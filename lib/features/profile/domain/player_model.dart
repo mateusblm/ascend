@@ -1,34 +1,63 @@
+import 'package:isar/isar.dart';
 import '../../quests/domain/quest_model.dart';
 
+part 'player_model.g.dart';
+
+@embedded
+class PlayerAttributes {
+  int strength;
+  int intelligence;
+  int vitality;
+  int agility;
+
+  PlayerAttributes({
+    this.strength = 10,
+    this.intelligence = 10,
+    this.vitality = 10,
+    this.agility = 10,
+  });
+}
+
+@Collection()
 class Player {
+  Id id = Isar.autoIncrement;
+
   final String name;
   final int level;
   final int xp;
   final int maxXp;
-  final Map<AttributeType, int> attributes;
+  final int statPoints; // Campo que causou o erro
+  final PlayerAttributes attributes;
+  final DateTime lastResetDate;
 
   Player({
+    this.id = Isar.autoIncrement,
     required this.name,
     required this.level,
     required this.xp,
     required this.maxXp,
+    this.statPoints = 0, // Valor default para novos registros
     required this.attributes,
+    required this.lastResetDate,
   });
 
-  // No Dart/Flutter, como os estados são imutáveis, usamos o copyWith 
-  // para criar uma nova instância alterada (similar ao @Builder do Lombok)
   Player copyWith({
     int? level,
     int? xp,
     int? maxXp,
-    Map<AttributeType, int>? attributes,
+    int? statPoints,
+    PlayerAttributes? attributes,
+    DateTime? lastResetDate,
   }) {
     return Player(
-      name: name,
+      id: this.id,
+      name: this.name,
       level: level ?? this.level,
       xp: xp ?? this.xp,
       maxXp: maxXp ?? this.maxXp,
+      statPoints: statPoints ?? this.statPoints,
       attributes: attributes ?? this.attributes,
+      lastResetDate: lastResetDate ?? this.lastResetDate,
     );
   }
 }

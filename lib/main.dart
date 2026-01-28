@@ -1,22 +1,36 @@
+import 'package:ascend/features/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_core/firebase_core.dart'; // Adicione este import
+import 'package:firebase_core/firebase_core.dart';
+import 'package:isar/isar.dart'; // Import do Isar
+import 'package:path_provider/path_provider.dart'; // Para o caminho do DB
 
-// Imports do seu projeto
+// Importe seus modelos para o Isar conhecer os Schemas
+import 'features/profile/domain/player_model.dart';
+import 'features/quests/domain/quest_model.dart';
+
 import 'core/theme/app_colors.dart';
 import 'features/profile/presentation/home_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/domain/auth_state.dart';
 
+// 1. DECLARAÇÃO GLOBAL (Onde o erro morre)
+// Isso permite que qualquer arquivo use 'isar' após o import do main.dart
+late Isar isar;
+
 void main() async {
-  // Como dev Java, pense nisso como garantir que o Spring Boot inicie o contexto 
-  // antes de tentar injetar qualquer Bean.
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializa o Firebase (exige as configs do google-services.json)
   await Firebase.initializeApp();
+
+  // 2. INICIALIZAÇÃO DO BANCO
+  final dir = await getApplicationDocumentsDirectory();
+  isar = await Isar.open(
+    [PlayerSchema, QuestSchema], // Se der erro aqui, rode o build_runner
+    directory: dir.path,
+  );
 
   runApp(
     const ProviderScope(
@@ -25,13 +39,11 @@ void main() async {
   );
 }
 
-// Alterado para ConsumerWidget para acessar o 'ref'
 class AscendApp extends ConsumerWidget {
   const AscendApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Escutando o estado de autenticação
     final authState = ref.watch(authProvider);
 
     return MaterialApp(
@@ -49,9 +61,8 @@ class AscendApp extends ConsumerWidget {
           surface: AppColors.surface,
         ),
       ),
-      // Lógica de roteamento baseada no estado do Google Auth
       home: authState is AuthSuccess 
-          ? const HomeScreen() 
+          ? const MainNavigationScreen()
           : const LoginScreen(),
     );
   }

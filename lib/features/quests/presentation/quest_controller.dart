@@ -112,17 +112,30 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     final questOriginal = state[index];
     final wasCompleted = questOriginal.isCompleted;
-    final updatedQuest = questOriginal.copyWith(isCompleted: !wasCompleted);
-
-    _isar.writeTxnSync(() {
-      _isar.quests.putSync(updatedQuest);
-    });
-
-    final newState = [...state];
-    newState[index] = updatedQuest;
-    state = newState;
 
     if (!wasCompleted) {
+      // Captura snapshot do jogador ANTES de aplicar a recompensa
+      final player = ref.read(playerProvider);
+      final updatedQuest = questOriginal.copyWith(
+        isCompleted: true,
+        preRewardLevel: player.level,
+        preRewardXp: player.xp,
+        preRewardMaxXp: player.maxXp,
+        preRewardStatPoints: player.statPoints,
+        preRewardStrength: player.attributes.strength,
+        preRewardIntelligence: player.attributes.intelligence,
+        preRewardVitality: player.attributes.vitality,
+        preRewardAgility: player.attributes.agility,
+      );
+
+      _isar.writeTxnSync(() {
+        _isar.quests.putSync(updatedQuest);
+      });
+
+      final newState = [...state];
+      newState[index] = updatedQuest;
+      state = newState;
+
       ref.read(playerProvider.notifier).addReward(
             updatedQuest.xpReward,
             updatedQuest.rewardAttribute,
@@ -132,10 +145,21 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return;
     }
 
-    ref.read(playerProvider.notifier).removeReward(
-          updatedQuest.xpReward,
-          updatedQuest.rewardAttribute,
-        );
+    // Desfazendo: limpa o snapshot e reverte recompensa
+    final updatedQuest = questOriginal.copyWith(
+      isCompleted: false,
+      clearPreRewardSnapshot: true,
+    );
+
+    _isar.writeTxnSync(() {
+      _isar.quests.putSync(updatedQuest);
+    });
+
+    final newState = [...state];
+    newState[index] = updatedQuest;
+    state = newState;
+
+    ref.read(playerProvider.notifier).undoReward(questOriginal);
   }
 
   void addQuest(String title, AttributeType attribute, int xp) {

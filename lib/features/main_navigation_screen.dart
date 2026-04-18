@@ -1,4 +1,6 @@
 // lib/features/main_navigation_screen.dart
+import 'dart:async';
+
 import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -13,12 +15,41 @@ import 'profile/presentation/rank_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 import 'profile/presentation/stats_screen.dart';
 
-class MainNavigationScreen extends ConsumerWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(rankProgressionSyncProvider);
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+  Timer? _syncDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Sync competitiva com debounce — evita chamadas redundantes ao Firestore
+    // durante rebuilds rápidos. Substitui o antigo ref.watch(rankProgressionSyncProvider).
+    ref.listenManual(playerProvider, (_, next) {
+      final syncPaused = ref.read(debugRankSyncPausedProvider);
+      if (syncPaused) return;
+
+      _syncDebounce?.cancel();
+      _syncDebounce = Timer(const Duration(milliseconds: 500), () {
+        ref.read(rankProgressionRepositoryProvider).syncCompetitiveState(next);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncDebounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationProvider);
     final player = ref.watch(playerProvider);
     final quests = ref.watch(questProvider);

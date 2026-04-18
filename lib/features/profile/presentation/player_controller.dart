@@ -2,18 +2,20 @@ import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
 final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
   final isar = ref.watch(isarProvider);
   final savedPlayer = isar.players.where().findFirstSync();
+  final currentUser = FirebaseAuth.instance.currentUser;
 
   return PlayerNotifier(
     isar,
     savedPlayer ??
         Player(
-          name: 'MATEUS',
+          name: currentUser?.displayName ?? 'Jogador',
           level: 1,
           xp: 0,
           maxXp: 100,
@@ -107,21 +109,40 @@ class PlayerNotifier extends StateNotifier<Player> {
     );
   }
 
-  void removeReward(int xpReward, AttributeType attribute) {
-    final newXp = (state.xp - xpReward).clamp(0, state.maxXp);
+  /// Reverte completamente uma recompensa de quest usando o snapshot pré-recompensa.
+  /// Se o snapshot não existir, faz fallback para subtração simples (sem reverter level-up).
+  void undoReward(Quest quest) {
+    if (quest.hasPreRewardSnapshot) {
+      state = state.copyWith(
+        level: quest.preRewardLevel,
+        xp: quest.preRewardXp,
+        maxXp: quest.preRewardMaxXp,
+        statPoints: quest.preRewardStatPoints,
+        attributes: PlayerAttributes(
+          strength: quest.preRewardStrength ?? state.attributes.strength,
+          intelligence: quest.preRewardIntelligence ?? state.attributes.intelligence,
+          vitality: quest.preRewardVitality ?? state.attributes.vitality,
+          agility: quest.preRewardAgility ?? state.attributes.agility,
+        ),
+      );
+    } else {
+      // Fallback para quests antigas sem snapshot (subtração simples, não reverte level-up)
+      final newXp = (state.xp - quest.xpReward).clamp(0, state.maxXp);
+      final attribute = quest.rewardAttribute;
 
-    final newAttrs = PlayerAttributes(
-      strength: (state.attributes.strength - (attribute == AttributeType.strength ? 1 : 0)).clamp(10, 999),
-      intelligence: (state.attributes.intelligence - (attribute == AttributeType.intelligence ? 1 : 0))
-          .clamp(10, 999),
-      vitality: (state.attributes.vitality - (attribute == AttributeType.vitality ? 1 : 0)).clamp(10, 999),
-      agility: (state.attributes.agility - (attribute == AttributeType.agility ? 1 : 0)).clamp(10, 999),
-    );
+      final newAttrs = PlayerAttributes(
+        strength: (state.attributes.strength - (attribute == AttributeType.strength ? 1 : 0)).clamp(10, 999),
+        intelligence: (state.attributes.intelligence - (attribute == AttributeType.intelligence ? 1 : 0))
+            .clamp(10, 999),
+        vitality: (state.attributes.vitality - (attribute == AttributeType.vitality ? 1 : 0)).clamp(10, 999),
+        agility: (state.attributes.agility - (attribute == AttributeType.agility ? 1 : 0)).clamp(10, 999),
+      );
 
-    state = state.copyWith(
-      xp: newXp,
-      attributes: newAttrs,
-    );
+      state = state.copyWith(
+        xp: newXp,
+        attributes: newAttrs,
+      );
+    }
 
     _saveToDb();
   }

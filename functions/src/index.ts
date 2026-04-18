@@ -229,7 +229,6 @@ export const claimWeeklyBoss = onCall(
 
       transaction.update(bossRef, {
         completedCount: admin.firestore.FieldValue.increment(1),
-        participantCount: admin.firestore.FieldValue.increment(1),
       });
 
       return { status: 'claimed' as const };

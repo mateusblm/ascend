@@ -9,6 +9,7 @@ import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'profile/presentation/home_screen.dart';
+import 'profile/presentation/rank_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 import 'profile/presentation/stats_screen.dart';
 
@@ -26,6 +27,7 @@ class MainNavigationScreen extends ConsumerWidget {
     final List<Widget> screens = [
       const HomeScreen(),
       const QuestsScreen(),
+      const RankScreen(),
       const StatsScreen(),
     ];
 
@@ -69,6 +71,11 @@ class MainNavigationScreen extends ConsumerWidget {
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bar_chart_outlined),
                     activeIcon: Icon(Icons.bar_chart),
+                    label: "RANK",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.analytics_outlined),
+                    activeIcon: Icon(Icons.analytics),
                     label: "STATS",
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final competitiveRank = ref.watch(competitiveRankProvider);
     final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final topCompletions = ref.watch(weeklyBossTopCompletionsProvider);
@@ -30,7 +32,7 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(player.name, player.level, _calculateCurrentTitle(player)),
+            _buildHeader(player.name, player.level, competitiveRank, _calculateCurrentTitle(player)),
             const SizedBox(height: 40),
             _buildStatusCard(
               child: Column(
@@ -50,6 +52,7 @@ class HomeScreen extends ConsumerWidget {
                     authState,
                     remoteWeeklyBoss,
                     topCompletions,
+                    competitiveRank,
                   ),
                 ],
               ),
@@ -84,7 +87,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(String name, int level, String title) {
+  Widget _buildHeader(String name, int level, String rank, String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -97,7 +100,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'RANK: ${playerRankForLevel(level)}',
+              'RANK: $rank',
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -346,6 +349,7 @@ class HomeScreen extends ConsumerWidget {
     AuthState authState,
     AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
     AsyncValue<List<WeeklyBossCompletion>> topCompletions,
+    String competitiveRank,
   ) {
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
     final weeklyBoss = remoteBoss == null
@@ -458,7 +462,7 @@ class HomeScreen extends ConsumerWidget {
                             authState,
                             remoteBoss,
                             weeklyBoss,
-                            playerRankForLevel(player.level),
+                            competitiveRank,
                           )
                       : null,
                   child: Text(isClaimed ? 'RESGATADO' : 'RESGATAR'),

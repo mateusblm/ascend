@@ -3,12 +3,14 @@ import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,6 +34,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final rankSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
     final rankHistory = ref.watch(rankProgressionHistoryProvider).valueOrNull ?? const <CompetitiveRankSnapshot>[];
+    final promotionExam = ref.watch(promotionExamProvider).valueOrNull;
+    final debugSyncPaused = ref.watch(debugRankSyncPausedProvider);
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
@@ -84,6 +88,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       player,
                       attrs,
                       rankSnapshot,
+                      promotionExam,
+                      debugSyncPaused,
                       weeklyBoss,
                       weeklyBossProgress,
                       weeklyBossClaimed,
@@ -160,6 +166,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     Player player,
     PlayerAttributes attrs,
     CompetitiveRankSnapshot? rankSnapshot,
+    PromotionExam? promotionExam,
+    bool debugSyncPaused,
     WeeklyBossDefinition? weeklyBoss,
     int weeklyBossProgress,
     bool weeklyBossClaimed,
@@ -173,6 +181,17 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         const SizedBox(height: 20),
         _buildCompetitiveRankCard(rankSnapshot, player),
         const SizedBox(height: 10),
+        _buildPromotionExamCard(rankSnapshot, promotionExam),
+        const SizedBox(height: 10),
+        if (kDebugMode) ...[
+          _buildDebugProgressionCard(
+            player,
+            rankSnapshot,
+            promotionExam,
+            debugSyncPaused,
+          ),
+          const SizedBox(height: 10),
+        ],
         Row(
           children: [
             Expanded(
@@ -510,6 +529,172 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromotionExamCard(
+    CompetitiveRankSnapshot? snapshot,
+    PromotionExam? exam,
+  ) {
+    final accentColor = switch (exam?.status) {
+      PromotionExamStatus.inProgress => Colors.orangeAccent,
+      PromotionExamStatus.passed => Colors.greenAccent,
+      PromotionExamStatus.failed => Colors.redAccent,
+      PromotionExamStatus.promoted => AppColors.neonBlue,
+      null => AppColors.neonBlue,
+    };
+
+    final title = switch (exam?.status) {
+      PromotionExamStatus.inProgress => 'EXAME DE PROMOCAO EM CURSO',
+      PromotionExamStatus.passed => 'EXAME CONCLUIDO',
+      PromotionExamStatus.failed => 'EXAME FALHOU',
+      PromotionExamStatus.promoted => 'PROMOCAO CONFIRMADA',
+      null => 'EXAME DE PROMOCAO',
+    };
+
+    final description = switch (exam?.status) {
+      PromotionExamStatus.inProgress =>
+        'Conquiste ${exam!.targetActiveDays} dias ativos nesta semana antes de ${_formatShortDate(exam.expiresAt)}.',
+      PromotionExamStatus.passed =>
+        'Voce venceu a prova para o rank ${exam!.targetRank}. Agora falta confirmar a promocao.',
+      PromotionExamStatus.failed =>
+        'O exame expirou ou voce nao sustentou a progressao exigida. Reconquiste o estado de promocao para tentar de novo.',
+      PromotionExamStatus.promoted =>
+        'Sua ascensao foi registrada no sistema. Continue treinando para segurar o novo rank.',
+      null => snapshot?.promotionReady == true
+          ? 'Voce desbloqueou o exame para o rank ${snapshot!.promotionTargetRank}. Ative a prova e ganhe mais um dia ativo nesta semana.'
+          : 'Quando a promocao estiver pronta, o sistema vai abrir uma prova formal aqui.',
+    };
+
+    final actionLabel = switch (exam?.status) {
+      PromotionExamStatus.passed => 'PROMOVER RANK',
+      PromotionExamStatus.inProgress => null,
+      PromotionExamStatus.failed => null,
+      PromotionExamStatus.promoted => null,
+      null => snapshot?.promotionReady == true ? 'INICIAR EXAME' : null,
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        border: Border.all(color: accentColor.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 11, color: Colors.white54, letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.5),
+          ),
+          if (exam != null && exam.status == PromotionExamStatus.inProgress) ...[
+            const SizedBox(height: 12),
+            _buildMiniMetric(
+              'META DO EXAME',
+              '${exam.targetActiveDays} dias',
+              accentColor,
+            ),
+          ],
+          if (actionLabel != null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () => _handlePromotionExamAction(snapshot, exam),
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebugProgressionCard(
+    Player player,
+    CompetitiveRankSnapshot? snapshot,
+    PromotionExam? exam,
+    bool syncPaused,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orangeAccent.withOpacity(0.06),
+        border: Border.all(color: Colors.orangeAccent.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'DEBUG DE PROGRESSAO',
+            style: TextStyle(fontSize: 11, color: Colors.white54, letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            syncPaused
+                ? 'Sincronizacao automatica pausada para teste.'
+                : 'Sincronizacao automatica ativa. Pause para forcar estados remotos.',
+            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Pausar sync automatica', style: TextStyle(fontSize: 13)),
+            value: syncPaused,
+            onChanged: (value) => ref.read(debugRankSyncPausedProvider.notifier).state = value,
+            activeColor: Colors.orangeAccent,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: syncPaused ? () => _forcePromotionReady(player) : null,
+                child: const Text('FORCAR PROMOTION READY'),
+              ),
+              OutlinedButton(
+                onPressed: syncPaused && exam != null ? () => _forceExamPassed(player) : null,
+                child: const Text('FORCAR EXAME PASS'),
+              ),
+              OutlinedButton(
+                onPressed: syncPaused ? _clearPromotionState : null,
+                child: const Text('LIMPAR EXAME'),
+              ),
+            ],
+          ),
+          if (snapshot != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Snapshot atual: rank ${snapshot.currentRank} | ${snapshot.status.name} | alvo ${snapshot.promotionTargetRank ?? '-'}',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+          ],
+          if (exam != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Exame atual: ${exam.status.name} | ${exam.sourceRank} -> ${exam.targetRank}',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
           ],
         ],
@@ -1132,6 +1317,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 
+  String _formatShortDate(DateTime value) {
+    return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}';
+  }
+
   String _shortError(Object? error) {
     if (error == null) return 'desconhecido';
     final text = error.toString().replaceAll('\n', ' ');
@@ -1164,6 +1353,86 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     if (shouldLogout == true && mounted) {
       await ref.read(authProvider.notifier).signOut();
     }
+  }
+
+  Future<void> _handlePromotionExamAction(
+    CompetitiveRankSnapshot? snapshot,
+    PromotionExam? exam,
+  ) async {
+    if (snapshot == null) return;
+
+    final repository = ref.read(rankProgressionRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+
+    if (exam?.status == PromotionExamStatus.passed) {
+      final promoted = await repository.promoteIfExamPassed(snapshot);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            promoted
+                ? 'Promocao confirmada. O sistema registrou seu novo rank.'
+                : 'A promocao nao pode ser concluida agora.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final started = await repository.startPromotionExam(snapshot);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          started
+              ? 'Exame iniciado. Ganhe mais um dia ativo para concluir a promocao.'
+              : 'Nao foi possivel iniciar o exame agora.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _forcePromotionReady(Player player) async {
+    final repository = ref.read(rankProgressionRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    final ok = await repository.debugForcePromotionReady(player);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Snapshot forcado para promotionReady.'
+              : 'Nao foi possivel forcar promotionReady.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _forceExamPassed(Player player) async {
+    final repository = ref.read(rankProgressionRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    final ok = await repository.debugForceExamPassed(player);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Exame marcado como aprovado para teste.'
+              : 'Nao foi possivel forcar exame aprovado.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _clearPromotionState() async {
+    final repository = ref.read(rankProgressionRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    await repository.debugClearPromotionState();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Estado de exame limpo para teste.'),
+      ),
+    );
   }
 }
 

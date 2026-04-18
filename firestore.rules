@@ -72,6 +72,12 @@ service cloud.firestore {
         allow create, update: if isSignedIn() && request.auth.uid == userId;
         allow delete: if false;
       }
+
+      match /promotion_exam/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() && request.auth.uid == userId;
+        allow delete: if false;
+      }
     }
   }
 }

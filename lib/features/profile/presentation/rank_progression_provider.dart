@@ -21,6 +21,11 @@ final rankProgressionSnapshotProvider = StreamProvider.autoDispose<CompetitiveRa
   return repository.watchCurrentSnapshot();
 });
 
+final rankProgressionHistoryProvider = StreamProvider.autoDispose<List<CompetitiveRankSnapshot>>((ref) {
+  final repository = ref.watch(rankProgressionRepositoryProvider);
+  return repository.watchRecentHistory();
+});
+
 final competitiveRankProvider = Provider<String>((ref) {
   final player = ref.watch(playerProvider);
   final remoteSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;

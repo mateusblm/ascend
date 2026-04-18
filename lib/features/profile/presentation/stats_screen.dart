@@ -31,6 +31,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final rankSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
+    final rankHistory = ref.watch(rankProgressionHistoryProvider).valueOrNull ?? const <CompetitiveRankSnapshot>[];
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
@@ -88,7 +89,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       weeklyBossClaimed,
                       remoteWeeklyBoss,
                     ),
-                  _StatsSection.analysis => _buildAnalysisSection(player, insights.discipline, insights.review),
+                  _StatsSection.analysis => _buildAnalysisSection(
+                      player,
+                      insights.discipline,
+                      insights.review,
+                      rankHistory,
+                    ),
                   _StatsSection.plan => _buildPlanSection(player, insights.nextWeekPlan),
                   _StatsSection.build => _buildBuildSection(
                       context,
@@ -217,6 +223,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     Player player,
     WeeklyDisciplineReport weeklyScore,
     WeeklyReviewReport weeklyReview,
+    List<CompetitiveRankSnapshot> rankHistory,
   ) {
     return Column(
       key: const ValueKey('analysis'),
@@ -235,6 +242,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         _buildWeeklyScoreCard(weeklyScore),
         const SizedBox(height: 10),
         _buildWeeklyReviewCard(weeklyReview),
+        const SizedBox(height: 10),
+        _buildRankHistoryCard(rankHistory),
       ],
     );
   }
@@ -885,6 +894,80 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
+  Widget _buildRankHistoryCard(List<CompetitiveRankSnapshot> history) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'TRILHA DE RANK',
+            style: TextStyle(fontSize: 11, color: Colors.white54, letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 12),
+          if (history.isEmpty)
+            const Text(
+              'O historico competitivo vai aparecer aqui assim que o Firestore registrar as semanas.',
+              style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.4),
+            )
+          else
+            ...history.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 72,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.neonBlue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.neonBlue.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        entry.weekKey,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10, color: AppColors.neonBlue),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rank ${entry.currentRank} | ${_rankStatusLabel(entry.status)}',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${entry.activeDays}/${entry.requiredActiveDays} dias | strikes ${entry.demotionStrikes}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            entry.summary,
+                            style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNextWeekPlanCard(NextWeekPlan plan) {
     return Container(
       width: double.infinity,
@@ -972,6 +1055,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   String _weekdayLabel(int weekday) {
     const labels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
     return labels[weekday - 1];
+  }
+
+  String _rankStatusLabel(RankMaintenanceStatus status) {
+    return switch (status) {
+      RankMaintenanceStatus.secure => 'ESTAVEL',
+      RankMaintenanceStatus.warning => 'ALERTA',
+      RankMaintenanceStatus.critical => 'RISCO',
+      RankMaintenanceStatus.promotionReady => 'PROMOCAO',
+      RankMaintenanceStatus.demoted => 'QUEDA',
+    };
   }
 
   Widget _buildStreakCard({

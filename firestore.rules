@@ -66,6 +66,12 @@ service cloud.firestore {
         allow create, update: if isSignedIn() && request.auth.uid == userId;
         allow delete: if false;
       }
+
+      match /progression_history/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() && request.auth.uid == userId;
+        allow delete: if false;
+      }
     }
   }
 }

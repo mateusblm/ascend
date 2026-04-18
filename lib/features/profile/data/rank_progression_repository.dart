@@ -26,6 +26,23 @@ class RankProgressionRepository {
     });
   }
 
+  Stream<List<CompetitiveRankSnapshot>> watchRecentHistory({int limit = 6}) {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      return Stream.value(const <CompetitiveRankSnapshot>[]);
+    }
+
+    return _historyCollection(uid)
+        .orderBy('updatedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => CompetitiveRankSnapshot.fromFirestore(doc.data()))
+              .toList();
+        });
+  }
+
   Future<void> syncSnapshot(Player player) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
@@ -46,12 +63,20 @@ class RankProgressionRepository {
       return;
     }
 
-    await snapshotRef.set(nextSnapshot.toFirestore(), SetOptions(merge: true));
+    final historyRef = _historyCollection(uid).doc(nextSnapshot.weekKey);
+    final batch = _firestore.batch();
+    batch.set(snapshotRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
+    batch.set(historyRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
+    await batch.commit();
     _lastSyncedFingerprintByUser[uid] = fingerprint;
   }
 
   DocumentReference<Map<String, dynamic>> _progressionDoc(String uid) {
     return _firestore.collection('users').doc(uid).collection('progression').doc('current');
+  }
+
+  CollectionReference<Map<String, dynamic>> _historyCollection(String uid) {
+    return _firestore.collection('users').doc(uid).collection('progression_history');
   }
 
   String _fingerprintFor(CompetitiveRankSnapshot snapshot) {

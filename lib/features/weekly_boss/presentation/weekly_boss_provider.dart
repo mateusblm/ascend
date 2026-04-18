@@ -1,5 +1,5 @@
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
-import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
@@ -12,8 +12,7 @@ final weeklyBossRepositoryProvider = Provider<WeeklyBossRepository>((ref) {
 });
 
 final remoteWeeklyBossProvider = StreamProvider.autoDispose<RemoteWeeklyBoss?>((ref) {
-  final player = ref.watch(playerProvider);
-  final rank = playerRankForLevel(player.level);
+  final rank = ref.watch(competitiveRankProvider);
   final repository = ref.watch(weeklyBossRepositoryProvider);
   return repository.watchActiveBossForRank(rank).map((boss) {
     if (kDebugMode) {

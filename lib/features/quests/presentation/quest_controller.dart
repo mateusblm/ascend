@@ -1,5 +1,6 @@
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,6 +154,38 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     state = [...state, newQuest];
   }
 
+  int addSuggestedQuests(List<QuestSuggestion> suggestions) {
+    if (suggestions.isEmpty) return 0;
+
+    final existingTitles = state.map((quest) => _normalizeTitle(quest.title)).toSet();
+    final newQuests = <Quest>[];
+
+    for (final suggestion in suggestions) {
+      final normalizedTitle = _normalizeTitle(suggestion.title);
+      if (existingTitles.contains(normalizedTitle)) continue;
+
+      existingTitles.add(normalizedTitle);
+      newQuests.add(
+        Quest(
+          id: '${DateTime.now().microsecondsSinceEpoch}-${newQuests.length}',
+          title: suggestion.title,
+          rewardAttribute: suggestion.rewardAttribute,
+          xpReward: suggestion.xpReward,
+          isCompleted: false,
+        ),
+      );
+    }
+
+    if (newQuests.isEmpty) return 0;
+
+    _isar.writeTxnSync(() {
+      _isar.quests.putAllSync(newQuests);
+    });
+
+    state = [...state, ...newQuests];
+    return newQuests.length;
+  }
+
   void deleteQuest(String id) {
     _isar.writeTxnSync(() {
       final questToDelete = _isar.quests.filter().idEqualTo(id).findFirstSync();
@@ -163,4 +196,6 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     state = state.where((q) => q.id != id).toList();
   }
+
+  String _normalizeTitle(String value) => value.trim().toLowerCase();
 }

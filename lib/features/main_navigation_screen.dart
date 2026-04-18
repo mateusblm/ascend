@@ -4,6 +4,7 @@ import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ class MainNavigationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(rankProgressionSyncProvider);
     final currentIndex = ref.watch(navigationProvider);
     final player = ref.watch(playerProvider);
     final quests = ref.watch(questProvider);

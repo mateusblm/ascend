@@ -1,5 +1,11 @@
+import 'package:ascend/features/profile/domain/weekly_boss.dart';
+import 'package:ascend/features/profile/domain/weekly_insights.dart';
+import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +17,31 @@ class QuestsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quests = ref.watch(questProvider);
+    final player = ref.watch(playerProvider);
+    final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider).valueOrNull;
     final activeQuests = quests.where((q) => !q.isCompleted).toList();
     final completedQuests = quests.where((q) => q.isCompleted).toList();
+    final weeklyBoss = remoteWeeklyBoss == null
+        ? null
+        : WeeklyBossDefinition(
+            rank: remoteWeeklyBoss.rank,
+            title: remoteWeeklyBoss.title,
+            description: remoteWeeklyBoss.description,
+            targetActiveDays: remoteWeeklyBoss.targetActiveDays,
+            rewardXp: remoteWeeklyBoss.rewardXp,
+            rewardStatPoints: remoteWeeklyBoss.rewardStatPoints,
+          );
+    final insights = buildWeeklyInsights(
+      player,
+      weeklyBoss: weeklyBoss,
+      weeklyBossProgress: weeklyBoss?.progressFor(player) ?? 0,
+      weeklyBossClaimed: weeklyBoss?.isClaimedThisWeek(player) ?? false,
+    );
+    final suggestions = buildWeeklyQuestSuggestions(
+      player,
+      insights,
+      weeklyBoss: weeklyBoss,
+    ).where((suggestion) => !quests.any((quest) => quest.title == suggestion.title)).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -40,6 +69,10 @@ class QuestsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (suggestions.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildSuggestionsPanel(context, ref, suggestions),
+                ),
 
               if (activeQuests.isNotEmpty)
                 SliverList(
@@ -91,7 +124,7 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDismissibleQuest(BuildContext context, WidgetRef ref, dynamic quest) {
+  Widget _buildDismissibleQuest(BuildContext context, WidgetRef ref, Quest quest) {
     return Dismissible(
       key: Key(quest.id),
       direction: DismissDirection.endToStart,
@@ -115,6 +148,147 @@ class QuestsScreen extends ConsumerWidget {
             onLevelUp: (level) => _showLevelUpDialog(context, level),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsPanel(
+    BuildContext context,
+    WidgetRef ref,
+    List<QuestSuggestion> suggestions,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.neonBlue.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.neonBlue.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'SUGESTOES DA SEMANA',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 2),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Baseadas no seu foco, ritmo recente e plano da proxima semana.',
+            style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.neonBlue,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () {
+                final addedCount = ref.read(questProvider.notifier).addSuggestedQuests(suggestions);
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.hideCurrentSnackBar();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      addedCount > 0
+                          ? '$addedCount quests adicionadas para a sua semana.'
+                          : 'Essas sugestoes ja estao na sua lista atual.',
+                    ),
+                  ),
+                );
+              },
+              child: Text(
+                'MONTAR SEMANA (${suggestions.length})',
+                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...suggestions.map(
+            (suggestion) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.neonBlue.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          suggestion.tag,
+                          style: const TextStyle(
+                            color: AppColors.neonBlue,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '+${suggestion.xpReward} XP',
+                        style: const TextStyle(
+                          color: AppColors.neonBlue,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    suggestion.title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.3),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    suggestion.reason,
+                    style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.neonBlue),
+                        foregroundColor: AppColors.neonBlue,
+                      ),
+                      onPressed: () {
+                        ref.read(questProvider.notifier).addQuest(
+                              suggestion.title,
+                              suggestion.rewardAttribute,
+                              suggestion.xpReward,
+                            );
+                        final messenger = ScaffoldMessenger.of(context);
+                        messenger.hideCurrentSnackBar();
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('"${suggestion.title}" adicionada nas quests.')),
+                        );
+                      },
+                      child: const Text(
+                        'ADICIONAR',
+                        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

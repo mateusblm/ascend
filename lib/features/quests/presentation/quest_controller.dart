@@ -44,11 +44,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       final allQuests = _isar.quests.where().findAllSync();
       final resetQuests = allQuests.map((q) => q.copyWith(isCompleted: false)).toList();
       _isar.quests.putAllSync(resetQuests);
-
-      final updatedPlayer = player.copyWith(lastResetDate: now);
-      _isar.players.putSync(updatedPlayer);
     });
 
+    ref.read(playerProvider.notifier).handleDailyReset(now);
     state = _isar.quests.where().findAllSync();
   }
 
@@ -90,6 +88,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
             updatedQuest.rewardAttribute,
             onLevelUp: onLevelUp,
           );
+      ref.read(playerProvider.notifier).recordQuestCompletion();
       return;
     }
 

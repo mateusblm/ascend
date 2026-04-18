@@ -1,7 +1,7 @@
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
-import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,7 +13,7 @@ class HomeScreen extends ConsumerWidget {
     final player = ref.watch(playerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Deixamos o gradiente para o MainNavigation
+      backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 60),
         child: Column(
@@ -21,44 +21,34 @@ class HomeScreen extends ConsumerWidget {
           children: [
             _buildHeader(player.name, player.level, _calculateCurrentTitle(player)),
             const SizedBox(height: 40),
-            
-            // Card de Progresso Principal
             _buildStatusCard(
-              title: "EVOLUÇÃO",
               child: Column(
                 children: [
-                  _buildStatBar(
-                    "XP", 
-                    player.xp / player.maxXp, 
-                    AppColors.neonBlue, 
-                    "${player.xp} / ${player.maxXp}"
-                  ),
+                  _buildStatBar('XP', player.xp / player.maxXp, AppColors.neonBlue, '${player.xp} / ${player.maxXp}'),
                   const SizedBox(height: 20),
-                  _buildStatBar("HP", 1.0, Colors.redAccent, "100%"),
+                  _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
+                  const SizedBox(height: 24),
+                  _buildStreakPanel(player),
                 ],
               ),
             ),
-            
             const SizedBox(height: 40),
-
-            // Janela de Atributos
-            const Text("ATRIBUTOS", style: TextStyle(fontSize: 18, letterSpacing: 3, fontWeight: FontWeight.bold)),
+            const Text(
+              'ATRIBUTOS',
+              style: TextStyle(fontSize: 18, letterSpacing: 3, fontWeight: FontWeight.bold),
+            ),
             const Divider(color: AppColors.neonBlue, thickness: 0.5),
             const SizedBox(height: 10),
-            
-            _buildAttributeRow("FORÇA", player.attributes.strength.toString(), Icons.fitness_center),
-            _buildAttributeRow("INTELIGÊNCIA", player.attributes.intelligence.toString(), Icons.psychology),
-            _buildAttributeRow("VITALIDADE", player.attributes.vitality.toString(), Icons.favorite),
-            _buildAttributeRow("AGILIDADE", player.attributes.agility.toString(), Icons.speed),
-            
+            _buildAttributeRow('FORCA', player.attributes.strength.toString(), Icons.fitness_center),
+            _buildAttributeRow('INTELIGENCIA', player.attributes.intelligence.toString(), Icons.psychology),
+            _buildAttributeRow('VITALIDADE', player.attributes.vitality.toString(), Icons.favorite),
+            _buildAttributeRow('AGILIDADE', player.attributes.agility.toString(), Icons.speed),
             const SizedBox(height: 50),
-            
-            // Dica de RPG (Flavor Text)
             Center(
               child: Text(
-                "\"O MEDO NÃO É UM OBSTÁCULO, É UMA FERRAMENTA.\"",
+                '"O MEDO NAO E UM OBSTACULO, E UMA FERRAMENTA."',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white10,
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
@@ -76,14 +66,16 @@ class HomeScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("PLAYER: $name | $title", // Título aparece aqui agora
-            style: const TextStyle(fontSize: 12, color: AppColors.neonBlue, letterSpacing: 1.5)),
+        Text(
+          'PLAYER: $name | $title',
+          style: const TextStyle(fontSize: 12, color: AppColors.neonBlue, letterSpacing: 1.5),
+        ),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "RANK: ${_calculateRank(level)}",
+              'RANK: ${_calculateRank(level)}',
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -94,26 +86,17 @@ class HomeScreen extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Text("LEVEL", style: TextStyle(fontSize: 10, color: Colors.white38)),
+                const Text('LEVEL', style: TextStyle(fontSize: 10, color: Colors.white38)),
                 Text(level.toString().padLeft(2, '0'), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               ],
-            )
+            ),
           ],
         ),
       ],
     );
   }
 
-  String _calculateRank(int level) {
-    if (level < 5) return "E";
-    if (level < 10) return "D";
-    if (level < 20) return "C";
-    if (level < 30) return "B";
-    if (level < 40) return "A";
-    return "S";
-  }
-
-  Widget _buildStatusCard({required String title, required Widget child}) {
+  Widget _buildStatusCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -150,9 +133,65 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildStreakPanel(Player player) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMiniMetric(
+            icon: Icons.local_fire_department,
+            label: 'STREAK ATUAL',
+            value: '${player.currentStreak} dias',
+            accentColor: Colors.orangeAccent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMiniMetric(
+            icon: Icons.emoji_events,
+            label: 'MELHOR STREAK',
+            value: '${player.bestStreak} dias',
+            accentColor: AppColors.neonBlue,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniMetric({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color accentColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: accentColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAttributeRow(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
           Icon(icon, size: 18, color: AppColors.neonBlue.withOpacity(0.5)),
@@ -160,24 +199,30 @@ class HomeScreen extends ConsumerWidget {
           Text(label, style: const TextStyle(color: Colors.white70, letterSpacing: 1)),
           const Spacer(),
           Text(
-            value, 
+            value,
             style: const TextStyle(
-              color: AppColors.neonBlue, 
-              fontWeight: FontWeight.bold, 
+              color: AppColors.neonBlue,
+              fontWeight: FontWeight.bold,
               fontSize: 18,
-              fontFamily: 'Courier', // Estilo terminal/sistema
-            )
+              fontFamily: 'Courier',
+            ),
           ),
         ],
       ),
     );
   }
 
+  String _calculateRank(int level) {
+    if (level < 5) return 'E';
+    if (level < 10) return 'D';
+    if (level < 20) return 'C';
+    if (level < 30) return 'B';
+    if (level < 40) return 'A';
+    return 'S';
+  }
+
   String _calculateCurrentTitle(Player player) {
-  // Pega todas as conquistas que o player cumpre os requisitos
-  final unlocked = systemAchievements.where((a) => a.requirement(player)).toList();
-  
-  // Retorna o último título conquistado ou o padrão
-  return unlocked.isNotEmpty ? unlocked.last.title : "ASPIRANTE";
+    final unlocked = systemAchievements.where((achievement) => achievement.requirement(player)).toList();
+    return unlocked.isNotEmpty ? unlocked.last.title : 'ASPIRANTE';
   }
 }

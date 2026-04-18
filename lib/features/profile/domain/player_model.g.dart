@@ -23,33 +23,48 @@ const PlayerSchema = CollectionSchema(
       type: IsarType.object,
       target: r'PlayerAttributes',
     ),
-    r'lastResetDate': PropertySchema(
+    r'bestStreak': PropertySchema(
       id: 1,
+      name: r'bestStreak',
+      type: IsarType.long,
+    ),
+    r'currentStreak': PropertySchema(
+      id: 2,
+      name: r'currentStreak',
+      type: IsarType.long,
+    ),
+    r'lastQuestCompletionDate': PropertySchema(
+      id: 3,
+      name: r'lastQuestCompletionDate',
+      type: IsarType.dateTime,
+    ),
+    r'lastResetDate': PropertySchema(
+      id: 4,
       name: r'lastResetDate',
       type: IsarType.dateTime,
     ),
     r'level': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'level',
       type: IsarType.long,
     ),
     r'maxXp': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'maxXp',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'statPoints': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'statPoints',
       type: IsarType.long,
     ),
     r'xp': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'xp',
       type: IsarType.long,
     )
@@ -93,12 +108,15 @@ void _playerSerialize(
     PlayerAttributesSchema.serialize,
     object.attributes,
   );
-  writer.writeDateTime(offsets[1], object.lastResetDate);
-  writer.writeLong(offsets[2], object.level);
-  writer.writeLong(offsets[3], object.maxXp);
-  writer.writeString(offsets[4], object.name);
-  writer.writeLong(offsets[5], object.statPoints);
-  writer.writeLong(offsets[6], object.xp);
+  writer.writeLong(offsets[1], object.bestStreak);
+  writer.writeLong(offsets[2], object.currentStreak);
+  writer.writeDateTime(offsets[3], object.lastQuestCompletionDate);
+  writer.writeDateTime(offsets[4], object.lastResetDate);
+  writer.writeLong(offsets[5], object.level);
+  writer.writeLong(offsets[6], object.maxXp);
+  writer.writeString(offsets[7], object.name);
+  writer.writeLong(offsets[8], object.statPoints);
+  writer.writeLong(offsets[9], object.xp);
 }
 
 Player _playerDeserialize(
@@ -114,13 +132,16 @@ Player _playerDeserialize(
           allOffsets,
         ) ??
         PlayerAttributes(),
+    bestStreak: reader.readLongOrNull(offsets[1]) ?? 0,
+    currentStreak: reader.readLongOrNull(offsets[2]) ?? 0,
     id: id,
-    lastResetDate: reader.readDateTime(offsets[1]),
-    level: reader.readLong(offsets[2]),
-    maxXp: reader.readLong(offsets[3]),
-    name: reader.readString(offsets[4]),
-    statPoints: reader.readLongOrNull(offsets[5]) ?? 0,
-    xp: reader.readLong(offsets[6]),
+    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[3]),
+    lastResetDate: reader.readDateTime(offsets[4]),
+    level: reader.readLong(offsets[5]),
+    maxXp: reader.readLong(offsets[6]),
+    name: reader.readString(offsets[7]),
+    statPoints: reader.readLongOrNull(offsets[8]) ?? 0,
+    xp: reader.readLong(offsets[9]),
   );
   return object;
 }
@@ -140,16 +161,22 @@ P _playerDeserializeProp<P>(
           ) ??
           PlayerAttributes()) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
-    case 2:
-      return (reader.readLong(offset)) as P;
-    case 3:
-      return (reader.readLong(offset)) as P;
-    case 4:
-      return (reader.readString(offset)) as P;
-    case 5:
       return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 2:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 3:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
+    case 5:
+      return (reader.readLong(offset)) as P;
     case 6:
+      return (reader.readLong(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 9:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -244,6 +271,112 @@ extension PlayerQueryWhere on QueryBuilder<Player, Player, QWhereClause> {
 }
 
 extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
+  QueryBuilder<Player, Player, QAfterFilterCondition> bestStreakEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bestStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> bestStreakGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bestStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> bestStreakLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bestStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> bestStreakBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bestStreak',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> currentStreakEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> currentStreakGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> currentStreakLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> currentStreakBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'currentStreak',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -288,6 +421,80 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastQuestCompletionDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastQuestCompletionDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastQuestCompletionDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastQuestCompletionDate',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -700,6 +907,43 @@ extension PlayerQueryObject on QueryBuilder<Player, Player, QFilterCondition> {
 extension PlayerQueryLinks on QueryBuilder<Player, Player, QFilterCondition> {}
 
 extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
+  QueryBuilder<Player, Player, QAfterSortBy> sortByBestStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bestStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByBestStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bestStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByCurrentStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByLastQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQuestCompletionDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      sortByLastQuestCompletionDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQuestCompletionDate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> sortByLastResetDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastResetDate', Sort.asc);
@@ -774,6 +1018,30 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
 }
 
 extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
+  QueryBuilder<Player, Player, QAfterSortBy> thenByBestStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bestStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByBestStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bestStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByCurrentStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -783,6 +1051,19 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
   QueryBuilder<Player, Player, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByLastQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQuestCompletionDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      thenByLastQuestCompletionDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQuestCompletionDate', Sort.desc);
     });
   }
 
@@ -860,6 +1141,24 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
 }
 
 extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
+  QueryBuilder<Player, Player, QDistinct> distinctByBestStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bestStreak');
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct> distinctByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'currentStreak');
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct> distinctByLastQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastQuestCompletionDate');
+    });
+  }
+
   QueryBuilder<Player, Player, QDistinct> distinctByLastResetDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastResetDate');
@@ -909,6 +1208,25 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
       attributesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'attributes');
+    });
+  }
+
+  QueryBuilder<Player, int, QQueryOperations> bestStreakProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bestStreak');
+    });
+  }
+
+  QueryBuilder<Player, int, QQueryOperations> currentStreakProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'currentStreak');
+    });
+  }
+
+  QueryBuilder<Player, DateTime?, QQueryOperations>
+      lastQuestCompletionDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastQuestCompletionDate');
     });
   }
 

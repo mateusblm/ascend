@@ -25,9 +25,12 @@ class Player {
   final int level;
   final int xp;
   final int maxXp;
-  final int statPoints; // Campo que causou o erro
+  final int statPoints;
   final PlayerAttributes attributes;
   final DateTime lastResetDate;
+  final int currentStreak;
+  final int bestStreak;
+  final DateTime? lastQuestCompletionDate;
 
   Player({
     this.id = Isar.autoIncrement,
@@ -35,9 +38,12 @@ class Player {
     required this.level,
     required this.xp,
     required this.maxXp,
-    this.statPoints = 0, // Valor default para novos registros
+    this.statPoints = 0,
     required this.attributes,
     required this.lastResetDate,
+    this.currentStreak = 0,
+    this.bestStreak = 0,
+    this.lastQuestCompletionDate,
   });
 
   Player copyWith({
@@ -47,16 +53,25 @@ class Player {
     int? statPoints,
     PlayerAttributes? attributes,
     DateTime? lastResetDate,
+    int? currentStreak,
+    int? bestStreak,
+    DateTime? lastQuestCompletionDate,
+    bool clearLastQuestCompletionDate = false,
   }) {
     return Player(
-      id: this.id,
-      name: this.name,
+      id: id,
+      name: name,
       level: level ?? this.level,
       xp: xp ?? this.xp,
       maxXp: maxXp ?? this.maxXp,
       statPoints: statPoints ?? this.statPoints,
       attributes: attributes ?? this.attributes,
       lastResetDate: lastResetDate ?? this.lastResetDate,
+      currentStreak: currentStreak ?? this.currentStreak,
+      bestStreak: bestStreak ?? this.bestStreak,
+      lastQuestCompletionDate: clearLastQuestCompletionDate
+          ? null
+          : (lastQuestCompletionDate ?? this.lastQuestCompletionDate),
     );
   }
 }

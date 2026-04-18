@@ -34,6 +34,14 @@ class PlayerNotifier extends StateNotifier<Player> {
     });
   }
 
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
+  int _daysBetween(DateTime from, DateTime to) {
+    return _dateOnly(to).difference(_dateOnly(from)).inDays;
+  }
+
   void addReward(
     int xpReward,
     AttributeType attribute, {
@@ -108,6 +116,45 @@ class PlayerNotifier extends StateNotifier<Player> {
     state = state.copyWith(
       statPoints: state.statPoints - 1,
       attributes: newAttrs,
+    );
+
+    _saveToDb();
+  }
+
+  void recordQuestCompletion([DateTime? completedAt]) {
+    final completionDate = completedAt ?? DateTime.now();
+    final lastCompletion = state.lastQuestCompletionDate;
+
+    if (lastCompletion != null && _daysBetween(lastCompletion, completionDate) == 0) {
+      return;
+    }
+
+    final streak = switch (lastCompletion) {
+      null => 1,
+      _ when _daysBetween(lastCompletion, completionDate) == 1 => state.currentStreak + 1,
+      _ => 1,
+    };
+
+    state = state.copyWith(
+      currentStreak: streak,
+      bestStreak: streak > state.bestStreak ? streak : state.bestStreak,
+      lastQuestCompletionDate: completionDate,
+    );
+
+    _saveToDb();
+  }
+
+  void handleDailyReset(DateTime now) {
+    final lastCompletion = state.lastQuestCompletionDate;
+    var nextStreak = state.currentStreak;
+
+    if (lastCompletion != null && _daysBetween(lastCompletion, now) > 1) {
+      nextStreak = 0;
+    }
+
+    state = state.copyWith(
+      lastResetDate: now,
+      currentStreak: nextStreak,
     );
 
     _saveToDb();

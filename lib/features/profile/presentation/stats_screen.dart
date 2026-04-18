@@ -1,17 +1,13 @@
-import 'package:ascend/features/profile/domain/achievement_modal.dart';
-import 'package:ascend/features/quests/domain/quest_model.dart'; // Importante para o AttributeType
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/profile/domain/achievement_modal.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'player_controller.dart';
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
-
-  String _getBestTitle(dynamic player) {
-    final unlocked = systemAchievements.where((a) => a.requirement(player)).toList();
-    return unlocked.isNotEmpty ? unlocked.last.title : "ASPIRANTE";
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,23 +28,49 @@ class StatsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("DETALHES DE STATUS",
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4)),
+                    Text(
+                      'DETALHES DE STATUS',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4),
+                    ),
                     Divider(color: AppColors.neonBlue, thickness: 1),
                   ],
                 ),
               ),
-
               _buildCombatPowerCard(player.level, attrs),
-
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStreakCard(
+                      label: 'STREAK ATUAL',
+                      value: '${player.currentStreak}',
+                      caption: 'dias seguidos',
+                      accentColor: Colors.orangeAccent,
+                      icon: Icons.local_fire_department,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildStreakCard(
+                      label: 'MELHOR STREAK',
+                      value: '${player.bestStreak}',
+                      caption: 'recorde pessoal',
+                      accentColor: AppColors.neonBlue,
+                      icon: Icons.emoji_events,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildInfoBox('ULTIMA CONCLUSAO', _formatLastCompletion(player.lastQuestCompletionDate)),
               const SizedBox(height: 30),
-
-              // --- SEÇÃO DE PONTOS DISPONÍVEIS ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("POTENCIAL DE ATRIBUTO",
-                      style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2)),
+                  const Text(
+                    'POTENCIAL DE ATRIBUTO',
+                    style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2),
+                  ),
                   if (hasPoints)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -58,34 +80,39 @@ class StatsScreen extends ConsumerWidget {
                         border: Border.all(color: AppColors.neonBlue),
                       ),
                       child: Text(
-                        "${player.statPoints} PONTOS",
+                        '${player.statPoints} PONTOS',
                         style: const TextStyle(color: AppColors.neonBlue, fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
                 ],
               ),
               const SizedBox(height: 20),
-
-              _buildDetailedStat(context, ref, "FORÇA", attrs.strength, Colors.orangeAccent, AttributeType.strength, hasPoints),
-              _buildDetailedStat(context, ref, "INTELIGÊNCIA", attrs.intelligence, Colors.lightBlueAccent, AttributeType.intelligence, hasPoints),
-              _buildDetailedStat(context, ref, "VITALIDADE", attrs.vitality, Colors.greenAccent, AttributeType.vitality, hasPoints),
-              _buildDetailedStat(context, ref, "AGILIDADE", attrs.agility, Colors.purpleAccent, AttributeType.agility, hasPoints),
-
+              _buildDetailedStat(context, ref, 'FORCA', attrs.strength, Colors.orangeAccent, AttributeType.strength, hasPoints),
+              _buildDetailedStat(
+                context,
+                ref,
+                'INTELIGENCIA',
+                attrs.intelligence,
+                Colors.lightBlueAccent,
+                AttributeType.intelligence,
+                hasPoints,
+              ),
+              _buildDetailedStat(context, ref, 'VITALIDADE', attrs.vitality, Colors.greenAccent, AttributeType.vitality, hasPoints),
+              _buildDetailedStat(context, ref, 'AGILIDADE', attrs.agility, Colors.purpleAccent, AttributeType.agility, hasPoints),
               const SizedBox(height: 40),
-
-              const Text("INFORMAÇÕES DO SISTEMA", 
-                  style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2)),
+              const Text(
+                'INFORMACOES DO SISTEMA',
+                style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2),
+              ),
               const SizedBox(height: 15),
-              
-              _buildInfoBox("TÍTULO ATUAL", _getBestTitle(player)),
-              _buildInfoBox("CLASSE", "PLAYER"),
-
+              _buildInfoBox('TITULO ATUAL', _getBestTitle(player)),
+              _buildInfoBox('CLASSE', 'PLAYER'),
               const SizedBox(height: 30),
-
-              const Text("CONQUISTAS", 
-                  style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2)),
+              const Text(
+                'CONQUISTAS',
+                style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2),
+              ),
               const SizedBox(height: 15),
-
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -102,9 +129,7 @@ class StatsScreen extends ConsumerWidget {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: isUnlocked 
-                          ? AppColors.neonBlue.withOpacity(0.05) 
-                          : Colors.white.withOpacity(0.02),
+                      color: isUnlocked ? AppColors.neonBlue.withOpacity(0.05) : Colors.white.withOpacity(0.02),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isUnlocked ? AppColors.neonBlue.withOpacity(0.5) : Colors.white10,
@@ -142,7 +167,7 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCombatPowerCard(int level, dynamic attrs) {
+  Widget _buildCombatPowerCard(int level, PlayerAttributes attrs) {
     final power = (level * 10) + attrs.strength + attrs.intelligence + attrs.vitality + attrs.agility;
     return Container(
       width: double.infinity,
@@ -154,20 +179,29 @@ class StatsScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text("PODER DE COMBATE", style: TextStyle(fontSize: 12, color: Colors.white54)),
+          const Text('PODER DE COMBATE', style: TextStyle(fontSize: 12, color: Colors.white54)),
           Text(
             power.toString().padLeft(4, '0'),
             style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, fontFamily: 'Courier'),
           ),
           const SizedBox(height: 10),
-          const Text("STATUS: ESTÁVEL", style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
+          const Text('STATUS: ESTAVEL', style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
         ],
       ),
     );
   }
 
-  Widget _buildDetailedStat(BuildContext context, WidgetRef ref, String label, int value, Color color, AttributeType type, bool canUpgrade) {
-    double progress = (value / 100).clamp(0.0, 1.0);
+  Widget _buildDetailedStat(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    int value,
+    Color color,
+    AttributeType type,
+    bool canUpgrade,
+  ) {
+    final progress = (value / 100).clamp(0.0, 1.0);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
@@ -219,7 +253,7 @@ class StatsScreen extends ConsumerWidget {
                       boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)],
                     ),
                   );
-                }
+                },
               ),
             ],
           ),
@@ -230,6 +264,7 @@ class StatsScreen extends ConsumerWidget {
 
   Widget _buildInfoBox(String label, String value) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
@@ -245,5 +280,70 @@ class StatsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildStreakCard({
+    required String label,
+    required String value,
+    required String caption,
+    required Color accentColor,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: accentColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: accentColor,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Courier',
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getBestTitle(Player player) {
+    final unlocked = systemAchievements.where((achievement) => achievement.requirement(player)).toList();
+    return unlocked.isNotEmpty ? unlocked.last.title : 'ASPIRANTE';
+  }
+
+  String _formatLastCompletion(DateTime? value) {
+    if (value == null) return 'Nenhuma ainda';
+    return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
 }

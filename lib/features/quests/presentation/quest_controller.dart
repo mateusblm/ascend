@@ -26,7 +26,11 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     }
 
     if (savedQuests.isEmpty) {
-      _seedInitialQuests();
+      if (player?.hasCompletedOnboarding == true) {
+        _seedInitialQuests(player!.primaryFocus);
+      } else {
+        state = [];
+      }
     } else {
       state = _isar.quests.where().findAllSync();
     }
@@ -50,20 +54,55 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     state = _isar.quests.where().findAllSync();
   }
 
-  void _seedInitialQuests() {
-    final initialQuests = [
-      Quest(id: '1', title: 'Treino de flexoes', rewardAttribute: AttributeType.strength, xpReward: 50),
-      Quest(
-        id: '2',
-        title: 'Estudar Dart por 30 minutos',
-        rewardAttribute: AttributeType.intelligence,
-        xpReward: 30,
-      ),
-      Quest(id: '3', title: 'Beber 2L de agua', rewardAttribute: AttributeType.vitality, xpReward: 20),
-    ];
+  void _seedInitialQuests(AwakeningPath focus) {
+    final initialQuests = _starterQuestsFor(focus);
 
     _isar.writeTxnSync(() => _isar.quests.putAllSync(initialQuests));
     state = initialQuests;
+  }
+
+  List<Quest> _starterQuestsFor(AwakeningPath focus) {
+    return switch (focus) {
+      AwakeningPath.discipline => [
+          _buildStarterQuest('discipline-1', 'Arrumar a cama ao acordar', AttributeType.vitality, 20),
+          _buildStarterQuest('discipline-2', 'Fazer 15 minutos de foco total', AttributeType.intelligence, 30),
+          _buildStarterQuest('discipline-3', 'Revisar metas do dia', AttributeType.agility, 25),
+        ],
+      AwakeningPath.study => [
+          _buildStarterQuest('study-1', 'Estudar por 30 minutos', AttributeType.intelligence, 35),
+          _buildStarterQuest('study-2', 'Anotar 3 aprendizados do dia', AttributeType.intelligence, 25),
+          _buildStarterQuest('study-3', 'Resolver 1 exercicio dificil', AttributeType.agility, 30),
+        ],
+      AwakeningPath.training => [
+          _buildStarterQuest('training-1', 'Treino rapido de 20 minutos', AttributeType.strength, 35),
+          _buildStarterQuest('training-2', 'Alongamento e mobilidade', AttributeType.vitality, 25),
+          _buildStarterQuest('training-3', 'Caminhada energica de 15 minutos', AttributeType.agility, 30),
+        ],
+      AwakeningPath.health => [
+          _buildStarterQuest('health-1', 'Beber 2L de agua', AttributeType.vitality, 25),
+          _buildStarterQuest('health-2', 'Dormir no horario alvo', AttributeType.vitality, 35),
+          _buildStarterQuest('health-3', 'Fazer uma refeicao sem ultraprocessados', AttributeType.strength, 30),
+        ],
+      AwakeningPath.productivity => [
+          _buildStarterQuest('productivity-1', 'Concluir a tarefa mais importante do dia', AttributeType.intelligence, 40),
+          _buildStarterQuest('productivity-2', 'Executar 2 blocos de foco sem distração', AttributeType.agility, 30),
+          _buildStarterQuest('productivity-3', 'Encerrar o dia com inbox zerada', AttributeType.vitality, 25),
+        ],
+    };
+  }
+
+  Quest _buildStarterQuest(String id, String title, AttributeType rewardAttribute, int xpReward) {
+    return Quest(
+      id: id,
+      title: title,
+      rewardAttribute: rewardAttribute,
+      xpReward: xpReward,
+    );
+  }
+
+  void applyStarterKit(AwakeningPath focus) {
+    if (state.isNotEmpty) return;
+    _seedInitialQuests(focus);
   }
 
   void toggleQuest(String id, {void Function(int level)? onLevelUp}) {

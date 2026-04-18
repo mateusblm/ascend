@@ -38,38 +38,49 @@ const PlayerSchema = CollectionSchema(
       name: r'currentStreak',
       type: IsarType.long,
     ),
-    r'lastQuestCompletionDate': PropertySchema(
+    r'hasCompletedOnboarding': PropertySchema(
       id: 4,
+      name: r'hasCompletedOnboarding',
+      type: IsarType.bool,
+    ),
+    r'lastQuestCompletionDate': PropertySchema(
+      id: 5,
       name: r'lastQuestCompletionDate',
       type: IsarType.dateTime,
     ),
     r'lastResetDate': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'lastResetDate',
       type: IsarType.dateTime,
     ),
     r'level': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'level',
       type: IsarType.long,
     ),
     r'maxXp': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'maxXp',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'name',
       type: IsarType.string,
     ),
+    r'primaryFocus': PropertySchema(
+      id: 10,
+      name: r'primaryFocus',
+      type: IsarType.byte,
+      enumMap: _PlayerprimaryFocusEnumValueMap,
+    ),
     r'statPoints': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'statPoints',
       type: IsarType.long,
     ),
     r'xp': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'xp',
       type: IsarType.long,
     )
@@ -117,13 +128,15 @@ void _playerSerialize(
   );
   writer.writeLong(offsets[2], object.bestStreak);
   writer.writeLong(offsets[3], object.currentStreak);
-  writer.writeDateTime(offsets[4], object.lastQuestCompletionDate);
-  writer.writeDateTime(offsets[5], object.lastResetDate);
-  writer.writeLong(offsets[6], object.level);
-  writer.writeLong(offsets[7], object.maxXp);
-  writer.writeString(offsets[8], object.name);
-  writer.writeLong(offsets[9], object.statPoints);
-  writer.writeLong(offsets[10], object.xp);
+  writer.writeBool(offsets[4], object.hasCompletedOnboarding);
+  writer.writeDateTime(offsets[5], object.lastQuestCompletionDate);
+  writer.writeDateTime(offsets[6], object.lastResetDate);
+  writer.writeLong(offsets[7], object.level);
+  writer.writeLong(offsets[8], object.maxXp);
+  writer.writeString(offsets[9], object.name);
+  writer.writeByte(offsets[10], object.primaryFocus.index);
+  writer.writeLong(offsets[11], object.statPoints);
+  writer.writeLong(offsets[12], object.xp);
 }
 
 Player _playerDeserialize(
@@ -142,14 +155,18 @@ Player _playerDeserialize(
         PlayerAttributes(),
     bestStreak: reader.readLongOrNull(offsets[2]) ?? 0,
     currentStreak: reader.readLongOrNull(offsets[3]) ?? 0,
+    hasCompletedOnboarding: reader.readBoolOrNull(offsets[4]) ?? false,
     id: id,
-    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[4]),
-    lastResetDate: reader.readDateTime(offsets[5]),
-    level: reader.readLong(offsets[6]),
-    maxXp: reader.readLong(offsets[7]),
-    name: reader.readString(offsets[8]),
-    statPoints: reader.readLongOrNull(offsets[9]) ?? 0,
-    xp: reader.readLong(offsets[10]),
+    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[5]),
+    lastResetDate: reader.readDateTime(offsets[6]),
+    level: reader.readLong(offsets[7]),
+    maxXp: reader.readLong(offsets[8]),
+    name: reader.readString(offsets[9]),
+    primaryFocus:
+        _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[10])] ??
+            AwakeningPath.discipline,
+    statPoints: reader.readLongOrNull(offsets[11]) ?? 0,
+    xp: reader.readLong(offsets[12]),
   );
   return object;
 }
@@ -175,23 +192,43 @@ P _playerDeserializeProp<P>(
     case 3:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 7:
       return (reader.readLong(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 9:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readString(offset)) as P;
     case 10:
+      return (_PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offset)] ??
+          AwakeningPath.discipline) as P;
+    case 11:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 12:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _PlayerprimaryFocusEnumValueMap = {
+  'discipline': 0,
+  'study': 1,
+  'training': 2,
+  'health': 3,
+  'productivity': 4,
+};
+const _PlayerprimaryFocusValueEnumMap = {
+  0: AwakeningPath.discipline,
+  1: AwakeningPath.study,
+  2: AwakeningPath.training,
+  3: AwakeningPath.health,
+  4: AwakeningPath.productivity,
+};
 
 Id _playerGetId(Player object) {
   return object.id;
@@ -527,6 +564,16 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      hasCompletedOnboardingEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasCompletedOnboarding',
+        value: value,
       ));
     });
   }
@@ -943,6 +990,59 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterFilterCondition> primaryFocusEqualTo(
+      AwakeningPath value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'primaryFocus',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> primaryFocusGreaterThan(
+    AwakeningPath value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'primaryFocus',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> primaryFocusLessThan(
+    AwakeningPath value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'primaryFocus',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> primaryFocusBetween(
+    AwakeningPath lower,
+    AwakeningPath upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'primaryFocus',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> statPointsEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -1085,6 +1185,19 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> sortByHasCompletedOnboarding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompletedOnboarding', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      sortByHasCompletedOnboardingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompletedOnboarding', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> sortByLastQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastQuestCompletionDate', Sort.asc);
@@ -1146,6 +1259,18 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> sortByPrimaryFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'primaryFocus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByPrimaryFocusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'primaryFocus', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> sortByStatPoints() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'statPoints', Sort.asc);
@@ -1193,6 +1318,19 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
   QueryBuilder<Player, Player, QAfterSortBy> thenByCurrentStreakDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'currentStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByHasCompletedOnboarding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompletedOnboarding', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      thenByHasCompletedOnboardingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCompletedOnboarding', Sort.desc);
     });
   }
 
@@ -1269,6 +1407,18 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> thenByPrimaryFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'primaryFocus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByPrimaryFocusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'primaryFocus', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenByStatPoints() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'statPoints', Sort.asc);
@@ -1313,6 +1463,12 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
     });
   }
 
+  QueryBuilder<Player, Player, QDistinct> distinctByHasCompletedOnboarding() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasCompletedOnboarding');
+    });
+  }
+
   QueryBuilder<Player, Player, QDistinct> distinctByLastQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastQuestCompletionDate');
@@ -1341,6 +1497,12 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct> distinctByPrimaryFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'primaryFocus');
     });
   }
 
@@ -1390,6 +1552,13 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Player, bool, QQueryOperations>
+      hasCompletedOnboardingProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasCompletedOnboarding');
+    });
+  }
+
   QueryBuilder<Player, DateTime?, QQueryOperations>
       lastQuestCompletionDateProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1418,6 +1587,12 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
   QueryBuilder<Player, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Player, AwakeningPath, QQueryOperations> primaryFocusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'primaryFocus');
     });
   }
 

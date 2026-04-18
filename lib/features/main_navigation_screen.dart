@@ -1,6 +1,10 @@
 // lib/features/main_navigation_screen.dart
 import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
+import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'profile/presentation/home_screen.dart';
@@ -13,6 +17,9 @@ class MainNavigationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navigationProvider);
+    final player = ref.watch(playerProvider);
+    final quests = ref.watch(questProvider);
+    final requiresOnboarding = _requiresOnboarding(player, quests.isNotEmpty);
 
     final List<Widget> screens = [
       const HomeScreen(),
@@ -31,36 +38,53 @@ class MainNavigationScreen extends ConsumerWidget {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent, // Importante!
-        body: IndexedStack(
-          index: currentIndex,
-          children: screens,
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) => ref.read(navigationProvider.notifier).state = index,
-          backgroundColor: Colors.black.withOpacity(0.8),
-          selectedItemColor: AppColors.neonBlue,
-          unselectedItemColor: Colors.white24,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), 
-              activeIcon: Icon(Icons.person),
-              label: "STATUS"
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bolt_outlined), // Raio combina com "Quest/Energia"
-              activeIcon: Icon(Icons.bolt),
-              label: "QUESTS"
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined), 
-              activeIcon: Icon(Icons.bar_chart),
-              label: "STATS"
-            ),
-          ],
-        ),
+        body: requiresOnboarding
+            ? const AwakeningOnboardingScreen()
+            : IndexedStack(
+                index: currentIndex,
+                children: screens,
+              ),
+        bottomNavigationBar: requiresOnboarding
+            ? null
+            : BottomNavigationBar(
+                currentIndex: currentIndex,
+                onTap: (index) => ref.read(navigationProvider.notifier).state = index,
+                backgroundColor: Colors.black.withOpacity(0.8),
+                selectedItemColor: AppColors.neonBlue,
+                unselectedItemColor: Colors.white24,
+                type: BottomNavigationBarType.fixed,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
+                    label: "STATUS",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.bolt_outlined),
+                    activeIcon: Icon(Icons.bolt),
+                    label: "QUESTS",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.bar_chart_outlined),
+                    activeIcon: Icon(Icons.bar_chart),
+                    label: "STATS",
+                  ),
+                ],
+              ),
       ),
     );
+  }
+
+  bool _requiresOnboarding(Player player, bool hasExistingQuests) {
+    if (player.hasCompletedOnboarding) return false;
+
+    final hasProgress = player.level > 1 ||
+        player.xp > 0 ||
+        player.currentStreak > 0 ||
+        player.bestStreak > 0 ||
+        player.activityHistory.isNotEmpty ||
+        hasExistingQuests;
+
+    return !hasProgress;
   }
 }

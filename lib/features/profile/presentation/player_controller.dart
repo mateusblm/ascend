@@ -1,5 +1,6 @@
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -51,16 +52,17 @@ class PlayerNotifier extends StateNotifier<Player> {
     return updatedHistory;
   }
 
-  void addReward(
-    int xpReward,
-    AttributeType attribute, {
+  void _applyXpReward(
+    int xpReward, {
+    int bonusStatPoints = 0,
+    PlayerAttributes? attributes,
     void Function(int level)? onLevelUp,
   }) {
     final oldLevel = state.level;
     var currentXp = state.xp + xpReward;
     var currentLevel = state.level;
     var currentMaxXp = state.maxXp;
-    var currentStatPoints = state.statPoints;
+    var currentStatPoints = state.statPoints + bonusStatPoints;
 
     while (currentXp >= currentMaxXp) {
       currentXp -= currentMaxXp;
@@ -69,19 +71,12 @@ class PlayerNotifier extends StateNotifier<Player> {
       currentMaxXp = (currentMaxXp * 1.2).toInt();
     }
 
-    final newAttrs = PlayerAttributes(
-      strength: state.attributes.strength + (attribute == AttributeType.strength ? 1 : 0),
-      intelligence: state.attributes.intelligence + (attribute == AttributeType.intelligence ? 1 : 0),
-      vitality: state.attributes.vitality + (attribute == AttributeType.vitality ? 1 : 0),
-      agility: state.attributes.agility + (attribute == AttributeType.agility ? 1 : 0),
-    );
-
     state = state.copyWith(
       level: currentLevel,
       xp: currentXp,
       maxXp: currentMaxXp,
       statPoints: currentStatPoints,
-      attributes: newAttrs,
+      attributes: attributes ?? state.attributes,
     );
 
     _saveToDb();
@@ -91,6 +86,25 @@ class PlayerNotifier extends StateNotifier<Player> {
         onLevelUp(currentLevel);
       });
     }
+  }
+
+  void addReward(
+    int xpReward,
+    AttributeType attribute, {
+    void Function(int level)? onLevelUp,
+  }) {
+    final newAttrs = PlayerAttributes(
+      strength: state.attributes.strength + (attribute == AttributeType.strength ? 1 : 0),
+      intelligence: state.attributes.intelligence + (attribute == AttributeType.intelligence ? 1 : 0),
+      vitality: state.attributes.vitality + (attribute == AttributeType.vitality ? 1 : 0),
+      agility: state.attributes.agility + (attribute == AttributeType.agility ? 1 : 0),
+    );
+
+    _applyXpReward(
+      xpReward,
+      attributes: newAttrs,
+      onLevelUp: onLevelUp,
+    );
   }
 
   void removeReward(int xpReward, AttributeType attribute) {
@@ -182,5 +196,27 @@ class PlayerNotifier extends StateNotifier<Player> {
     );
 
     _saveToDb();
+  }
+
+  void updatePrimaryFocus(AwakeningPath focus) {
+    state = state.copyWith(primaryFocus: focus);
+    _saveToDb();
+  }
+
+  bool claimWeeklyBossReward({void Function(int level)? onLevelUp}) {
+    final weeklyBoss = weeklyBossFor(state.primaryFocus);
+    if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
+      return false;
+    }
+
+    _applyXpReward(
+      weeklyBoss.rewardXp,
+      bonusStatPoints: weeklyBoss.rewardStatPoints,
+      onLevelUp: onLevelUp,
+    );
+
+    state = state.copyWith(weeklyBossLastClaimedAt: DateTime.now());
+    _saveToDb();
+    return true;
   }
 }

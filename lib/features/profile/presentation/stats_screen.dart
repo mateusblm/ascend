@@ -63,6 +63,7 @@ class StatsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _buildInfoBox('ULTIMA CONCLUSAO', _formatLastCompletion(player.lastQuestCompletionDate)),
+              _buildInfoBox('FOCO PRINCIPAL', player.primaryFocus.label),
               const SizedBox(height: 30),
               const Text(
                 'ULTIMOS 7 DIAS',

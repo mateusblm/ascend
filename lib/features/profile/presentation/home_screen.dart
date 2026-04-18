@@ -1,6 +1,8 @@
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/weekly_boss.dart';
+import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +26,8 @@ class HomeScreen extends ConsumerWidget {
             _buildStatusCard(
               child: Column(
                 children: [
+                  _buildFocusBanner(context, player.primaryFocus),
+                  const SizedBox(height: 20),
                   _buildStatBar('XP', player.xp / player.maxXp, AppColors.neonBlue, '${player.xp} / ${player.maxXp}'),
                   const SizedBox(height: 20),
                   _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
@@ -105,6 +109,69 @@ class HomeScreen extends ConsumerWidget {
         border: Border.all(color: Colors.white10),
       ),
       child: child,
+    );
+  }
+
+  Widget _buildFocusBanner(BuildContext context, AwakeningPath focus) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.neonBlue.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.neonBlue.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'FOCO ATUAL',
+                  style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.2),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _openFocusSelectionSheet(context, focus),
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  'ALTERAR',
+                  style: TextStyle(
+                    color: AppColors.neonBlue,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            focus.label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.neonBlue,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openFocusSelectionSheet(BuildContext context, AwakeningPath currentFocus) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FocusSelectionSheet(currentFocus: currentFocus),
     );
   }
 

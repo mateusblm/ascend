@@ -33,6 +33,8 @@ class HomeScreen extends ConsumerWidget {
                   _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
                   const SizedBox(height: 24),
                   _buildStreakPanel(player),
+                  const SizedBox(height: 20),
+                  _buildWeeklyBossPanel(context, ref, player),
                 ],
               ),
             ),
@@ -175,6 +177,17 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  void _claimWeeklyBoss(BuildContext context, WidgetRef ref) {
+    final claimed = ref.read(playerProvider.notifier).claimWeeklyBossReward();
+    final message = claimed
+        ? 'Boss semanal derrotado. Recompensa aplicada ao sistema.'
+        : 'O boss semanal ainda nao esta pronto para resgate.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Widget _buildStatBar(String label, double progress, Color color, String trailing) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,6 +263,92 @@ class HomeScreen extends ConsumerWidget {
                 Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyBossPanel(BuildContext context, WidgetRef ref, Player player) {
+    final weeklyBoss = weeklyBossFor(player.primaryFocus);
+    final progress = weeklyBoss.progressFor(player);
+    final isClaimed = weeklyBoss.isClaimedThisWeek(player);
+    final isCompleted = weeklyBoss.isCompleted(player);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_moon, color: Colors.amberAccent, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'BOSS SEMANAL',
+                  style: TextStyle(fontSize: 12, color: Colors.white38, letterSpacing: 1.2),
+                ),
+              ),
+              Text(
+                '$progress/${weeklyBoss.targetActiveDays}',
+                style: const TextStyle(
+                  color: AppColors.neonBlue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            weeklyBoss.title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            weeklyBoss.description,
+            style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: (progress / weeklyBoss.targetActiveDays).clamp(0.0, 1.0),
+              backgroundColor: Colors.white10,
+              color: isCompleted ? Colors.amberAccent : AppColors.neonBlue,
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos',
+                  style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.6),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isClaimed
+                      ? Colors.white12
+                      : (isCompleted ? Colors.amberAccent : Colors.white12),
+                  foregroundColor: isCompleted && !isClaimed ? Colors.black : Colors.white54,
+                ),
+                onPressed: isCompleted && !isClaimed
+                    ? () => _claimWeeklyBoss(context, ref)
+                    : null,
+                child: Text(isClaimed ? 'RESGATADO' : 'RESGATAR'),
+              ),
+            ],
           ),
         ],
       ),

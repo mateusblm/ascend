@@ -55,6 +55,7 @@ class Player {
   @enumerated
   final AwakeningPath primaryFocus;
   final bool hasCompletedOnboarding;
+  final DateTime? weeklyBossLastClaimedAt;
 
   Player({
     this.id = Isar.autoIncrement,
@@ -71,6 +72,7 @@ class Player {
     this.activityHistory = const [],
     this.primaryFocus = AwakeningPath.discipline,
     this.hasCompletedOnboarding = false,
+    this.weeklyBossLastClaimedAt,
   });
 
   Player copyWith({
@@ -86,7 +88,9 @@ class Player {
     List<DateTime>? activityHistory,
     AwakeningPath? primaryFocus,
     bool? hasCompletedOnboarding,
+    DateTime? weeklyBossLastClaimedAt,
     bool clearLastQuestCompletionDate = false,
+    bool clearWeeklyBossLastClaimedAt = false,
   }) {
     return Player(
       id: id,
@@ -105,6 +109,9 @@ class Player {
       activityHistory: activityHistory ?? this.activityHistory,
       primaryFocus: primaryFocus ?? this.primaryFocus,
       hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      weeklyBossLastClaimedAt: clearWeeklyBossLastClaimedAt
+          ? null
+          : (weeklyBossLastClaimedAt ?? this.weeklyBossLastClaimedAt),
     );
   }
 }

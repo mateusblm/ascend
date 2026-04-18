@@ -79,8 +79,13 @@ const PlayerSchema = CollectionSchema(
       name: r'statPoints',
       type: IsarType.long,
     ),
-    r'xp': PropertySchema(
+    r'weeklyBossLastClaimedAt': PropertySchema(
       id: 12,
+      name: r'weeklyBossLastClaimedAt',
+      type: IsarType.dateTime,
+    ),
+    r'xp': PropertySchema(
+      id: 13,
       name: r'xp',
       type: IsarType.long,
     )
@@ -136,7 +141,8 @@ void _playerSerialize(
   writer.writeString(offsets[9], object.name);
   writer.writeByte(offsets[10], object.primaryFocus.index);
   writer.writeLong(offsets[11], object.statPoints);
-  writer.writeLong(offsets[12], object.xp);
+  writer.writeDateTime(offsets[12], object.weeklyBossLastClaimedAt);
+  writer.writeLong(offsets[13], object.xp);
 }
 
 Player _playerDeserialize(
@@ -166,7 +172,8 @@ Player _playerDeserialize(
         _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[10])] ??
             AwakeningPath.discipline,
     statPoints: reader.readLongOrNull(offsets[11]) ?? 0,
-    xp: reader.readLong(offsets[12]),
+    weeklyBossLastClaimedAt: reader.readDateTimeOrNull(offsets[12]),
+    xp: reader.readLong(offsets[13]),
   );
   return object;
 }
@@ -209,6 +216,8 @@ P _playerDeserializeProp<P>(
     case 11:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 12:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 13:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1096,6 +1105,80 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'weeklyBossLastClaimedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'weeklyBossLastClaimedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'weeklyBossLastClaimedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'weeklyBossLastClaimedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'weeklyBossLastClaimedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      weeklyBossLastClaimedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'weeklyBossLastClaimedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> xpEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1283,6 +1366,19 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> sortByWeeklyBossLastClaimedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weeklyBossLastClaimedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      sortByWeeklyBossLastClaimedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weeklyBossLastClaimedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> sortByXp() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'xp', Sort.asc);
@@ -1431,6 +1527,19 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> thenByWeeklyBossLastClaimedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weeklyBossLastClaimedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      thenByWeeklyBossLastClaimedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weeklyBossLastClaimedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenByXp() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'xp', Sort.asc);
@@ -1509,6 +1618,12 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
   QueryBuilder<Player, Player, QDistinct> distinctByStatPoints() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'statPoints');
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct> distinctByWeeklyBossLastClaimedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'weeklyBossLastClaimedAt');
     });
   }
 
@@ -1599,6 +1714,13 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
   QueryBuilder<Player, int, QQueryOperations> statPointsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'statPoints');
+    });
+  }
+
+  QueryBuilder<Player, DateTime?, QQueryOperations>
+      weeklyBossLastClaimedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'weeklyBossLastClaimedAt');
     });
   }
 

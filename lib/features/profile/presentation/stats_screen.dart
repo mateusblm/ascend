@@ -1,6 +1,9 @@
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/auth/domain/auth_state.dart';
+import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +15,12 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final authState = ref.watch(authProvider);
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
+    final weeklyBoss = weeklyBossFor(player.primaryFocus);
+    final weeklyBossProgress = weeklyBoss.progressFor(player);
+    final weeklyBossClaimed = weeklyBoss.isClaimedThisWeek(player);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -64,6 +71,12 @@ class StatsScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               _buildInfoBox('ULTIMA CONCLUSAO', _formatLastCompletion(player.lastQuestCompletionDate)),
               _buildInfoBox('FOCO PRINCIPAL', player.primaryFocus.label),
+              _buildInfoBox(
+                'BOSS SEMANAL',
+                weeklyBossClaimed
+                    ? '${weeklyBoss.title} | resgatado'
+                    : '${weeklyBossProgress}/${weeklyBoss.targetActiveDays}',
+              ),
               const SizedBox(height: 30),
               const Text(
                 'ULTIMOS 7 DIAS',
@@ -171,6 +184,23 @@ class StatsScreen extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 50),
+              if (authState is AuthSuccess)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 52),
+                      side: const BorderSide(color: Colors.redAccent),
+                      foregroundColor: Colors.redAccent,
+                    ),
+                    onPressed: () => _confirmLogout(context, ref, authState.displayName),
+                    icon: const Icon(Icons.logout),
+                    label: const Text(
+                      'SAIR DA CONTA GOOGLE',
+                      style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -443,6 +473,34 @@ class StatsScreen extends ConsumerWidget {
   String _formatLastCompletion(DateTime? value) {
     if (value == null) return 'Nenhuma ainda';
     return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+  }
+
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref, String displayName) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Sair da conta'),
+          content: Text('Deseja desconectar $displayName da sua sessao atual?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Sair'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      await ref.read(authProvider.notifier).signOut();
+    }
   }
 }
 

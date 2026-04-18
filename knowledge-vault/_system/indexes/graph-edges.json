@@ -1,0 +1,492 @@
+[
+    {
+        "source":  "lib\\core\\database\\isar_provider.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\core\\database\\isar_provider.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\core\\database\\isar_provider.dart",
+        "target":  "isarProvider",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\core\\navigation\\navigation_provider.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\core\\navigation\\navigation_provider.dart",
+        "target":  "navigationProvider",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\core\\theme\\app_colors.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\core\\theme\\app_colors.dart",
+        "target":  "AppColors",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "target":  "AuthFailure",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "target":  "AuthInitial",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "target":  "AuthLoading",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "target":  "AuthSuccess",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "target":  "package:firebase_auth/firebase_auth.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "target":  "package:google_sign_in/google_sign_in.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "target":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "target":  "AuthControllerauthProvider",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "lib\\core\\theme\\app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "target":  "LoginScreen",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "lib/core/navigation/navigation_provider.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\main_navigation_screen.dart",
+        "target":  "MainNavigationScreen",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\achievement_modal.dart",
+        "target":  "lib/features/profile/domain/player_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\achievement_modal.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\achievement_modal.dart",
+        "target":  "Achievement",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\player_model.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\player_model.dart",
+        "target":  "Player",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\domain\\player_model.dart",
+        "target":  "PlayerAttributes",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "lib/features/profile/domain/achievement_modal.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "lib/features/profile/domain/player_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "lib/features/profile/presentation/player_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "target":  "HomeScreen",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "lib/core/database/isar_provider.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "lib/features/profile/domain/player_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "lib/features/quests/domain/quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "target":  "PlayerNotifierplayerProvider",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "lib/features/profile/domain/achievement_modal.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "lib/features/quests/domain/quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "target":  "StatsScreen",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\domain\\quest_model.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\domain\\quest_model.dart",
+        "target":  "QuestAttributeType",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "lib/core/database/isar_provider.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "lib/features/profile/domain/player_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "lib/features/profile/presentation/player_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "lib/features/quests/domain/quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "target":  "QuestNotifierquestProvider",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "lib/features/quests/presentation/quest_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "lib/features/quests/presentation/widgets/add_quest_modal.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "target":  "QuestsScreen",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "lib\\features\\quests\\domain\\quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "_AddQuestModalState",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "target":  "AddQuestModal",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "target":  "lib/features/quests/domain/quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "target":  "QuestCard",
+        "type":  "defines"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/core/database/isar_provider.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/core/theme/app_colors.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/auth/domain/auth_state.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/auth/presentation/auth_controller.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/auth/presentation/login_screen.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/main_navigation_screen.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/profile/domain/player_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "lib/features/quests/domain/quest_model.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:firebase_core/firebase_core.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:flutter/material.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:flutter_riverpod/flutter_riverpod.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:google_fonts/google_fonts.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:isar/isar.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "package:path_provider/path_provider.dart",
+        "type":  "imports"
+    },
+    {
+        "source":  "lib\\main.dart",
+        "target":  "AscendApp",
+        "type":  "defines"
+    }
+]

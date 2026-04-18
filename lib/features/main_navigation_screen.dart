@@ -1,8 +1,8 @@
 // lib/features/main_navigation_screen.dart
 import 'package:ascend/core/navigation/navigation_provider.dart';
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'profile/presentation/home_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 import 'profile/presentation/stats_screen.dart';

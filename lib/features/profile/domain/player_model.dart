@@ -1,5 +1,4 @@
 import 'package:isar/isar.dart';
-import '../../quests/domain/quest_model.dart';
 
 part 'player_model.g.dart';
 

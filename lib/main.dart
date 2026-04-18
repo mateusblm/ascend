@@ -1,40 +1,34 @@
+import 'package:ascend/core/database/isar_provider.dart';
+import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/auth/domain/auth_state.dart';
+import 'package:ascend/features/auth/presentation/auth_controller.dart';
+import 'package:ascend/features/auth/presentation/login_screen.dart';
 import 'package:ascend/features/main_navigation_screen.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:isar/isar.dart'; // Import do Isar
-import 'package:path_provider/path_provider.dart'; // Para o caminho do DB
-
-// Importe seus modelos para o Isar conhecer os Schemas
-import 'features/profile/domain/player_model.dart';
-import 'features/quests/domain/quest_model.dart';
-
-import 'core/theme/app_colors.dart';
-import 'features/profile/presentation/home_screen.dart';
-import 'features/auth/presentation/login_screen.dart';
-import 'features/auth/presentation/auth_controller.dart';
-import 'features/auth/domain/auth_state.dart';
-
-// 1. DECLARAÇÃO GLOBAL (Onde o erro morre)
-// Isso permite que qualquer arquivo use 'isar' após o import do main.dart
-late Isar isar;
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
   await Firebase.initializeApp();
 
-  // 2. INICIALIZAÇÃO DO BANCO
   final dir = await getApplicationDocumentsDirectory();
-  isar = await Isar.open(
-    [PlayerSchema, QuestSchema], // Se der erro aqui, rode o build_runner
+  final isar = await Isar.open(
+    [PlayerSchema, QuestSchema],
     directory: dir.path,
   );
 
   runApp(
-    const ProviderScope(
-      child: AscendApp(),
+    ProviderScope(
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+      ],
+      child: const AscendApp(),
     ),
   );
 }
@@ -61,9 +55,7 @@ class AscendApp extends ConsumerWidget {
           surface: AppColors.surface,
         ),
       ),
-      home: authState is AuthSuccess 
-          ? const MainNavigationScreen()
-          : const LoginScreen(),
+      home: authState is AuthSuccess ? const MainNavigationScreen() : const LoginScreen(),
     );
   }
 }

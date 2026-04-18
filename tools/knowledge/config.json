@@ -1,0 +1,17 @@
+{
+  "projectName": "ascend",
+  "vaultRoot": "knowledge-vault",
+  "chatSourceDir": "memory-input/chats",
+  "rawChatsDir": "03-chats/raw",
+  "normalizedChatsDir": "03-chats/normalized",
+  "codeNotesDir": "02-codebase/files",
+  "entityNotesDir": "04-entities/code",
+  "decisionNotesDir": "05-decisions",
+  "taskNotesDir": "06-tasks",
+  "promptTemplatesDir": "_system/prompt-templates",
+  "contextManifestsDir": "_system/context-manifests",
+  "statePath": "_system/state/import-state.json",
+  "entityCatalogPath": "_system/indexes/entity-catalog.json",
+  "graphEdgesPath": "_system/indexes/graph-edges.json",
+  "codeIndexPath": "_system/indexes/code-files.json"
+}

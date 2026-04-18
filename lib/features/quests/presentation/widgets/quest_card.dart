@@ -1,6 +1,6 @@
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class QuestCard extends StatelessWidget {
   final Quest quest;

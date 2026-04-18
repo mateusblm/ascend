@@ -1,28 +1,41 @@
 # AGENTS.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+This file provides guidance for AI agents and human contributors working in this repository.
 
 ## Project Overview
 
 Ascend is a Flutter mobile app that gamifies daily tasks using an RPG progression system. Users complete quests to earn XP and level up their character, with attribute points distributed across strength, intelligence, vitality, and agility.
 
-## Build & Development Commands
+Additional source-of-truth documents:
+- `docs/product/vision.md`
+- `docs/product/roadmap.md`
+- `docs/ai/development-charter.md`
+- `docs/ai/architecture-map.md`
+- `docs/ai/change-checklist.md`
+- `docs/ai/testing-strategy.md`
+- `docs/ai/token-efficiency.md`
+- `docs/ai/knowledge-memory-system.md`
+- `docs/ai/obsidian-vault-operations.md`
+- `docs/ai/prompt-templates.md`
+- `docs/ai/retrieval-workflow.md`
+
+## Build And Development Commands
 
 ```powershell
 # Install dependencies
 flutter pub get
 
-# Generate Isar database schemas (required after modifying @Collection or @embedded models)
+# Generate Isar database schemas after modifying @Collection or @embedded models
 dart run build_runner build --delete-conflicting-outputs
 
 # Run the app
 flutter run
 
-# Run on specific device
+# Run on a specific device
 flutter run -d windows
 flutter run -d chrome
 
-# Analyze/lint code
+# Analyze and lint
 flutter analyze
 
 # Run tests
@@ -34,52 +47,61 @@ flutter test test/path/to/test_file.dart
 
 ## Tech Stack
 
-- **State Management**: Riverpod with `StateNotifierProvider` pattern
-- **Local Database**: Isar (NoSQL) with code generation
-- **Authentication**: Firebase Auth with Google Sign-In
-- **UI**: Material Design with custom dark theme, Google Fonts (Orbitron)
+- State management: Riverpod with `StateNotifierProvider`
+- Local database: Isar
+- Authentication: Firebase Auth with Google Sign-In
+- UI: Material Design with custom dark theme and Google Fonts
 
 ## Architecture
 
 ### Directory Structure
-```
+
+```text
 lib/
-├── main.dart              # App entry point, Firebase/Isar initialization
-├── core/                  # Shared utilities
-│   ├── navigation/        # Navigation state (Riverpod provider)
-│   └── theme/             # AppColors and theming
-└── features/              # Feature modules
-    ├── auth/              # Authentication (Firebase/Google)
-    ├── profile/           # Player stats, leveling, attributes
-    └── quests/            # Daily quests/tasks system
+|-- main.dart              # App entry point, Firebase and Isar initialization
+|-- core/                  # Shared utilities
+|   |-- database/          # Database providers
+|   |-- navigation/        # Navigation state
+|   `-- theme/             # App colors and theming
+`-- features/              # Feature modules
+    |-- auth/              # Authentication
+    |-- profile/           # Player stats, leveling, attributes
+    `-- quests/            # Daily quests and completion flow
 ```
 
 ### Feature Module Pattern
-Each feature follows domain/presentation separation:
-- `domain/` - Models, state classes (e.g., `player_model.dart`, `auth_state.dart`)
-- `presentation/` - Screens, controllers (Riverpod notifiers), widgets
+
+Each feature follows domain and presentation separation:
+- `domain/` for models and state classes
+- `presentation/` for screens, controllers, and widgets
 
 ### State Management Pattern
-Controllers use Riverpod's `StateNotifierProvider`:
-```dart
-final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) => ...);
-```
+
+Controllers use Riverpod providers. The main examples are:
+- `authProvider`
+- `playerProvider`
+- `questProvider`
+- `navigationProvider`
 
 ### Isar Database
-- Global `isar` instance declared in `main.dart`
-- Models use `@Collection()` annotation with `part '*.g.dart'` for codegen
-- Embedded objects use `@embedded` annotation
-- **After modifying Isar models, always regenerate with `dart run build_runner build`**
 
-### Key Providers
-- `authProvider` - Authentication state (AuthController)
-- `playerProvider` - Player stats and leveling (PlayerNotifier)
-- `questProvider` - Quest list and completion (QuestNotifier)
-- `navigationProvider` - Bottom navigation tab index
+- Models use `@Collection()` with `part '*.g.dart'` for code generation
+- Embedded objects use `@embedded`
+- Database access is provided through `isarProvider`
+- After modifying Isar models, always regenerate with `dart run build_runner build --delete-conflicting-outputs`
 
 ## Domain Concepts
 
-- **Player**: Has level, XP, stat points, and 4 attributes (STR/INT/VIT/AGI)
-- **Quest**: Daily task with XP reward and associated attribute bonus
-- **Daily Reset**: Quests reset to incomplete at midnight (checked on app init)
-- **Level Up**: Triggers at XP threshold, grants 5 stat points, increases maxXP by 20%
+- Player: has level, XP, stat points, and 4 attributes
+- Quest: daily task with XP reward and associated attribute bonus
+- Daily reset: quests reset to incomplete based on `lastResetDate`
+- Level up: grants 5 stat points and increases `maxXp` by 20%
+
+## AI Working Rules
+
+- Read the relevant feature files before editing.
+- Prefer small, safe changes over broad refactors.
+- Treat progression logic, persistence, and auth as sensitive areas.
+- Update the docs above when architecture or product behavior changes.
+- Do not manually edit generated Isar files.
+- Use the AI docs to avoid repeating repo-wide context in every session.

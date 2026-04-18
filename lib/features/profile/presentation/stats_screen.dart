@@ -1,8 +1,8 @@
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart'; // Importante para o AttributeType
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'player_controller.dart';
 
 class StatsScreen extends ConsumerWidget {

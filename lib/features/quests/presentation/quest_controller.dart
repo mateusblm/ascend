@@ -1,25 +1,26 @@
+import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
-import '../../../main.dart'; 
-import '../domain/quest_model.dart';
-import '../../profile/presentation/player_controller.dart';
 
 final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
-  return QuestNotifier(ref);
+  return QuestNotifier(ref, ref.watch(isarProvider));
 });
 
 class QuestNotifier extends StateNotifier<List<Quest>> {
-  final Ref ref;
-
-  QuestNotifier(this.ref) : super([]) {
+  QuestNotifier(this.ref, this._isar) : super([]) {
     _init();
   }
 
+  final Ref ref;
+  final Isar _isar;
+
   void _init() {
-    final savedQuests = isar.quests.where().findAllSync();
-    final player = isar.players.where().findFirstSync();
-    
+    final savedQuests = _isar.quests.where().findAllSync();
+    final player = _isar.players.where().findFirstSync();
+
     if (player != null) {
       _checkDailyReset(player);
     }
@@ -27,43 +28,47 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     if (savedQuests.isEmpty) {
       _seedInitialQuests();
     } else {
-      state = isar.quests.where().findAllSync();
+      state = _isar.quests.where().findAllSync();
     }
   }
 
   void _checkDailyReset(Player player) {
     final now = DateTime.now();
     final lastReset = player.lastResetDate;
+    final isDifferentDay =
+        now.year != lastReset.year || now.month != lastReset.month || now.day != lastReset.day;
 
-    final isDifferentDay = now.year != lastReset.year || 
-                          now.month != lastReset.month || 
-                          now.day != lastReset.day;
+    if (!isDifferentDay) return;
 
-    if (isDifferentDay) {
-      isar.writeTxnSync(() {
-        final allQuests = isar.quests.where().findAllSync();
-        final resetQuests = allQuests.map((q) => q.copyWith(isCompleted: false)).toList();
-        isar.quests.putAllSync(resetQuests);
+    _isar.writeTxnSync(() {
+      final allQuests = _isar.quests.where().findAllSync();
+      final resetQuests = allQuests.map((q) => q.copyWith(isCompleted: false)).toList();
+      _isar.quests.putAllSync(resetQuests);
 
-        final updatedPlayer = player.copyWith(lastResetDate: now);
-        isar.players.putSync(updatedPlayer);
-      });
-      state = isar.quests.where().findAllSync();
-    }
+      final updatedPlayer = player.copyWith(lastResetDate: now);
+      _isar.players.putSync(updatedPlayer);
+    });
+
+    state = _isar.quests.where().findAllSync();
   }
 
   void _seedInitialQuests() {
     final initialQuests = [
-      Quest(id: '1', title: 'Treino de Flexões', rewardAttribute: AttributeType.strength, xpReward: 50),
-      Quest(id: '2', title: 'Estudar Dart por 30min', rewardAttribute: AttributeType.intelligence, xpReward: 30),
-      Quest(id: '3', title: 'Beber 2L de Água', rewardAttribute: AttributeType.vitality, xpReward: 20),
+      Quest(id: '1', title: 'Treino de flexoes', rewardAttribute: AttributeType.strength, xpReward: 50),
+      Quest(
+        id: '2',
+        title: 'Estudar Dart por 30 minutos',
+        rewardAttribute: AttributeType.intelligence,
+        xpReward: 30,
+      ),
+      Quest(id: '3', title: 'Beber 2L de agua', rewardAttribute: AttributeType.vitality, xpReward: 20),
     ];
-    
-    isar.writeTxnSync(() => isar.quests.putAllSync(initialQuests));
+
+    _isar.writeTxnSync(() => _isar.quests.putAllSync(initialQuests));
     state = initialQuests;
   }
 
-  void toggleQuest(String id, {Function(int)? onLevelUp}) {
+  void toggleQuest(String id, {void Function(int level)? onLevelUp}) {
     final index = state.indexWhere((q) => q.id == id);
     if (index == -1) return;
 
@@ -71,28 +76,27 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     final wasCompleted = questOriginal.isCompleted;
     final updatedQuest = questOriginal.copyWith(isCompleted: !wasCompleted);
 
-    isar.writeTxnSync(() {
-      isar.quests.putSync(updatedQuest);
+    _isar.writeTxnSync(() {
+      _isar.quests.putSync(updatedQuest);
     });
 
-    // Atualiza a lista local
     final newState = [...state];
     newState[index] = updatedQuest;
     state = newState;
 
-    // Chamada direta para o Player - A segurança agora está no WidgetsBinding do addReward
     if (!wasCompleted) {
       ref.read(playerProvider.notifier).addReward(
-        updatedQuest.xpReward,
-        updatedQuest.rewardAttribute,
-        onLevelUp: onLevelUp,
-      );
-    } else {
-      ref.read(playerProvider.notifier).removeReward(
-        updatedQuest.xpReward,
-        updatedQuest.rewardAttribute,
-      );
+            updatedQuest.xpReward,
+            updatedQuest.rewardAttribute,
+            onLevelUp: onLevelUp,
+          );
+      return;
     }
+
+    ref.read(playerProvider.notifier).removeReward(
+          updatedQuest.xpReward,
+          updatedQuest.rewardAttribute,
+        );
   }
 
   void addQuest(String title, AttributeType attribute, int xp) {
@@ -104,20 +108,21 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       isCompleted: false,
     );
 
-    isar.writeTxnSync(() {
-      isar.quests.putSync(newQuest);
+    _isar.writeTxnSync(() {
+      _isar.quests.putSync(newQuest);
     });
 
     state = [...state, newQuest];
   }
 
   void deleteQuest(String id) {
-    isar.writeTxnSync(() {
-      final questToDelete = isar.quests.filter().idEqualTo(id).findFirstSync();
+    _isar.writeTxnSync(() {
+      final questToDelete = _isar.quests.filter().idEqualTo(id).findFirstSync();
       if (questToDelete != null) {
-        isar.quests.deleteSync(questToDelete.isarId);
+        _isar.quests.deleteSync(questToDelete.isarId);
       }
     });
+
     state = state.where((q) => q.id != id).toList();
   }
 }

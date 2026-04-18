@@ -1,0 +1,409 @@
+[
+    {
+        "name":  "isarProvider",
+        "aliases":  [
+                        "isarProvider"
+                    ],
+        "note":  "[[isarProvider]]",
+        "category":  "code-entity",
+        "source":  "lib\\core\\database\\isar_provider.dart"
+    },
+    {
+        "name":  "lib\\core\\database\\isar_provider.dart",
+        "aliases":  [
+                        "lib\\core\\database\\isar_provider.dart",
+                        "isar_provider"
+                    ],
+        "note":  "[[lib-core-database-isar-provider-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\core\\database\\isar_provider.dart"
+    },
+    {
+        "name":  "navigationProvider",
+        "aliases":  [
+                        "navigationProvider"
+                    ],
+        "note":  "[[navigationProvider]]",
+        "category":  "code-entity",
+        "source":  "lib\\core\\navigation\\navigation_provider.dart"
+    },
+    {
+        "name":  "lib\\core\\navigation\\navigation_provider.dart",
+        "aliases":  [
+                        "lib\\core\\navigation\\navigation_provider.dart",
+                        "navigation_provider"
+                    ],
+        "note":  "[[lib-core-navigation-navigation-provider-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\core\\navigation\\navigation_provider.dart"
+    },
+    {
+        "name":  "AppColors",
+        "aliases":  [
+                        "AppColors"
+                    ],
+        "note":  "[[AppColors]]",
+        "category":  "code-entity",
+        "source":  "lib\\core\\theme\\app_colors.dart"
+    },
+    {
+        "name":  "lib\\core\\theme\\app_colors.dart",
+        "aliases":  [
+                        "lib\\core\\theme\\app_colors.dart",
+                        "app_colors"
+                    ],
+        "note":  "[[lib-core-theme-app-colors-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\core\\theme\\app_colors.dart"
+    },
+    {
+        "name":  "AuthFailure",
+        "aliases":  [
+                        "AuthFailure"
+                    ],
+        "note":  "[[AuthFailure]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart"
+    },
+    {
+        "name":  "AuthInitial",
+        "aliases":  [
+                        "AuthInitial"
+                    ],
+        "note":  "[[AuthInitial]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart"
+    },
+    {
+        "name":  "AuthLoading",
+        "aliases":  [
+                        "AuthLoading"
+                    ],
+        "note":  "[[AuthLoading]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart"
+    },
+    {
+        "name":  "AuthSuccess",
+        "aliases":  [
+                        "AuthSuccess"
+                    ],
+        "note":  "[[AuthSuccess]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart"
+    },
+    {
+        "name":  "lib\\features\\auth\\domain\\auth_state.dart",
+        "aliases":  [
+                        "lib\\features\\auth\\domain\\auth_state.dart",
+                        "auth_state"
+                    ],
+        "note":  "[[lib-features-auth-domain-auth-state-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\auth\\domain\\auth_state.dart"
+    },
+    {
+        "name":  "AuthControllerauthProvider",
+        "aliases":  [
+                        "AuthControllerauthProvider"
+                    ],
+        "note":  "[[AuthControllerauthProvider]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart"
+    },
+    {
+        "name":  "lib\\features\\auth\\presentation\\auth_controller.dart",
+        "aliases":  [
+                        "lib\\features\\auth\\presentation\\auth_controller.dart",
+                        "auth_controller"
+                    ],
+        "note":  "[[lib-features-auth-presentation-auth-controller-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\auth\\presentation\\auth_controller.dart"
+    },
+    {
+        "name":  "LoginScreen",
+        "aliases":  [
+                        "LoginScreen"
+                    ],
+        "note":  "[[LoginScreen]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart"
+    },
+    {
+        "name":  "lib\\features\\auth\\presentation\\login_screen.dart",
+        "aliases":  [
+                        "lib\\features\\auth\\presentation\\login_screen.dart",
+                        "login_screen"
+                    ],
+        "note":  "[[lib-features-auth-presentation-login-screen-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\auth\\presentation\\login_screen.dart"
+    },
+    {
+        "name":  "MainNavigationScreen",
+        "aliases":  [
+                        "MainNavigationScreen"
+                    ],
+        "note":  "[[MainNavigationScreen]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\main_navigation_screen.dart"
+    },
+    {
+        "name":  "lib\\features\\main_navigation_screen.dart",
+        "aliases":  [
+                        "lib\\features\\main_navigation_screen.dart",
+                        "main_navigation_screen"
+                    ],
+        "note":  "[[lib-features-main-navigation-screen-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\main_navigation_screen.dart"
+    },
+    {
+        "name":  "Achievement",
+        "aliases":  [
+                        "Achievement"
+                    ],
+        "note":  "[[Achievement]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\domain\\achievement_modal.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\domain\\achievement_modal.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\domain\\achievement_modal.dart",
+                        "achievement_modal"
+                    ],
+        "note":  "[[lib-features-profile-domain-achievement-modal-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\domain\\achievement_modal.dart"
+    },
+    {
+        "name":  "Player",
+        "aliases":  [
+                        "Player"
+                    ],
+        "note":  "[[Player]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\domain\\player_model.dart"
+    },
+    {
+        "name":  "PlayerAttributes",
+        "aliases":  [
+                        "PlayerAttributes"
+                    ],
+        "note":  "[[PlayerAttributes]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\domain\\player_model.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\domain\\player_model.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\domain\\player_model.dart",
+                        "player_model"
+                    ],
+        "note":  "[[lib-features-profile-domain-player-model-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\domain\\player_model.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\domain\\player_model.g.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\domain\\player_model.g.dart",
+                        "player_model.g"
+                    ],
+        "note":  "[[lib-features-profile-domain-player-model-g-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\domain\\player_model.g.dart"
+    },
+    {
+        "name":  "HomeScreen",
+        "aliases":  [
+                        "HomeScreen"
+                    ],
+        "note":  "[[HomeScreen]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\presentation\\home_screen.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\presentation\\home_screen.dart",
+                        "home_screen"
+                    ],
+        "note":  "[[lib-features-profile-presentation-home-screen-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\presentation\\home_screen.dart"
+    },
+    {
+        "name":  "PlayerNotifierplayerProvider",
+        "aliases":  [
+                        "PlayerNotifierplayerProvider"
+                    ],
+        "note":  "[[PlayerNotifierplayerProvider]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\presentation\\player_controller.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\presentation\\player_controller.dart",
+                        "player_controller"
+                    ],
+        "note":  "[[lib-features-profile-presentation-player-controller-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\presentation\\player_controller.dart"
+    },
+    {
+        "name":  "StatsScreen",
+        "aliases":  [
+                        "StatsScreen"
+                    ],
+        "note":  "[[StatsScreen]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart"
+    },
+    {
+        "name":  "lib\\features\\profile\\presentation\\stats_screen.dart",
+        "aliases":  [
+                        "lib\\features\\profile\\presentation\\stats_screen.dart",
+                        "stats_screen"
+                    ],
+        "note":  "[[lib-features-profile-presentation-stats-screen-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\profile\\presentation\\stats_screen.dart"
+    },
+    {
+        "name":  "QuestAttributeType",
+        "aliases":  [
+                        "QuestAttributeType"
+                    ],
+        "note":  "[[QuestAttributeType]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\domain\\quest_model.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\domain\\quest_model.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\domain\\quest_model.dart",
+                        "quest_model"
+                    ],
+        "note":  "[[lib-features-quests-domain-quest-model-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\domain\\quest_model.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\domain\\quest_model.g.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\domain\\quest_model.g.dart",
+                        "quest_model.g"
+                    ],
+        "note":  "[[lib-features-quests-domain-quest-model-g-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\domain\\quest_model.g.dart"
+    },
+    {
+        "name":  "QuestNotifierquestProvider",
+        "aliases":  [
+                        "QuestNotifierquestProvider"
+                    ],
+        "note":  "[[QuestNotifierquestProvider]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\presentation\\quest_controller.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\presentation\\quest_controller.dart",
+                        "quest_controller"
+                    ],
+        "note":  "[[lib-features-quests-presentation-quest-controller-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\presentation\\quest_controller.dart"
+    },
+    {
+        "name":  "QuestsScreen",
+        "aliases":  [
+                        "QuestsScreen"
+                    ],
+        "note":  "[[QuestsScreen]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\presentation\\quests_screen.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\presentation\\quests_screen.dart",
+                        "quests_screen"
+                    ],
+        "note":  "[[lib-features-quests-presentation-quests-screen-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\presentation\\quests_screen.dart"
+    },
+    {
+        "name":  "_AddQuestModalState",
+        "aliases":  [
+                        "_AddQuestModalState"
+                    ],
+        "note":  "[[_AddQuestModalState]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart"
+    },
+    {
+        "name":  "AddQuestModal",
+        "aliases":  [
+                        "AddQuestModal"
+                    ],
+        "note":  "[[AddQuestModal]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart",
+                        "add_quest_modal"
+                    ],
+        "note":  "[[lib-features-quests-presentation-widgets-add-quest-modal-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\presentation\\widgets\\add_quest_modal.dart"
+    },
+    {
+        "name":  "QuestCard",
+        "aliases":  [
+                        "QuestCard"
+                    ],
+        "note":  "[[QuestCard]]",
+        "category":  "code-entity",
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart"
+    },
+    {
+        "name":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+        "aliases":  [
+                        "lib\\features\\quests\\presentation\\widgets\\quest_card.dart",
+                        "quest_card"
+                    ],
+        "note":  "[[lib-features-quests-presentation-widgets-quest-card-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\features\\quests\\presentation\\widgets\\quest_card.dart"
+    },
+    {
+        "name":  "AscendApp",
+        "aliases":  [
+                        "AscendApp"
+                    ],
+        "note":  "[[AscendApp]]",
+        "category":  "code-entity",
+        "source":  "lib\\main.dart"
+    },
+    {
+        "name":  "lib\\main.dart",
+        "aliases":  [
+                        "lib\\main.dart",
+                        "main"
+                    ],
+        "note":  "[[lib-main-dart]]",
+        "category":  "code-file",
+        "source":  "lib\\main.dart"
+    }
+]

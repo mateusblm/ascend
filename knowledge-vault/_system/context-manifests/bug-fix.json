@@ -1,0 +1,12 @@
+{
+  "name": "bug-fix",
+  "documents": [
+    "AGENTS.md",
+    "docs/ai/change-checklist.md",
+    "docs/ai/testing-strategy.md"
+  ],
+  "includeCodeNotes": true,
+  "maxCodeNotes": 5,
+  "includeEntities": true,
+  "maxEntities": 8
+}

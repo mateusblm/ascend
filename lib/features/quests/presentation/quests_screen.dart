@@ -1,9 +1,8 @@
-import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import 'widgets/quest_card.dart';
 
 class QuestsScreen extends ConsumerWidget {

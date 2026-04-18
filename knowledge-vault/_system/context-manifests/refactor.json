@@ -1,0 +1,14 @@
+{
+  "name": "refactor",
+  "documents": [
+    "AGENTS.md",
+    "docs/ai/architecture-map.md",
+    "docs/ai/development-charter.md",
+    "docs/ai/change-checklist.md",
+    "docs/ai/testing-strategy.md"
+  ],
+  "includeCodeNotes": true,
+  "maxCodeNotes": 8,
+  "includeEntities": true,
+  "maxEntities": 12
+}

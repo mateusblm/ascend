@@ -1,0 +1,14 @@
+{
+  "name": "feature-work",
+  "documents": [
+    "AGENTS.md",
+    "docs/product/vision.md",
+    "docs/product/roadmap.md",
+    "docs/ai/development-charter.md",
+    "docs/ai/change-checklist.md"
+  ],
+  "includeCodeNotes": true,
+  "maxCodeNotes": 6,
+  "includeEntities": true,
+  "maxEntities": 10
+}

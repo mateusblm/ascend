@@ -82,7 +82,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             : BottomNavigationBar(
                 currentIndex: currentIndex,
                 onTap: (index) => ref.read(navigationProvider.notifier).state = index,
-                backgroundColor: Colors.black.withOpacity(0.8),
+                backgroundColor: Colors.black.withValues(alpha: 0.8),
                 selectedItemColor: AppColors.neonBlue,
                 unselectedItemColor: Colors.white24,
                 type: BottomNavigationBarType.fixed,

@@ -37,11 +37,13 @@ class QuestsScreen extends ConsumerWidget {
       weeklyBossProgress: weeklyBoss?.progressFor(player) ?? 0,
       weeklyBossClaimed: weeklyBoss?.isClaimedThisWeek(player) ?? false,
     );
-    final suggestions = buildWeeklyQuestSuggestions(
-      player,
-      insights,
-      weeklyBoss: weeklyBoss,
-    ).where((suggestion) => !quests.any((quest) => quest.title == suggestion.title)).toList();
+    final suggestions =
+        buildWeeklyQuestSuggestions(player, insights, weeklyBoss: weeklyBoss)
+            .where(
+              (suggestion) =>
+                  !quests.any((quest) => quest.title == suggestion.title),
+            )
+            .toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -57,11 +59,11 @@ class QuestsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "DAILY QUESTS", 
+                        "QUESTS DIÁRIAS",
                         style: TextStyle(
-                          fontSize: 24, 
-                          fontWeight: FontWeight.bold, 
-                          letterSpacing: 4
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
                         ),
                       ),
                       Divider(color: AppColors.neonBlue, thickness: 1),
@@ -76,14 +78,11 @@ class QuestsScreen extends ConsumerWidget {
 
               if (activeQuests.isNotEmpty)
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final quest = activeQuests[index];
-                      // Passamos o context do BUILD principal para garantir estabilidade
-                      return _buildDismissibleQuest(context, ref, quest);
-                    },
-                    childCount: activeQuests.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final quest = activeQuests[index];
+                    // Passamos o context do BUILD principal para garantir estabilidade
+                    return _buildDismissibleQuest(context, ref, quest);
+                  }, childCount: activeQuests.length),
                 )
               else
                 _buildEmptyState("NENHUMA MISSÃO ATIVA"),
@@ -93,22 +92,23 @@ class QuestsScreen extends ConsumerWidget {
                   child: Padding(
                     padding: EdgeInsets.only(top: 40, bottom: 10),
                     child: Text(
-                      "CONCLUÍDAS", 
-                      style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2)
+                      "CONCLUÍDAS",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white38,
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
                 ),
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final quest = completedQuests[index];
-                      return Opacity(
-                        opacity: 0.6,
-                        child: _buildDismissibleQuest(context, ref, quest),
-                      );
-                    },
-                    childCount: completedQuests.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final quest = completedQuests[index];
+                    return Opacity(
+                      opacity: 0.6,
+                      child: _buildDismissibleQuest(context, ref, quest),
+                    );
+                  }, childCount: completedQuests.length),
                 ),
               ],
             ],
@@ -124,11 +124,16 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDismissibleQuest(BuildContext context, WidgetRef ref, Quest quest) {
+  Widget _buildDismissibleQuest(
+    BuildContext context,
+    WidgetRef ref,
+    Quest quest,
+  ) {
     return Dismissible(
       key: Key(quest.id),
       direction: DismissDirection.endToStart,
-      onDismissed: (_) => ref.read(questProvider.notifier).deleteQuest(quest.id),
+      onDismissed: (_) =>
+          ref.read(questProvider.notifier).deleteQuest(quest.id),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -143,10 +148,12 @@ class QuestsScreen extends ConsumerWidget {
         quest: quest,
         onToggle: () {
           // Aqui usamos o context que vem do build() para evitar o erro de BuildContext inválido
-          ref.read(questProvider.notifier).toggleQuest(
-            quest.id,
-            onLevelUp: (level) => _showLevelUpDialog(context, level),
-          );
+          ref
+              .read(questProvider.notifier)
+              .toggleQuest(
+                quest.id,
+                onLevelUp: (level) => _showLevelUpDialog(context, level),
+              );
         },
       ),
     );
@@ -170,7 +177,11 @@ class QuestsScreen extends ConsumerWidget {
         children: [
           const Text(
             'SUGESTOES DA SEMANA',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 2),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -187,7 +198,9 @@ class QuestsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: () {
-                final addedCount = ref.read(questProvider.notifier).addSuggestedQuests(suggestions);
+                final addedCount = ref
+                    .read(questProvider.notifier)
+                    .addSuggestedQuests(suggestions);
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
@@ -202,7 +215,10 @@ class QuestsScreen extends ConsumerWidget {
               },
               child: Text(
                 'MONTAR SEMANA (${suggestions.length})',
-                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
               ),
             ),
           ),
@@ -222,7 +238,10 @@ class QuestsScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.neonBlue.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(20),
@@ -251,12 +270,20 @@ class QuestsScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Text(
                     suggestion.title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.3),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     suggestion.reason,
-                    style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.4),
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Align(
@@ -267,7 +294,9 @@ class QuestsScreen extends ConsumerWidget {
                         foregroundColor: AppColors.neonBlue,
                       ),
                       onPressed: () {
-                        ref.read(questProvider.notifier).addQuest(
+                        ref
+                            .read(questProvider.notifier)
+                            .addQuest(
                               suggestion.title,
                               suggestion.rewardAttribute,
                               suggestion.xpReward,
@@ -275,12 +304,19 @@ class QuestsScreen extends ConsumerWidget {
                         final messenger = ScaffoldMessenger.of(context);
                         messenger.hideCurrentSnackBar();
                         messenger.showSnackBar(
-                          SnackBar(content: Text('"${suggestion.title}" adicionada nas quests.')),
+                          SnackBar(
+                            content: Text(
+                              '"${suggestion.title}" adicionada nas quests.',
+                            ),
+                          ),
                         );
                       },
                       child: const Text(
                         'ADICIONAR',
-                        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -299,8 +335,8 @@ class QuestsScreen extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(40.0),
           child: Text(
-            text, 
-            style: const TextStyle(color: Colors.white24, fontSize: 12)
+            text,
+            style: const TextStyle(color: Colors.white24, fontSize: 12),
           ),
         ),
       ),
@@ -316,14 +352,16 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
-void _showLevelUpDialog(BuildContext context, int level) {
+  void _showLevelUpDialog(BuildContext context, int level) {
     if (!context.mounted) return;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.85), // Levemente mais transparente para ver o fundo
-      builder: (dialogContext) { 
+      barrierColor: Colors.black.withOpacity(
+        0.85,
+      ), // Levemente mais transparente para ver o fundo
+      builder: (dialogContext) {
         // Agendamos o fechamento automático usando o dialogContext
         Future.delayed(const Duration(milliseconds: 2500), () {
           if (dialogContext.mounted) {
@@ -366,9 +404,10 @@ void _showLevelUpDialog(BuildContext context, int level) {
                   ),
                 ),
                 const SizedBox(height: 40),
-                const Icon(Icons.keyboard_double_arrow_up, 
-                  color: AppColors.neonBlue, 
-                  size: 80 // Aumentei um pouco para dar mais impacto
+                const Icon(
+                  Icons.keyboard_double_arrow_up,
+                  color: AppColors.neonBlue,
+                  size: 80, // Aumentei um pouco para dar mais impacto
                 ),
               ],
             ),

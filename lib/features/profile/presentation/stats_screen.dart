@@ -35,7 +35,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     final rankSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
     final rankHistory = ref.watch(rankProgressionHistoryProvider).valueOrNull ?? const <CompetitiveRankSnapshot>[];
     final promotionExam = ref.watch(promotionExamProvider).valueOrNull;
-    final debugSyncPaused = ref.watch(debugRankSyncPausedProvider);
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
@@ -89,7 +88,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       attrs,
                       rankSnapshot,
                       promotionExam,
-                      debugSyncPaused,
                       weeklyBoss,
                       weeklyBossProgress,
                       weeklyBossClaimed,
@@ -167,7 +165,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     PlayerAttributes attrs,
     CompetitiveRankSnapshot? rankSnapshot,
     PromotionExam? promotionExam,
-    bool debugSyncPaused,
     WeeklyBossDefinition? weeklyBoss,
     int weeklyBossProgress,
     bool weeklyBossClaimed,
@@ -182,16 +179,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         _buildCompetitiveRankCard(rankSnapshot, player),
         const SizedBox(height: 10),
         _buildPromotionExamCard(rankSnapshot, promotionExam),
+        _buildPromotionExamCard(rankSnapshot, promotionExam),
         const SizedBox(height: 10),
-        if (kDebugMode) ...[
-          _buildDebugProgressionCard(
-            player,
-            rankSnapshot,
-            promotionExam,
-            debugSyncPaused,
-          ),
-          const SizedBox(height: 10),
-        ],
         Row(
           children: [
             Expanded(
@@ -628,79 +617,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
-  Widget _buildDebugProgressionCard(
-    Player player,
-    CompetitiveRankSnapshot? snapshot,
-    PromotionExam? exam,
-    bool syncPaused,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orangeAccent.withOpacity(0.06),
-        border: Border.all(color: Colors.orangeAccent.withOpacity(0.35)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DEBUG DE PROGRESSAO',
-            style: TextStyle(fontSize: 11, color: Colors.white54, letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            syncPaused
-                ? 'Sincronizacao automatica pausada para teste.'
-                : 'Sincronizacao automatica ativa. Pause para forcar estados remotos.',
-            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Pausar sync automatica', style: TextStyle(fontSize: 13)),
-            value: syncPaused,
-            onChanged: (value) => ref.read(debugRankSyncPausedProvider.notifier).state = value,
-            activeColor: Colors.orangeAccent,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton(
-                onPressed: syncPaused ? () => _forcePromotionReady(player) : null,
-                child: const Text('FORCAR PROMOTION READY'),
-              ),
-              OutlinedButton(
-                onPressed: syncPaused && exam != null ? () => _forceExamPassed(player) : null,
-                child: const Text('FORCAR EXAME PASS'),
-              ),
-              OutlinedButton(
-                onPressed: syncPaused ? _clearPromotionState : null,
-                child: const Text('LIMPAR EXAME'),
-              ),
-            ],
-          ),
-          if (snapshot != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Snapshot atual: rank ${snapshot.currentRank} | ${snapshot.status.name} | alvo ${snapshot.promotionTargetRank ?? '-'}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
-          if (exam != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Exame atual: ${exam.status.name} | ${exam.sourceRank} -> ${exam.targetRank}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _buildMiniMetric(String label, String value, Color color) {
     return Container(
@@ -1391,49 +1307,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
-  Future<void> _forcePromotionReady(Player player) async {
-    final repository = ref.read(rankProgressionRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    final ok = await repository.debugForcePromotionReady(player);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? 'Snapshot forcado para promotionReady.'
-              : 'Nao foi possivel forcar promotionReady.',
-        ),
-      ),
-    );
-  }
-
-  Future<void> _forceExamPassed(Player player) async {
-    final repository = ref.read(rankProgressionRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    final ok = await repository.debugForceExamPassed(player);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? 'Exame marcado como aprovado para teste.'
-              : 'Nao foi possivel forcar exame aprovado.',
-        ),
-      ),
-    );
-  }
-
-  Future<void> _clearPromotionState() async {
-    final repository = ref.read(rankProgressionRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    await repository.debugClearPromotionState();
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Estado de exame limpo para teste.'),
-      ),
-    );
-  }
 }
 
 enum _StatsSection {

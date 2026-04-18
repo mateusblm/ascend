@@ -4,6 +4,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RankProgressionRepository {
@@ -103,7 +104,13 @@ class RankProgressionRepository {
     if (nextExam != null) {
       batch.set(examRef, nextExam.toFirestore(), SetOptions(merge: true));
     }
-    await batch.commit();
+    
+    await _commitAndSyncRpc(
+      batch: batch,
+      snapshot: nextSnapshot,
+      exam: nextExam,
+    );
+    
     _lastSyncedFingerprintByUser[uid] = fingerprint;
     return nextSnapshot;
   }
@@ -133,7 +140,13 @@ class RankProgressionRepository {
       return;
     }
 
-    await examRef.set(nextExam.toFirestore(), SetOptions(merge: true));
+    final batch = _firestore.batch();
+    batch.set(examRef, nextExam.toFirestore(), SetOptions(merge: true));
+    await _commitAndSyncRpc(
+      batch: batch,
+      snapshot: snapshot,
+      exam: nextExam,
+    );
   }
 
   Future<bool> startPromotionExam(CompetitiveRankSnapshot snapshot) async {
@@ -168,7 +181,14 @@ class RankProgressionRepository {
       syncSource: 'client',
     );
 
-    await examRef.set(exam.toFirestore(), SetOptions(merge: true));
+    final batch = _firestore.batch();
+    batch.set(examRef, exam.toFirestore(), SetOptions(merge: true));
+    await _commitAndSyncRpc(
+      batch: batch,
+      snapshot: snapshot,
+      exam: exam,
+    );
+    
     return true;
   }
 
@@ -217,19 +237,20 @@ class RankProgressionRepository {
       promotedSnapshot.toFirestore(),
       SetOptions(merge: true),
     );
-    batch.set(
-      examRef,
-      exam
-          .copyWith(
-            status: PromotionExamStatus.promoted,
-            resolvedAt: now,
-            syncSchemaVersion: syncSchemaVersion,
-            syncSource: 'client',
-          )
-          .toFirestore(),
-      SetOptions(merge: true),
+    final updatedExam = exam.copyWith(
+      status: PromotionExamStatus.promoted,
+      resolvedAt: now,
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'client',
     );
-    await batch.commit();
+    batch.set(examRef, updatedExam.toFirestore(), SetOptions(merge: true));
+    
+    await _commitAndSyncRpc(
+      batch: batch,
+      snapshot: promotedSnapshot,
+      exam: updatedExam,
+    );
+    
     _lastSyncedFingerprintByUser[uid] = _fingerprintFor(promotedSnapshot);
     return true;
   }
@@ -498,5 +519,26 @@ class RankProgressionRepository {
       exam.syncSource,
       exam.resolvedAt?.millisecondsSinceEpoch ?? 0,
     ].join('|');
+  }
+  
+  Future<void> _commitAndSyncRpc({
+    required WriteBatch batch,
+    required CompetitiveRankSnapshot snapshot,
+    PromotionExam? exam,
+  }) async {
+    // 1. Otimismo local / Offline fallback
+    await batch.commit();
+
+    // 2. Chamada remota para o backend (autoritativo)
+    try {
+      final callable = FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+          .httpsCallable('upsertCompetitiveProgression');
+      await callable.call({
+        'snapshot': snapshot.toFirestore(),
+        if (exam != null) 'exam': exam.toFirestore(),
+      });
+    } catch (_) {
+      // Fallback silencioso permite funcionamento da UI offline ou se o Cloud demorar
+    }
   }
 }

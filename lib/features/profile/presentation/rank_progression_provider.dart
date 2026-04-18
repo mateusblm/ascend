@@ -16,7 +16,6 @@ final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((
   );
 });
 
-final debugRankSyncPausedProvider = StateProvider<bool>((ref) => false);
 
 final rankProgressionSnapshotProvider =
     StreamProvider.autoDispose<CompetitiveRankSnapshot?>((ref) {

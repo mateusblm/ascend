@@ -35,7 +35,6 @@ class RankScreen extends ConsumerWidget {
       topCompletions:
           topCompletions.valueOrNull ?? const <WeeklyBossCompletion>[],
     );
-    final debugSyncPaused = ref.watch(debugRankSyncPausedProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,17 +57,6 @@ class RankScreen extends ConsumerWidget {
               _buildSeasonCard(season),
               const SizedBox(height: 12),
               _buildHistoryCard(history),
-              if (kDebugMode) ...[
-                const SizedBox(height: 12),
-                _buildDebugCard(
-                  context,
-                  ref,
-                  player,
-                  snapshot,
-                  exam,
-                  debugSyncPaused,
-                ),
-              ],
             ],
           ),
         ),
@@ -1060,87 +1048,6 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDebugCard(
-    BuildContext context,
-    WidgetRef ref,
-    Player player,
-    CompetitiveRankSnapshot? snapshot,
-    PromotionExam? exam,
-    bool syncPaused,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orangeAccent.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orangeAccent.withOpacity(0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DEBUG DE PROGRESSAO',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.white54,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'Pausar sync automatica',
-              style: TextStyle(fontSize: 13),
-            ),
-            value: syncPaused,
-            onChanged: (value) =>
-                ref.read(debugRankSyncPausedProvider.notifier).state = value,
-            activeThumbColor: Colors.orangeAccent,
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton(
-                onPressed: syncPaused
-                    ? () => _forcePromotionReady(context, ref, player)
-                    : null,
-                child: const Text('FORCAR PROMOTION READY'),
-              ),
-              OutlinedButton(
-                onPressed: syncPaused && exam != null
-                    ? () => _forceExamPassed(context, ref, player)
-                    : null,
-                child: const Text('FORCAR EXAME PASS'),
-              ),
-              OutlinedButton(
-                onPressed: syncPaused
-                    ? () => _clearPromotionState(context, ref)
-                    : null,
-                child: const Text('ENCERRAR EXAME'),
-              ),
-            ],
-          ),
-          if (snapshot != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Snapshot: rank ${snapshot.currentRank} | ${snapshot.status.name} | alvo ${snapshot.promotionTargetRank ?? '-'} | fonte ${snapshot.syncSource}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
-          if (exam != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Exame: ${exam.status.name} | ${exam.sourceRank} -> ${exam.targetRank} | fonte ${exam.syncSource}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _metric(String label, String value, Color color) {
     return Container(

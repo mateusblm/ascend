@@ -7,6 +7,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
+
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,11 +31,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     super.initState();
 
     // Sync competitiva com debounce — evita chamadas redundantes ao Firestore
-    // durante rebuilds rápidos. Substitui o antigo ref.watch(rankProgressionSyncProvider).
+    // durante rebuilds rápidos.
     ref.listenManual(playerProvider, (_, next) {
-      final syncPaused = ref.read(debugRankSyncPausedProvider);
-      if (syncPaused) return;
-
       _syncDebounce?.cancel();
       _syncDebounce = Timer(const Duration(milliseconds: 500), () {
         ref.read(rankProgressionRepositoryProvider).syncCompetitiveState(next);

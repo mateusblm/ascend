@@ -203,8 +203,10 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
   }
 
-  bool claimWeeklyBossReward({void Function(int level)? onLevelUp}) {
-    final weeklyBoss = weeklyBossForPlayer(state);
+  bool claimWeeklyBossReward(
+    WeeklyBossDefinition weeklyBoss, {
+    void Function(int level)? onLevelUp,
+  }) {
     if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
       return false;
     }

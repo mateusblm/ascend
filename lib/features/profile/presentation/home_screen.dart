@@ -1,10 +1,13 @@
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/auth/domain/auth_state.dart';
+import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
+import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +18,9 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
+    final topCompletions = ref.watch(weeklyBossTopCompletionsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -37,7 +42,14 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   _buildStreakPanel(player),
                   const SizedBox(height: 20),
-                  _buildWeeklyBossPanel(context, ref, player, remoteWeeklyBoss),
+                  _buildWeeklyBossPanel(
+                    context,
+                    ref,
+                    player,
+                    authState,
+                    remoteWeeklyBoss,
+                    topCompletions,
+                  ),
                 ],
               ),
             ),
@@ -180,11 +192,43 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _claimWeeklyBoss(BuildContext context, WidgetRef ref) {
-    final claimed = ref.read(playerProvider.notifier).claimWeeklyBossReward();
-    final message = claimed
-        ? 'Boss semanal derrotado. Recompensa aplicada ao sistema.'
-        : 'O boss semanal ainda nao esta pronto para resgate.';
+  Future<void> _claimWeeklyBoss(
+    BuildContext context,
+    WidgetRef ref,
+    AuthState authState,
+    RemoteWeeklyBoss? remoteBoss,
+    WeeklyBossDefinition weeklyBoss,
+    String rank,
+  ) async {
+    final claimed = ref.read(playerProvider.notifier).claimWeeklyBossReward(weeklyBoss);
+    if (!claimed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O boss semanal ainda nao esta pronto para resgate.')),
+      );
+      return;
+    }
+
+    var message = 'Boss semanal derrotado. Recompensa aplicada ao sistema.';
+
+    if (remoteBoss != null && authState is AuthSuccess) {
+      try {
+        final repository = ref.read(weeklyBossRepositoryProvider);
+        final submitted = await repository.submitCompletion(
+          bossId: remoteBoss.id,
+          uid: authState.uid,
+          displayName: authState.displayName,
+          photoUrl: authState.photoUrl,
+          rankAtCompletion: rank,
+        );
+        if (submitted) {
+          message = 'Boss semanal derrotado. Clear remoto registrado no ranking.';
+        } else {
+          message = 'Boss semanal derrotado. Seu clear remoto ja estava registrado.';
+        }
+      } catch (_) {
+        message = 'Boss semanal derrotado localmente, mas houve falha ao registrar online.';
+      }
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -276,12 +320,13 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     Player player,
+    AuthState authState,
     AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
+    AsyncValue<List<WeeklyBossCompletion>> topCompletions,
   ) {
-    final localBoss = weeklyBossForPlayer(player);
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
     final weeklyBoss = remoteBoss == null
-        ? localBoss
+        ? null
         : WeeklyBossDefinition(
             rank: remoteBoss.rank,
             title: remoteBoss.title,
@@ -290,9 +335,10 @@ class HomeScreen extends ConsumerWidget {
             rewardXp: remoteBoss.rewardXp,
             rewardStatPoints: remoteBoss.rewardStatPoints,
           );
-    final progress = weeklyBoss.progressFor(player);
-    final isClaimed = weeklyBoss.isClaimedThisWeek(player);
-    final isCompleted = weeklyBoss.isCompleted(player);
+    final hasActiveRemoteBoss = weeklyBoss != null;
+    final progress = weeklyBoss?.progressFor(player) ?? 0;
+    final isClaimed = weeklyBoss?.isClaimedThisWeek(player) ?? false;
+    final isCompleted = weeklyBoss?.isCompleted(player) ?? false;
 
     return Container(
       width: double.infinity,
@@ -316,7 +362,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                '$progress/${weeklyBoss.targetActiveDays}',
+                hasActiveRemoteBoss ? '$progress/${weeklyBoss.targetActiveDays}' : '--',
                 style: const TextStyle(
                   color: AppColors.neonBlue,
                   fontWeight: FontWeight.bold,
@@ -331,53 +377,154 @@ class HomeScreen extends ConsumerWidget {
               'ONLINE: ${remoteBoss.completedCount} concluidos | ${remoteBoss.participantCount} participantes',
               style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.5),
             ),
+          ] else if (remoteWeeklyBoss.isLoading) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'ONLINE: conectando ao Firestore...',
+              style: TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 0.5),
+            ),
+          ] else if (remoteWeeklyBoss.hasError) ...[
+            const SizedBox(height: 8),
+            Text(
+              'ONLINE: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
+              style: const TextStyle(color: Colors.redAccent, fontSize: 11, letterSpacing: 0.5),
+            ),
           ],
           const SizedBox(height: 10),
-          Text(
-            weeklyBoss.title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            weeklyBoss.description,
-            style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: (progress / weeklyBoss.targetActiveDays).clamp(0.0, 1.0),
-              backgroundColor: Colors.white10,
-              color: isCompleted ? Colors.amberAccent : AppColors.neonBlue,
-              minHeight: 6,
+          if (hasActiveRemoteBoss) ...[
+            Text(
+              weeklyBoss.title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.6),
-                ),
+            const SizedBox(height: 6),
+            Text(
+              weeklyBoss.description,
+              style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (progress / weeklyBoss.targetActiveDays).clamp(0.0, 1.0),
+                backgroundColor: Colors.white10,
+                color: isCompleted ? Colors.amberAccent : AppColors.neonBlue,
+                minHeight: 6,
               ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isClaimed
-                      ? Colors.white12
-                      : (isCompleted ? Colors.amberAccent : Colors.white12),
-                  foregroundColor: isCompleted && !isClaimed ? Colors.black : Colors.white54,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos',
+                    style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.6),
+                  ),
                 ),
-                onPressed: isCompleted && !isClaimed
-                    ? () => _claimWeeklyBoss(context, ref)
-                    : null,
-                child: Text(isClaimed ? 'RESGATADO' : 'RESGATAR'),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isClaimed
+                        ? Colors.white12
+                        : (isCompleted ? Colors.amberAccent : Colors.white12),
+                    foregroundColor: isCompleted && !isClaimed ? Colors.black : Colors.white54,
+                  ),
+                  onPressed: isCompleted && !isClaimed
+                      ? () => _claimWeeklyBoss(
+                            context,
+                            ref,
+                            authState,
+                            remoteBoss,
+                            weeklyBoss,
+                            playerRankForLevel(player.level),
+                          )
+                      : null,
+                  child: Text(isClaimed ? 'RESGATADO' : 'RESGATAR'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(color: Colors.white10, height: 1),
+            const SizedBox(height: 12),
+            const Text(
+              'PRIMEIROS CLEARS',
+              style: TextStyle(fontSize: 11, color: Colors.white38, letterSpacing: 1.1),
+            ),
+            const SizedBox(height: 10),
+            ..._buildTopCompletions(topCompletions),
+          ] else if (!remoteWeeklyBoss.isLoading && !remoteWeeklyBoss.hasError) ...[
+            const Text(
+              'Nenhum boss semanal ativo no momento.',
+              style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  List<Widget> _buildTopCompletions(AsyncValue<List<WeeklyBossCompletion>> topCompletions) {
+    return topCompletions.when(
+      data: (entries) {
+        if (entries.isEmpty) {
+          return const [
+            Text(
+              'Nenhum clear remoto registrado ainda.',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+            ),
+          ];
+        }
+
+        return List.generate(entries.length, (index) {
+          final entry = entries[index];
+          final position = index + 1;
+          final timestamp = entry.completedAt;
+          final timeLabel = timestamp == null
+              ? 'sincronizando...'
+              : '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '#$position',
+                    style: const TextStyle(
+                      color: AppColors.neonBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    entry.displayName,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  timeLabel,
+                  style: const TextStyle(color: Colors.white38, fontSize: 10),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+      loading: () => const [
+        Text(
+          'Carregando ranking remoto...',
+          style: TextStyle(color: Colors.white38, fontSize: 11),
+        ),
+      ],
+      error: (error, _) => [
+        Text(
+          'Falha ao carregar ranking: ${_shortError(error)}',
+          style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+        ),
+      ],
     );
   }
 
@@ -407,5 +554,11 @@ class HomeScreen extends ConsumerWidget {
   String _calculateCurrentTitle(Player player) {
     final unlocked = systemAchievements.where((achievement) => achievement.requirement(player)).toList();
     return unlocked.isNotEmpty ? unlocked.last.title : 'ASPIRANTE';
+  }
+
+  String _shortError(Object? error) {
+    if (error == null) return 'desconhecido';
+    final text = error.toString().replaceAll('\n', ' ');
+    return text.length > 48 ? '${text.substring(0, 48)}...' : text;
   }
 }

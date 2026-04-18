@@ -4,6 +4,7 @@ class RemoteWeeklyBoss {
   const RemoteWeeklyBoss({
     required this.id,
     required this.rank,
+    required this.isActive,
     required this.title,
     required this.description,
     required this.targetActiveDays,
@@ -17,6 +18,7 @@ class RemoteWeeklyBoss {
 
   final String id;
   final String rank;
+  final bool isActive;
   final String title;
   final String description;
   final int targetActiveDays;
@@ -33,6 +35,7 @@ class RemoteWeeklyBoss {
     return RemoteWeeklyBoss(
       id: document.id,
       rank: (data['rank'] as String?) ?? 'E',
+      isActive: (data['isActive'] as bool?) ?? false,
       title: (data['title'] as String?) ?? 'Boss semanal',
       description: (data['description'] as String?) ?? 'Evento semanal ativo.',
       targetActiveDays: (data['targetActiveDays'] as num?)?.toInt() ?? 4,

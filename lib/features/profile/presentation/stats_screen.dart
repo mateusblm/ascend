@@ -20,10 +20,9 @@ class StatsScreen extends ConsumerWidget {
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
-    final localBoss = weeklyBossForPlayer(player);
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
     final weeklyBoss = remoteBoss == null
-        ? localBoss
+        ? null
         : WeeklyBossDefinition(
             rank: remoteBoss.rank,
             title: remoteBoss.title,
@@ -32,8 +31,8 @@ class StatsScreen extends ConsumerWidget {
             rewardXp: remoteBoss.rewardXp,
             rewardStatPoints: remoteBoss.rewardStatPoints,
           );
-    final weeklyBossProgress = weeklyBoss.progressFor(player);
-    final weeklyBossClaimed = weeklyBoss.isClaimedThisWeek(player);
+    final weeklyBossProgress = weeklyBoss?.progressFor(player) ?? 0;
+    final weeklyBossClaimed = weeklyBoss?.isClaimedThisWeek(player) ?? false;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -86,14 +85,23 @@ class StatsScreen extends ConsumerWidget {
               _buildInfoBox('FOCO PRINCIPAL', player.primaryFocus.label),
               _buildInfoBox(
                 'BOSS SEMANAL',
-                weeklyBossClaimed
-                    ? '${weeklyBoss.title} | resgatado'
-                    : '${weeklyBossProgress}/${weeklyBoss.targetActiveDays}',
+                weeklyBoss == null
+                    ? 'Nenhum boss ativo'
+                    : (weeklyBossClaimed
+                        ? '${weeklyBoss.title} | resgatado'
+                        : '${weeklyBossProgress}/${weeklyBoss.targetActiveDays}'),
               ),
               if (remoteBoss != null)
                 _buildInfoBox(
                   'EVENTO ONLINE',
                   '${remoteBoss.completedCount} concluidos | ${remoteBoss.participantCount} participantes',
+                ),
+              if (remoteWeeklyBoss.isLoading)
+                _buildInfoBox('EVENTO ONLINE', 'Conectando ao Firestore...'),
+              if (remoteWeeklyBoss.hasError)
+                _buildInfoBox(
+                  'EVENTO ONLINE',
+                  'Erro ao consultar: ${_shortError(remoteWeeklyBoss.error)}',
                 ),
               const SizedBox(height: 30),
               const Text(
@@ -491,6 +499,12 @@ class StatsScreen extends ConsumerWidget {
   String _formatLastCompletion(DateTime? value) {
     if (value == null) return 'Nenhuma ainda';
     return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+  }
+
+  String _shortError(Object? error) {
+    if (error == null) return 'desconhecido';
+    final text = error.toString().replaceAll('\n', ' ');
+    return text.length > 48 ? '${text.substring(0, 48)}...' : text;
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref, String displayName) async {

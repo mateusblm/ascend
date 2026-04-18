@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function completionPath(bossId, userId) {
+      return /databases/$(database)/documents/weekly_bosses/$(bossId)/completions/$(userId);
+    }
+
+    function isValidRank(rank) {
+      return rank in ['E', 'D', 'C', 'B', 'A', 'S'];
+    }
+
+    function validCompletionPayload(userId) {
+      return request.resource.data.keys().hasOnly([
+            'uid',
+            'displayName',
+            'photoUrl',
+            'rankAtCompletion',
+            'completedAt'
+          ]) &&
+          request.resource.data.uid == userId &&
+          request.resource.data.displayName is string &&
+          request.resource.data.displayName.size() > 0 &&
+          request.resource.data.displayName.size() <= 40 &&
+          request.resource.data.photoUrl is string &&
+          request.resource.data.photoUrl.size() <= 500 &&
+          isValidRank(request.resource.data.rankAtCompletion) &&
+          request.resource.data.completedAt == request.time;
+    }
+
+    function validBossCounterUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedCount']) &&
+          resource.data.completedCount is int &&
+          request.resource.data.completedCount is int &&
+          request.resource.data.completedCount == resource.data.completedCount + 1;
+    }
+
+    match /weekly_bosses/{bossId} {
+      allow read: if true;
+      allow create, delete: if false;
+
+      allow update: if isSignedIn() &&
+          validBossCounterUpdate() &&
+          !exists(completionPath(bossId, request.auth.uid)) &&
+          existsAfter(completionPath(bossId, request.auth.uid));
+
+      match /completions/{userId} {
+        allow read: if true;
+        allow create: if isSignedIn() &&
+            request.auth.uid == userId &&
+            !exists(completionPath(bossId, userId)) &&
+            validCompletionPayload(userId);
+        allow update, delete: if false;
+      }
+    }
+  }
+}

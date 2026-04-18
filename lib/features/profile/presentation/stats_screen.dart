@@ -5,6 +5,7 @@ import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'player_controller.dart';
@@ -16,9 +17,21 @@ class StatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
     final authState = ref.watch(authProvider);
+    final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final attrs = player.attributes;
     final hasPoints = player.statPoints > 0;
-    final weeklyBoss = weeklyBossFor(player.primaryFocus);
+    final localBoss = weeklyBossForPlayer(player);
+    final remoteBoss = remoteWeeklyBoss.valueOrNull;
+    final weeklyBoss = remoteBoss == null
+        ? localBoss
+        : WeeklyBossDefinition(
+            rank: remoteBoss.rank,
+            title: remoteBoss.title,
+            description: remoteBoss.description,
+            targetActiveDays: remoteBoss.targetActiveDays,
+            rewardXp: remoteBoss.rewardXp,
+            rewardStatPoints: remoteBoss.rewardStatPoints,
+          );
     final weeklyBossProgress = weeklyBoss.progressFor(player);
     final weeklyBossClaimed = weeklyBoss.isClaimedThisWeek(player);
 
@@ -77,6 +90,11 @@ class StatsScreen extends ConsumerWidget {
                     ? '${weeklyBoss.title} | resgatado'
                     : '${weeklyBossProgress}/${weeklyBoss.targetActiveDays}',
               ),
+              if (remoteBoss != null)
+                _buildInfoBox(
+                  'EVENTO ONLINE',
+                  '${remoteBoss.completedCount} concluidos | ${remoteBoss.participantCount} participantes',
+                ),
               const SizedBox(height: 30),
               const Text(
                 'ULTIMOS 7 DIAS',

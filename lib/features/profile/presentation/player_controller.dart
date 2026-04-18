@@ -204,7 +204,7 @@ class PlayerNotifier extends StateNotifier<Player> {
   }
 
   bool claimWeeklyBossReward({void Function(int level)? onLevelUp}) {
-    final weeklyBoss = weeklyBossFor(state.primaryFocus);
+    final weeklyBoss = weeklyBossForPlayer(state);
     if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
       return false;
     }

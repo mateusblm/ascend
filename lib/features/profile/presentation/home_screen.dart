@@ -4,6 +4,8 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
+import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -34,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   _buildStreakPanel(player),
                   const SizedBox(height: 20),
-                  _buildWeeklyBossPanel(context, ref, player),
+                  _buildWeeklyBossPanel(context, ref, player, remoteWeeklyBoss),
                 ],
               ),
             ),
@@ -81,7 +84,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'RANK: ${_calculateRank(level)}',
+              'RANK: ${playerRankForLevel(level)}',
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -269,8 +272,24 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyBossPanel(BuildContext context, WidgetRef ref, Player player) {
-    final weeklyBoss = weeklyBossFor(player.primaryFocus);
+  Widget _buildWeeklyBossPanel(
+    BuildContext context,
+    WidgetRef ref,
+    Player player,
+    AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
+  ) {
+    final localBoss = weeklyBossForPlayer(player);
+    final remoteBoss = remoteWeeklyBoss.valueOrNull;
+    final weeklyBoss = remoteBoss == null
+        ? localBoss
+        : WeeklyBossDefinition(
+            rank: remoteBoss.rank,
+            title: remoteBoss.title,
+            description: remoteBoss.description,
+            targetActiveDays: remoteBoss.targetActiveDays,
+            rewardXp: remoteBoss.rewardXp,
+            rewardStatPoints: remoteBoss.rewardStatPoints,
+          );
     final progress = weeklyBoss.progressFor(player);
     final isClaimed = weeklyBoss.isClaimedThisWeek(player);
     final isCompleted = weeklyBoss.isCompleted(player);
@@ -306,6 +325,13 @@ class HomeScreen extends ConsumerWidget {
               ),
             ],
           ),
+          if (remoteBoss != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'ONLINE: ${remoteBoss.completedCount} concluidos | ${remoteBoss.participantCount} participantes',
+              style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.5),
+            ),
+          ],
           const SizedBox(height: 10),
           Text(
             weeklyBoss.title,
@@ -376,15 +402,6 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _calculateRank(int level) {
-    if (level < 5) return 'E';
-    if (level < 10) return 'D';
-    if (level < 20) return 'C';
-    if (level < 30) return 'B';
-    if (level < 40) return 'A';
-    return 'S';
   }
 
   String _calculateCurrentTitle(Player player) {

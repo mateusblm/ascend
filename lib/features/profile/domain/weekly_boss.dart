@@ -2,6 +2,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 
 class WeeklyBossDefinition {
   const WeeklyBossDefinition({
+    required this.rank,
     required this.title,
     required this.description,
     required this.targetActiveDays,
@@ -9,6 +10,7 @@ class WeeklyBossDefinition {
     required this.rewardStatPoints,
   });
 
+  final String rank;
   final String title;
   final String description;
   final int targetActiveDays;
@@ -19,7 +21,7 @@ class WeeklyBossDefinition {
 extension WeeklyBossDefinitionX on WeeklyBossDefinition {
   int progressFor(Player player) {
     final now = DateTime.now();
-    final weekStart = _weekStart(now);
+    final weekStart = weekStartFor(now);
     final weekEnd = weekStart.add(const Duration(days: 7));
 
     final activeDates = player.activityHistory
@@ -40,51 +42,77 @@ extension WeeklyBossDefinitionX on WeeklyBossDefinition {
     final claimedAt = player.weeklyBossLastClaimedAt;
     if (claimedAt == null) return false;
 
-    return _weekStart(claimedAt) == _weekStart(DateTime.now());
-  }
-
-  static DateTime _weekStart(DateTime date) {
-    final normalized = DateTime(date.year, date.month, date.day);
-    return normalized.subtract(Duration(days: normalized.weekday - 1));
+    return weekStartFor(claimedAt) == weekStartFor(DateTime.now());
   }
 }
 
-WeeklyBossDefinition weeklyBossFor(AwakeningPath focus) {
-  return switch (focus) {
-    AwakeningPath.discipline => const WeeklyBossDefinition(
-        title: 'Protocolo de Constancia',
-        description: 'Fique ativo em 4 dias da semana para consolidar a disciplina.',
+DateTime weekStartFor(DateTime date) {
+  final normalized = DateTime(date.year, date.month, date.day);
+  return normalized.subtract(Duration(days: normalized.weekday - 1));
+}
+
+String playerRankForLevel(int level) {
+  if (level < 5) return 'E';
+  if (level < 10) return 'D';
+  if (level < 20) return 'C';
+  if (level < 30) return 'B';
+  if (level < 40) return 'A';
+  return 'S';
+}
+
+WeeklyBossDefinition weeklyBossForPlayer(Player player) {
+  return weeklyBossForRank(playerRankForLevel(player.level));
+}
+
+WeeklyBossDefinition weeklyBossForRank(String rank) {
+  return switch (rank) {
+    'E' => const WeeklyBossDefinition(
+        rank: 'E',
+        title: 'Primeira Ruptura',
+        description: 'Fique ativo em 4 dias da semana para provar que voce merece subir de rank.',
         targetActiveDays: 4,
         rewardXp: 120,
         rewardStatPoints: 2,
       ),
-    AwakeningPath.study => const WeeklyBossDefinition(
-        title: 'Ritual do Conhecimento',
-        description: 'Ative o sistema em 4 dias da semana para manter o estudo em alta.',
+    'D' => const WeeklyBossDefinition(
+        rank: 'D',
+        title: 'Cerco do Iniciante',
+        description: 'Mantenha 4 dias ativos e mostre consistencia acima da media do rank D.',
         targetActiveDays: 4,
-        rewardXp: 130,
-        rewardStatPoints: 2,
-      ),
-    AwakeningPath.training => const WeeklyBossDefinition(
-        title: 'Circuito de Evolucao',
-        description: 'Registre progresso em 5 dias da semana para dominar sua rotina fisica.',
-        targetActiveDays: 5,
         rewardXp: 140,
         rewardStatPoints: 2,
       ),
-    AwakeningPath.health => const WeeklyBossDefinition(
-        title: 'Nucleo Vital',
-        description: 'Mantenha 4 dias ativos na semana para estabilizar sua energia.',
-        targetActiveDays: 4,
-        rewardXp: 120,
+    'C' => const WeeklyBossDefinition(
+        rank: 'C',
+        title: 'Camara da Pressao',
+        description: 'Entregue 5 dias ativos para suportar a pressao do rank C.',
+        targetActiveDays: 5,
+        rewardXp: 170,
         rewardStatPoints: 3,
       ),
-    AwakeningPath.productivity => const WeeklyBossDefinition(
-        title: 'Sprint de Execucao',
-        description: 'Ative o sistema em 5 dias da semana para consolidar entregas.',
+    'B' => const WeeklyBossDefinition(
+        rank: 'B',
+        title: 'Fenda do Executor',
+        description: 'Complete 5 dias ativos para dominar a semana como um executor de rank B.',
         targetActiveDays: 5,
-        rewardXp: 140,
-        rewardStatPoints: 2,
+        rewardXp: 200,
+        rewardStatPoints: 3,
+      ),
+    'A' => const WeeklyBossDefinition(
+        rank: 'A',
+        title: 'Trono do Predador',
+        description: 'Segure 6 dias ativos e prove que seu nivel de execucao e raro.',
+        targetActiveDays: 6,
+        rewardXp: 240,
+        rewardStatPoints: 4,
+      ),
+    _ => const WeeklyBossDefinition(
+        rank: 'S',
+        title: 'Nucleo da Ascensao',
+        description: 'Conquiste 6 dias ativos para sustentar um padrao digno do rank S.',
+        targetActiveDays: 6,
+        rewardXp: 300,
+        rewardStatPoints: 5,
       ),
   };
 }

@@ -482,7 +482,7 @@ class HomeScreen extends ConsumerWidget {
           if (remoteBoss != null) ...[
             const SizedBox(height: 8),
             Text(
-              'ONLINE: ${remoteBoss.completedCount} concluidos | ${remoteBoss.participantCount} participantes',
+              'ONLINE: ${remoteBoss.completedCount} concluidos',
               style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.5),
             ),
           ] else if (remoteWeeklyBoss.isLoading) ...[

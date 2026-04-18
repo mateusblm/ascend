@@ -16,7 +16,7 @@ void main() {
 
       expect(summary.hasActiveBoss, isFalse);
       expect(summary.stateLabel, 'SEM EVENTO');
-      expect(summary.clearRatePercent, 0);
+      expect(summary.completedCount, 0);
     });
 
     test('builds urgency and pressure labels from remote boss state', () {
@@ -50,8 +50,8 @@ void main() {
 
       expect(summary.hasActiveBoss, isTrue);
       expect(summary.urgencyLabel, 'JANELA FINAL');
-      expect(summary.stateLabel, 'PRESSAO DE ELITE');
-      expect(summary.clearRatePercent, 40);
+      expect(summary.stateLabel, 'PRIMEIROS HUNTERS');
+      expect(summary.completedCount, 4);
       expect(summary.leaderHeadline, contains('MATEUS'));
     });
   });

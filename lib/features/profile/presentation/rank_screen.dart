@@ -595,9 +595,9 @@ class RankScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _metric(
-                    'CLEAR RATE',
-                    '${arena.clearRatePercent}%',
-                    arena.clearRatePercent >= 35
+                    'CLEARS TOTAIS',
+                    '${arena.completedCount}',
+                    arena.completedCount >= 10
                         ? Colors.greenAccent
                         : Colors.white70,
                   ),

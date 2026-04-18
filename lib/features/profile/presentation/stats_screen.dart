@@ -843,7 +843,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
         return _buildInfoBox(
           'EVENTO ONLINE',
-          '${boss.completedCount} concluidos | ${boss.participantCount} participantes',
+          '${boss.completedCount} concluidos',
         );
       },
       loading: () => _buildInfoBox('EVENTO ONLINE', 'Conectando ao Firestore...'),

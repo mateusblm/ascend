@@ -10,8 +10,6 @@ class RankArenaSummary {
     required this.progress,
     required this.target,
     required this.completedCount,
-    required this.participantCount,
-    required this.clearRatePercent,
     required this.rewardLabel,
     required this.leaderHeadline,
     required this.crowdReading,
@@ -23,8 +21,6 @@ class RankArenaSummary {
   final int progress;
   final int target;
   final int completedCount;
-  final int participantCount;
-  final int clearRatePercent;
   final String rewardLabel;
   final String leaderHeadline;
   final String crowdReading;
@@ -44,8 +40,6 @@ RankArenaSummary buildRankArenaSummary({
       progress: 0,
       target: 0,
       completedCount: 0,
-      participantCount: 0,
-      clearRatePercent: 0,
       rewardLabel: 'Nenhuma recompensa carregada.',
       leaderHeadline: 'Nenhum boss ativo para este rank.',
       crowdReading:
@@ -54,12 +48,6 @@ RankArenaSummary buildRankArenaSummary({
   }
 
   final progress = _activeDaysThisWeek(player, now: now);
-  final participants = boss.participantCount <= 0
-      ? boss.completedCount
-      : boss.participantCount;
-  final clearRate = participants == 0
-      ? 0
-      : ((boss.completedCount / participants) * 100).round();
   final remaining = boss.endsAt.difference(now ?? DateTime.now());
   final urgencyLabel = switch (remaining.inHours) {
     <= 6 => 'JANELA FINAL',
@@ -67,9 +55,9 @@ RankArenaSummary buildRankArenaSummary({
     <= 72 => 'SEMANA QUENTE',
     _ => 'ARENA ABERTA',
   };
-  final stateLabel = switch (clearRate) {
-    >= 70 => 'ARENA DOMINADA',
-    >= 35 => 'PRESSAO DE ELITE',
+  final stateLabel = switch (boss.completedCount) {
+    >= 100 => 'ARENA DOMINADA',
+    >= 25 => 'PRESSAO DE ELITE',
     > 0 => 'PRIMEIROS HUNTERS',
     _ => 'BOSS INVICTO',
   };
@@ -77,10 +65,10 @@ RankArenaSummary buildRankArenaSummary({
   final leaderHeadline = topCompletions.isEmpty
       ? 'Nenhum clear remoto ainda. Quem romper primeiro define o ritmo do rank.'
       : 'Primeiro clear: ${topCompletions.first.displayName} abriu a arena.';
-  final crowdReading = switch (clearRate) {
-    >= 70 =>
-      'A maioria dos participantes ja rompeu o evento. Agora voce disputa reputacao e velocidade de clear.',
-    >= 35 =>
+  final crowdReading = switch (boss.completedCount) {
+    >= 100 =>
+      'Muitos hunters ja romperam o evento. Agora voce disputa reputacao e velocidade de clear.',
+    >= 25 =>
       'O boss ainda oferece pressao competitiva real. O rank ja provou que e vencivel, mas ainda nao esta resolvido.',
     > 0 =>
       'Poucos hunters conseguiram passar. Esta e a zona ideal para ganhar prestigio rapido.',
@@ -95,8 +83,6 @@ RankArenaSummary buildRankArenaSummary({
     progress: progress,
     target: boss.targetActiveDays,
     completedCount: boss.completedCount,
-    participantCount: participants,
-    clearRatePercent: clearRate,
     rewardLabel: rewardLabel,
     leaderHeadline: leaderHeadline,
     crowdReading: crowdReading,

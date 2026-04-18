@@ -42,6 +42,15 @@ class PlayerNotifier extends StateNotifier<Player> {
     return _dateOnly(to).difference(_dateOnly(from)).inDays;
   }
 
+  List<DateTime> _upsertActivityDate(List<DateTime> activityHistory, DateTime completionDate) {
+    final normalizedDate = _dateOnly(completionDate);
+    final updatedHistory = activityHistory.where((entry) => _dateOnly(entry) != normalizedDate).toList()
+      ..add(normalizedDate)
+      ..sort();
+
+    return updatedHistory;
+  }
+
   void addReward(
     int xpReward,
     AttributeType attribute, {
@@ -124,8 +133,13 @@ class PlayerNotifier extends StateNotifier<Player> {
   void recordQuestCompletion([DateTime? completedAt]) {
     final completionDate = completedAt ?? DateTime.now();
     final lastCompletion = state.lastQuestCompletionDate;
+    final updatedHistory = _upsertActivityDate(state.activityHistory, completionDate);
 
     if (lastCompletion != null && _daysBetween(lastCompletion, completionDate) == 0) {
+      if (updatedHistory.length != state.activityHistory.length) {
+        state = state.copyWith(activityHistory: updatedHistory);
+        _saveToDb();
+      }
       return;
     }
 
@@ -139,6 +153,7 @@ class PlayerNotifier extends StateNotifier<Player> {
       currentStreak: streak,
       bestStreak: streak > state.bestStreak ? streak : state.bestStreak,
       lastQuestCompletionDate: completionDate,
+      activityHistory: updatedHistory,
     );
 
     _saveToDb();
@@ -155,6 +170,15 @@ class PlayerNotifier extends StateNotifier<Player> {
     state = state.copyWith(
       lastResetDate: now,
       currentStreak: nextStreak,
+    );
+
+    _saveToDb();
+  }
+
+  void completeOnboarding(AwakeningPath focus) {
+    state = state.copyWith(
+      primaryFocus: focus,
+      hasCompletedOnboarding: true,
     );
 
     _saveToDb();

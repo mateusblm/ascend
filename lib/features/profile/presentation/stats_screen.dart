@@ -64,6 +64,16 @@ class StatsScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               _buildInfoBox('ULTIMA CONCLUSAO', _formatLastCompletion(player.lastQuestCompletionDate)),
               const SizedBox(height: 30),
+              const Text(
+                'ULTIMOS 7 DIAS',
+                style: TextStyle(fontSize: 14, color: Colors.white38, letterSpacing: 2),
+              ),
+              const SizedBox(height: 15),
+              _buildWeeklyHistory(player),
+              const SizedBox(height: 10),
+              _buildInfoBox('DIAS ATIVOS', '${_activityDates(player).length}'),
+              _buildInfoBox('CONSISTENCIA 7D', _calculateWeeklyConsistency(player)),
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -282,6 +292,93 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildWeeklyHistory(Player player) {
+    final weeklyEntries = _lastSevenDays(player);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: weeklyEntries.map((entry) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                children: [
+                  Text(
+                    entry.label,
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: entry.isActive ? AppColors.neonBlue.withOpacity(0.18) : Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: entry.isActive ? AppColors.neonBlue : Colors.white10,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        entry.isActive ? Icons.check : Icons.remove,
+                        color: entry.isActive ? AppColors.neonBlue : Colors.white24,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  List<_DailyActivity> _lastSevenDays(Player player) {
+    final today = DateTime.now();
+    final activeDates = _activityDates(player);
+
+    return List.generate(7, (index) {
+      final date = DateTime(today.year, today.month, today.day).subtract(Duration(days: 6 - index));
+      final isActive = activeDates.contains(date);
+
+      return _DailyActivity(
+        label: _weekdayLabel(date.weekday),
+        isActive: isActive,
+      );
+    });
+  }
+
+  String _calculateWeeklyConsistency(Player player) {
+    final activeDays = _lastSevenDays(player).where((entry) => entry.isActive).length;
+    return '$activeDays/7';
+  }
+
+  Set<DateTime> _activityDates(Player player) {
+    final activityDates = player.activityHistory
+        .map((entry) => DateTime(entry.year, entry.month, entry.day))
+        .toSet();
+
+    final lastCompletion = player.lastQuestCompletionDate;
+    if (lastCompletion != null) {
+      activityDates.add(DateTime(lastCompletion.year, lastCompletion.month, lastCompletion.day));
+    }
+
+    return activityDates;
+  }
+
+  String _weekdayLabel(int weekday) {
+    const labels = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+    return labels[weekday - 1];
+  }
+
   Widget _buildStreakCard({
     required String label,
     required String value,
@@ -346,4 +443,14 @@ class StatsScreen extends ConsumerWidget {
     if (value == null) return 'Nenhuma ainda';
     return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
   }
+}
+
+class _DailyActivity {
+  const _DailyActivity({
+    required this.label,
+    required this.isActive,
+  });
+
+  final String label;
+  final bool isActive;
 }

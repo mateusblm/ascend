@@ -17,54 +17,59 @@ const PlayerSchema = CollectionSchema(
   name: r'Player',
   id: -1052842935974721688,
   properties: {
-    r'attributes': PropertySchema(
+    r'activityHistory': PropertySchema(
       id: 0,
+      name: r'activityHistory',
+      type: IsarType.dateTimeList,
+    ),
+    r'attributes': PropertySchema(
+      id: 1,
       name: r'attributes',
       type: IsarType.object,
       target: r'PlayerAttributes',
     ),
     r'bestStreak': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'bestStreak',
       type: IsarType.long,
     ),
     r'currentStreak': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'currentStreak',
       type: IsarType.long,
     ),
     r'lastQuestCompletionDate': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'lastQuestCompletionDate',
       type: IsarType.dateTime,
     ),
     r'lastResetDate': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'lastResetDate',
       type: IsarType.dateTime,
     ),
     r'level': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'level',
       type: IsarType.long,
     ),
     r'maxXp': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'maxXp',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'name',
       type: IsarType.string,
     ),
     r'statPoints': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'statPoints',
       type: IsarType.long,
     ),
     r'xp': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'xp',
       type: IsarType.long,
     )
@@ -89,6 +94,7 @@ int _playerEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.activityHistory.length * 8;
   bytesCount += 3 +
       PlayerAttributesSchema.estimateSize(
           object.attributes, allOffsets[PlayerAttributes]!, allOffsets);
@@ -102,21 +108,22 @@ void _playerSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
+  writer.writeDateTimeList(offsets[0], object.activityHistory);
   writer.writeObject<PlayerAttributes>(
-    offsets[0],
+    offsets[1],
     allOffsets,
     PlayerAttributesSchema.serialize,
     object.attributes,
   );
-  writer.writeLong(offsets[1], object.bestStreak);
-  writer.writeLong(offsets[2], object.currentStreak);
-  writer.writeDateTime(offsets[3], object.lastQuestCompletionDate);
-  writer.writeDateTime(offsets[4], object.lastResetDate);
-  writer.writeLong(offsets[5], object.level);
-  writer.writeLong(offsets[6], object.maxXp);
-  writer.writeString(offsets[7], object.name);
-  writer.writeLong(offsets[8], object.statPoints);
-  writer.writeLong(offsets[9], object.xp);
+  writer.writeLong(offsets[2], object.bestStreak);
+  writer.writeLong(offsets[3], object.currentStreak);
+  writer.writeDateTime(offsets[4], object.lastQuestCompletionDate);
+  writer.writeDateTime(offsets[5], object.lastResetDate);
+  writer.writeLong(offsets[6], object.level);
+  writer.writeLong(offsets[7], object.maxXp);
+  writer.writeString(offsets[8], object.name);
+  writer.writeLong(offsets[9], object.statPoints);
+  writer.writeLong(offsets[10], object.xp);
 }
 
 Player _playerDeserialize(
@@ -126,22 +133,23 @@ Player _playerDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Player(
+    activityHistory: reader.readDateTimeList(offsets[0]) ?? const [],
     attributes: reader.readObjectOrNull<PlayerAttributes>(
-          offsets[0],
+          offsets[1],
           PlayerAttributesSchema.deserialize,
           allOffsets,
         ) ??
         PlayerAttributes(),
-    bestStreak: reader.readLongOrNull(offsets[1]) ?? 0,
-    currentStreak: reader.readLongOrNull(offsets[2]) ?? 0,
+    bestStreak: reader.readLongOrNull(offsets[2]) ?? 0,
+    currentStreak: reader.readLongOrNull(offsets[3]) ?? 0,
     id: id,
-    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[3]),
-    lastResetDate: reader.readDateTime(offsets[4]),
-    level: reader.readLong(offsets[5]),
-    maxXp: reader.readLong(offsets[6]),
-    name: reader.readString(offsets[7]),
-    statPoints: reader.readLongOrNull(offsets[8]) ?? 0,
-    xp: reader.readLong(offsets[9]),
+    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[4]),
+    lastResetDate: reader.readDateTime(offsets[5]),
+    level: reader.readLong(offsets[6]),
+    maxXp: reader.readLong(offsets[7]),
+    name: reader.readString(offsets[8]),
+    statPoints: reader.readLongOrNull(offsets[9]) ?? 0,
+    xp: reader.readLong(offsets[10]),
   );
   return object;
 }
@@ -154,29 +162,31 @@ P _playerDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readDateTimeList(offset) ?? const []) as P;
+    case 1:
       return (reader.readObjectOrNull<PlayerAttributes>(
             offset,
             PlayerAttributesSchema.deserialize,
             allOffsets,
           ) ??
           PlayerAttributes()) as P;
-    case 1:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 2:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 3:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 4:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 6:
       return (reader.readLong(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 8:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 10:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -271,6 +281,150 @@ extension PlayerQueryWhere on QueryBuilder<Player, Player, QWhereClause> {
 }
 
 extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryElementEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryElementGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryElementLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryElementBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activityHistory',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> activityHistoryIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      activityHistoryLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'activityHistory',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> bestStreakEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -1141,6 +1295,12 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
 }
 
 extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
+  QueryBuilder<Player, Player, QDistinct> distinctByActivityHistory() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activityHistory');
+    });
+  }
+
   QueryBuilder<Player, Player, QDistinct> distinctByBestStreak() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'bestStreak');
@@ -1201,6 +1361,13 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
   QueryBuilder<Player, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Player, List<DateTime>, QQueryOperations>
+      activityHistoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activityHistory');
     });
   }
 

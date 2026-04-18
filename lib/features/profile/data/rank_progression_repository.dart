@@ -9,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 class RankProgressionRepository {
   RankProgressionRepository(this._firestore, this._auth);
 
+  static const int syncSchemaVersion = 2;
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final Map<String, String> _lastSyncedFingerprintByUser = <String, String>{};
@@ -58,23 +60,39 @@ class RankProgressionRepository {
     });
   }
 
-  Future<CompetitiveRankSnapshot?> syncSnapshot(Player player) async {
+  Future<CompetitiveRankSnapshot?> syncCompetitiveState(Player player) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
 
     final snapshotRef = _progressionDoc(uid);
+    final examRef = _promotionExamDoc(uid);
     final previousDoc = await snapshotRef.get();
+    final examDoc = await examRef.get();
+
     final previousSnapshot = previousDoc.exists && previousDoc.data() != null
         ? CompetitiveRankSnapshot.fromFirestore(previousDoc.data()!)
+        : null;
+    final currentExam = examDoc.exists && examDoc.data() != null
+        ? PromotionExam.fromFirestore(examDoc.data()!)
         : null;
 
     final nextSnapshot = evaluateCompetitiveRank(
       player: player,
       previousSnapshot: previousSnapshot,
+    ).copyWith(syncSchemaVersion: syncSchemaVersion, syncSource: 'client');
+    final nextExam = _resolveExamAfterSnapshot(
+      snapshot: nextSnapshot,
+      currentExam: currentExam,
     );
 
-    final fingerprint = _fingerprintFor(nextSnapshot);
-    if (_lastSyncedFingerprintByUser[uid] == fingerprint) {
+    final fingerprint = _fingerprintFor(nextSnapshot, nextExam: nextExam);
+    if (_lastSyncedFingerprintByUser[uid] == fingerprint &&
+        _shouldSkipRemoteWrite(
+          currentSnapshot: previousSnapshot,
+          nextSnapshot: nextSnapshot,
+          currentExam: currentExam,
+          nextExam: nextExam,
+        )) {
       return nextSnapshot;
     }
 
@@ -82,10 +100,16 @@ class RankProgressionRepository {
     final batch = _firestore.batch();
     batch.set(snapshotRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
     batch.set(historyRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
+    if (nextExam != null) {
+      batch.set(examRef, nextExam.toFirestore(), SetOptions(merge: true));
+    }
     await batch.commit();
     _lastSyncedFingerprintByUser[uid] = fingerprint;
     return nextSnapshot;
   }
+
+  Future<CompetitiveRankSnapshot?> syncSnapshot(Player player) =>
+      syncCompetitiveState(player);
 
   Future<void> syncPromotionExam(CompetitiveRankSnapshot snapshot) async {
     final uid = _auth.currentUser?.uid;
@@ -95,32 +119,29 @@ class RankProgressionRepository {
     final examDoc = await examRef.get();
     if (!examDoc.exists || examDoc.data() == null) return;
 
-    final exam = PromotionExam.fromFirestore(examDoc.data()!);
-    if (exam.status != PromotionExamStatus.inProgress) return;
-
-    final now = DateTime.now();
-    if (snapshot.weekKey != exam.sourceWeekKey || now.isAfter(exam.expiresAt)) {
-      await examRef.set(
-        exam.copyWith(status: PromotionExamStatus.failed, resolvedAt: now).toFirestore(),
-        SetOptions(merge: true),
-      );
+    final currentExam = PromotionExam.fromFirestore(examDoc.data()!);
+    final nextExam = _resolveExamAfterSnapshot(
+      snapshot: snapshot.copyWith(
+        syncSchemaVersion: syncSchemaVersion,
+        syncSource: snapshot.syncSource,
+      ),
+      currentExam: currentExam,
+    );
+    if (nextExam == null ||
+        nextExam.toFirestore().toString() ==
+            currentExam.toFirestore().toString()) {
       return;
     }
 
-    final passed = snapshot.activeDays >= exam.targetActiveDays &&
-        (!exam.bossRequired || snapshot.bossCompleted);
-    if (!passed) return;
-
-    await examRef.set(
-      exam.copyWith(status: PromotionExamStatus.passed, resolvedAt: now).toFirestore(),
-      SetOptions(merge: true),
-    );
+    await examRef.set(nextExam.toFirestore(), SetOptions(merge: true));
   }
 
   Future<bool> startPromotionExam(CompetitiveRankSnapshot snapshot) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
-    if (!snapshot.promotionReady || snapshot.promotionTargetRank == null) return false;
+    if (!snapshot.promotionReady || snapshot.promotionTargetRank == null) {
+      return false;
+    }
 
     final examRef = _promotionExamDoc(uid);
     final existing = await examRef.get();
@@ -143,6 +164,8 @@ class RankProgressionRepository {
       bossRequired: nextRule.requiresBossClear,
       startedAt: now,
       expiresAt: now.add(const Duration(days: 3)),
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'client',
     );
 
     await examRef.set(exam.toFirestore(), SetOptions(merge: true));
@@ -174,13 +197,21 @@ class RankProgressionRepository {
       demotionStrikes: 0,
       promotionReady: false,
       promotionTargetRank: rankAfter(promotedRank),
+      eventType: CompetitiveRankEventType.promotionConfirmed,
       summary: 'Promovido para o rank $promotedRank.',
-      detail: 'O exame foi concluido e sua promocao agora faz parte do historico competitivo.',
+      detail:
+          'O exame foi concluido e sua promocao agora faz parte do historico competitivo.',
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'client',
       updatedAt: now,
     );
 
     final batch = _firestore.batch();
-    batch.set(_progressionDoc(uid), promotedSnapshot.toFirestore(), SetOptions(merge: true));
+    batch.set(
+      _progressionDoc(uid),
+      promotedSnapshot.toFirestore(),
+      SetOptions(merge: true),
+    );
     batch.set(
       _historyCollection(uid).doc(promotedSnapshot.weekKey),
       promotedSnapshot.toFirestore(),
@@ -188,7 +219,14 @@ class RankProgressionRepository {
     );
     batch.set(
       examRef,
-      exam.copyWith(status: PromotionExamStatus.promoted, resolvedAt: now).toFirestore(),
+      exam
+          .copyWith(
+            status: PromotionExamStatus.promoted,
+            resolvedAt: now,
+            syncSchemaVersion: syncSchemaVersion,
+            syncSource: 'client',
+          )
+          .toFirestore(),
       SetOptions(merge: true),
     );
     await batch.commit();
@@ -220,13 +258,21 @@ class RankProgressionRepository {
       demotionStrikes: 0,
       promotionReady: true,
       promotionTargetRank: targetRank,
+      eventType: CompetitiveRankEventType.promotionUnlocked,
       summary: 'Exame de promocao pronto para o rank $targetRank.',
-      detail: 'Snapshot forcado em debug para testar a promocao sem depender da progressao natural.',
+      detail:
+          'Snapshot forcado em debug para testar a promocao sem depender da progressao natural.',
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'debug',
       updatedAt: DateTime.now(),
     );
 
     final batch = _firestore.batch();
-    batch.set(snapshotRef, forcedSnapshot.toFirestore(), SetOptions(merge: true));
+    batch.set(
+      snapshotRef,
+      forcedSnapshot.toFirestore(),
+      SetOptions(merge: true),
+    );
     batch.set(
       _historyCollection(uid).doc(forcedSnapshot.weekKey),
       forcedSnapshot.toFirestore(),
@@ -265,13 +311,21 @@ class RankProgressionRepository {
       demotionStrikes: 0,
       promotionReady: true,
       promotionTargetRank: exam.targetRank,
+      eventType: CompetitiveRankEventType.promotionUnlocked,
       summary: 'Exame concluido para o rank ${exam.targetRank}.',
-      detail: 'Snapshot forcado em debug para permitir a confirmacao da promocao.',
+      detail:
+          'Snapshot forcado em debug para permitir a confirmacao da promocao.',
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'debug',
       updatedAt: DateTime.now(),
     );
 
     final batch = _firestore.batch();
-    batch.set(snapshotRef, forcedSnapshot.toFirestore(), SetOptions(merge: true));
+    batch.set(
+      snapshotRef,
+      forcedSnapshot.toFirestore(),
+      SetOptions(merge: true),
+    );
     batch.set(
       _historyCollection(uid).doc(forcedSnapshot.weekKey),
       forcedSnapshot.toFirestore(),
@@ -279,7 +333,14 @@ class RankProgressionRepository {
     );
     batch.set(
       examRef,
-      exam.copyWith(status: PromotionExamStatus.passed, resolvedAt: DateTime.now()).toFirestore(),
+      exam
+          .copyWith(
+            status: PromotionExamStatus.passed,
+            resolvedAt: DateTime.now(),
+            syncSchemaVersion: syncSchemaVersion,
+            syncSource: 'debug',
+          )
+          .toFirestore(),
       SetOptions(merge: true),
     );
     await batch.commit();
@@ -291,22 +352,122 @@ class RankProgressionRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    await _promotionExamDoc(uid).delete().catchError((_) {});
+    final examRef = _promotionExamDoc(uid);
+    final examDoc = await examRef.get();
+    if (!examDoc.exists || examDoc.data() == null) return;
+
+    final exam = PromotionExam.fromFirestore(examDoc.data()!);
+    await examRef.set(
+      exam
+          .copyWith(
+            status: PromotionExamStatus.failed,
+            resolvedAt: DateTime.now(),
+            syncSchemaVersion: syncSchemaVersion,
+            syncSource: 'debug',
+          )
+          .toFirestore(),
+      SetOptions(merge: true),
+    );
   }
 
   DocumentReference<Map<String, dynamic>> _progressionDoc(String uid) {
-    return _firestore.collection('users').doc(uid).collection('progression').doc('current');
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('progression')
+        .doc('current');
   }
 
   CollectionReference<Map<String, dynamic>> _historyCollection(String uid) {
-    return _firestore.collection('users').doc(uid).collection('progression_history');
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('progression_history');
   }
 
   DocumentReference<Map<String, dynamic>> _promotionExamDoc(String uid) {
-    return _firestore.collection('users').doc(uid).collection('promotion_exam').doc('current');
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('promotion_exam')
+        .doc('current');
   }
 
-  String _fingerprintFor(CompetitiveRankSnapshot snapshot) {
+  PromotionExam? _resolveExamAfterSnapshot({
+    required CompetitiveRankSnapshot snapshot,
+    required PromotionExam? currentExam,
+    DateTime? now,
+  }) {
+    if (currentExam == null) return null;
+    if (currentExam.status != PromotionExamStatus.inProgress) {
+      return currentExam.copyWith(
+        syncSchemaVersion: syncSchemaVersion,
+        syncSource: currentExam.syncSource,
+      );
+    }
+
+    final currentTime = now ?? DateTime.now();
+    if (snapshot.weekKey != currentExam.sourceWeekKey ||
+        currentTime.isAfter(currentExam.expiresAt)) {
+      return currentExam.copyWith(
+        status: PromotionExamStatus.failed,
+        resolvedAt: currentTime,
+        syncSchemaVersion: syncSchemaVersion,
+        syncSource: 'client',
+      );
+    }
+
+    final passed =
+        snapshot.activeDays >= currentExam.targetActiveDays &&
+        (!currentExam.bossRequired || snapshot.bossCompleted);
+    if (!passed) {
+      return currentExam.copyWith(
+        syncSchemaVersion: syncSchemaVersion,
+        syncSource: currentExam.syncSource,
+      );
+    }
+
+    return currentExam.copyWith(
+      status: PromotionExamStatus.passed,
+      resolvedAt: currentTime,
+      syncSchemaVersion: syncSchemaVersion,
+      syncSource: 'client',
+    );
+  }
+
+  bool _shouldSkipRemoteWrite({
+    required CompetitiveRankSnapshot? currentSnapshot,
+    required CompetitiveRankSnapshot nextSnapshot,
+    required PromotionExam? currentExam,
+    required PromotionExam? nextExam,
+  }) {
+    if (currentSnapshot == null) return false;
+
+    final snapshotUnchanged =
+        _logicalSnapshotFingerprint(currentSnapshot) ==
+        _logicalSnapshotFingerprint(nextSnapshot);
+    final examUnchanged = switch ((currentExam, nextExam)) {
+      (null, null) => true,
+      (final examA?, final examB?) =>
+        _logicalExamFingerprint(examA) == _logicalExamFingerprint(examB),
+      _ => false,
+    };
+    return snapshotUnchanged && examUnchanged;
+  }
+
+  String _fingerprintFor(
+    CompetitiveRankSnapshot snapshot, {
+    PromotionExam? nextExam,
+  }) {
+    return [
+      _logicalSnapshotFingerprint(snapshot),
+      nextExam?.status.name ?? 'no_exam',
+      nextExam?.targetRank ?? '',
+      nextExam?.syncSource ?? '',
+    ].join('|');
+  }
+
+  String _logicalSnapshotFingerprint(CompetitiveRankSnapshot snapshot) {
     return [
       snapshot.currentRank,
       snapshot.weekKey,
@@ -318,6 +479,24 @@ class RankProgressionRepository {
       snapshot.demotionStrikes,
       snapshot.promotionReady,
       snapshot.promotionTargetRank ?? '',
+      snapshot.eventType.name,
+      snapshot.syncSource,
+      snapshot.syncSchemaVersion,
+    ].join('|');
+  }
+
+  String _logicalExamFingerprint(PromotionExam exam) {
+    return [
+      exam.sourceRank,
+      exam.targetRank,
+      exam.sourceWeekKey,
+      exam.status.name,
+      exam.baselineActiveDays,
+      exam.requiredExtraActiveDays,
+      exam.bossRequired,
+      exam.syncSchemaVersion,
+      exam.syncSource,
+      exam.resolvedAt?.millisecondsSinceEpoch ?? 0,
     ].join('|');
   }
 }

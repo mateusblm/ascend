@@ -1,4 +1,3 @@
-import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';

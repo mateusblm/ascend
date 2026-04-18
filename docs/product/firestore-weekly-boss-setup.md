@@ -153,3 +153,30 @@ Depois desta base, a proxima etapa e:
 - exibir ranking real
 - validar elegibilidade no backend usando fonte remota (ex: perfil em Firestore)
 - adicionar Cloud Scheduler para rotacao automatica de boss semanal
+
+## Progresso competitivo remoto
+
+O app tambem passou a usar colecoes remotas para o sistema competitivo de rank:
+
+- `users/{uid}/progression/current`
+- `users/{uid}/progression_history/{weekKey}`
+- `users/{uid}/promotion_exam/current`
+
+Esses documentos agora carregam metadata de sync:
+
+- `syncSchemaVersion`
+- `syncSource`
+
+Isso ajuda a manter a escrita cliente consistente enquanto a camada autoritativa de backend ainda esta sendo preparada.
+
+### Backend preparado
+
+O projeto agora possui tambem a callable:
+
+- `upsertCompetitiveProgression`
+
+Ela ainda e preparatoria para a migracao futura para Blaze/backend autoritativo, mas ja deixa pronto o contrato server-side de:
+
+- snapshot competitivo atual
+- historico semanal
+- estado do exame de promocao

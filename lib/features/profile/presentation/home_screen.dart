@@ -3,6 +3,9 @@ import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/rank_prestige.dart';
+import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
@@ -21,6 +24,10 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
     final competitiveRank = ref.watch(competitiveRankProvider);
+    final rankSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
+    final rankHistory = ref.watch(rankProgressionHistoryProvider).valueOrNull ?? const <CompetitiveRankSnapshot>[];
+    final prestige = buildRankPrestigeSummary(rankHistory);
+    final season = buildCurrentSeasonSummary(rankHistory);
     final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final topCompletions = ref.watch(weeklyBossTopCompletionsProvider);
@@ -43,6 +50,8 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
                   _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
                   const SizedBox(height: 24),
+                  _buildCompetitivePulse(rankSnapshot, prestige, season),
+                  const SizedBox(height: 20),
                   _buildStreakPanel(player),
                   const SizedBox(height: 20),
                   _buildWeeklyBossPanel(
@@ -307,6 +316,78 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCompetitivePulse(
+    CompetitiveRankSnapshot? snapshot,
+    RankPrestigeSummary prestige,
+    RankSeasonSummary season,
+  ) {
+    final status = snapshot?.status ?? RankMaintenanceStatus.secure;
+    final accentColor = switch (status) {
+      RankMaintenanceStatus.secure => Colors.greenAccent,
+      RankMaintenanceStatus.warning => Colors.orangeAccent,
+      RankMaintenanceStatus.critical => Colors.redAccent,
+      RankMaintenanceStatus.promotionReady => AppColors.neonBlue,
+      RankMaintenanceStatus.demoted => Colors.redAccent,
+    };
+
+    final headline = switch (snapshot?.eventType) {
+      CompetitiveRankEventType.promotionConfirmed => 'PROMOCAO REGISTRADA',
+      CompetitiveRankEventType.promotionUnlocked => 'EXAME DISPONIVEL',
+      CompetitiveRankEventType.demotionApplied => 'QUEDA DE RANK',
+      CompetitiveRankEventType.perfectWeek => 'SEMANA PERFEITA',
+      CompetitiveRankEventType.warning => 'RANK EM ALERTA',
+      _ => 'STATUS COMPETITIVO',
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentColor.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  headline,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ),
+              Text(
+                prestige.prestigeLabel,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            snapshot?.summary ?? 'Seu estado competitivo esta sincronizando.',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Temporada ${season.seasonLabel} | manutencao ${prestige.maintenanceRate}% | pico ${season.peakRank}',
+            style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.4),
+          ),
+        ],
+      ),
     );
   }
 

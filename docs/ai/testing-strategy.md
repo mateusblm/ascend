@@ -25,6 +25,9 @@ These rules should have automated coverage first:
 - add quest flow
 - delete quest flow
 - level-up feedback flow
+- competitive rank sync metadata
+- promotion exam transitions
+- season summary and rank arena reads
 
 ### Tier 3: Nice To Have
 
@@ -69,6 +72,13 @@ Start with:
 3. daily reset unit tests
 4. login widget test
 5. quests screen widget test
+
+Current competitive additions to protect:
+
+6. rank maintenance and demotion unit tests
+7. promotion exam serialization and status transitions
+8. season reward/readiness summaries
+9. remote boss arena pressure/read model
 
 ## AI Test Rules
 

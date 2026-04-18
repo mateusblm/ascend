@@ -56,6 +56,7 @@ The product should retain users through:
 
 The strongest market differentiators for Ascend are:
 - RPG identity with meaningful progression, not just badges
+- competitive rank pressure with real maintenance and demotion
 - goal-oriented journeys instead of isolated habits
 - emotional attachment to a persistent character
 - strong visual feedback on growth
@@ -71,6 +72,8 @@ The strongest market differentiators for Ascend are:
 ### 2. Progression
 - level, rank, titles, classes, talents, achievements
 - make growth feel earned and cumulative
+- rank should be maintained, not only unlocked
+- promotion should require proof, not passive accumulation
 
 ### 3. Guidance
 - help users decide what to do next
@@ -101,3 +104,4 @@ Paid tier:
 - Do not add features that only increase surface area without strengthening the core loop.
 - Prefer depth over breadth.
 - Protect the feeling of real progress at all times.
+- Protect consequence: rank, exams, and seasonal standing should feel earned and reversible.

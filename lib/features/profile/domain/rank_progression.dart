@@ -10,6 +10,15 @@ enum RankMaintenanceStatus {
   demoted,
 }
 
+enum CompetitiveRankEventType {
+  routine,
+  warning,
+  perfectWeek,
+  promotionUnlocked,
+  promotionConfirmed,
+  demotionApplied,
+}
+
 class RankRule {
   const RankRule({
     required this.rank,
@@ -36,8 +45,11 @@ class CompetitiveRankSnapshot {
     required this.demotionStrikes,
     required this.promotionReady,
     required this.promotionTargetRank,
+    required this.eventType,
     required this.summary,
     required this.detail,
+    required this.syncSchemaVersion,
+    required this.syncSource,
     required this.updatedAt,
   });
 
@@ -51,11 +63,16 @@ class CompetitiveRankSnapshot {
   final int demotionStrikes;
   final bool promotionReady;
   final String? promotionTargetRank;
+  final CompetitiveRankEventType eventType;
   final String summary;
   final String detail;
+  final int syncSchemaVersion;
+  final String syncSource;
   final DateTime updatedAt;
 
-  bool get maintenanceMet => status == RankMaintenanceStatus.secure || status == RankMaintenanceStatus.promotionReady;
+  bool get maintenanceMet =>
+      status == RankMaintenanceStatus.secure ||
+      status == RankMaintenanceStatus.promotionReady;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -69,8 +86,11 @@ class CompetitiveRankSnapshot {
       'demotionStrikes': demotionStrikes,
       'promotionReady': promotionReady,
       'promotionTargetRank': promotionTargetRank,
+      'eventType': eventType.name,
       'summary': summary,
       'detail': detail,
+      'syncSchemaVersion': syncSchemaVersion,
+      'syncSource': syncSource,
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
@@ -90,9 +110,55 @@ class CompetitiveRankSnapshot {
       demotionStrikes: data['demotionStrikes'] as int? ?? 0,
       promotionReady: data['promotionReady'] as bool? ?? false,
       promotionTargetRank: data['promotionTargetRank'] as String?,
+      eventType: CompetitiveRankEventType.values.firstWhere(
+        (value) => value.name == data['eventType'],
+        orElse: () => CompetitiveRankEventType.routine,
+      ),
       summary: data['summary'] as String? ?? '',
       detail: data['detail'] as String? ?? '',
+      syncSchemaVersion: (data['syncSchemaVersion'] as num?)?.toInt() ?? 1,
+      syncSource: (data['syncSource'] as String? ?? 'client')
+          .trim()
+          .toLowerCase(),
       updatedAt: _readTimestamp(data['updatedAt']),
+    );
+  }
+
+  CompetitiveRankSnapshot copyWith({
+    String? currentRank,
+    String? weekKey,
+    int? activeDays,
+    int? requiredActiveDays,
+    bool? requiresBossClear,
+    bool? bossCompleted,
+    RankMaintenanceStatus? status,
+    int? demotionStrikes,
+    bool? promotionReady,
+    String? promotionTargetRank,
+    CompetitiveRankEventType? eventType,
+    String? summary,
+    String? detail,
+    int? syncSchemaVersion,
+    String? syncSource,
+    DateTime? updatedAt,
+  }) {
+    return CompetitiveRankSnapshot(
+      currentRank: currentRank ?? this.currentRank,
+      weekKey: weekKey ?? this.weekKey,
+      activeDays: activeDays ?? this.activeDays,
+      requiredActiveDays: requiredActiveDays ?? this.requiredActiveDays,
+      requiresBossClear: requiresBossClear ?? this.requiresBossClear,
+      bossCompleted: bossCompleted ?? this.bossCompleted,
+      status: status ?? this.status,
+      demotionStrikes: demotionStrikes ?? this.demotionStrikes,
+      promotionReady: promotionReady ?? this.promotionReady,
+      promotionTargetRank: promotionTargetRank ?? this.promotionTargetRank,
+      eventType: eventType ?? this.eventType,
+      summary: summary ?? this.summary,
+      detail: detail ?? this.detail,
+      syncSchemaVersion: syncSchemaVersion ?? this.syncSchemaVersion,
+      syncSource: syncSource ?? this.syncSource,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -104,14 +170,17 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
 }) {
   final currentDate = now ?? DateTime.now();
   final weekKey = _weekKeyFor(currentDate);
-  final seedRank = previousSnapshot?.currentRank ?? playerRankForLevel(player.level);
+  final seedRank =
+      previousSnapshot?.currentRank ?? playerRankForLevel(player.level);
   final baseRule = rankRuleFor(seedRank);
   final boss = weeklyBossForRank(seedRank);
   final bossCompleted = boss.isCompleted(player);
   final activeDays = boss.progressFor(player);
-  final maintenanceMet = activeDays >= baseRule.requiredActiveDays &&
+  final maintenanceMet =
+      activeDays >= baseRule.requiredActiveDays &&
       (!baseRule.requiresBossClear || bossCompleted);
-  final isNewWeek = previousSnapshot == null || previousSnapshot.weekKey != weekKey;
+  final isNewWeek =
+      previousSnapshot == null || previousSnapshot.weekKey != weekKey;
 
   var currentRank = seedRank;
   var demotionStrikes = previousSnapshot?.demotionStrikes ?? 0;
@@ -136,7 +205,8 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final currentBoss = weeklyBossForRank(currentRank);
   final currentBossCompleted = currentBoss.isCompleted(player);
   final currentActiveDays = currentBoss.progressFor(player);
-  final currentMaintenanceMet = currentActiveDays >= currentRule.requiredActiveDays &&
+  final currentMaintenanceMet =
+      currentActiveDays >= currentRule.requiredActiveDays &&
       (!currentRule.requiresBossClear || currentBossCompleted);
 
   if (status != RankMaintenanceStatus.demoted) {
@@ -150,8 +220,10 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
     } else if (currentMaintenanceMet) {
       status = RankMaintenanceStatus.secure;
     } else {
-      final missingDays = (currentRule.requiredActiveDays - currentActiveDays).clamp(0, currentRule.requiredActiveDays);
-      final bossBlocked = currentRule.requiresBossClear && !currentBossCompleted;
+      final missingDays = (currentRule.requiredActiveDays - currentActiveDays)
+          .clamp(0, currentRule.requiredActiveDays);
+      final bossBlocked =
+          currentRule.requiresBossClear && !currentBossCompleted;
       status = missingDays <= 1 && !bossBlocked
           ? RankMaintenanceStatus.warning
           : RankMaintenanceStatus.critical;
@@ -167,6 +239,12 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
     demotionStrikes: demotionStrikes,
     nextRank: nextRank,
   );
+  final eventType = _eventTypeForSnapshot(
+    status: status,
+    activeDays: currentActiveDays,
+    requiredActiveDays: currentRule.requiredActiveDays,
+    bossCompleted: currentBossCompleted,
+  );
 
   return CompetitiveRankSnapshot(
     currentRank: currentRank,
@@ -179,51 +257,76 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
     demotionStrikes: demotionStrikes,
     promotionReady: status == RankMaintenanceStatus.promotionReady,
     promotionTargetRank: nextRank,
+    eventType: eventType,
     summary: _summaryForStatus(status, currentRank),
     detail: detail,
+    syncSchemaVersion: 1,
+    syncSource: 'client',
     updatedAt: currentDate,
   );
+}
+
+CompetitiveRankEventType _eventTypeForSnapshot({
+  required RankMaintenanceStatus status,
+  required int activeDays,
+  required int requiredActiveDays,
+  required bool bossCompleted,
+}) {
+  if (status == RankMaintenanceStatus.demoted) {
+    return CompetitiveRankEventType.demotionApplied;
+  }
+  if (status == RankMaintenanceStatus.promotionReady) {
+    return CompetitiveRankEventType.promotionUnlocked;
+  }
+  if (status == RankMaintenanceStatus.warning ||
+      status == RankMaintenanceStatus.critical) {
+    return CompetitiveRankEventType.warning;
+  }
+  if (activeDays >= requiredActiveDays + 1 && bossCompleted) {
+    return CompetitiveRankEventType.perfectWeek;
+  }
+  return CompetitiveRankEventType.routine;
 }
 
 RankRule rankRuleFor(String rank) {
   final normalizedRank = rank.trim().toUpperCase();
   return switch (normalizedRank) {
     'E' => const RankRule(
-        rank: 'E',
-        requiredActiveDays: 3,
-        requiresBossClear: false,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'E',
+      requiredActiveDays: 3,
+      requiresBossClear: false,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
     'D' => const RankRule(
-        rank: 'D',
-        requiredActiveDays: 4,
-        requiresBossClear: false,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'D',
+      requiredActiveDays: 4,
+      requiresBossClear: false,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
     'C' => const RankRule(
-        rank: 'C',
-        requiredActiveDays: 5,
-        requiresBossClear: true,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'C',
+      requiredActiveDays: 5,
+      requiresBossClear: true,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
     'B' => const RankRule(
-        rank: 'B',
-        requiredActiveDays: 5,
-        requiresBossClear: true,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'B',
+      requiredActiveDays: 5,
+      requiresBossClear: true,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
     'A' => const RankRule(
-        rank: 'A',
-        requiredActiveDays: 6,
-        requiresBossClear: true,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'A',
+      requiredActiveDays: 6,
+      requiresBossClear: true,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
     _ => const RankRule(
-        rank: 'S',
-        requiredActiveDays: 6,
-        requiresBossClear: true,
-        maxFailedWeeksBeforeDemotion: 2,
-      ),
+      rank: 'S',
+      requiredActiveDays: 6,
+      requiresBossClear: true,
+      maxFailedWeeksBeforeDemotion: 2,
+    ),
   };
 }
 
@@ -267,8 +370,10 @@ String _summaryForStatus(RankMaintenanceStatus status, String currentRank) {
     RankMaintenanceStatus.secure => 'Rank $currentRank estabilizado.',
     RankMaintenanceStatus.warning => 'Rank $currentRank em alerta.',
     RankMaintenanceStatus.critical => 'Rank $currentRank em risco real.',
-    RankMaintenanceStatus.promotionReady => 'Exame de promocao pronto para o rank ${rankAfter(currentRank) ?? currentRank}.',
-    RankMaintenanceStatus.demoted => 'Queda confirmada para o rank $currentRank.',
+    RankMaintenanceStatus.promotionReady =>
+      'Exame de promocao pronto para o rank ${rankAfter(currentRank) ?? currentRank}.',
+    RankMaintenanceStatus.demoted =>
+      'Queda confirmada para o rank $currentRank.',
   };
 }
 
@@ -282,7 +387,9 @@ String _detailForStatus({
   required String? nextRank,
 }) {
   final bossLine = currentRule.requiresBossClear
-      ? (bossCompleted ? 'Boss semanal concluido.' : 'Boss semanal ainda pendente.')
+      ? (bossCompleted
+            ? 'Boss semanal concluido.'
+            : 'Boss semanal ainda pendente.')
       : 'Boss semanal nao e exigido neste rank.';
 
   return switch (status) {

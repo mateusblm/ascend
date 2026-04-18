@@ -10,7 +10,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((ref) {
+final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((
+  ref,
+) {
   return RankProgressionRepository(
     FirebaseFirestore.instance,
     FirebaseAuth.instance,
@@ -19,15 +21,17 @@ final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((r
 
 final debugRankSyncPausedProvider = StateProvider<bool>((ref) => false);
 
-final rankProgressionSnapshotProvider = StreamProvider.autoDispose<CompetitiveRankSnapshot?>((ref) {
-  final repository = ref.watch(rankProgressionRepositoryProvider);
-  return repository.watchCurrentSnapshot();
-});
+final rankProgressionSnapshotProvider =
+    StreamProvider.autoDispose<CompetitiveRankSnapshot?>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchCurrentSnapshot();
+    });
 
-final rankProgressionHistoryProvider = StreamProvider.autoDispose<List<CompetitiveRankSnapshot>>((ref) {
-  final repository = ref.watch(rankProgressionRepositoryProvider);
-  return repository.watchRecentHistory();
-});
+final rankProgressionHistoryProvider =
+    StreamProvider.autoDispose<List<CompetitiveRankSnapshot>>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchRecentHistory();
+    });
 
 final promotionExamProvider = StreamProvider.autoDispose<PromotionExam?>((ref) {
   final repository = ref.watch(rankProgressionRepositoryProvider);
@@ -49,13 +53,12 @@ final rankProgressionSyncProvider = Provider<void>((ref) {
   final repository = ref.watch(rankProgressionRepositoryProvider);
   unawaited(
     (() async {
-      final snapshot = await repository.syncSnapshot(player);
-      if (snapshot != null) {
-        await repository.syncPromotionExam(snapshot);
-      }
+      await repository.syncCompetitiveState(player);
     })().catchError((error, stackTrace) {
       if (kDebugMode) {
-        debugPrint('[RankProgression] Falha ao sincronizar snapshot remoto: $error');
+        debugPrint(
+          '[RankProgression] Falha ao sincronizar snapshot remoto: $error',
+        );
       }
     }),
   );

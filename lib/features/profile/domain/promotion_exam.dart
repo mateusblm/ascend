@@ -1,11 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum PromotionExamStatus {
-  inProgress,
-  passed,
-  failed,
-  promoted,
-}
+enum PromotionExamStatus { inProgress, passed, failed, promoted }
 
 class PromotionExam {
   const PromotionExam({
@@ -18,6 +13,8 @@ class PromotionExam {
     required this.bossRequired,
     required this.startedAt,
     required this.expiresAt,
+    required this.syncSchemaVersion,
+    required this.syncSource,
     this.resolvedAt,
   });
 
@@ -30,6 +27,8 @@ class PromotionExam {
   final bool bossRequired;
   final DateTime startedAt;
   final DateTime expiresAt;
+  final int syncSchemaVersion;
+  final String syncSource;
   final DateTime? resolvedAt;
 
   int get targetActiveDays => baselineActiveDays + requiredExtraActiveDays;
@@ -45,6 +44,8 @@ class PromotionExam {
       'bossRequired': bossRequired,
       'startedAt': Timestamp.fromDate(startedAt),
       'expiresAt': Timestamp.fromDate(expiresAt),
+      'syncSchemaVersion': syncSchemaVersion,
+      'syncSource': syncSource,
       'resolvedAt': resolvedAt == null ? null : Timestamp.fromDate(resolvedAt!),
     };
   }
@@ -63,13 +64,21 @@ class PromotionExam {
       bossRequired: data['bossRequired'] as bool? ?? false,
       startedAt: _readTimestamp(data['startedAt']),
       expiresAt: _readTimestamp(data['expiresAt']),
-      resolvedAt: data['resolvedAt'] == null ? null : _readTimestamp(data['resolvedAt']),
+      syncSchemaVersion: (data['syncSchemaVersion'] as num?)?.toInt() ?? 1,
+      syncSource: (data['syncSource'] as String? ?? 'client')
+          .trim()
+          .toLowerCase(),
+      resolvedAt: data['resolvedAt'] == null
+          ? null
+          : _readTimestamp(data['resolvedAt']),
     );
   }
 
   PromotionExam copyWith({
     PromotionExamStatus? status,
     DateTime? resolvedAt,
+    int? syncSchemaVersion,
+    String? syncSource,
   }) {
     return PromotionExam(
       sourceRank: sourceRank,
@@ -81,6 +90,8 @@ class PromotionExam {
       bossRequired: bossRequired,
       startedAt: startedAt,
       expiresAt: expiresAt,
+      syncSchemaVersion: syncSchemaVersion ?? this.syncSchemaVersion,
+      syncSource: syncSource ?? this.syncSource,
       resolvedAt: resolvedAt ?? this.resolvedAt,
     );
   }

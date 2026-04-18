@@ -86,8 +86,27 @@ Success criteria:
 
 The current implementation priority should be:
 
-1. codebase stability and guardrails
-2. tests for core progression logic
-3. streaks and history
-4. onboarding and journey setup
-5. deeper progression systems
+1. competitive rank loop stabilization
+2. tests for rank, exam, demotion, and weekly boss logic
+3. home/rank/stats polish around progression identity
+4. leaderboard and season depth
+5. guided growth and AI planner integration
+
+## Current Competitive Track
+
+The current active product track is the competitive RPG layer:
+
+- rank maintenance and demotion
+- promotion exam flow
+- weekly rank history
+- seasonal rank summary
+- prestige and reputation signals
+- rank arena event read-model
+- sync metadata for remote competitive state
+
+Near-term follow-up deliverables:
+
+- stronger boss leaderboard and rank arena feel
+- backend-authoritative competitive rules
+- seasonal reset and season rewards
+- widget/integration coverage for competitive UI flows

@@ -13,6 +13,109 @@ service cloud.firestore {
       return rank in ['E', 'D', 'C', 'B', 'A', 'S'];
     }
 
+    function isValidSyncSource(source) {
+      return source in ['client', 'debug', 'backend'];
+    }
+
+    function isValidRankStatus(status) {
+      return status in ['secure', 'warning', 'critical', 'promotionReady', 'demoted'];
+    }
+
+    function isValidRankEventType(eventType) {
+      return eventType in [
+        'routine',
+        'warning',
+        'perfectWeek',
+        'promotionUnlocked',
+        'promotionConfirmed',
+        'demotionApplied'
+      ];
+    }
+
+    function isValidExamStatus(status) {
+      return status in ['inProgress', 'passed', 'failed', 'promoted'];
+    }
+
+    function validProgressionSnapshot(docId, shouldMatchDocId) {
+      return request.resource.data.keys().hasOnly([
+            'currentRank',
+            'weekKey',
+            'activeDays',
+            'requiredActiveDays',
+            'requiresBossClear',
+            'bossCompleted',
+            'status',
+            'demotionStrikes',
+            'promotionReady',
+            'promotionTargetRank',
+            'eventType',
+            'summary',
+            'detail',
+            'syncSchemaVersion',
+            'syncSource',
+            'updatedAt'
+          ]) &&
+          isValidRank(request.resource.data.currentRank) &&
+          request.resource.data.weekKey is string &&
+          (!shouldMatchDocId || request.resource.data.weekKey == docId) &&
+          request.resource.data.activeDays is int &&
+          request.resource.data.activeDays >= 0 &&
+          request.resource.data.requiredActiveDays is int &&
+          request.resource.data.requiredActiveDays >= 0 &&
+          request.resource.data.requiresBossClear is bool &&
+          request.resource.data.bossCompleted is bool &&
+          isValidRankStatus(request.resource.data.status) &&
+          request.resource.data.demotionStrikes is int &&
+          request.resource.data.demotionStrikes >= 0 &&
+          request.resource.data.promotionReady is bool &&
+          (request.resource.data.promotionTargetRank == null ||
+              isValidRank(request.resource.data.promotionTargetRank)) &&
+          isValidRankEventType(request.resource.data.eventType) &&
+          request.resource.data.summary is string &&
+          request.resource.data.summary.size() <= 240 &&
+          request.resource.data.detail is string &&
+          request.resource.data.detail.size() <= 500 &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 2 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          request.resource.data.updatedAt is timestamp;
+    }
+
+    function validPromotionExam(docId) {
+      return docId == 'current' &&
+          request.resource.data.keys().hasOnly([
+            'sourceRank',
+            'targetRank',
+            'sourceWeekKey',
+            'status',
+            'baselineActiveDays',
+            'requiredExtraActiveDays',
+            'bossRequired',
+            'startedAt',
+            'expiresAt',
+            'syncSchemaVersion',
+            'syncSource',
+            'resolvedAt'
+          ]) &&
+          isValidRank(request.resource.data.sourceRank) &&
+          isValidRank(request.resource.data.targetRank) &&
+          request.resource.data.sourceWeekKey is string &&
+          isValidExamStatus(request.resource.data.status) &&
+          request.resource.data.baselineActiveDays is int &&
+          request.resource.data.baselineActiveDays >= 0 &&
+          request.resource.data.requiredExtraActiveDays is int &&
+          request.resource.data.requiredExtraActiveDays >= 0 &&
+          request.resource.data.bossRequired is bool &&
+          request.resource.data.startedAt is timestamp &&
+          request.resource.data.expiresAt is timestamp &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 2 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          (request.resource.data.resolvedAt == null || request.resource.data.resolvedAt is timestamp);
+    }
+
     function validCompletionPayload(userId) {
       return request.resource.data.keys().hasOnly([
             'uid',
@@ -63,19 +166,26 @@ service cloud.firestore {
 
       match /progression/{docId} {
         allow read: if isSignedIn() && request.auth.uid == userId;
-        allow create, update: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            docId == 'current' &&
+            validProgressionSnapshot(docId, false);
         allow delete: if false;
       }
 
       match /progression_history/{docId} {
         allow read: if isSignedIn() && request.auth.uid == userId;
-        allow create, update: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validProgressionSnapshot(docId, true);
         allow delete: if false;
       }
 
       match /promotion_exam/{docId} {
         allow read: if isSignedIn() && request.auth.uid == userId;
-        allow create, update: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validPromotionExam(docId);
         allow delete: if false;
       }
     }

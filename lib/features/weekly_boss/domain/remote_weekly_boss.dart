@@ -31,10 +31,11 @@ class RemoteWeeklyBoss {
 
   factory RemoteWeeklyBoss.fromFirestore(DocumentSnapshot<Map<String, dynamic>> document) {
     final data = document.data() ?? <String, dynamic>{};
+    final rawRank = (data['rank'] as String?) ?? 'E';
 
     return RemoteWeeklyBoss(
       id: document.id,
-      rank: (data['rank'] as String?) ?? 'E',
+      rank: rawRank.trim().toUpperCase(),
       isActive: (data['isActive'] as bool?) ?? false,
       title: (data['title'] as String?) ?? 'Boss semanal',
       description: (data['description'] as String?) ?? 'Evento semanal ativo.',

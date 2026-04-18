@@ -16,14 +16,18 @@ final remoteWeeklyBossProvider = StreamProvider.autoDispose<RemoteWeeklyBoss?>((
   final rank = playerRankForLevel(player.level);
   final repository = ref.watch(weeklyBossRepositoryProvider);
   return repository.watchActiveBossForRank(rank).map((boss) {
-    debugPrint(
-      boss == null
-          ? '[WeeklyBoss] Nenhum boss remoto ativo para rank $rank.'
-          : '[WeeklyBoss] Boss remoto carregado para rank $rank: ${boss.id}',
-    );
+    if (kDebugMode) {
+      debugPrint(
+        boss == null
+            ? '[WeeklyBoss] Nenhum boss remoto ativo para rank $rank.'
+            : '[WeeklyBoss] Boss remoto carregado para rank $rank: ${boss.id}',
+      );
+    }
     return boss;
   }).handleError((error, stackTrace) {
-    debugPrint('[WeeklyBoss] Erro ao carregar boss remoto para rank $rank: $error');
+    if (kDebugMode) {
+      debugPrint('[WeeklyBoss] Erro ao carregar boss remoto para rank $rank: $error');
+    }
   });
 });
 

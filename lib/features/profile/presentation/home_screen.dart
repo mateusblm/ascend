@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
@@ -200,39 +201,61 @@ class HomeScreen extends ConsumerWidget {
     WeeklyBossDefinition weeklyBoss,
     String rank,
   ) async {
-    final claimed = ref.read(playerProvider.notifier).claimWeeklyBossReward(weeklyBoss);
-    if (!claimed) {
+    if (authState is! AuthSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Faca login para registrar e resgatar o boss semanal.')),
+      );
+      return;
+    }
+
+    if (remoteBoss == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nenhum boss remoto ativo para resgate no momento.')),
+      );
+      return;
+    }
+
+    if (!weeklyBoss.isCompleted(ref.read(playerProvider)) ||
+        weeklyBoss.isClaimedThisWeek(ref.read(playerProvider))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('O boss semanal ainda nao esta pronto para resgate.')),
       );
       return;
     }
 
-    var message = 'Boss semanal derrotado. Recompensa aplicada ao sistema.';
+    try {
+      final repository = ref.read(weeklyBossRepositoryProvider);
+      final remoteResult = await repository.claimWeeklyBoss(
+        bossId: remoteBoss.id,
+        displayName: authState.displayName,
+        photoUrl: authState.photoUrl,
+        rankAtCompletion: rank,
+      );
 
-    if (remoteBoss != null && authState is AuthSuccess) {
-      try {
-        final repository = ref.read(weeklyBossRepositoryProvider);
-        final submitted = await repository.submitCompletion(
-          bossId: remoteBoss.id,
-          uid: authState.uid,
-          displayName: authState.displayName,
-          photoUrl: authState.photoUrl,
-          rankAtCompletion: rank,
+      if (remoteResult == ClaimWeeklyBossRemoteResult.alreadyCompleted) {
+        ref.read(playerProvider.notifier).markWeeklyBossClaimedNow();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seu clear remoto ja estava registrado nesta semana.')),
         );
-        if (submitted) {
-          message = 'Boss semanal derrotado. Clear remoto registrado no ranking.';
-        } else {
-          message = 'Boss semanal derrotado. Seu clear remoto ja estava registrado.';
-        }
-      } catch (_) {
-        message = 'Boss semanal derrotado localmente, mas houve falha ao registrar online.';
+        return;
       }
-    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+      final applied = ref.read(playerProvider.notifier).claimWeeklyBossReward(weeklyBoss);
+      if (!applied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clear remoto registrado, mas recompensa local ja estava aplicada.')),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Boss semanal derrotado. Recompensa e ranking sincronizados.')),
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Falha ao registrar clear remoto. Tente novamente em instantes.')),
+      );
+    }
   }
 
   Widget _buildStatBar(String label, double progress, Color color, String trailing) {

@@ -221,4 +221,9 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
     return true;
   }
+
+  void markWeeklyBossClaimedNow() {
+    state = state.copyWith(weeklyBossLastClaimedAt: DateTime.now());
+    _saveToDb();
+  }
 }

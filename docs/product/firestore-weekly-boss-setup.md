@@ -20,19 +20,20 @@ O repositorio agora possui:
 
 - `firestore.rules`
 - `firebase.json`
+- `functions/` com callable `claimWeeklyBoss`
 
 As regras atuais permitem:
 
 - leitura publica dos documentos de `weekly_bosses`
 - leitura publica do ranking inicial em `completions`
-- criacao de uma conclusao apenas pelo proprio usuario autenticado
-- incremento de `completedCount` somente quando a mesma transacao cria a conclusao do usuario
+- escrita segura pelo app (transacao create completion + update completedCount)
+- escrita pelo backend (Cloud Functions com Admin SDK), quando disponivel
 
 As regras atuais bloqueiam:
 
 - alteracao arbitraria do boss semanal pelo app
 - edicao ou exclusao de conclusoes
-- duplicidade de clear para o mesmo usuario no mesmo boss
+- update de contadores fora da transacao valida
 
 ### Publicar regras
 
@@ -50,6 +51,46 @@ Opcao 2, pelo Firebase Console:
 - va em `Rules`
 - cole o conteudo de `firestore.rules`
 - clique em `Publish`
+
+## Backend (Cloud Functions)
+
+O app agora chama a callable `claimWeeklyBoss` para registrar clear remoto.
+Se a callable nao estiver deployada (ex: projeto sem Blaze), o app usa fallback automatico para transacao cliente com as rules atuais.
+
+### Estrutura criada
+
+- `functions/package.json`
+- `functions/tsconfig.json`
+- `functions/src/index.ts`
+
+### Deploy da callable
+
+No terminal, na raiz do projeto:
+
+```powershell
+cd functions
+npm install
+npm run build
+cd ..
+firebase deploy --only functions --project ascend-b7c20
+```
+
+> Observacao: Cloud Functions exige plano Blaze. Sem Blaze, mantenha apenas as rules publicadas e use o fallback cliente ja implementado no app.
+
+### O que a callable valida
+
+- usuario autenticado
+- `bossId` existente
+- `isActive == true`
+- janela ativa (`startsAt <= agora < endsAt`)
+- rank enviado bate com rank do boss (quando enviado)
+- idempotencia por usuario (nao cria clear duplicado)
+
+### O que a callable grava
+
+- `weekly_bosses/{bossId}/completions/{uid}`
+- incrementa `completedCount`
+- incrementa `participantCount`
 
 ## Colecao inicial
 
@@ -85,23 +126,23 @@ Sugestao de id:
 
 O app busca:
 
-- `rank == rank do jogador`
-- `isActive == true`
-- `limit(1)`
+- leitura de `weekly_bosses` (limitado) e filtro local por rank normalizado (`trim + uppercase`)
+- filtro local `isActive == true`
+- filtro local de janela ativa por data (`startsAt <= agora < endsAt`)
+- `limit(50)` com selecao do primeiro boss valido
 
 Isso significa que:
 
 - para cada rank, deve existir no maximo um boss ativo por vez
 - `isActive` deve estar `true` no boss atual
-- `startsAt` e `endsAt` podem continuar existindo como metadado do evento
+- `startsAt` e `endsAt` devem estar corretos, pois fazem parte da validacao ativa
 
 ## O que o app ja faz
 
 - calcula o progresso localmente pelos dias ativos da semana
 - usa Firestore para ler o boss remoto do rank
 - mostra `completedCount` e `participantCount` quando existir boss remoto
-- registra o clear remoto em `weekly_bosses/{bossId}/completions/{uid}` quando o boss e resgatado
-- incrementa `completedCount` no documento do boss
+- registra clear remoto pela callable `claimWeeklyBoss`
 - mostra um ranking inicial com os primeiros clears sincronizados
 - o boss global agora deve ser controlado pelo Firestore. Sem boss remoto ativo, a UI mostra que nao ha evento no momento.
 
@@ -109,6 +150,6 @@ Isso significa que:
 
 Depois desta base, a proxima etapa e:
 
-- usar timestamp do servidor
 - exibir ranking real
-- adicionar validacao mais forte e, depois, Cloud Functions
+- validar elegibilidade no backend usando fonte remota (ex: perfil em Firestore)
+- adicionar Cloud Scheduler para rotacao automatica de boss semanal

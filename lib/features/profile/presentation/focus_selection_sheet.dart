@@ -5,15 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class FocusSelectionSheet extends ConsumerStatefulWidget {
-  const FocusSelectionSheet({
-    super.key,
-    required this.currentFocus,
-  });
+  const FocusSelectionSheet({super.key, required this.currentFocus});
 
   final AwakeningPath currentFocus;
 
   @override
-  ConsumerState<FocusSelectionSheet> createState() => _FocusSelectionSheetState();
+  ConsumerState<FocusSelectionSheet> createState() =>
+      _FocusSelectionSheetState();
 }
 
 class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
@@ -38,7 +36,11 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
         children: [
           const Text(
             'ALTERAR FOCO',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -57,7 +59,9 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.neonBlue.withOpacity(0.1) : Colors.white.withOpacity(0.03),
+                    color: isSelected
+                        ? AppColors.neonBlue.withValues(alpha: 0.1)
+                        : Colors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isSelected ? AppColors.neonBlue : Colors.white10,
@@ -72,7 +76,9 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
                             Text(
                               focus.label,
                               style: TextStyle(
-                                color: isSelected ? AppColors.neonBlue : Colors.white,
+                                color: isSelected
+                                    ? AppColors.neonBlue
+                                    : Colors.white,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,
                               ),
@@ -80,14 +86,20 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
                             const SizedBox(height: 4),
                             Text(
                               focus.description,
-                              style: const TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 11,
+                                height: 1.4,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 12),
                       Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
                         color: isSelected ? AppColors.neonBlue : Colors.white24,
                       ),
                     ],
@@ -108,7 +120,10 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
               onPressed: _applyFocusChange,
               child: const Text(
                 'CONFIRMAR FOCO',
-                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
           ),

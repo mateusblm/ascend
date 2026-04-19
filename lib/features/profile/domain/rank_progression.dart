@@ -10,11 +10,14 @@ enum RankMaintenanceStatus {
   demoted,
 }
 
+enum RankAdvancementMode { ascension, reconquest }
+
 enum CompetitiveRankEventType {
   routine,
   warning,
   perfectWeek,
   promotionUnlocked,
+  reconquestUnlocked,
   promotionConfirmed,
   demotionApplied,
 }
@@ -22,12 +25,14 @@ enum CompetitiveRankEventType {
 class RankRule {
   const RankRule({
     required this.rank,
+    required this.minimumLevel,
     required this.requiredActiveDays,
     required this.requiresBossClear,
     required this.maxFailedWeeksBeforeDemotion,
   });
 
   final String rank;
+  final int minimumLevel;
   final int requiredActiveDays;
   final bool requiresBossClear;
   final int maxFailedWeeksBeforeDemotion;
@@ -36,6 +41,8 @@ class RankRule {
 class CompetitiveRankSnapshot {
   const CompetitiveRankSnapshot({
     required this.currentRank,
+    this.peakRank = 'E',
+    this.highestEligibleRank = 'E',
     required this.weekKey,
     required this.activeDays,
     required this.requiredActiveDays,
@@ -45,6 +52,9 @@ class CompetitiveRankSnapshot {
     required this.demotionStrikes,
     required this.promotionReady,
     required this.promotionTargetRank,
+    this.targetRequiredLevel = 1,
+    this.targetLevelGateMet = true,
+    this.advancementMode,
     required this.eventType,
     required this.summary,
     required this.detail,
@@ -54,6 +64,8 @@ class CompetitiveRankSnapshot {
   });
 
   final String currentRank;
+  final String peakRank;
+  final String highestEligibleRank;
   final String weekKey;
   final int activeDays;
   final int requiredActiveDays;
@@ -63,6 +75,9 @@ class CompetitiveRankSnapshot {
   final int demotionStrikes;
   final bool promotionReady;
   final String? promotionTargetRank;
+  final int targetRequiredLevel;
+  final bool targetLevelGateMet;
+  final RankAdvancementMode? advancementMode;
   final CompetitiveRankEventType eventType;
   final String summary;
   final String detail;
@@ -74,9 +89,13 @@ class CompetitiveRankSnapshot {
       status == RankMaintenanceStatus.secure ||
       status == RankMaintenanceStatus.promotionReady;
 
+  bool get isReconquest => advancementMode == RankAdvancementMode.reconquest;
+
   Map<String, dynamic> toFirestore() {
     return {
       'currentRank': currentRank,
+      'peakRank': peakRank,
+      'highestEligibleRank': highestEligibleRank,
       'weekKey': weekKey,
       'activeDays': activeDays,
       'requiredActiveDays': requiredActiveDays,
@@ -86,6 +105,9 @@ class CompetitiveRankSnapshot {
       'demotionStrikes': demotionStrikes,
       'promotionReady': promotionReady,
       'promotionTargetRank': promotionTargetRank,
+      'targetRequiredLevel': targetRequiredLevel,
+      'targetLevelGateMet': targetLevelGateMet,
+      'advancementMode': advancementMode?.name,
       'eventType': eventType.name,
       'summary': summary,
       'detail': detail,
@@ -98,6 +120,15 @@ class CompetitiveRankSnapshot {
   factory CompetitiveRankSnapshot.fromFirestore(Map<String, dynamic> data) {
     return CompetitiveRankSnapshot(
       currentRank: (data['currentRank'] as String? ?? 'E').trim().toUpperCase(),
+      peakRank: (data['peakRank'] as String? ?? data['currentRank'] as String? ?? 'E')
+          .trim()
+          .toUpperCase(),
+      highestEligibleRank:
+          (data['highestEligibleRank'] as String? ??
+                  data['currentRank'] as String? ??
+                  'E')
+              .trim()
+              .toUpperCase(),
       weekKey: data['weekKey'] as String? ?? '',
       activeDays: data['activeDays'] as int? ?? 0,
       requiredActiveDays: data['requiredActiveDays'] as int? ?? 3,
@@ -110,6 +141,14 @@ class CompetitiveRankSnapshot {
       demotionStrikes: data['demotionStrikes'] as int? ?? 0,
       promotionReady: data['promotionReady'] as bool? ?? false,
       promotionTargetRank: data['promotionTargetRank'] as String?,
+      targetRequiredLevel: (data['targetRequiredLevel'] as num?)?.toInt() ?? 1,
+      targetLevelGateMet: data['targetLevelGateMet'] as bool? ?? true,
+      advancementMode: data['advancementMode'] == null
+          ? null
+          : RankAdvancementMode.values.firstWhere(
+              (value) => value.name == data['advancementMode'],
+              orElse: () => RankAdvancementMode.ascension,
+            ),
       eventType: CompetitiveRankEventType.values.firstWhere(
         (value) => value.name == data['eventType'],
         orElse: () => CompetitiveRankEventType.routine,
@@ -126,6 +165,8 @@ class CompetitiveRankSnapshot {
 
   CompetitiveRankSnapshot copyWith({
     String? currentRank,
+    String? peakRank,
+    String? highestEligibleRank,
     String? weekKey,
     int? activeDays,
     int? requiredActiveDays,
@@ -135,6 +176,9 @@ class CompetitiveRankSnapshot {
     int? demotionStrikes,
     bool? promotionReady,
     String? promotionTargetRank,
+    int? targetRequiredLevel,
+    bool? targetLevelGateMet,
+    RankAdvancementMode? advancementMode,
     CompetitiveRankEventType? eventType,
     String? summary,
     String? detail,
@@ -144,6 +188,8 @@ class CompetitiveRankSnapshot {
   }) {
     return CompetitiveRankSnapshot(
       currentRank: currentRank ?? this.currentRank,
+      peakRank: peakRank ?? this.peakRank,
+      highestEligibleRank: highestEligibleRank ?? this.highestEligibleRank,
       weekKey: weekKey ?? this.weekKey,
       activeDays: activeDays ?? this.activeDays,
       requiredActiveDays: requiredActiveDays ?? this.requiredActiveDays,
@@ -153,6 +199,9 @@ class CompetitiveRankSnapshot {
       demotionStrikes: demotionStrikes ?? this.demotionStrikes,
       promotionReady: promotionReady ?? this.promotionReady,
       promotionTargetRank: promotionTargetRank ?? this.promotionTargetRank,
+      targetRequiredLevel: targetRequiredLevel ?? this.targetRequiredLevel,
+      targetLevelGateMet: targetLevelGateMet ?? this.targetLevelGateMet,
+      advancementMode: advancementMode ?? this.advancementMode,
       eventType: eventType ?? this.eventType,
       summary: summary ?? this.summary,
       detail: detail ?? this.detail,
@@ -170,8 +219,12 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
 }) {
   final currentDate = now ?? DateTime.now();
   final weekKey = _weekKeyFor(currentDate);
+  final highestEligibleRank = playerRankForLevel(player.level);
   final seedRank =
       previousSnapshot?.currentRank ?? playerRankForLevel(player.level);
+  final previousPeakRank =
+      previousSnapshot?.peakRank ?? previousSnapshot?.currentRank ?? seedRank;
+  final peakRank = _higherRank(previousPeakRank, seedRank);
   final baseRule = rankRuleFor(seedRank);
   final boss = weeklyBossForRank(seedRank);
   final bossCompleted = boss.isCompleted(player);
@@ -202,18 +255,30 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
 
   final currentRule = rankRuleFor(currentRank);
   final nextRank = rankAfter(currentRank);
+  final nextRule = nextRank == null ? null : rankRuleFor(nextRank);
   final currentBoss = weeklyBossForRank(currentRank);
   final currentBossCompleted = currentBoss.isCompleted(player);
   final currentActiveDays = currentBoss.progressFor(player);
   final currentMaintenanceMet =
       currentActiveDays >= currentRule.requiredActiveDays &&
       (!currentRule.requiresBossClear || currentBossCompleted);
+  final nextBoss = nextRank == null ? null : weeklyBossForRank(nextRank);
+  final nextBossCompleted = nextBoss?.isCompleted(player) ?? false;
+  final targetRequiredLevel = nextRule?.minimumLevel ?? player.level;
+  final targetLevelGateMet =
+      nextRule == null ? true : player.level >= nextRule.minimumLevel;
+  final advancementMode = nextRank == null
+      ? null
+      : (_rankOrder(nextRank) <= _rankOrder(peakRank)
+            ? RankAdvancementMode.reconquest
+            : RankAdvancementMode.ascension);
 
   if (status != RankMaintenanceStatus.demoted) {
     final promotionReady = _isPromotionReady(
       currentRank: currentRank,
       activeDays: currentActiveDays,
-      bossCompleted: currentBossCompleted,
+      bossCompleted: nextBossCompleted,
+      playerLevel: player.level,
     );
     if (promotionReady) {
       status = RankMaintenanceStatus.promotionReady;
@@ -233,21 +298,29 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final detail = _detailForStatus(
     status: status,
     currentRank: currentRank,
+    peakRank: peakRank,
+    highestEligibleRank: highestEligibleRank,
     currentRule: currentRule,
     activeDays: currentActiveDays,
     bossCompleted: currentBossCompleted,
     demotionStrikes: demotionStrikes,
     nextRank: nextRank,
+    targetRequiredLevel: targetRequiredLevel,
+    targetLevelGateMet: targetLevelGateMet,
+    advancementMode: advancementMode,
   );
   final eventType = _eventTypeForSnapshot(
     status: status,
     activeDays: currentActiveDays,
     requiredActiveDays: currentRule.requiredActiveDays,
     bossCompleted: currentBossCompleted,
+    advancementMode: advancementMode,
   );
 
   return CompetitiveRankSnapshot(
     currentRank: currentRank,
+    peakRank: peakRank,
+    highestEligibleRank: highestEligibleRank,
     weekKey: weekKey,
     activeDays: currentActiveDays,
     requiredActiveDays: currentRule.requiredActiveDays,
@@ -257,8 +330,16 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
     demotionStrikes: demotionStrikes,
     promotionReady: status == RankMaintenanceStatus.promotionReady,
     promotionTargetRank: nextRank,
+    targetRequiredLevel: targetRequiredLevel,
+    targetLevelGateMet: targetLevelGateMet,
+    advancementMode: advancementMode,
     eventType: eventType,
-    summary: _summaryForStatus(status, currentRank),
+    summary: _summaryForStatus(
+      status,
+      currentRank,
+      nextRank: nextRank,
+      advancementMode: advancementMode,
+    ),
     detail: detail,
     syncSchemaVersion: 1,
     syncSource: 'client',
@@ -271,12 +352,15 @@ CompetitiveRankEventType _eventTypeForSnapshot({
   required int activeDays,
   required int requiredActiveDays,
   required bool bossCompleted,
+  required RankAdvancementMode? advancementMode,
 }) {
   if (status == RankMaintenanceStatus.demoted) {
     return CompetitiveRankEventType.demotionApplied;
   }
   if (status == RankMaintenanceStatus.promotionReady) {
-    return CompetitiveRankEventType.promotionUnlocked;
+    return advancementMode == RankAdvancementMode.reconquest
+        ? CompetitiveRankEventType.reconquestUnlocked
+        : CompetitiveRankEventType.promotionUnlocked;
   }
   if (status == RankMaintenanceStatus.warning ||
       status == RankMaintenanceStatus.critical) {
@@ -293,36 +377,42 @@ RankRule rankRuleFor(String rank) {
   return switch (normalizedRank) {
     'E' => const RankRule(
       rank: 'E',
+      minimumLevel: 1,
       requiredActiveDays: 3,
       requiresBossClear: false,
       maxFailedWeeksBeforeDemotion: 2,
     ),
     'D' => const RankRule(
       rank: 'D',
+      minimumLevel: 5,
       requiredActiveDays: 4,
       requiresBossClear: false,
       maxFailedWeeksBeforeDemotion: 2,
     ),
     'C' => const RankRule(
       rank: 'C',
+      minimumLevel: 10,
       requiredActiveDays: 5,
       requiresBossClear: true,
       maxFailedWeeksBeforeDemotion: 2,
     ),
     'B' => const RankRule(
       rank: 'B',
+      minimumLevel: 20,
       requiredActiveDays: 5,
       requiresBossClear: true,
       maxFailedWeeksBeforeDemotion: 2,
     ),
     'A' => const RankRule(
       rank: 'A',
+      minimumLevel: 30,
       requiredActiveDays: 6,
       requiresBossClear: true,
       maxFailedWeeksBeforeDemotion: 2,
     ),
     _ => const RankRule(
       rank: 'S',
+      minimumLevel: 40,
       requiredActiveDays: 6,
       requiresBossClear: true,
       maxFailedWeeksBeforeDemotion: 2,
@@ -356,22 +446,32 @@ bool _isPromotionReady({
   required String currentRank,
   required int activeDays,
   required bool bossCompleted,
+  required int playerLevel,
 }) {
   final nextRank = rankAfter(currentRank);
   if (nextRank == null) return false;
 
   final nextRule = rankRuleFor(nextRank);
-  return activeDays >= nextRule.requiredActiveDays &&
+  final levelGateMet = playerLevel >= nextRule.minimumLevel;
+  return levelGateMet &&
+      activeDays >= nextRule.requiredActiveDays &&
       (!nextRule.requiresBossClear || bossCompleted);
 }
 
-String _summaryForStatus(RankMaintenanceStatus status, String currentRank) {
+String _summaryForStatus(
+  RankMaintenanceStatus status,
+  String currentRank, {
+  required String? nextRank,
+  required RankAdvancementMode? advancementMode,
+}) {
   return switch (status) {
     RankMaintenanceStatus.secure => 'Rank $currentRank estabilizado.',
     RankMaintenanceStatus.warning => 'Rank $currentRank em alerta.',
     RankMaintenanceStatus.critical => 'Rank $currentRank em risco real.',
     RankMaintenanceStatus.promotionReady =>
-      'Exame de promocao pronto para o rank ${rankAfter(currentRank) ?? currentRank}.',
+      advancementMode == RankAdvancementMode.reconquest
+          ? 'Reconquista pronta para o rank ${nextRank ?? currentRank}.'
+          : 'Exame de promocao pronto para o rank ${nextRank ?? currentRank}.',
     RankMaintenanceStatus.demoted =>
       'Queda confirmada para o rank $currentRank.',
   };
@@ -380,29 +480,59 @@ String _summaryForStatus(RankMaintenanceStatus status, String currentRank) {
 String _detailForStatus({
   required RankMaintenanceStatus status,
   required String currentRank,
+  required String peakRank,
+  required String highestEligibleRank,
   required RankRule currentRule,
   required int activeDays,
   required bool bossCompleted,
   required int demotionStrikes,
   required String? nextRank,
+  required int targetRequiredLevel,
+  required bool targetLevelGateMet,
+  required RankAdvancementMode? advancementMode,
 }) {
   final bossLine = currentRule.requiresBossClear
       ? (bossCompleted
             ? 'Boss semanal concluido.'
             : 'Boss semanal ainda pendente.')
       : 'Boss semanal nao e exigido neste rank.';
+  final levelLine = nextRank == null
+      ? 'Voce ja esta no topo do sistema.'
+      : targetLevelGateMet
+          ? 'Seu level ja libera a tentativa do rank $nextRank.'
+          : 'Seu level atual ainda nao libera o rank $nextRank. Necessario: level $targetRequiredLevel.';
+  final reconquestLine = _rankOrder(currentRank) < _rankOrder(peakRank)
+      ? 'Seu pico historico e $peakRank. O sistema abriu uma rota de reconquista acelerada.'
+      : 'Seu teto atual por level chega ate o rank $highestEligibleRank.';
 
   return switch (status) {
     RankMaintenanceStatus.secure =>
-      'Voce garantiu $activeDays/${currentRule.requiredActiveDays} dias ativos. $bossLine',
+      'Voce garantiu $activeDays/${currentRule.requiredActiveDays} dias ativos. $bossLine $reconquestLine $levelLine',
     RankMaintenanceStatus.warning =>
-      'Voce tem $activeDays/${currentRule.requiredActiveDays} dias ativos. Falhar esta semana deixa o sistema em pressao real.',
+      'Voce tem $activeDays/${currentRule.requiredActiveDays} dias ativos. Falhar esta semana deixa o sistema em pressao real. $levelLine',
     RankMaintenanceStatus.critical =>
       'Voce esta abaixo da manutencao do rank $currentRank. Strikes atuais: $demotionStrikes. $bossLine',
     RankMaintenanceStatus.promotionReady =>
-      'Voce atingiu o padrao do proximo rank${nextRank == null ? '' : ' $nextRank'}. Agora falta transformar isso em exame de promocao.',
+      advancementMode == RankAdvancementMode.reconquest
+          ? 'Voce sustentou o padrao para reconquistar o rank ${nextRank ?? currentRank}. O exame agora valida a retomada do seu pico historico.'
+          : 'Voce atingiu o padrao do proximo rank${nextRank == null ? '' : ' $nextRank'}. Agora falta transformar isso em exame de promocao.',
     RankMaintenanceStatus.demoted =>
-      'A manutencao falhou por semanas seguidas. O sistema aplicou queda de rank para preservar a seriedade da progressao.',
+      'A manutencao falhou por semanas seguidas. O sistema aplicou queda de rank para preservar a seriedade da progressao. Seu pico historico continua registrado em $peakRank.',
+  };
+}
+
+String _higherRank(String rankA, String rankB) {
+  return _rankOrder(rankA) >= _rankOrder(rankB) ? rankA : rankB;
+}
+
+int _rankOrder(String rank) {
+  return switch (rank.trim().toUpperCase()) {
+    'E' => 0,
+    'D' => 1,
+    'C' => 2,
+    'B' => 3,
+    'A' => 4,
+    _ => 5,
   };
 }
 

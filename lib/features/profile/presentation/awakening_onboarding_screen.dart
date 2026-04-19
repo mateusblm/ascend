@@ -9,10 +9,12 @@ class AwakeningOnboardingScreen extends ConsumerStatefulWidget {
   const AwakeningOnboardingScreen({super.key});
 
   @override
-  ConsumerState<AwakeningOnboardingScreen> createState() => _AwakeningOnboardingScreenState();
+  ConsumerState<AwakeningOnboardingScreen> createState() =>
+      _AwakeningOnboardingScreenState();
 }
 
-class _AwakeningOnboardingScreenState extends ConsumerState<AwakeningOnboardingScreen> {
+class _AwakeningOnboardingScreenState
+    extends ConsumerState<AwakeningOnboardingScreen> {
   AwakeningPath _selectedFocus = AwakeningPath.discipline;
 
   @override
@@ -58,10 +60,14 @@ class _AwakeningOnboardingScreenState extends ConsumerState<AwakeningOnboardingS
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.neonBlue.withOpacity(0.12) : Colors.white.withOpacity(0.03),
+                          color: selected
+                              ? AppColors.neonBlue.withValues(alpha: 0.12)
+                              : Colors.white.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: selected ? AppColors.neonBlue : Colors.white10,
+                            color: selected
+                                ? AppColors.neonBlue
+                                : Colors.white10,
                             width: selected ? 1.4 : 1,
                           ),
                         ),
@@ -77,13 +83,19 @@ class _AwakeningOnboardingScreenState extends ConsumerState<AwakeningOnboardingS
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.5,
-                                      color: selected ? AppColors.neonBlue : Colors.white,
+                                      color: selected
+                                          ? AppColors.neonBlue
+                                          : Colors.white,
                                     ),
                                   ),
                                 ),
                                 Icon(
-                                  selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                  color: selected ? AppColors.neonBlue : Colors.white24,
+                                  selected
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
+                                  color: selected
+                                      ? AppColors.neonBlue
+                                      : Colors.white24,
                                 ),
                               ],
                             ),
@@ -115,7 +127,10 @@ class _AwakeningOnboardingScreenState extends ConsumerState<AwakeningOnboardingS
                   onPressed: _completeOnboarding,
                   child: const Text(
                     'INICIAR JORNADA',
-                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.4),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.4,
+                    ),
                   ),
                 ),
               ),

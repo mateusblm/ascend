@@ -1,6 +1,9 @@
 import 'package:ascend/features/profile/data/rank_progression_repository.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
+import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
+import 'package:ascend/features/profile/domain/season_reward_snapshot.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,7 +18,6 @@ final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((
     FirebaseAuth.instance,
   );
 });
-
 
 final rankProgressionSnapshotProvider =
     StreamProvider.autoDispose<CompetitiveRankSnapshot?>((ref) {
@@ -34,12 +36,35 @@ final promotionExamProvider = StreamProvider.autoDispose<PromotionExam?>((ref) {
   return repository.watchCurrentPromotionExam();
 });
 
+final currentSeasonRewardProvider =
+    StreamProvider.autoDispose<SeasonRewardSnapshot?>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchCurrentSeasonReward();
+    });
+
+final seasonRewardHistoryProvider =
+    StreamProvider.autoDispose<List<SeasonRewardSnapshot>>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchSeasonRewardHistory();
+    });
+
+final seasonLegacyHistoryProvider =
+    StreamProvider.autoDispose<List<SeasonLegacyReward>>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchSeasonLegacyHistory();
+    });
+
+final seasonProfileProvider =
+    StreamProvider.autoDispose<SeasonProfileSnapshot?>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchSeasonProfile();
+    });
+
 final competitiveRankProvider = Provider<String>((ref) {
   final player = ref.watch(playerProvider);
   final remoteSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
   return remoteSnapshot?.currentRank ?? playerRankForLevel(player.level);
 });
 
-// O sync competitivo agora é gerenciado por um listener com debounce
-// em MainNavigationScreen, evitando side-effects durante avaliação de providers.
-
+// O sync competitivo agora e gerenciado por um listener com debounce
+// em MainNavigationScreen, evitando side-effects durante avaliacao de providers.

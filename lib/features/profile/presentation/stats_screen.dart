@@ -151,7 +151,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               InfoTooltipIcon(
                 title: 'Resumo do perfil',
                 message:
-                    'Esta tela junta seus atributos, progresso de XP, rank e leitura semanal em um formato curto. Os detalhes longos ficam escondidos por baixo do ícone de ajuda.',
+                    'Esta tela junta seus atributos, progresso de XP, rank e leitura semanal em um formato curto. Os detalhes longos ficam escondidos por baixo do icone de ajuda.',
               ),
             ],
           ),
@@ -197,7 +197,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Rank $currentRank • Lv ${player.level}',
+                        'Rank $currentRank - Lv ${player.level}',
                         style: const TextStyle(
                           color: Colors.white60,
                           fontSize: 12.5,
@@ -264,12 +264,18 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               title: 'Exame',
               text: switch (promotionExam.status) {
                 PromotionExamStatus.inProgress =>
-                  'Meta: ${promotionExam.targetActiveDays} dias ativos.',
+                  promotionExam.mode == PromotionExamMode.reconquest
+                      ? 'Reconquista em curso: meta de ${promotionExam.targetActiveDays} dias ativos.'
+                      : 'Meta: ${promotionExam.targetActiveDays} dias ativos.',
                 PromotionExamStatus.passed =>
-                  'Exame concluído e pronto para promoção.',
+                  promotionExam.mode == PromotionExamMode.reconquest
+                      ? 'Exame concluido e pronto para reconquista.'
+                      : 'Exame concluido e pronto para promocao.',
                 PromotionExamStatus.failed =>
-                  'Exame expirado ou não sustentado.',
-                PromotionExamStatus.promoted => 'Promoção já registrada.',
+                  'Exame expirado ou nao sustentado.',
+                PromotionExamStatus.promoted => promotionExam.mode == PromotionExamMode.reconquest
+                    ? 'Reconquista ja registrada.'
+                    : 'Promocao ja registrada.',
               },
               accent: AppColors.neonBlue,
             ),
@@ -323,7 +329,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '⚡ PROGRESSO GERAL',
+                'PROGRESSO GERAL',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -342,7 +348,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'XP diário e evolução geral.',
+                'XP diario e evolucao geral.',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12.5,
@@ -353,7 +359,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      label: 'FORÇA',
+                      label: 'FORCA',
                       value: attrs.strength.toString(),
                       accent: Colors.amberAccent,
                     ),
@@ -361,7 +367,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _MetricCard(
-                      label: 'INTELIGÊNCIA',
+                      label: 'INTELIGENCIA',
                       value: attrs.intelligence.toString(),
                       accent: AppColors.neonBlue,
                     ),
@@ -397,7 +403,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '🛡️ BOSS SEMANAL',
+                'BOSS SEMANAL',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -416,7 +422,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               const SizedBox(height: 6),
               Text(
                 weeklyBoss?.description ??
-                    'A arena ainda não abriu para o seu rank.',
+                    'A arena ainda nao abriu para o seu rank.',
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 12.5,
@@ -437,8 +443,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 weeklyBoss == null
                     ? 'Sem recompensa carregada no momento.'
                     : weeklyBossClaimed
-                    ? 'Recompensa da semana já coletada.'
-                    : '${weeklyBossProgress}/${weeklyBoss.targetActiveDays} dias ativos para liberar ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} ponto(s).',
+                    ? 'Recompensa da semana ja coletada.'
+                    : '$weeklyBossProgress/${weeklyBoss.targetActiveDays} dias ativos para liberar ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} ponto(s).',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12.5,
@@ -475,7 +481,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      '📈 ATRIBUTOS',
+                      'ATRIBUTOS',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -487,13 +493,13 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   InfoTooltipIcon(
                     title: 'Atributos',
                     message:
-                        'Os atributos crescem com pontos livres. Cada ponto melhora uma frente do perfil: força, inteligência, vitalidade e agilidade.',
+                        'Os atributos crescem com pontos livres. Cada ponto melhora uma frente do perfil: forca, inteligencia, vitalidade e agilidade.',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _AttributeRow(
-                label: 'FORÇA',
+                label: 'FORCA',
                 value: attrs.strength,
                 accent: Colors.amberAccent,
                 canUpgrade: player.statPoints > 0,
@@ -502,7 +508,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     .upgradeAttribute(AttributeType.strength),
               ),
               _AttributeRow(
-                label: 'INTELIGÊNCIA',
+                label: 'INTELIGENCIA',
                 value: attrs.intelligence,
                 accent: AppColors.neonBlue,
                 canUpgrade: player.statPoints > 0,
@@ -531,7 +537,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               const SizedBox(height: 12),
               Text(
                 player.statPoints > 0
-                    ? 'Você tem ${player.statPoints} ponto(s) para gastar.'
+                    ? 'Voce tem ${player.statPoints} ponto(s) para gastar.'
                     : 'Nenhum ponto livre no momento.',
                 style: TextStyle(
                   color: player.statPoints > 0
@@ -567,7 +573,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      '🧭 SEMANA ATUAL',
+                      'SEMANA ATUAL',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -579,7 +585,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   InfoTooltipIcon(
                     title: 'Leitura semanal',
                     message:
-                        'Esse bloco mostra como a sua semana está indo, em linguagem curta. A explicação completa de cada indicador fica escondida no botão de ajuda.',
+                        'Esse bloco mostra como a sua semana esta indo, em linguagem curta. A explicacao completa de cada indicador fica escondida no botao de ajuda.',
                   ),
                 ],
               ),
@@ -642,7 +648,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '📚 HISTÓRICO RECENTE',
+                'HISTORICO RECENTE',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -653,7 +659,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               const SizedBox(height: 10),
               if (rankHistory.isEmpty)
                 const Text(
-                  'Ainda não há semanas registradas.',
+                  'Ainda nao ha semanas registradas.',
                   style: TextStyle(color: Colors.white60, fontSize: 12.5),
                 )
               else
@@ -663,9 +669,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       (entry) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: _MiniNote(
-                          title: '${entry.weekKey} • ${entry.currentRank}',
+                          title: '${entry.weekKey} - ${entry.currentRank}',
                           text:
-                              '${entry.activeDays}/${entry.requiredActiveDays} dias • ${entry.summary}',
+                              '${entry.activeDays}/${entry.requiredActiveDays} dias - ${entry.summary}',
                           accent: AppColors.neonBlue,
                         ),
                       ),
@@ -695,7 +701,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      '🗺️ PLANO DA PRÓXIMA SEMANA',
+                      'PLANO DA PROXIMA SEMANA',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -705,9 +711,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     ),
                   ),
                   InfoTooltipIcon(
-                    title: 'Próxima semana',
+                    title: 'Proxima semana',
                     message:
-                        'O plano organiza as prioridades mais úteis para a semana seguinte. É um resumo direto do que vale fazer para manter o rank estável.',
+                        'O plano organiza as prioridades mais uteis para a semana seguinte. E um resumo direto do que vale fazer para manter o rank estavel.',
                   ),
                 ],
               ),

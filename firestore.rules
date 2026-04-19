@@ -27,6 +27,7 @@ service cloud.firestore {
         'warning',
         'perfectWeek',
         'promotionUnlocked',
+        'reconquestUnlocked',
         'promotionConfirmed',
         'demotionApplied'
       ];
@@ -36,9 +37,19 @@ service cloud.firestore {
       return status in ['inProgress', 'passed', 'failed', 'promoted'];
     }
 
+    function isValidExamMode(mode) {
+      return mode in ['ascension', 'reconquest'];
+    }
+
+    function isValidSeasonRewardClaimStatus(status) {
+      return status in ['locked', 'readyToClaim', 'claimed'];
+    }
+
     function validProgressionSnapshot(docId, shouldMatchDocId) {
       return request.resource.data.keys().hasOnly([
             'currentRank',
+            'peakRank',
+            'highestEligibleRank',
             'weekKey',
             'activeDays',
             'requiredActiveDays',
@@ -48,6 +59,9 @@ service cloud.firestore {
             'demotionStrikes',
             'promotionReady',
             'promotionTargetRank',
+            'targetRequiredLevel',
+            'targetLevelGateMet',
+            'advancementMode',
             'eventType',
             'summary',
             'detail',
@@ -56,6 +70,8 @@ service cloud.firestore {
             'updatedAt'
           ]) &&
           isValidRank(request.resource.data.currentRank) &&
+          isValidRank(request.resource.data.peakRank) &&
+          isValidRank(request.resource.data.highestEligibleRank) &&
           request.resource.data.weekKey is string &&
           (!shouldMatchDocId || request.resource.data.weekKey == docId) &&
           request.resource.data.activeDays is int &&
@@ -70,6 +86,11 @@ service cloud.firestore {
           request.resource.data.promotionReady is bool &&
           (request.resource.data.promotionTargetRank == null ||
               isValidRank(request.resource.data.promotionTargetRank)) &&
+          request.resource.data.targetRequiredLevel is int &&
+          request.resource.data.targetRequiredLevel >= 1 &&
+          request.resource.data.targetLevelGateMet is bool &&
+          (request.resource.data.advancementMode == null ||
+              isValidExamMode(request.resource.data.advancementMode)) &&
           isValidRankEventType(request.resource.data.eventType) &&
           request.resource.data.summary is string &&
           request.resource.data.summary.size() <= 240 &&
@@ -77,7 +98,7 @@ service cloud.firestore {
           request.resource.data.detail.size() <= 500 &&
           request.resource.data.syncSchemaVersion is int &&
           request.resource.data.syncSchemaVersion >= 1 &&
-          request.resource.data.syncSchemaVersion <= 2 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
           isValidSyncSource(request.resource.data.syncSource) &&
           request.resource.data.updatedAt is timestamp;
     }
@@ -89,9 +110,11 @@ service cloud.firestore {
             'targetRank',
             'sourceWeekKey',
             'status',
+            'mode',
             'baselineActiveDays',
             'requiredExtraActiveDays',
             'bossRequired',
+            'requiredLevel',
             'startedAt',
             'expiresAt',
             'syncSchemaVersion',
@@ -102,18 +125,180 @@ service cloud.firestore {
           isValidRank(request.resource.data.targetRank) &&
           request.resource.data.sourceWeekKey is string &&
           isValidExamStatus(request.resource.data.status) &&
+          isValidExamMode(request.resource.data.mode) &&
           request.resource.data.baselineActiveDays is int &&
           request.resource.data.baselineActiveDays >= 0 &&
           request.resource.data.requiredExtraActiveDays is int &&
           request.resource.data.requiredExtraActiveDays >= 0 &&
           request.resource.data.bossRequired is bool &&
+          request.resource.data.requiredLevel is int &&
+          request.resource.data.requiredLevel >= 1 &&
           request.resource.data.startedAt is timestamp &&
           request.resource.data.expiresAt is timestamp &&
           request.resource.data.syncSchemaVersion is int &&
           request.resource.data.syncSchemaVersion >= 1 &&
-          request.resource.data.syncSchemaVersion <= 2 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
           isValidSyncSource(request.resource.data.syncSource) &&
           (request.resource.data.resolvedAt == null || request.resource.data.resolvedAt is timestamp);
+    }
+
+    function validSeasonReward(docId, shouldMatchDocId) {
+      return request.resource.data.keys().hasOnly([
+            'seasonKey',
+            'seasonLabel',
+            'currentRankBracket',
+            'rewardTierLabel',
+            'rewardStatusLabel',
+            'rewardUnlocked',
+            'rewardName',
+            'rewardBadgeLabel',
+            'rewardTitleLabel',
+            'rewardBonusLabel',
+            'recordedWeeks',
+            'secureWeeks',
+            'seasonScore',
+            'scoreBandLabel',
+            'clearRateLabel',
+            'playerStandingLabel',
+            'spotlightLabel',
+            'resetLabel',
+            'claimStatus',
+            'syncSchemaVersion',
+            'syncSource',
+            'updatedAt',
+            'claimedAt'
+          ]) &&
+          request.resource.data.seasonKey is string &&
+          (!shouldMatchDocId || request.resource.data.seasonKey == docId) &&
+          request.resource.data.seasonLabel is string &&
+          request.resource.data.seasonLabel.size() <= 24 &&
+          isValidRank(request.resource.data.currentRankBracket) &&
+          request.resource.data.rewardTierLabel is string &&
+          request.resource.data.rewardTierLabel.size() <= 32 &&
+          request.resource.data.rewardStatusLabel is string &&
+          request.resource.data.rewardStatusLabel.size() <= 32 &&
+          request.resource.data.rewardUnlocked is bool &&
+          request.resource.data.rewardName is string &&
+          request.resource.data.rewardName.size() <= 80 &&
+          request.resource.data.rewardBadgeLabel is string &&
+          request.resource.data.rewardBadgeLabel.size() <= 40 &&
+          request.resource.data.rewardTitleLabel is string &&
+          request.resource.data.rewardTitleLabel.size() <= 60 &&
+          request.resource.data.rewardBonusLabel is string &&
+          request.resource.data.rewardBonusLabel.size() <= 240 &&
+          request.resource.data.recordedWeeks is int &&
+          request.resource.data.recordedWeeks >= 0 &&
+          request.resource.data.secureWeeks is int &&
+          request.resource.data.secureWeeks >= 0 &&
+          request.resource.data.seasonScore is int &&
+          request.resource.data.scoreBandLabel is string &&
+          request.resource.data.scoreBandLabel.size() <= 24 &&
+          request.resource.data.clearRateLabel is string &&
+          request.resource.data.clearRateLabel.size() <= 64 &&
+          request.resource.data.playerStandingLabel is string &&
+          request.resource.data.playerStandingLabel.size() <= 64 &&
+          request.resource.data.spotlightLabel is string &&
+          request.resource.data.spotlightLabel.size() <= 240 &&
+          request.resource.data.resetLabel is string &&
+          request.resource.data.resetLabel.size() <= 40 &&
+          isValidSeasonRewardClaimStatus(request.resource.data.claimStatus) &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          request.resource.data.updatedAt is timestamp &&
+          (request.resource.data.claimedAt == null || request.resource.data.claimedAt is timestamp);
+    }
+
+    function validSeasonLegacy(docId, shouldMatchDocId) {
+      return request.resource.data.keys().hasOnly([
+            'seasonKey',
+            'seasonLabel',
+            'claimedRankBracket',
+            'rewardTierLabel',
+            'rewardName',
+            'rewardBadgeLabel',
+            'rewardTitleLabel',
+            'rewardBonusLabel',
+            'scoreBandLabel',
+            'seasonScore',
+            'playerStandingLabel',
+            'spotlightLabel',
+            'cosmeticFrameLabel',
+            'cosmeticAuraLabel',
+            'claimedAt',
+            'syncSchemaVersion',
+            'syncSource',
+            'updatedAt'
+          ]) &&
+          request.resource.data.seasonKey is string &&
+          (!shouldMatchDocId || request.resource.data.seasonKey == docId) &&
+          request.resource.data.seasonLabel is string &&
+          request.resource.data.seasonLabel.size() <= 24 &&
+          isValidRank(request.resource.data.claimedRankBracket) &&
+          request.resource.data.rewardTierLabel is string &&
+          request.resource.data.rewardTierLabel.size() <= 32 &&
+          request.resource.data.rewardName is string &&
+          request.resource.data.rewardName.size() <= 80 &&
+          request.resource.data.rewardBadgeLabel is string &&
+          request.resource.data.rewardBadgeLabel.size() <= 40 &&
+          request.resource.data.rewardTitleLabel is string &&
+          request.resource.data.rewardTitleLabel.size() <= 60 &&
+          request.resource.data.rewardBonusLabel is string &&
+          request.resource.data.rewardBonusLabel.size() <= 240 &&
+          request.resource.data.scoreBandLabel is string &&
+          request.resource.data.scoreBandLabel.size() <= 24 &&
+          request.resource.data.seasonScore is int &&
+          request.resource.data.playerStandingLabel is string &&
+          request.resource.data.playerStandingLabel.size() <= 64 &&
+          request.resource.data.spotlightLabel is string &&
+          request.resource.data.spotlightLabel.size() <= 240 &&
+          request.resource.data.cosmeticFrameLabel is string &&
+          request.resource.data.cosmeticFrameLabel.size() <= 40 &&
+          request.resource.data.cosmeticAuraLabel is string &&
+          request.resource.data.cosmeticAuraLabel.size() <= 40 &&
+          request.resource.data.claimedAt is timestamp &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          request.resource.data.updatedAt is timestamp;
+    }
+
+    function validSeasonProfile(docId) {
+      return docId == 'current' &&
+          request.resource.data.keys().hasOnly([
+            'activeSeasonKey',
+            'activeSeasonLabel',
+            'activeRewardName',
+            'activeBadgeLabel',
+            'activeTitleLabel',
+            'cosmeticFrameLabel',
+            'cosmeticAuraLabel',
+            'equippedAt',
+            'syncSchemaVersion',
+            'syncSource',
+            'updatedAt'
+          ]) &&
+          request.resource.data.activeSeasonKey is string &&
+          request.resource.data.activeSeasonLabel is string &&
+          request.resource.data.activeSeasonLabel.size() <= 24 &&
+          request.resource.data.activeRewardName is string &&
+          request.resource.data.activeRewardName.size() <= 80 &&
+          request.resource.data.activeBadgeLabel is string &&
+          request.resource.data.activeBadgeLabel.size() <= 40 &&
+          request.resource.data.activeTitleLabel is string &&
+          request.resource.data.activeTitleLabel.size() <= 60 &&
+          request.resource.data.cosmeticFrameLabel is string &&
+          request.resource.data.cosmeticFrameLabel.size() <= 40 &&
+          request.resource.data.cosmeticAuraLabel is string &&
+          request.resource.data.cosmeticAuraLabel.size() <= 40 &&
+          request.resource.data.equippedAt is timestamp &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          request.resource.data.updatedAt is timestamp;
     }
 
     function validCompletionPayload(userId) {
@@ -186,6 +371,39 @@ service cloud.firestore {
         allow create, update: if isSignedIn() &&
             request.auth.uid == userId &&
             validPromotionExam(docId);
+        allow delete: if false;
+      }
+
+      match /season_rewards/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            docId == 'current' &&
+            validSeasonReward(docId, false);
+        allow delete: if false;
+      }
+
+      match /season_reward_history/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validSeasonReward(docId, true);
+        allow delete: if false;
+      }
+
+      match /season_legacy/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validSeasonLegacy(docId, true);
+        allow delete: if false;
+      }
+
+      match /season_profile/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validSeasonProfile(docId);
         allow delete: if false;
       }
     }

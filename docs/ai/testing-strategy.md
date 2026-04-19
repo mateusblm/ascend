@@ -25,6 +25,7 @@ These rules should have automated coverage first:
 - add quest flow
 - delete quest flow
 - level-up feedback flow
+- home screen boss panel states
 - competitive rank sync metadata
 - promotion exam transitions
 - season summary and rank arena reads
@@ -79,6 +80,21 @@ Current competitive additions to protect:
 7. promotion exam serialization and status transitions
 8. season reward/readiness summaries
 9. remote boss arena pressure/read model
+10. rank screen widget rendering
+11. home screen widget states for active and idle online boss panels
+12. daily reset rule and streak maintenance
+13. weekly boss reward claim guard against duplicate weekly resgate
+14. promotion UI states for exam start and rank confirmation
+15. season leaderboard scoring and podium read-model
+16. season reward payload rendering in Rank UI
+17. season reward snapshot serialization and remote-safe schema
+18. season reward claim lifecycle (`locked`, `readyToClaim`, `claimed`)
+19. permanent season legacy/profile serialization
+20. home/rank UI states that surface active seasonal title and legacy archive
+21. hybrid rank progression rules:
+    - level gate for upward movement
+    - weekly maintenance for rank survival
+    - reconquest flow after falling below peak rank
 
 ## AI Test Rules
 

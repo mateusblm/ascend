@@ -24,8 +24,55 @@ void main() {
       expect(snapshot.eventType, CompetitiveRankEventType.routine);
     });
 
-    test('returns promotionReady when next rank requirement is reached', () {
+    test('returns promotionReady when next rank requirement is reached and level gate is met', () {
       final player = _buildPlayer(
+        level: 5,
+        activityHistory: [
+          DateTime(2026, 4, 14),
+          DateTime(2026, 4, 15),
+          DateTime(2026, 4, 16),
+          DateTime(2026, 4, 17),
+        ],
+        lastQuestCompletionDate: DateTime(2026, 4, 17),
+      );
+      final previousSnapshot = CompetitiveRankSnapshot(
+        currentRank: 'E',
+        peakRank: 'E',
+        highestEligibleRank: 'D',
+        weekKey: '2026W0407',
+        activeDays: 2,
+        requiredActiveDays: 3,
+        requiresBossClear: false,
+        bossCompleted: false,
+        status: RankMaintenanceStatus.warning,
+        demotionStrikes: 0,
+        promotionReady: false,
+        promotionTargetRank: 'D',
+        targetRequiredLevel: 5,
+        targetLevelGateMet: true,
+        advancementMode: RankAdvancementMode.ascension,
+        eventType: CompetitiveRankEventType.warning,
+        summary: 'placeholder',
+        detail: 'placeholder',
+        syncSchemaVersion: 3,
+        syncSource: 'client',
+        updatedAt: DateTime(2026, 4, 7),
+      );
+
+      final snapshot = evaluateCompetitiveRank(
+        player: player,
+        previousSnapshot: previousSnapshot,
+        now: DateTime(2026, 4, 17),
+      );
+
+      expect(snapshot.status, RankMaintenanceStatus.promotionReady);
+      expect(snapshot.promotionTargetRank, 'D');
+      expect(snapshot.eventType, CompetitiveRankEventType.promotionUnlocked);
+    });
+
+    test('stays secure when weekly target is met but next rank level gate is missing', () {
+      final player = _buildPlayer(
+        level: 1,
         activityHistory: [
           DateTime(2026, 4, 14),
           DateTime(2026, 4, 15),
@@ -40,9 +87,58 @@ void main() {
         now: DateTime(2026, 4, 17),
       );
 
+      expect(snapshot.status, RankMaintenanceStatus.secure);
+      expect(snapshot.targetLevelGateMet, isFalse);
+      expect(snapshot.targetRequiredLevel, 5);
+      expect(snapshot.highestEligibleRank, 'E');
+    });
+
+    test('opens reconquest when player has fallen below peak rank but still has level gate', () {
+      final player = _buildPlayer(
+        level: 30,
+        activityHistory: [
+          DateTime(2026, 4, 14),
+          DateTime(2026, 4, 15),
+          DateTime(2026, 4, 16),
+          DateTime(2026, 4, 17),
+        ],
+        lastQuestCompletionDate: DateTime(2026, 4, 17),
+      );
+      final previousSnapshot = CompetitiveRankSnapshot(
+        currentRank: 'E',
+        peakRank: 'C',
+        highestEligibleRank: 'A',
+        weekKey: '2026W0407',
+        activeDays: 2,
+        requiredActiveDays: 3,
+        requiresBossClear: false,
+        bossCompleted: false,
+        status: RankMaintenanceStatus.warning,
+        demotionStrikes: 0,
+        promotionReady: false,
+        promotionTargetRank: 'D',
+        targetRequiredLevel: 5,
+        targetLevelGateMet: true,
+        advancementMode: RankAdvancementMode.reconquest,
+        eventType: CompetitiveRankEventType.warning,
+        summary: 'placeholder',
+        detail: 'placeholder',
+        syncSchemaVersion: 3,
+        syncSource: 'client',
+        updatedAt: DateTime(2026, 4, 7),
+      );
+
+      final snapshot = evaluateCompetitiveRank(
+        player: player,
+        previousSnapshot: previousSnapshot,
+        now: DateTime(2026, 4, 17),
+      );
+
       expect(snapshot.status, RankMaintenanceStatus.promotionReady);
+      expect(snapshot.advancementMode, RankAdvancementMode.reconquest);
+      expect(snapshot.eventType, CompetitiveRankEventType.reconquestUnlocked);
+      expect(snapshot.peakRank, 'C');
       expect(snapshot.promotionTargetRank, 'D');
-      expect(snapshot.eventType, CompetitiveRankEventType.promotionUnlocked);
     });
 
     test('applies demotion after consecutive failed weeks', () {

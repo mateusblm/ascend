@@ -15,9 +15,13 @@ class QuestCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: quest.isCompleted ? Colors.green.withOpacity(0.1) : AppColors.surface,
+        color: quest.isCompleted
+            ? Colors.green.withValues(alpha: 0.1)
+            : AppColors.surface,
         border: Border.all(
-          color: quest.isCompleted ? Colors.green : AppColors.neonBlue.withOpacity(0.5),
+          color: quest.isCompleted
+              ? Colors.green
+              : AppColors.neonBlue.withValues(alpha: 0.5),
         ),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -36,12 +40,17 @@ class QuestCard extends StatelessWidget {
                   quest.title,
                   style: TextStyle(
                     fontSize: 16,
-                    decoration: quest.isCompleted ? TextDecoration.lineThrough : null,
+                    decoration: quest.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
                 Text(
                   "+${quest.xpReward} XP | RECOMPENSA: ${quest.rewardAttribute.name.toUpperCase()}",
-                  style: const TextStyle(fontSize: 10, color: AppColors.neonBlue),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.neonBlue,
+                  ),
                 ),
               ],
             ),

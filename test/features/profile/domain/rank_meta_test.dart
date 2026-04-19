@@ -34,10 +34,20 @@ void main() {
 
       expect(season.recordedWeeks, 2);
       expect(season.secureWeeks, 2);
+      expect(season.secureRate, 100);
       expect(season.examWeeks, 1);
       expect(season.promotionEvents, 0);
       expect(season.rewardTierLabel, 'MANUTENCAO');
+      expect(season.rewardStatusLabel, 'EM ROTA');
+      expect(season.rewardTrackLabel, '2/3 semanas seguras');
+      expect(season.rewardProgress, closeTo(2 / 3, 0.001));
+      expect(season.nextUnlockHint, contains('DOMINIO'));
+      expect(season.resetLabel, contains('Reset em'));
       expect(season.peakRank, 'C');
+      expect(season.rewardUnlocked, isTrue);
+      expect(season.rewardName, 'Pacote de Manutencao');
+      expect(season.rewardBadgeLabel, 'SIGILO DE BRONZE');
+      expect(season.rewardTitleLabel, 'VIGIA DO CICLO');
     });
   });
 

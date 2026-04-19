@@ -59,7 +59,7 @@ class QuestsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "QUESTS DIÁRIAS",
+                        "QUESTS DIARIAS",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -85,14 +85,14 @@ class QuestsScreen extends ConsumerWidget {
                   }, childCount: activeQuests.length),
                 )
               else
-                _buildEmptyState("NENHUMA MISSÃO ATIVA"),
+                _buildEmptyState("NENHUMA MISSAO ATIVA"),
 
               if (completedQuests.isNotEmpty) ...[
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.only(top: 40, bottom: 10),
                     child: Text(
-                      "CONCLUÍDAS",
+                      "CONCLUIDAS",
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white38,
@@ -139,7 +139,7 @@ class QuestsScreen extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.redAccent.withOpacity(0.2),
+          color: Colors.redAccent.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(Icons.delete_sweep, color: Colors.redAccent),
@@ -147,7 +147,7 @@ class QuestsScreen extends ConsumerWidget {
       child: QuestCard(
         quest: quest,
         onToggle: () {
-          // Aqui usamos o context que vem do build() para evitar o erro de BuildContext inválido
+          // Aqui usamos o context que vem do build() para evitar o erro de BuildContext invalido
           ref
               .read(questProvider.notifier)
               .toggleQuest(
@@ -168,9 +168,9 @@ class QuestsScreen extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.neonBlue.withOpacity(0.05),
+        color: AppColors.neonBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.neonBlue.withOpacity(0.3)),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +228,7 @@ class QuestsScreen extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.white10),
               ),
@@ -243,7 +243,7 @@ class QuestsScreen extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.neonBlue.withOpacity(0.12),
+                          color: AppColors.neonBlue.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -358,11 +358,11 @@ class QuestsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(
-        0.85,
+      barrierColor: Colors.black.withValues(
+        alpha: 0.85,
       ), // Levemente mais transparente para ver o fundo
       builder: (dialogContext) {
-        // Agendamos o fechamento automático usando o dialogContext
+        // Agendamos o fechamento automatico usando o dialogContext
         Future.delayed(const Duration(milliseconds: 2500), () {
           if (dialogContext.mounted) {
             Navigator.of(dialogContext).pop();
@@ -395,7 +395,7 @@ class QuestsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "NÍVEL $level",
+                  "NIVEL $level",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,

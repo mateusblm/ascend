@@ -1,4 +1,3 @@
-// lib/features/main_navigation_screen.dart
 import 'dart:async';
 
 import 'package:ascend/core/navigation/navigation_provider.dart';
@@ -7,43 +6,57 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
-
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'profile/presentation/home_screen.dart';
 import 'profile/presentation/rank_screen.dart';
-import 'quests/presentation/quests_screen.dart';
 import 'profile/presentation/stats_screen.dart';
+import 'quests/presentation/quests_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
+    with WidgetsBindingObserver {
   Timer? _syncDebounce;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
-    // Sync competitiva com debounce — evita chamadas redundantes ao Firestore
-    // durante rebuilds rápidos.
+    // Mantem a sync competitiva desacoplada da avaliacao de providers e evita
+    // chamadas redundantes ao Firestore durante sequencias rapidas de rebuild.
     ref.listenManual(playerProvider, (_, next) {
-      _syncDebounce?.cancel();
-      _syncDebounce = Timer(const Duration(milliseconds: 500), () {
-        ref.read(rankProgressionRepositoryProvider).syncCompetitiveState(next);
-      });
+      _scheduleCompetitiveSync(next);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(questProvider.notifier).ensureDailyReset();
+      _scheduleCompetitiveSync(ref.read(playerProvider), delay: Duration.zero);
     });
   }
 
   @override
   void dispose() {
     _syncDebounce?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(questProvider.notifier).ensureDailyReset();
+      _scheduleCompetitiveSync(ref.read(playerProvider));
+    }
   }
 
   @override
@@ -53,7 +66,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final quests = ref.watch(questProvider);
     final requiresOnboarding = _requiresOnboarding(player, quests.isNotEmpty);
 
-    final List<Widget> screens = [
+    final screens = <Widget>[
       const HomeScreen(),
       const QuestsScreen(),
       const RankScreen(),
@@ -61,7 +74,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     ];
 
     return Container(
-      // O Gradiente de fundo fica aqui, fixo para todas as telas
       decoration: const BoxDecoration(
         gradient: RadialGradient(
           center: Alignment.center,
@@ -70,18 +82,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         ),
       ),
       child: Scaffold(
-        backgroundColor: Colors.transparent, // Importante!
+        backgroundColor: Colors.transparent,
         body: requiresOnboarding
             ? const AwakeningOnboardingScreen()
-            : IndexedStack(
-                index: currentIndex,
-                children: screens,
-              ),
+            : IndexedStack(index: currentIndex, children: screens),
         bottomNavigationBar: requiresOnboarding
             ? null
             : BottomNavigationBar(
                 currentIndex: currentIndex,
-                onTap: (index) => ref.read(navigationProvider.notifier).state = index,
+                onTap: (index) =>
+                    ref.read(navigationProvider.notifier).state = index,
                 backgroundColor: Colors.black.withValues(alpha: 0.8),
                 selectedItemColor: AppColors.neonBlue,
                 unselectedItemColor: Colors.white24,
@@ -90,22 +100,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person_outline),
                     activeIcon: Icon(Icons.person),
-                    label: "STATUS",
+                    label: 'STATUS',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bolt_outlined),
                     activeIcon: Icon(Icons.bolt),
-                    label: "QUESTS",
+                    label: 'QUESTS',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bar_chart_outlined),
                     activeIcon: Icon(Icons.bar_chart),
-                    label: "RANK",
+                    label: 'RANK',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.analytics_outlined),
                     activeIcon: Icon(Icons.analytics),
-                    label: "STATS",
+                    label: 'STATS',
                   ),
                 ],
               ),
@@ -116,7 +126,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   bool _requiresOnboarding(Player player, bool hasExistingQuests) {
     if (player.hasCompletedOnboarding) return false;
 
-    final hasProgress = player.level > 1 ||
+    final hasProgress =
+        player.level > 1 ||
         player.xp > 0 ||
         player.currentStreak > 0 ||
         player.bestStreak > 0 ||
@@ -124,5 +135,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         hasExistingQuests;
 
     return !hasProgress;
+  }
+
+  void _scheduleCompetitiveSync(
+    Player player, {
+    Duration delay = const Duration(milliseconds: 500),
+  }) {
+    _syncDebounce?.cancel();
+    _syncDebounce = Timer(delay, () {
+      ref.read(rankProgressionRepositoryProvider).syncCompetitiveState(player);
+    });
   }
 }

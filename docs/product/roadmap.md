@@ -110,3 +110,14 @@ Near-term follow-up deliverables:
 - backend-authoritative competitive rules
 - seasonal reset and season rewards
 - widget/integration coverage for competitive UI flows
+- seasonal reward track surfaced in Rank UI with reset pressure and unlock pacing
+- seasonal leaderboard surfaced in Rank UI with podium, bracket score, and clear-rate pressure
+- concrete seasonal reward package surfaced in Rank UI with badge/title/payoff instead of generic preview text
+- seasonal reward state mirrored to Firestore for future authoritative rewards, archives, and season history
+- seasonal reward claim state surfaced in Rank UI with real resgate flow and remote archive
+- seasonal claim upgraded toward an authoritative backend path with permanent title, badge, and visual legacy records
+- active seasonal legacy surfaced in Home and Rank so claimed seasons become visible identity, not just stored data
+- rank progression now moving toward a hybrid model:
+  - level gates upward eligibility
+  - weekly maintenance prevents or causes demotion
+  - peak rank enables accelerated reconquest instead of treating returning players like full beginners

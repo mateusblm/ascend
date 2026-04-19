@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/rank_prestige.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/rank_season.dart';
+import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
@@ -25,9 +26,12 @@ class HomeScreen extends ConsumerWidget {
     final player = ref.watch(playerProvider);
     final competitiveRank = ref.watch(competitiveRankProvider);
     final rankSnapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
-    final rankHistory = ref.watch(rankProgressionHistoryProvider).valueOrNull ?? const <CompetitiveRankSnapshot>[];
+    final rankHistory =
+        ref.watch(rankProgressionHistoryProvider).valueOrNull ??
+        const <CompetitiveRankSnapshot>[];
     final prestige = buildRankPrestigeSummary(rankHistory);
     final season = buildCurrentSeasonSummary(rankHistory);
+    final seasonProfile = ref.watch(seasonProfileProvider).valueOrNull;
     final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final topCompletions = ref.watch(weeklyBossTopCompletionsProvider);
@@ -39,14 +43,25 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(player.name, player.level, competitiveRank, _calculateCurrentTitle(player)),
+            _buildHeader(
+              player.name,
+              player.level,
+              competitiveRank,
+              _resolveDisplayTitle(player, seasonProfile),
+              seasonProfile,
+            ),
             const SizedBox(height: 40),
             _buildStatusCard(
               child: Column(
                 children: [
                   _buildFocusBanner(context, player.primaryFocus),
                   const SizedBox(height: 20),
-                  _buildStatBar('XP', player.xp / player.maxXp, AppColors.neonBlue, '${player.xp} / ${player.maxXp}'),
+                  _buildStatBar(
+                    'XP',
+                    player.xp / player.maxXp,
+                    AppColors.neonBlue,
+                    '${player.xp} / ${player.maxXp}',
+                  ),
                   const SizedBox(height: 20),
                   _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
                   const SizedBox(height: 24),
@@ -69,14 +84,34 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 40),
             const Text(
               'ATRIBUTOS',
-              style: TextStyle(fontSize: 18, letterSpacing: 3, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                letterSpacing: 3,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const Divider(color: AppColors.neonBlue, thickness: 0.5),
             const SizedBox(height: 10),
-            _buildAttributeRow('FORCA', player.attributes.strength.toString(), Icons.fitness_center),
-            _buildAttributeRow('INTELIGENCIA', player.attributes.intelligence.toString(), Icons.psychology),
-            _buildAttributeRow('VITALIDADE', player.attributes.vitality.toString(), Icons.favorite),
-            _buildAttributeRow('AGILIDADE', player.attributes.agility.toString(), Icons.speed),
+            _buildAttributeRow(
+              'FORCA',
+              player.attributes.strength.toString(),
+              Icons.fitness_center,
+            ),
+            _buildAttributeRow(
+              'INTELIGENCIA',
+              player.attributes.intelligence.toString(),
+              Icons.psychology,
+            ),
+            _buildAttributeRow(
+              'VITALIDADE',
+              player.attributes.vitality.toString(),
+              Icons.favorite,
+            ),
+            _buildAttributeRow(
+              'AGILIDADE',
+              player.attributes.agility.toString(),
+              Icons.speed,
+            ),
             const SizedBox(height: 50),
             Center(
               child: Text(
@@ -96,14 +131,45 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(String name, int level, String rank, String title) {
+  Widget _buildHeader(
+    String name,
+    int level,
+    String rank,
+    String title,
+    SeasonProfileSnapshot? seasonProfile,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'PLAYER: $name | $title',
-          style: const TextStyle(fontSize: 12, color: AppColors.neonBlue, letterSpacing: 1.5),
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.neonBlue,
+            letterSpacing: 1.5,
+          ),
         ),
+        if (seasonProfile != null) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildSeasonHeaderChip(
+                seasonProfile.activeBadgeLabel,
+                Colors.amberAccent,
+              ),
+              _buildSeasonHeaderChip(
+                seasonProfile.cosmeticAuraLabel,
+                AppColors.neonBlue,
+              ),
+              _buildSeasonHeaderChip(
+                seasonProfile.activeSeasonLabel,
+                Colors.white70,
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,14 +180,28 @@ class HomeScreen extends ConsumerWidget {
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                shadows: [Shadow(color: AppColors.neonBlue.withOpacity(0.8), blurRadius: 20)],
+                shadows: [
+                  Shadow(
+                    color: AppColors.neonBlue.withValues(alpha: 0.8),
+                    blurRadius: 20,
+                  ),
+                ],
               ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Text('LEVEL', style: TextStyle(fontSize: 10, color: Colors.white38)),
-                Text(level.toString().padLeft(2, '0'), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                const Text(
+                  'LEVEL',
+                  style: TextStyle(fontSize: 10, color: Colors.white38),
+                ),
+                Text(
+                  level.toString().padLeft(2, '0'),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ],
@@ -130,11 +210,31 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildSeasonHeaderChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatusCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.white10),
       ),
@@ -147,9 +247,9 @@ class HomeScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.neonBlue.withOpacity(0.08),
+        color: AppColors.neonBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.neonBlue.withOpacity(0.35)),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,14 +259,21 @@ class HomeScreen extends ConsumerWidget {
               const Expanded(
                 child: Text(
                   'FOCO ATUAL',
-                  style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.2),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white38,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
               TextButton(
                 onPressed: () => _openFocusSelectionSheet(context, focus),
                 style: TextButton.styleFrom(
                   minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
@@ -196,7 +303,10 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  void _openFocusSelectionSheet(BuildContext context, AwakeningPath currentFocus) {
+  void _openFocusSelectionSheet(
+    BuildContext context,
+    AwakeningPath currentFocus,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -215,14 +325,18 @@ class HomeScreen extends ConsumerWidget {
   ) async {
     if (authState is! AuthSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Faca login para registrar e resgatar o boss semanal.')),
+        const SnackBar(
+          content: Text('Faca login para registrar e resgatar o boss semanal.'),
+        ),
       );
       return;
     }
 
     if (remoteBoss == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nenhum boss remoto ativo para resgate no momento.')),
+        const SnackBar(
+          content: Text('Nenhum boss remoto ativo para resgate no momento.'),
+        ),
       );
       return;
     }
@@ -230,7 +344,9 @@ class HomeScreen extends ConsumerWidget {
     if (!weeklyBoss.isCompleted(ref.read(playerProvider)) ||
         weeklyBoss.isClaimedThisWeek(ref.read(playerProvider))) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('O boss semanal ainda nao esta pronto para resgate.')),
+        const SnackBar(
+          content: Text('O boss semanal ainda nao esta pronto para resgate.'),
+        ),
       );
       return;
     }
@@ -243,42 +359,73 @@ class HomeScreen extends ConsumerWidget {
         photoUrl: authState.photoUrl,
         rankAtCompletion: rank,
       );
+      if (!context.mounted) return;
 
       if (remoteResult == ClaimWeeklyBossRemoteResult.alreadyCompleted) {
         ref.read(playerProvider.notifier).markWeeklyBossClaimedNow();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Seu clear remoto ja estava registrado nesta semana.')),
+          const SnackBar(
+            content: Text(
+              'Seu clear remoto ja estava registrado nesta semana.',
+            ),
+          ),
         );
         return;
       }
 
-      final applied = ref.read(playerProvider.notifier).claimWeeklyBossReward(weeklyBoss);
+      final applied = ref
+          .read(playerProvider.notifier)
+          .claimWeeklyBossReward(weeklyBoss);
       if (!applied) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Clear remoto registrado, mas recompensa local ja estava aplicada.')),
+          const SnackBar(
+            content: Text(
+              'Clear remoto registrado, mas recompensa local ja estava aplicada.',
+            ),
+          ),
         );
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Boss semanal derrotado. Recompensa e ranking sincronizados.')),
+        const SnackBar(
+          content: Text(
+            'Boss semanal derrotado. Recompensa e ranking sincronizados.',
+          ),
+        ),
       );
     } catch (_) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha ao registrar clear remoto. Tente novamente em instantes.')),
+        const SnackBar(
+          content: Text(
+            'Falha ao registrar clear remoto. Tente novamente em instantes.',
+          ),
+        ),
       );
     }
   }
 
-  Widget _buildStatBar(String label, double progress, Color color, String trailing) {
+  Widget _buildStatBar(
+    String label,
+    double progress,
+    Color color,
+    String trailing,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            Text(trailing, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              trailing,
+              style: const TextStyle(fontSize: 10, color: Colors.white38),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -336,6 +483,7 @@ class HomeScreen extends ConsumerWidget {
     final headline = switch (snapshot?.eventType) {
       CompetitiveRankEventType.promotionConfirmed => 'PROMOCAO REGISTRADA',
       CompetitiveRankEventType.promotionUnlocked => 'EXAME DISPONIVEL',
+      CompetitiveRankEventType.reconquestUnlocked => 'RECONQUISTA ABERTA',
       CompetitiveRankEventType.demotionApplied => 'QUEDA DE RANK',
       CompetitiveRankEventType.perfectWeek => 'SEMANA PERFEITA',
       CompetitiveRankEventType.warning => 'RANK EM ALERTA',
@@ -346,9 +494,9 @@ class HomeScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.08),
+        color: accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withOpacity(0.35)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,12 +527,20 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             snapshot?.summary ?? 'Seu estado competitivo esta sincronizando.',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 1.4),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Temporada ${season.seasonLabel} | manutencao ${prestige.maintenanceRate}% | pico ${season.peakRank}',
-            style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.4),
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -400,7 +556,7 @@ class HomeScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10),
       ),
@@ -412,9 +568,22 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white38,
+                    letterSpacing: 1,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -452,7 +621,7 @@ class HomeScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white10),
       ),
@@ -461,16 +630,26 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.shield_moon, color: Colors.amberAccent, size: 18),
+              const Icon(
+                Icons.shield_moon,
+                color: Colors.amberAccent,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
                   'BOSS SEMANAL',
-                  style: TextStyle(fontSize: 12, color: Colors.white38, letterSpacing: 1.2),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white38,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
               Text(
-                hasActiveRemoteBoss ? '$progress/${weeklyBoss.targetActiveDays}' : '--',
+                hasActiveRemoteBoss
+                    ? '$progress/${weeklyBoss.targetActiveDays}'
+                    : '--',
                 style: const TextStyle(
                   color: AppColors.neonBlue,
                   fontWeight: FontWeight.bold,
@@ -483,19 +662,31 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'ONLINE: ${remoteBoss.completedCount} concluidos',
-              style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.5),
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                letterSpacing: 0.5,
+              ),
             ),
           ] else if (remoteWeeklyBoss.isLoading) ...[
             const SizedBox(height: 8),
             const Text(
               'ONLINE: conectando ao Firestore...',
-              style: TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 0.5),
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 11,
+                letterSpacing: 0.5,
+              ),
             ),
           ] else if (remoteWeeklyBoss.hasError) ...[
             const SizedBox(height: 8),
             Text(
               'ONLINE: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
-              style: const TextStyle(color: Colors.redAccent, fontSize: 11, letterSpacing: 0.5),
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontSize: 11,
+                letterSpacing: 0.5,
+              ),
             ),
           ],
           const SizedBox(height: 10),
@@ -507,7 +698,11 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               weeklyBoss.description,
-              style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             ClipRRect(
@@ -525,7 +720,11 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos',
-                    style: const TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 0.6),
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -534,17 +733,19 @@ class HomeScreen extends ConsumerWidget {
                     backgroundColor: isClaimed
                         ? Colors.white12
                         : (isCompleted ? Colors.amberAccent : Colors.white12),
-                    foregroundColor: isCompleted && !isClaimed ? Colors.black : Colors.white54,
+                    foregroundColor: isCompleted && !isClaimed
+                        ? Colors.black
+                        : Colors.white54,
                   ),
                   onPressed: isCompleted && !isClaimed
                       ? () => _claimWeeklyBoss(
-                            context,
-                            ref,
-                            authState,
-                            remoteBoss,
-                            weeklyBoss,
-                            competitiveRank,
-                          )
+                          context,
+                          ref,
+                          authState,
+                          remoteBoss,
+                          weeklyBoss,
+                          competitiveRank,
+                        )
                       : null,
                   child: Text(isClaimed ? 'RESGATADO' : 'RESGATAR'),
                 ),
@@ -555,14 +756,23 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             const Text(
               'PRIMEIROS CLEARS',
-              style: TextStyle(fontSize: 11, color: Colors.white38, letterSpacing: 1.1),
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white38,
+                letterSpacing: 1.1,
+              ),
             ),
             const SizedBox(height: 10),
             ..._buildTopCompletions(topCompletions),
-          ] else if (!remoteWeeklyBoss.isLoading && !remoteWeeklyBoss.hasError) ...[
+          ] else if (!remoteWeeklyBoss.isLoading &&
+              !remoteWeeklyBoss.hasError) ...[
             const Text(
               'Nenhum boss semanal ativo no momento.',
-              style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
           ],
         ],
@@ -570,7 +780,9 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildTopCompletions(AsyncValue<List<WeeklyBossCompletion>> topCompletions) {
+  List<Widget> _buildTopCompletions(
+    AsyncValue<List<WeeklyBossCompletion>> topCompletions,
+  ) {
     return topCompletions.when(
       data: (entries) {
         if (entries.isEmpty) {
@@ -641,9 +853,16 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.neonBlue.withOpacity(0.5)),
+          Icon(
+            icon,
+            size: 18,
+            color: AppColors.neonBlue.withValues(alpha: 0.5),
+          ),
           const SizedBox(width: 15),
-          Text(label, style: const TextStyle(color: Colors.white70, letterSpacing: 1)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, letterSpacing: 1),
+          ),
           const Spacer(),
           Text(
             value,
@@ -659,8 +878,20 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  String _resolveDisplayTitle(
+    Player player,
+    SeasonProfileSnapshot? seasonProfile,
+  ) {
+    if (seasonProfile != null) {
+      return seasonProfile.activeTitleLabel;
+    }
+    return _calculateCurrentTitle(player);
+  }
+
   String _calculateCurrentTitle(Player player) {
-    final unlocked = systemAchievements.where((achievement) => achievement.requirement(player)).toList();
+    final unlocked = systemAchievements
+        .where((achievement) => achievement.requirement(player))
+        .toList();
     return unlocked.isNotEmpty ? unlocked.last.title : 'ASPIRANTE';
   }
 

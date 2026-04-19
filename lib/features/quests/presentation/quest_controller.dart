@@ -10,6 +10,15 @@ final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
   return QuestNotifier(ref, ref.watch(isarProvider));
 });
 
+bool isDailyResetDue({
+  required DateTime lastReset,
+  required DateTime now,
+}) {
+  return now.year != lastReset.year ||
+      now.month != lastReset.month ||
+      now.day != lastReset.day;
+}
+
 class QuestNotifier extends StateNotifier<List<Quest>> {
   QuestNotifier(this.ref, this._isar) : super([]) {
     _init();
@@ -22,10 +31,6 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     final savedQuests = _isar.quests.where().findAllSync();
     final player = _isar.players.where().findFirstSync();
 
-    if (player != null) {
-      _checkDailyReset(player);
-    }
-
     if (savedQuests.isEmpty) {
       if (player?.hasCompletedOnboarding == true) {
         _seedInitialQuests(player!.primaryFocus);
@@ -37,13 +42,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     }
   }
 
+  void ensureDailyReset() {
+    _checkDailyReset(ref.read(playerProvider));
+  }
+
   void _checkDailyReset(Player player) {
     final now = DateTime.now();
-    final lastReset = player.lastResetDate;
-    final isDifferentDay =
-        now.year != lastReset.year || now.month != lastReset.month || now.day != lastReset.day;
-
-    if (!isDifferentDay) return;
+    if (!isDailyResetDue(lastReset: player.lastResetDate, now: now)) return;
 
     _isar.writeTxnSync(() {
       final allQuests = _isar.quests.where().findAllSync();

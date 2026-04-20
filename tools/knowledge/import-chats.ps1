@@ -12,6 +12,32 @@ function Ensure-Directory {
   }
 }
 
+function Write-TextFile {
+  param(
+    [string]$Path,
+    [string[]]$Lines
+  )
+
+  $directory = Split-Path -Parent $Path
+  if (-not [string]::IsNullOrWhiteSpace($directory)) {
+    Ensure-Directory $directory
+  }
+
+  if ($null -eq $Lines) {
+    $Lines = @()
+  }
+
+  $safeLines = @(
+    foreach ($line in $Lines) {
+    if ($null -eq $line) { "" } else { [string]$line }
+  }
+  )
+
+  $content = [string]::Join([System.Environment]::NewLine, $safeLines)
+  $encoding = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, $content, $encoding)
+}
+
 function Get-Slug {
   param([string]$Value)
 
@@ -202,10 +228,24 @@ Ensure-Directory $decisionRoot
 Ensure-Directory $taskRoot
 Ensure-Directory (Split-Path -Parent $statePath)
 
-$state = if (Test-Path $statePath) {
-  Get-Content $statePath -Raw | ConvertFrom-Json
-} else {
-  [pscustomobject]@{ imports = [pscustomobject]@{} }
+$state = $null
+if (Test-Path $statePath) {
+  try {
+    $rawState = Get-Content $statePath -Raw
+    if (-not [string]::IsNullOrWhiteSpace($rawState)) {
+      $state = $rawState | ConvertFrom-Json
+    }
+  } catch {
+    $state = $null
+  }
+}
+
+if ($null -eq $state) {
+  $state = [pscustomobject]@{ imports = [pscustomobject]@{} }
+}
+
+if ($null -eq $state.imports) {
+  $state | Add-Member -NotePropertyName imports -NotePropertyValue ([pscustomobject]@{}) -Force
 }
 
 $catalog = if (Test-Path $catalogPath) {
@@ -260,7 +300,7 @@ foreach ($chatFile in $chatFiles) {
     "",
     $content
   )
-  Set-Content -Path (Join-Path $rawRoot "$slug.md") -Value ($rawLines -join "`r`n")
+  Write-TextFile -Path (Join-Path $rawRoot "$slug.md") -Lines $rawLines
 
   $normalizedLines = New-Object System.Collections.Generic.List[string]
   $normalizedLines.Add("---")
@@ -311,7 +351,7 @@ foreach ($chatFile in $chatFiles) {
   $normalizedLines.Add($excerpt)
   $normalizedLines.Add('```')
 
-  Set-Content -Path (Join-Path $normalizedRoot "$slug.md") -Value ($normalizedLines -join "`r`n")
+  Write-TextFile -Path (Join-Path $normalizedRoot "$slug.md") -Lines $normalizedLines
 
   $decisionIndex = 1
   foreach ($decision in $decisionCandidates) {
@@ -335,7 +375,7 @@ foreach ($chatFile in $chatFiles) {
       "",
       "- [[${slug}]]"
     )
-    Set-Content -Path (Join-Path $decisionRoot "$decisionSlug.md") -Value ($decisionLines -join "`r`n")
+    Write-TextFile -Path (Join-Path $decisionRoot "$decisionSlug.md") -Lines $decisionLines
     $decisionIndex++
   }
 
@@ -361,7 +401,7 @@ foreach ($chatFile in $chatFiles) {
       "",
       "- [[${slug}]]"
     )
-    Set-Content -Path (Join-Path $taskRoot "$taskSlug.md") -Value ($taskLines -join "`r`n")
+    Write-TextFile -Path (Join-Path $taskRoot "$taskSlug.md") -Lines $taskLines
     $taskIndex++
   }
 
@@ -369,6 +409,6 @@ foreach ($chatFile in $chatFiles) {
   $processed++
 }
 
-$state | ConvertTo-Json -Depth 20 | Set-Content -Path $statePath
+@($state | ConvertTo-Json -Depth 20) | Write-TextFile -Path $statePath
 
 Write-Host "Imported $processed chat file(s)."

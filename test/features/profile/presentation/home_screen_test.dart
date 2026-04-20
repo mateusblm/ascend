@@ -92,12 +92,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('STATUS COMPETITIVO'), findsOneWidget);
+    expect(find.text('SEU MOMENTO'), findsOneWidget);
     expect(find.textContaining('PLAYER: TESTER | VIGIA DO CICLO'), findsOneWidget);
     expect(find.text('SIGILO DE BRONZE'), findsOneWidget);
-    expect(find.text('ONLINE: 3 concluidos'), findsOneWidget);
+    expect(find.text('NO SERVIDOR: 3 concluidos'), findsOneWidget);
     expect(find.text('Primeira Ruptura'), findsOneWidget);
-    expect(find.text('PRIMEIROS CLEARS'), findsOneWidget);
+    expect(find.text('QUEM JA PASSOU'), findsOneWidget);
     expect(find.text('Mateus'), findsOneWidget);
     expect(find.text('RESGATAR'), findsOneWidget);
   });
@@ -122,6 +122,9 @@ void main() {
             (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
           ),
           seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(null),
+          ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
             (ref) => Stream.value(const <WeeklyBossCompletion>[]),
@@ -132,7 +135,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Nenhum boss semanal ativo no momento.'), findsOneWidget);
+    expect(find.text('Nenhum desafio semanal ativo agora.'), findsOneWidget);
     expect(find.textContaining('Seu estado competitivo esta sincronizando'), findsOneWidget);
   });
 }
@@ -172,7 +175,14 @@ Player _buildPlayer({int level = 6}) {
       DateTime(2026, 4, 16),
       DateTime(2026, 4, 17),
     ],
+    competitiveActivityHistory: [
+      DateTime(2026, 4, 14),
+      DateTime(2026, 4, 15),
+      DateTime(2026, 4, 16),
+      DateTime(2026, 4, 17),
+    ],
     lastQuestCompletionDate: DateTime(2026, 4, 17),
+    lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 17),
     currentStreak: 4,
     bestStreak: 4,
     hasCompletedOnboarding: true,

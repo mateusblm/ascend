@@ -23,6 +23,32 @@ function Ensure-Directory {
   }
 }
 
+function Write-TextFile {
+  param(
+    [string]$Path,
+    [string[]]$Lines
+  )
+
+  $directory = Split-Path -Parent $Path
+  if (-not [string]::IsNullOrWhiteSpace($directory)) {
+    Ensure-Directory $directory
+  }
+
+  if ($null -eq $Lines) {
+    $Lines = @()
+  }
+
+  $safeLines = @(
+    foreach ($line in $Lines) {
+    if ($null -eq $line) { "" } else { [string]$line }
+  }
+  )
+
+  $content = [string]::Join([System.Environment]::NewLine, $safeLines)
+  $encoding = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, $content, $encoding)
+}
+
 function Get-RelativePath {
   param(
     [string]$BasePath,
@@ -46,12 +72,16 @@ function Resolve-ImportTarget {
     return $relative
   }
 
-  if ($ImportValue.StartsWith("package:")) {
+  if ($ImportValue -match '^[a-zA-Z][a-zA-Z0-9+\-.]*:') {
     return $ImportValue
   }
 
   $sourceDir = Split-Path -Parent $FilePath
-  $joined = [System.IO.Path]::GetFullPath((Join-Path $sourceDir $ImportValue))
+  try {
+    $joined = [System.IO.Path]::GetFullPath((Join-Path $sourceDir $ImportValue))
+  } catch {
+    return $ImportValue
+  }
 
   if ($joined.StartsWith($RepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
     return Get-RelativePath -BasePath $RepoRoot -TargetPath $joined
@@ -81,10 +111,10 @@ foreach ($file in $files) {
   $relativePath = Get-RelativePath -BasePath $repoRoot -TargetPath $file.FullName
   $content = Get-Content $file.FullName -Raw
 
-  $imports = [regex]::Matches($content, "(?m)^\s*import\s+'([^']+)';") | ForEach-Object { $_.Groups[1].Value }
-  $classes = [regex]::Matches($content, "(?m)^\s*class\s+([A-Za-z0-9_]+)") | ForEach-Object { $_.Groups[1].Value }
-  $enums = [regex]::Matches($content, "(?m)^\s*enum\s+([A-Za-z0-9_]+)") | ForEach-Object { $_.Groups[1].Value }
-  $providers = [regex]::Matches($content, "(?m)^\s*final\s+([A-Za-z0-9_]*Provider)\s*=") | ForEach-Object { $_.Groups[1].Value }
+  $imports = @([regex]::Matches($content, "(?m)^\s*import\s+'([^']+)';") | ForEach-Object { $_.Groups[1].Value })
+  $classes = @([regex]::Matches($content, "(?m)^\s*class\s+([A-Za-z0-9_]+)") | ForEach-Object { $_.Groups[1].Value })
+  $enums = @([regex]::Matches($content, "(?m)^\s*enum\s+([A-Za-z0-9_]+)") | ForEach-Object { $_.Groups[1].Value })
+  $providers = @([regex]::Matches($content, "(?m)^\s*final\s+([A-Za-z0-9_]*Provider)\s*=") | ForEach-Object { $_.Groups[1].Value })
   $symbols = @($classes + $enums + $providers) | Sort-Object -Unique
 
   $segments = $relativePath.Split('\')
@@ -92,9 +122,11 @@ foreach ($file in $files) {
   $slug = Get-Slug $relativePath.Replace('\', '-').Replace('.', '-')
   $notePath = Join-Path $codeNotesRoot "$slug.md"
 
-  $resolvedImports = foreach ($importValue in $imports) {
+  $resolvedImports = @(
+    foreach ($importValue in $imports) {
     Resolve-ImportTarget -ImportValue $importValue -FilePath $file.FullName -RepoRoot $repoRoot
   }
+  )
 
   $noteLines = @(
     "---"
@@ -134,7 +166,7 @@ foreach ($file in $files) {
     $noteLines += "- none"
   }
 
-  Set-Content -Path $notePath -Value ($noteLines -join "`r`n")
+  Write-TextFile -Path $notePath -Lines $noteLines
 
   foreach ($importTarget in $resolvedImports) {
     $edges.Add([pscustomobject]@{
@@ -160,7 +192,7 @@ foreach ($file in $files) {
       "- feature: $feature"
     )
 
-    Set-Content -Path $entityPath -Value ($entityLines -join "`r`n")
+    Write-TextFile -Path $entityPath -Lines $entityLines
 
     $catalog.Add([pscustomobject]@{
       name     = $symbol
@@ -194,9 +226,9 @@ foreach ($file in $files) {
   })
 }
 
-$catalog | ConvertTo-Json -Depth 6 | Set-Content -Path (Join-Path $vaultRoot $config.entityCatalogPath)
-$edges | ConvertTo-Json -Depth 6 | Set-Content -Path (Join-Path $vaultRoot $config.graphEdgesPath)
-$codeIndex | ConvertTo-Json -Depth 6 | Set-Content -Path (Join-Path $vaultRoot $config.codeIndexPath)
+@($catalog | ConvertTo-Json -Depth 6) | Write-TextFile -Path (Join-Path $vaultRoot $config.entityCatalogPath)
+@($edges | ConvertTo-Json -Depth 6) | Write-TextFile -Path (Join-Path $vaultRoot $config.graphEdgesPath)
+@($codeIndex | ConvertTo-Json -Depth 6) | Write-TextFile -Path (Join-Path $vaultRoot $config.codeIndexPath)
 
 $indexLines = @(
   "# Codebase Index",
@@ -209,6 +241,6 @@ $indexLines = @(
 )
 
 $indexLines += $codeIndex | ForEach-Object { "- [[{0}]] ({1})" -f $_.noteSlug, $_.path }
-Set-Content -Path (Join-Path $vaultRoot "02-codebase/index.md") -Value ($indexLines -join "`r`n")
+Write-TextFile -Path (Join-Path $vaultRoot "02-codebase/index.md") -Lines $indexLines
 
 Write-Host "Codebase map generated for $($files.Count) files."

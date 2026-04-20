@@ -3,18 +3,49 @@ import 'package:isar/isar.dart';
 part 'quest_model.g.dart';
 
 enum AttributeType { strength, intelligence, vitality, agility }
+enum QuestCategory { personal, competitive }
+enum QuestTemplateType { custom, focusSession, studySession, readingSession }
+enum QuestVerificationMode { manual, timer, timerWithReflection }
+enum QuestVerificationStatus { none, ready, inProgress, verified }
+
+const int personalQuestDefaultXp = 12;
+const int personalQuestMinXp = 8;
+const int personalQuestMaxXp = 15;
+
+int normalizePersonalQuestXp(int value) {
+  return value.clamp(personalQuestMinXp, personalQuestMaxXp);
+}
 
 @Collection()
 class Quest {
-  Id isarId = Isar.autoIncrement; // Primary Key
+  Id isarId = Isar.autoIncrement;
 
-  final String id; // Seu ID de string (ex: '1', '2')
+  final String id;
   final String title;
-  
+
   @enumerated
   final AttributeType rewardAttribute;
-  
+
   final int xpReward;
+
+  @enumerated
+  final QuestCategory category;
+
+  @enumerated
+  final QuestTemplateType templateType;
+
+  @enumerated
+  final QuestVerificationMode verificationMode;
+
+  @enumerated
+  final QuestVerificationStatus verificationStatus;
+
+  final int targetDurationMinutes;
+  final String? reflectionPrompt;
+  final String? reflectionAnswer;
+  final DateTime? verificationStartedAt;
+  final DateTime? completedAt;
+  final DateTime? verifiedAt;
   final bool isCompleted;
 
   // Snapshot do estado do jogador antes da recompensa ser aplicada.
@@ -34,6 +65,16 @@ class Quest {
     required this.title,
     required this.rewardAttribute,
     required this.xpReward,
+    this.category = QuestCategory.personal,
+    this.templateType = QuestTemplateType.custom,
+    this.verificationMode = QuestVerificationMode.manual,
+    this.verificationStatus = QuestVerificationStatus.none,
+    this.targetDurationMinutes = 0,
+    this.reflectionPrompt,
+    this.reflectionAnswer,
+    this.verificationStartedAt,
+    this.completedAt,
+    this.verifiedAt,
     this.isCompleted = false,
     this.preRewardLevel,
     this.preRewardXp,
@@ -45,11 +86,32 @@ class Quest {
     this.preRewardAgility,
   });
 
-  /// Indica se esta quest possui um snapshot pré-recompensa válido.
   bool get hasPreRewardSnapshot => preRewardLevel != null;
+
+  bool get isCompetitive => category == QuestCategory.competitive;
+
+  bool get countsTowardCompetitive =>
+      isCompetitive && verificationStatus == QuestVerificationStatus.verified;
+
+  bool get requiresTimer =>
+      verificationMode == QuestVerificationMode.timer ||
+      verificationMode == QuestVerificationMode.timerWithReflection;
+
+  bool get requiresReflection =>
+      verificationMode == QuestVerificationMode.timerWithReflection;
 
   Quest copyWith({
     bool? isCompleted,
+    QuestCategory? category,
+    QuestTemplateType? templateType,
+    QuestVerificationMode? verificationMode,
+    QuestVerificationStatus? verificationStatus,
+    int? targetDurationMinutes,
+    String? reflectionPrompt,
+    String? reflectionAnswer,
+    DateTime? verificationStartedAt,
+    DateTime? completedAt,
+    DateTime? verifiedAt,
     int? preRewardLevel,
     int? preRewardXp,
     int? preRewardMaxXp,
@@ -59,6 +121,7 @@ class Quest {
     int? preRewardVitality,
     int? preRewardAgility,
     bool clearPreRewardSnapshot = false,
+    bool clearVerificationProgress = false,
   }) {
     return Quest(
       isarId: isarId,
@@ -66,6 +129,20 @@ class Quest {
       title: title,
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
+      category: category ?? this.category,
+      templateType: templateType ?? this.templateType,
+      verificationMode: verificationMode ?? this.verificationMode,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      targetDurationMinutes: targetDurationMinutes ?? this.targetDurationMinutes,
+      reflectionPrompt: reflectionPrompt ?? this.reflectionPrompt,
+      reflectionAnswer: clearVerificationProgress
+          ? null
+          : (reflectionAnswer ?? this.reflectionAnswer),
+      verificationStartedAt: clearVerificationProgress
+          ? null
+          : (verificationStartedAt ?? this.verificationStartedAt),
+      completedAt: clearVerificationProgress ? null : (completedAt ?? this.completedAt),
+      verifiedAt: clearVerificationProgress ? null : (verifiedAt ?? this.verifiedAt),
       isCompleted: isCompleted ?? this.isCompleted,
       preRewardLevel: clearPreRewardSnapshot ? null : (preRewardLevel ?? this.preRewardLevel),
       preRewardXp: clearPreRewardSnapshot ? null : (preRewardXp ?? this.preRewardXp),

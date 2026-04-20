@@ -1,15 +1,16 @@
+import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:ascend/features/quests/presentation/widgets/quest_card.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
-import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'widgets/quest_card.dart';
 
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
@@ -19,8 +20,6 @@ class QuestsScreen extends ConsumerWidget {
     final quests = ref.watch(questProvider);
     final player = ref.watch(playerProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider).valueOrNull;
-    final activeQuests = quests.where((q) => !q.isCompleted).toList();
-    final completedQuests = quests.where((q) => q.isCompleted).toList();
     final weeklyBoss = remoteWeeklyBoss == null
         ? null
         : WeeklyBossDefinition(
@@ -44,6 +43,22 @@ class QuestsScreen extends ConsumerWidget {
                   !quests.any((quest) => quest.title == suggestion.title),
             )
             .toList();
+    final officialTemplates = templatesForFocus(player.primaryFocus)
+        .where(
+          (template) => !quests.any(
+            (quest) =>
+                quest.isCompetitive &&
+                !quest.isCompleted &&
+                quest.templateType == template.templateType,
+          ),
+        )
+        .toList();
+
+    final competitiveQuests = quests.where((q) => q.isCompetitive).toList();
+    final personalActiveQuests = quests
+        .where((q) => !q.isCompetitive && !q.isCompleted)
+        .toList();
+    final completedQuests = quests.where((q) => q.isCompleted).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -59,44 +74,101 @@ class QuestsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "QUESTS DIARIAS",
+                        'SUAS QUESTS',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 4,
                         ),
                       ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Quests competitivas protegem seu rank. Quests pessoais ajudam no progresso geral com XP menor.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Colors.white60,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 12),
                       Divider(color: AppColors.neonBlue, thickness: 1),
                     ],
                   ),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: _buildCompetitiveIntro(context),
+              ),
+              if (officialTemplates.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildCompetitiveTemplatesPanel(
+                    context,
+                    ref,
+                    officialTemplates,
+                  ),
+                ),
+              if (competitiveQuests.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 10),
+                    child: Text(
+                      'QUESTS QUE CONTAM PARA O RANK',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              if (competitiveQuests.isNotEmpty)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final quest = competitiveQuests[index];
+                    return _buildQuestItem(context, ref, quest);
+                  }, childCount: competitiveQuests.length),
+                ),
               if (suggestions.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _buildSuggestionsPanel(context, ref, suggestions),
                 ),
-
-              if (activeQuests.isNotEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8, bottom: 10),
+                  child: Text(
+                    'QUESTS PESSOAIS',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white54,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              if (personalActiveQuests.isNotEmpty)
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final quest = activeQuests[index];
-                    // Passamos o context do BUILD principal para garantir estabilidade
-                    return _buildDismissibleQuest(context, ref, quest);
-                  }, childCount: activeQuests.length),
+                    final quest = personalActiveQuests[index];
+                    return _buildQuestItem(context, ref, quest);
+                  }, childCount: personalActiveQuests.length),
                 )
               else
-                _buildEmptyState("NENHUMA MISSAO ATIVA"),
-
+                _buildEmptyState(
+                  'Nenhuma quest pessoal ativa. Toque em + para criar uma ou use as sugestoes.',
+                ),
               if (completedQuests.isNotEmpty) ...[
                 const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 40, bottom: 10),
+                    padding: EdgeInsets.only(top: 30, bottom: 10),
                     child: Text(
-                      "CONCLUIDAS",
+                      'CONCLUIDAS HOJE',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.white38,
-                        letterSpacing: 2,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -105,8 +177,8 @@ class QuestsScreen extends ConsumerWidget {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final quest = completedQuests[index];
                     return Opacity(
-                      opacity: 0.6,
-                      child: _buildDismissibleQuest(context, ref, quest),
+                      opacity: 0.75,
+                      child: _buildQuestItem(context, ref, quest),
                     );
                   }, childCount: completedQuests.length),
                 ),
@@ -117,23 +189,169 @@ class QuestsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openAddQuestModal(context),
-        //onPressed: () => ref.read(playerProvider.notifier).debugResetPlayer(),
         backgroundColor: AppColors.neonBlue,
         child: const Icon(Icons.add, color: Colors.black),
       ),
     );
   }
 
-  Widget _buildDismissibleQuest(
+  Widget _buildCompetitiveIntro(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.neonBlue.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'COMO O SISTEMA AGORA FUNCIONA',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.3,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Quests competitivas sao modelos oficiais com validacao leve. So elas contam para rank, boss e temporada.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompetitiveTemplatesPanel(
     BuildContext context,
     WidgetRef ref,
-    Quest quest,
+    List<CompetitiveQuestTemplate> templates,
   ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.neonBlue.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'MODELOS OFICIAIS',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Esses modelos ja nascem prontos para entrar no competitivo.',
+            style: TextStyle(color: Colors.white60, fontSize: 11.5, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          ...templates.map(
+            (template) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    template.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    template.description,
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildQuestChip(
+                        template.verificationLabel,
+                        AppColors.neonBlue,
+                      ),
+                      _buildQuestChip(
+                        '+${template.xpReward} XP',
+                        Colors.greenAccent,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.neonBlue),
+                        foregroundColor: AppColors.neonBlue,
+                      ),
+                      onPressed: () {
+                        final added = ref
+                            .read(questProvider.notifier)
+                            .addCompetitiveTemplate(template);
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added
+                                    ? '"${template.title}" entrou nas quests competitivas.'
+                                    : 'Voce ja tem uma quest desse tipo em aberto.',
+                              ),
+                            ),
+                          );
+                      },
+                      child: const Text(
+                        'ADICIONAR',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuestItem(BuildContext context, WidgetRef ref, Quest quest) {
+    final controller = ref.read(questProvider.notifier);
+    final helperText = _helperTextForQuest(quest);
+    final primaryLabel = _primaryLabelForQuest(quest);
+
     return Dismissible(
       key: Key(quest.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) =>
-          ref.read(questProvider.notifier).deleteQuest(quest.id),
+      direction: quest.isCompleted
+          ? DismissDirection.endToStart
+          : DismissDirection.none,
+      onDismissed: (_) => controller.deleteQuest(quest.id),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -146,16 +364,195 @@ class QuestsScreen extends ConsumerWidget {
       ),
       child: QuestCard(
         quest: quest,
-        onToggle: () {
-          // Aqui usamos o context que vem do build() para evitar o erro de BuildContext invalido
-          ref
-              .read(questProvider.notifier)
-              .toggleQuest(
-                quest.id,
-                onLevelUp: (level) => _showLevelUpDialog(context, level),
-              );
-        },
+        primaryActionLabel: primaryLabel,
+        helperText: helperText,
+        primaryActionEnabled: !quest.isCompleted || !quest.isCompetitive,
+        onPrimaryAction: () => _handleQuestPrimaryAction(context, ref, quest),
+        onSecondaryAction: quest.isCompleted && !quest.isCompetitive
+            ? () => controller.toggleQuest(quest.id)
+            : null,
+        secondaryActionLabel: quest.isCompleted && !quest.isCompetitive
+            ? 'DESFAZER'
+            : null,
       ),
+    );
+  }
+
+  Future<void> _handleQuestPrimaryAction(
+    BuildContext context,
+    WidgetRef ref,
+    Quest quest,
+  ) async {
+    final controller = ref.read(questProvider.notifier);
+
+    if (!quest.isCompetitive) {
+      controller.toggleQuest(
+        quest.id,
+        onLevelUp: (level) => _showLevelUpDialog(context, level),
+      );
+      return;
+    }
+
+    if (quest.isCompleted) return;
+
+    if (quest.verificationStatus != QuestVerificationStatus.inProgress) {
+      final result = controller.startCompetitiveQuest(quest.id);
+      _showQuestResult(context, quest, result);
+      return;
+    }
+
+    String? reflectionAnswer;
+    if (quest.requiresReflection) {
+      reflectionAnswer = await _openReflectionPrompt(
+        context,
+        quest.reflectionPrompt ?? 'O que voce fez nesta quest?',
+      );
+      if (reflectionAnswer == null) return;
+    }
+    if (!context.mounted) return;
+
+    final result = controller.completeCompetitiveQuest(
+      quest.id,
+      reflectionAnswer: reflectionAnswer,
+      onLevelUp: (level) => _showLevelUpDialog(context, level),
+    );
+    _showQuestResult(context, quest, result);
+  }
+
+  void _showQuestResult(
+    BuildContext context,
+    Quest quest,
+    QuestCompletionResult result,
+  ) {
+    final message = switch (result) {
+      QuestCompletionResult.success => quest.verificationStatus ==
+              QuestVerificationStatus.inProgress
+          ? 'Quest competitiva validada e registrada.'
+          : 'Sessao iniciada. Volte quando terminar para validar.',
+      QuestCompletionResult.notFound => 'Quest nao encontrada.',
+      QuestCompletionResult.alreadyCompleted => 'Essa quest ja foi concluida.',
+      QuestCompletionResult.invalidFlow => 'Essa acao nao e valida para esta quest.',
+      QuestCompletionResult.timerStillRunning =>
+        'Ainda falta tempo para essa sessao contar no competitivo.',
+      QuestCompletionResult.missingReflection =>
+        'Escreva uma reflexao curta para validar essa quest.',
+    };
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _primaryLabelForQuest(Quest quest) {
+    if (!quest.isCompetitive) {
+      return quest.isCompleted ? 'CONCLUIDA' : 'MARCAR COMO FEITA';
+    }
+    if (quest.isCompleted) return 'VALIDADA';
+    if (quest.verificationStatus == QuestVerificationStatus.inProgress) {
+      return quest.requiresReflection ? 'FINALIZAR E RESPONDER' : 'FINALIZAR';
+    }
+    return 'INICIAR';
+  }
+
+  String _helperTextForQuest(Quest quest) {
+    if (!quest.isCompetitive) {
+      return 'Quest pessoal: ajuda no seu progresso geral, mas nao entra no rank.';
+    }
+
+    if (quest.verificationStatus == QuestVerificationStatus.inProgress &&
+        quest.verificationStartedAt != null) {
+      final elapsed = DateTime.now().difference(quest.verificationStartedAt!).inMinutes;
+      return 'Sessao em andamento ha ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min.';
+    }
+
+    if (quest.isCompleted) {
+      return 'Quest competitiva validada. Este dia ja conta para rank e boss.';
+    }
+
+    return switch (quest.verificationMode) {
+      QuestVerificationMode.manual =>
+        'Quest competitiva simples, pronta para validar.',
+      QuestVerificationMode.timer =>
+        'Inicie no app e feche ${quest.targetDurationMinutes} min para contar no competitivo.',
+      QuestVerificationMode.timerWithReflection =>
+        'Inicie no app, feche ${quest.targetDurationMinutes} min e responda uma reflexao curta.',
+    };
+  }
+
+  Future<String?> _openReflectionPrompt(
+    BuildContext context,
+    String prompt,
+  ) async {
+    final controller = TextEditingController();
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'FECHAR QUEST COMPETITIVA',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                prompt,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Escreva uma resposta curta',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.neonBlue,
+                  ),
+                  onPressed: () {
+                    if (controller.text.trim().isEmpty) return;
+                    Navigator.of(context).pop(controller.text.trim());
+                  },
+                  child: const Text(
+                    'VALIDAR QUEST',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -176,7 +573,7 @@ class QuestsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'SUGESTOES DA SEMANA',
+            'SUGESTOES PESSOAIS',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -185,7 +582,7 @@ class QuestsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Baseadas no seu foco, ritmo recente e plano da proxima semana.',
+            'Essas sugestoes ajudam no seu ritmo, mas nao entram direto no competitivo e rendem XP leve.',
             style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
           ),
           const SizedBox(height: 14),
@@ -207,8 +604,8 @@ class QuestsScreen extends ConsumerWidget {
                   SnackBar(
                     content: Text(
                       addedCount > 0
-                          ? '$addedCount quests adicionadas para a sua semana.'
-                          : 'Essas sugestoes ja estao na sua lista atual.',
+                          ? '$addedCount quests pessoais adicionadas para a sua semana.'
+                          : 'Essas sugestoes ja estao na sua lista.',
                     ),
                   ),
                 );
@@ -237,25 +634,7 @@ class QuestsScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.neonBlue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          suggestion.tag,
-                          style: const TextStyle(
-                            color: AppColors.neonBlue,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
+                      _buildQuestChip('PESSOAL', Colors.white70),
                       const Spacer(),
                       Text(
                         '+${suggestion.xpReward} XP',
@@ -294,9 +673,7 @@ class QuestsScreen extends ConsumerWidget {
                         foregroundColor: AppColors.neonBlue,
                       ),
                       onPressed: () {
-                        ref
-                            .read(questProvider.notifier)
-                            .addQuest(
+                        ref.read(questProvider.notifier).addPersonalQuest(
                               suggestion.title,
                               suggestion.rewardAttribute,
                               suggestion.xpReward,
@@ -306,17 +683,14 @@ class QuestsScreen extends ConsumerWidget {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              '"${suggestion.title}" adicionada nas quests.',
+                              '"${suggestion.title}" entrou na sua lista pessoal.',
                             ),
                           ),
                         );
                       },
                       child: const Text(
                         'ADICIONAR',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -329,6 +703,25 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildQuestChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(String text) {
     return SliverToBoxAdapter(
       child: Center(
@@ -336,7 +729,12 @@ class QuestsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(40.0),
           child: Text(
             text,
-            style: const TextStyle(color: Colors.white24, fontSize: 12),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
           ),
         ),
       ),
@@ -358,11 +756,8 @@ class QuestsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withValues(
-        alpha: 0.85,
-      ), // Levemente mais transparente para ver o fundo
+      barrierColor: Colors.black.withValues(alpha: 0.85),
       builder: (dialogContext) {
-        // Agendamos o fechamento automatico usando o dialogContext
         Future.delayed(const Duration(milliseconds: 2500), () {
           if (dialogContext.mounted) {
             Navigator.of(dialogContext).pop();
@@ -384,18 +779,18 @@ class QuestsScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "LEVEL UP",
+                  'SUBIU DE NIVEL',
                   style: TextStyle(
                     color: AppColors.neonBlue,
-                    fontSize: 50,
+                    fontSize: 42,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 10,
+                    letterSpacing: 8,
                     decoration: TextDecoration.none,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "NIVEL $level",
+                  'NIVEL $level',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -403,11 +798,11 @@ class QuestsScreen extends ConsumerWidget {
                     decoration: TextDecoration.none,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 36),
                 const Icon(
                   Icons.keyboard_double_arrow_up,
                   color: AppColors.neonBlue,
-                  size: 80, // Aumentei um pouco para dar mais impacto
+                  size: 80,
                 ),
               ],
             ),

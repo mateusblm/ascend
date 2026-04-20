@@ -140,7 +140,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  'STATUS',
+                  'STATS',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
@@ -149,9 +149,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 ),
               ),
               InfoTooltipIcon(
-                title: 'Resumo do perfil',
+                title: 'Como ler esta tela',
                 message:
-                    'Esta tela junta seus atributos, progresso de XP, rank e leitura semanal em um formato curto. Os detalhes longos ficam escondidos por baixo do icone de ajuda.',
+                    'Use esta area para acompanhar numeros e tendencia. Rank mostra decisao e pressao da semana. Aqui ficam os detalhes do seu progresso.',
               ),
             ],
           ),
@@ -197,7 +197,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Rank $currentRank - Lv ${player.level}',
+                        'Rank $currentRank | Lv ${player.level}',
                         style: const TextStyle(
                           color: Colors.white60,
                           fontSize: 12.5,
@@ -269,8 +269,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       : 'Meta: ${promotionExam.targetActiveDays} dias ativos.',
                 PromotionExamStatus.passed =>
                   promotionExam.mode == PromotionExamMode.reconquest
-                      ? 'Exame concluido e pronto para reconquista.'
-                      : 'Exame concluido e pronto para promocao.',
+                      ? 'Reconquista pronta para confirmar.'
+                      : 'Promocao pronta para confirmar.',
                 PromotionExamStatus.failed =>
                   'Exame expirado ou nao sustentado.',
                 PromotionExamStatus.promoted => promotionExam.mode == PromotionExamMode.reconquest
@@ -329,7 +329,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'PROGRESSO GERAL',
+                'PROGRESSO',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -348,7 +348,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'XP diario e evolucao geral.',
+                'Seu progresso geral de XP e atributos.',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12.5,
@@ -403,7 +403,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'BOSS SEMANAL',
+                'DESAFIO DA SEMANA',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -493,7 +493,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   InfoTooltipIcon(
                     title: 'Atributos',
                     message:
-                        'Os atributos crescem com pontos livres. Cada ponto melhora uma frente do perfil: forca, inteligencia, vitalidade e agilidade.',
+                        'Use seus pontos livres para fortalecer o que mais combina com seu foco atual.',
                   ),
                 ],
               ),
@@ -573,7 +573,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'SEMANA ATUAL',
+                      'SEMANA',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -585,7 +585,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   InfoTooltipIcon(
                     title: 'Leitura semanal',
                     message:
-                        'Esse bloco mostra como a sua semana esta indo, em linguagem curta. A explicacao completa de cada indicador fica escondida no botao de ajuda.',
+                        'Esse bloco resume como a sua semana esta indo e o que vale ajustar antes do reset.',
                   ),
                 ],
               ),
@@ -648,7 +648,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'HISTORICO RECENTE',
+                'ULTIMAS SEMANAS',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -701,7 +701,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'PLANO DA PROXIMA SEMANA',
+                      'PLANO DA SEMANA',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -713,7 +713,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   InfoTooltipIcon(
                     title: 'Proxima semana',
                     message:
-                        'O plano organiza as prioridades mais uteis para a semana seguinte. E um resumo direto do que vale fazer para manter o rank estavel.',
+                        'O plano organiza o que mais vale fazer agora para manter o ritmo e proteger o rank.',
                   ),
                 ],
               ),
@@ -856,18 +856,68 @@ class _SectionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      selectedColor: AppColors.neonBlue.withValues(alpha: 0.18),
-      backgroundColor: Colors.white.withValues(alpha: 0.04),
-      side: BorderSide(color: selected ? AppColors.neonBlue : Colors.white10),
-      labelStyle: TextStyle(
-        color: selected ? AppColors.neonBlue : Colors.white70,
-        fontWeight: FontWeight.w700,
+    final borderColor = selected ? AppColors.neonBlue : Colors.white10;
+    final backgroundColor = selected
+        ? AppColors.neonBlue.withValues(alpha: 0.18)
+        : Colors.white.withValues(alpha: 0.04);
+    final foregroundColor = selected ? AppColors.neonBlue : Colors.white70;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: AppColors.neonBlue.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.symmetric(
+              horizontal: selected ? 18 : 14,
+              vertical: 10,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selected) ...[
+                  Icon(
+                    Icons.check,
+                    size: 14,
+                    color: foregroundColor,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: TextStyle(
+                    color: foregroundColor,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1011,7 +1061,7 @@ class _AttributeRow extends StatelessWidget {
 }
 
 enum _StatsSection {
-  overview('RESUMO'),
+  overview('GERAL'),
   attributes('ATRIBUTOS'),
   week('SEMANA'),
   plan('PLANO');

@@ -142,7 +142,7 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'PLAYER: $name | $title',
+              'PLAYER: $name | $title',
           style: const TextStyle(
             fontSize: 12,
             color: AppColors.neonBlue,
@@ -485,9 +485,9 @@ class HomeScreen extends ConsumerWidget {
       CompetitiveRankEventType.promotionUnlocked => 'EXAME DISPONIVEL',
       CompetitiveRankEventType.reconquestUnlocked => 'RECONQUISTA ABERTA',
       CompetitiveRankEventType.demotionApplied => 'QUEDA DE RANK',
-      CompetitiveRankEventType.perfectWeek => 'SEMANA PERFEITA',
-      CompetitiveRankEventType.warning => 'RANK EM ALERTA',
-      _ => 'STATUS COMPETITIVO',
+      CompetitiveRankEventType.perfectWeek => 'SEMANA FORTE',
+      CompetitiveRankEventType.warning => 'ATENCAO NO RANK',
+      _ => 'SEU MOMENTO',
     };
 
     return Container(
@@ -535,7 +535,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Temporada ${season.seasonLabel} | manutencao ${prestige.maintenanceRate}% | pico ${season.peakRank}',
+            'Temporada ${season.seasonLabel} | consistencia ${prestige.maintenanceRate}% | pico ${season.peakRank}',
             style: const TextStyle(
               color: Colors.white60,
               fontSize: 11,
@@ -613,9 +613,10 @@ class HomeScreen extends ConsumerWidget {
             rewardStatPoints: remoteBoss.rewardStatPoints,
           );
     final hasActiveRemoteBoss = weeklyBoss != null;
-    final progress = weeklyBoss?.progressFor(player) ?? 0;
+    final progress = weeklyBoss?.progressFor(player, competitiveOnly: true) ?? 0;
     final isClaimed = weeklyBoss?.isClaimedThisWeek(player) ?? false;
-    final isCompleted = weeklyBoss?.isCompleted(player) ?? false;
+    final isCompleted =
+        weeklyBoss?.isCompleted(player, competitiveOnly: true) ?? false;
 
     return Container(
       width: double.infinity,
@@ -638,7 +639,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'BOSS SEMANAL',
+                  'DESAFIO DA SEMANA',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white38,
@@ -661,7 +662,7 @@ class HomeScreen extends ConsumerWidget {
           if (remoteBoss != null) ...[
             const SizedBox(height: 8),
             Text(
-              'ONLINE: ${remoteBoss.completedCount} concluidos',
+              'NO SERVIDOR: ${remoteBoss.completedCount} concluidos',
               style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 11,
@@ -671,7 +672,7 @@ class HomeScreen extends ConsumerWidget {
           ] else if (remoteWeeklyBoss.isLoading) ...[
             const SizedBox(height: 8),
             const Text(
-              'ONLINE: conectando ao Firestore...',
+              'NO SERVIDOR: conectando...',
               style: TextStyle(
                 color: Colors.white38,
                 fontSize: 11,
@@ -681,7 +682,7 @@ class HomeScreen extends ConsumerWidget {
           ] else if (remoteWeeklyBoss.hasError) ...[
             const SizedBox(height: 8),
             Text(
-              'ONLINE: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
+              'NO SERVIDOR: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
               style: const TextStyle(
                 color: Colors.redAccent,
                 fontSize: 11,
@@ -719,7 +720,7 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos',
+                  'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos | conta so com dias competitivos validados',
                     style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 11,
@@ -755,7 +756,7 @@ class HomeScreen extends ConsumerWidget {
             const Divider(color: Colors.white10, height: 1),
             const SizedBox(height: 12),
             const Text(
-              'PRIMEIROS CLEARS',
+              'QUEM JA PASSOU',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.white38,
@@ -767,7 +768,7 @@ class HomeScreen extends ConsumerWidget {
           ] else if (!remoteWeeklyBoss.isLoading &&
               !remoteWeeklyBoss.hasError) ...[
             const Text(
-              'Nenhum boss semanal ativo no momento.',
+              'Nenhum desafio semanal ativo agora.',
               style: TextStyle(
                 color: Colors.white60,
                 fontSize: 12,

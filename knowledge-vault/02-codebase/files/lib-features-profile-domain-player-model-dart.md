@@ -2,7 +2,7 @@
 type: code-file
 path: lib\features\profile\domain\player_model.dart
 feature: profile
-symbol_count: 2
+symbol_count: 3
 import_count: 1
 ---
 # lib\features\profile\domain\player_model.dart
@@ -11,10 +11,11 @@ import_count: 1
 
 - feature: profile
 - imports: 1
-- symbols: 2
+- symbols: 3
 
 ## Symbols
 
+- AwakeningPath
 - Player
 - PlayerAttributes
 

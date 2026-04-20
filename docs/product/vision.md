@@ -105,3 +105,11 @@ Paid tier:
 - Prefer depth over breadth.
 - Protect the feeling of real progress at all times.
 - Protect consequence: rank, exams, and seasonal standing should feel earned and reversible.
+- Protect competitive integrity:
+  - not every quest should count equally toward rank or seasonal competition
+  - low-friction personal tracking should remain easy
+  - competitive progression should prefer verified effort over self-reported spam
+- Separate global progress from competitive proof:
+  - personal quests may grow the character level
+  - rank promotion, weekly bosses, and seasonal standing must come from competitive quests that were actually verified
+  - personal quests should grant lighter XP than competitive quests, so the free-form loop stays useful without becoming the main progression exploit

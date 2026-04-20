@@ -165,14 +165,30 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
   }
 
-  void recordQuestCompletion([DateTime? completedAt]) {
+  void recordQuestCompletion({
+    DateTime? completedAt,
+    bool countsForCompetitive = false,
+  }) {
     final completionDate = completedAt ?? DateTime.now();
     final lastCompletion = state.lastQuestCompletionDate;
     final updatedHistory = _upsertActivityDate(state.activityHistory, completionDate);
+    final updatedCompetitiveHistory = countsForCompetitive
+        ? _upsertActivityDate(state.competitiveActivityHistory, completionDate)
+        : state.competitiveActivityHistory;
 
     if (lastCompletion != null && _daysBetween(lastCompletion, completionDate) == 0) {
-      if (updatedHistory.length != state.activityHistory.length) {
-        state = state.copyWith(activityHistory: updatedHistory);
+      final historyChanged = updatedHistory.length != state.activityHistory.length;
+      final competitiveHistoryChanged =
+          updatedCompetitiveHistory.length != state.competitiveActivityHistory.length;
+
+      if (historyChanged || competitiveHistoryChanged) {
+        state = state.copyWith(
+          activityHistory: updatedHistory,
+          competitiveActivityHistory: updatedCompetitiveHistory,
+          lastCompetitiveQuestCompletionDate: countsForCompetitive
+              ? completionDate
+              : state.lastCompetitiveQuestCompletionDate,
+        );
         _saveToDb();
       }
       return;
@@ -189,6 +205,10 @@ class PlayerNotifier extends StateNotifier<Player> {
       bestStreak: streak > state.bestStreak ? streak : state.bestStreak,
       lastQuestCompletionDate: completionDate,
       activityHistory: updatedHistory,
+      competitiveActivityHistory: updatedCompetitiveHistory,
+      lastCompetitiveQuestCompletionDate: countsForCompetitive
+          ? completionDate
+          : state.lastCompetitiveQuestCompletionDate,
     );
 
     _saveToDb();
@@ -228,7 +248,8 @@ class PlayerNotifier extends StateNotifier<Player> {
     WeeklyBossDefinition weeklyBoss, {
     void Function(int level)? onLevelUp,
   }) {
-    if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
+    if (!weeklyBoss.isCompleted(state, competitiveOnly: true) ||
+        weeklyBoss.isClaimedThisWeek(state)) {
       return false;
     }
 

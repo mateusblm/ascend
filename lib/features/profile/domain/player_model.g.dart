@@ -33,59 +33,69 @@ const PlayerSchema = CollectionSchema(
       name: r'bestStreak',
       type: IsarType.long,
     ),
-    r'currentStreak': PropertySchema(
+    r'competitiveActivityHistory': PropertySchema(
       id: 3,
+      name: r'competitiveActivityHistory',
+      type: IsarType.dateTimeList,
+    ),
+    r'currentStreak': PropertySchema(
+      id: 4,
       name: r'currentStreak',
       type: IsarType.long,
     ),
     r'hasCompletedOnboarding': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'hasCompletedOnboarding',
       type: IsarType.bool,
     ),
+    r'lastCompetitiveQuestCompletionDate': PropertySchema(
+      id: 6,
+      name: r'lastCompetitiveQuestCompletionDate',
+      type: IsarType.dateTime,
+    ),
     r'lastQuestCompletionDate': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'lastQuestCompletionDate',
       type: IsarType.dateTime,
     ),
     r'lastResetDate': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'lastResetDate',
       type: IsarType.dateTime,
     ),
     r'level': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'level',
       type: IsarType.long,
     ),
     r'maxXp': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'maxXp',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'name',
       type: IsarType.string,
     ),
     r'primaryFocus': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'primaryFocus',
       type: IsarType.byte,
       enumMap: _PlayerprimaryFocusEnumValueMap,
     ),
     r'statPoints': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'statPoints',
       type: IsarType.long,
     ),
     r'weeklyBossLastClaimedAt': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'weeklyBossLastClaimedAt',
       type: IsarType.dateTime,
     ),
     r'xp': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'xp',
       type: IsarType.long,
     )
@@ -114,6 +124,7 @@ int _playerEstimateSize(
   bytesCount += 3 +
       PlayerAttributesSchema.estimateSize(
           object.attributes, allOffsets[PlayerAttributes]!, allOffsets);
+  bytesCount += 3 + object.competitiveActivityHistory.length * 8;
   bytesCount += 3 + object.name.length * 3;
   return bytesCount;
 }
@@ -132,17 +143,19 @@ void _playerSerialize(
     object.attributes,
   );
   writer.writeLong(offsets[2], object.bestStreak);
-  writer.writeLong(offsets[3], object.currentStreak);
-  writer.writeBool(offsets[4], object.hasCompletedOnboarding);
-  writer.writeDateTime(offsets[5], object.lastQuestCompletionDate);
-  writer.writeDateTime(offsets[6], object.lastResetDate);
-  writer.writeLong(offsets[7], object.level);
-  writer.writeLong(offsets[8], object.maxXp);
-  writer.writeString(offsets[9], object.name);
-  writer.writeByte(offsets[10], object.primaryFocus.index);
-  writer.writeLong(offsets[11], object.statPoints);
-  writer.writeDateTime(offsets[12], object.weeklyBossLastClaimedAt);
-  writer.writeLong(offsets[13], object.xp);
+  writer.writeDateTimeList(offsets[3], object.competitiveActivityHistory);
+  writer.writeLong(offsets[4], object.currentStreak);
+  writer.writeBool(offsets[5], object.hasCompletedOnboarding);
+  writer.writeDateTime(offsets[6], object.lastCompetitiveQuestCompletionDate);
+  writer.writeDateTime(offsets[7], object.lastQuestCompletionDate);
+  writer.writeDateTime(offsets[8], object.lastResetDate);
+  writer.writeLong(offsets[9], object.level);
+  writer.writeLong(offsets[10], object.maxXp);
+  writer.writeString(offsets[11], object.name);
+  writer.writeByte(offsets[12], object.primaryFocus.index);
+  writer.writeLong(offsets[13], object.statPoints);
+  writer.writeDateTime(offsets[14], object.weeklyBossLastClaimedAt);
+  writer.writeLong(offsets[15], object.xp);
 }
 
 Player _playerDeserialize(
@@ -160,20 +173,22 @@ Player _playerDeserialize(
         ) ??
         PlayerAttributes(),
     bestStreak: reader.readLongOrNull(offsets[2]) ?? 0,
-    currentStreak: reader.readLongOrNull(offsets[3]) ?? 0,
-    hasCompletedOnboarding: reader.readBoolOrNull(offsets[4]) ?? false,
+    competitiveActivityHistory: reader.readDateTimeList(offsets[3]) ?? const [],
+    currentStreak: reader.readLongOrNull(offsets[4]) ?? 0,
+    hasCompletedOnboarding: reader.readBoolOrNull(offsets[5]) ?? false,
     id: id,
-    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[5]),
-    lastResetDate: reader.readDateTime(offsets[6]),
-    level: reader.readLong(offsets[7]),
-    maxXp: reader.readLong(offsets[8]),
-    name: reader.readString(offsets[9]),
+    lastCompetitiveQuestCompletionDate: reader.readDateTimeOrNull(offsets[6]),
+    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[7]),
+    lastResetDate: reader.readDateTime(offsets[8]),
+    level: reader.readLong(offsets[9]),
+    maxXp: reader.readLong(offsets[10]),
+    name: reader.readString(offsets[11]),
     primaryFocus:
-        _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[10])] ??
+        _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[12])] ??
             AwakeningPath.discipline,
-    statPoints: reader.readLongOrNull(offsets[11]) ?? 0,
-    weeklyBossLastClaimedAt: reader.readDateTimeOrNull(offsets[12]),
-    xp: reader.readLong(offsets[13]),
+    statPoints: reader.readLongOrNull(offsets[13]) ?? 0,
+    weeklyBossLastClaimedAt: reader.readDateTimeOrNull(offsets[14]),
+    xp: reader.readLong(offsets[15]),
   );
   return object;
 }
@@ -197,27 +212,31 @@ P _playerDeserializeProp<P>(
     case 2:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 3:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readDateTimeList(offset) ?? const []) as P;
     case 4:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 5:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 10:
+      return (reader.readLong(offset)) as P;
+    case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (_PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offset)] ??
           AwakeningPath.discipline) as P;
-    case 11:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 12:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 13:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 14:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 15:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -524,6 +543,151 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryElementEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'competitiveActivityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryElementGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'competitiveActivityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryElementLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'competitiveActivityHistory',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryElementBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'competitiveActivityHistory',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      competitiveActivityHistoryLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'competitiveActivityHistory',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> currentStreakEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -631,6 +795,80 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastCompetitiveQuestCompletionDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastCompetitiveQuestCompletionDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastCompetitiveQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastCompetitiveQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastCompetitiveQuestCompletionDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      lastCompetitiveQuestCompletionDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastCompetitiveQuestCompletionDate',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1281,6 +1519,20 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy>
+      sortByLastCompetitiveQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCompetitiveQuestCompletionDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      sortByLastCompetitiveQuestCompletionDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCompetitiveQuestCompletionDate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> sortByLastQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastQuestCompletionDate', Sort.asc);
@@ -1442,6 +1694,20 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy>
+      thenByLastCompetitiveQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCompetitiveQuestCompletionDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy>
+      thenByLastCompetitiveQuestCompletionDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCompetitiveQuestCompletionDate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenByLastQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastQuestCompletionDate', Sort.asc);
@@ -1566,6 +1832,13 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
     });
   }
 
+  QueryBuilder<Player, Player, QDistinct>
+      distinctByCompetitiveActivityHistory() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'competitiveActivityHistory');
+    });
+  }
+
   QueryBuilder<Player, Player, QDistinct> distinctByCurrentStreak() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'currentStreak');
@@ -1575,6 +1848,13 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
   QueryBuilder<Player, Player, QDistinct> distinctByHasCompletedOnboarding() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'hasCompletedOnboarding');
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct>
+      distinctByLastCompetitiveQuestCompletionDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastCompetitiveQuestCompletionDate');
     });
   }
 
@@ -1661,6 +1941,13 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Player, List<DateTime>, QQueryOperations>
+      competitiveActivityHistoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'competitiveActivityHistory');
+    });
+  }
+
   QueryBuilder<Player, int, QQueryOperations> currentStreakProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'currentStreak');
@@ -1671,6 +1958,13 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
       hasCompletedOnboardingProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'hasCompletedOnboarding');
+    });
+  }
+
+  QueryBuilder<Player, DateTime?, QQueryOperations>
+      lastCompetitiveQuestCompletionDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastCompetitiveQuestCompletionDate');
     });
   }
 

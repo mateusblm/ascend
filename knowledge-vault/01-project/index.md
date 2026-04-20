@@ -5,3 +5,7 @@ This area is for stable project-level notes such as:
 - product notes
 - operating procedures
 - release notes
+
+## Active Notes
+
+- [[competitive-quest-integrity]]

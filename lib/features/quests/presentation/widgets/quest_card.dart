@@ -1,61 +1,177 @@
-import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
 
 class QuestCard extends StatelessWidget {
-  final Quest quest;
-  final VoidCallback onToggle;
+  const QuestCard({
+    super.key,
+    required this.quest,
+    required this.onPrimaryAction,
+    this.primaryActionLabel,
+    this.primaryActionEnabled = true,
+    this.onSecondaryAction,
+    this.secondaryActionLabel,
+    this.helperText,
+  });
 
-  const QuestCard({super.key, required this.quest, required this.onToggle});
+  final Quest quest;
+  final VoidCallback onPrimaryAction;
+  final String? primaryActionLabel;
+  final bool primaryActionEnabled;
+  final VoidCallback? onSecondaryAction;
+  final String? secondaryActionLabel;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
+    final accent = quest.isCompetitive ? AppColors.neonBlue : Colors.white70;
+
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: quest.isCompleted
-            ? Colors.green.withValues(alpha: 0.1)
+            ? Colors.green.withValues(alpha: 0.10)
             : AppColors.surface,
         border: Border.all(
           color: quest.isCompleted
-              ? Colors.green
-              : AppColors.neonBlue.withValues(alpha: 0.5),
+              ? Colors.greenAccent
+              : accent.withValues(alpha: 0.45),
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Checkbox(
-            value: quest.isCompleted,
-            onChanged: (_) => onToggle(),
-            activeColor: Colors.green,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quest.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        decoration: quest.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _QuestChip(
+                          label: quest.isCompetitive ? 'COMPETITIVA' : 'PESSOAL',
+                          color: quest.isCompetitive
+                              ? AppColors.neonBlue
+                              : Colors.white70,
+                        ),
+                        _QuestChip(
+                          label: _verificationLabel(quest),
+                          color: Colors.amberAccent,
+                        ),
+                        _QuestChip(
+                          label:
+                              '+${quest.xpReward} XP | ${quest.rewardAttribute.name.toUpperCase()}',
+                          color: Colors.greenAccent,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  quest.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    decoration: quest.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
+          if (helperText != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              helperText!,
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: Colors.white60,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton(
+                onPressed: primaryActionEnabled ? onPrimaryAction : null,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: quest.isCompleted
+                      ? Colors.greenAccent
+                      : AppColors.neonBlue,
+                  side: BorderSide(
+                    color: (quest.isCompleted
+                            ? Colors.greenAccent
+                            : AppColors.neonBlue)
+                        .withValues(alpha: 0.45),
                   ),
                 ),
-                Text(
-                  "+${quest.xpReward} XP | RECOMPENSA: ${quest.rewardAttribute.name.toUpperCase()}",
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.neonBlue,
+                child: Text(
+                  primaryActionLabel ??
+                      (quest.isCompleted ? 'CONCLUIDA' : 'MARCAR'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              if (secondaryActionLabel != null && onSecondaryAction != null) ...[
+                const SizedBox(width: 10),
+                TextButton(
+                  onPressed: onSecondaryAction,
+                  child: Text(
+                    secondaryActionLabel!,
+                    style: const TextStyle(color: Colors.white60),
                   ),
                 ),
               ],
-            ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  String _verificationLabel(Quest quest) {
+    return switch (quest.verificationMode) {
+      QuestVerificationMode.manual => 'CHECK',
+      QuestVerificationMode.timer =>
+        '${quest.targetDurationMinutes} MIN NO APP',
+      QuestVerificationMode.timerWithReflection =>
+        '${quest.targetDurationMinutes} MIN + REFLEXAO',
+    };
+  }
+}
+
+class _QuestChip extends StatelessWidget {
+  const _QuestChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
       ),
     );
   }

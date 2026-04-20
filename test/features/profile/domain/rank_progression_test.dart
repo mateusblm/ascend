@@ -6,12 +6,12 @@ void main() {
   group('evaluateCompetitiveRank', () {
     test('returns secure when weekly maintenance is met', () {
       final player = _buildPlayer(
-        activityHistory: [
+        competitiveActivityHistory: [
           DateTime(2026, 4, 14),
           DateTime(2026, 4, 15),
           DateTime(2026, 4, 16),
         ],
-        lastQuestCompletionDate: DateTime(2026, 4, 16),
+        lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 16),
       );
 
       final snapshot = evaluateCompetitiveRank(
@@ -27,13 +27,13 @@ void main() {
     test('returns promotionReady when next rank requirement is reached and level gate is met', () {
       final player = _buildPlayer(
         level: 5,
-        activityHistory: [
+        competitiveActivityHistory: [
           DateTime(2026, 4, 14),
           DateTime(2026, 4, 15),
           DateTime(2026, 4, 16),
           DateTime(2026, 4, 17),
         ],
-        lastQuestCompletionDate: DateTime(2026, 4, 17),
+        lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 17),
       );
       final previousSnapshot = CompetitiveRankSnapshot(
         currentRank: 'E',
@@ -73,13 +73,13 @@ void main() {
     test('stays secure when weekly target is met but next rank level gate is missing', () {
       final player = _buildPlayer(
         level: 1,
-        activityHistory: [
+        competitiveActivityHistory: [
           DateTime(2026, 4, 14),
           DateTime(2026, 4, 15),
           DateTime(2026, 4, 16),
           DateTime(2026, 4, 17),
         ],
-        lastQuestCompletionDate: DateTime(2026, 4, 17),
+        lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 17),
       );
 
       final snapshot = evaluateCompetitiveRank(
@@ -96,13 +96,13 @@ void main() {
     test('opens reconquest when player has fallen below peak rank but still has level gate', () {
       final player = _buildPlayer(
         level: 30,
-        activityHistory: [
+        competitiveActivityHistory: [
           DateTime(2026, 4, 14),
           DateTime(2026, 4, 15),
           DateTime(2026, 4, 16),
           DateTime(2026, 4, 17),
         ],
-        lastQuestCompletionDate: DateTime(2026, 4, 17),
+        lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 17),
       );
       final previousSnapshot = CompetitiveRankSnapshot(
         currentRank: 'E',
@@ -144,8 +144,8 @@ void main() {
     test('applies demotion after consecutive failed weeks', () {
       final player = _buildPlayer(
         level: 7,
-        activityHistory: [DateTime(2026, 4, 7)],
-        lastQuestCompletionDate: DateTime(2026, 4, 7),
+        competitiveActivityHistory: [DateTime(2026, 4, 7)],
+        lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 7),
       );
       final previousSnapshot = CompetitiveRankSnapshot(
         currentRank: 'D',
@@ -177,12 +177,36 @@ void main() {
       expect(snapshot.eventType, CompetitiveRankEventType.demotionApplied);
     });
   });
+
+  test('does not unlock promotion from personal-only activity history', () {
+    final player = _buildPlayer(
+      level: 5,
+      activityHistory: [
+        DateTime(2026, 4, 14),
+        DateTime(2026, 4, 15),
+        DateTime(2026, 4, 16),
+        DateTime(2026, 4, 17),
+      ],
+      lastQuestCompletionDate: DateTime(2026, 4, 17),
+    );
+
+    final snapshot = evaluateCompetitiveRank(
+      player: player,
+      now: DateTime(2026, 4, 17),
+    );
+
+    expect(snapshot.promotionReady, isFalse);
+    expect(snapshot.activeDays, 0);
+    expect(snapshot.status, RankMaintenanceStatus.critical);
+  });
 }
 
 Player _buildPlayer({
   int level = 1,
   List<DateTime> activityHistory = const [],
+  List<DateTime> competitiveActivityHistory = const [],
   DateTime? lastQuestCompletionDate,
+  DateTime? lastCompetitiveQuestCompletionDate,
 }) {
   return Player(
     name: 'TEST',
@@ -192,6 +216,8 @@ Player _buildPlayer({
     attributes: PlayerAttributes(),
     lastResetDate: DateTime(2026, 4, 18),
     activityHistory: activityHistory,
+    competitiveActivityHistory: competitiveActivityHistory,
     lastQuestCompletionDate: lastQuestCompletionDate,
+    lastCompetitiveQuestCompletionDate: lastCompetitiveQuestCompletionDate,
   );
 }

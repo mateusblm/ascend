@@ -227,8 +227,8 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final peakRank = _higherRank(previousPeakRank, seedRank);
   final baseRule = rankRuleFor(seedRank);
   final boss = weeklyBossForRank(seedRank);
-  final bossCompleted = boss.isCompleted(player);
-  final activeDays = boss.progressFor(player);
+  final bossCompleted = boss.isCompleted(player, competitiveOnly: true);
+  final activeDays = boss.progressFor(player, competitiveOnly: true);
   final maintenanceMet =
       activeDays >= baseRule.requiredActiveDays &&
       (!baseRule.requiresBossClear || bossCompleted);
@@ -257,13 +257,20 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final nextRank = rankAfter(currentRank);
   final nextRule = nextRank == null ? null : rankRuleFor(nextRank);
   final currentBoss = weeklyBossForRank(currentRank);
-  final currentBossCompleted = currentBoss.isCompleted(player);
-  final currentActiveDays = currentBoss.progressFor(player);
+  final currentBossCompleted = currentBoss.isCompleted(
+    player,
+    competitiveOnly: true,
+  );
+  final currentActiveDays = currentBoss.progressFor(
+    player,
+    competitiveOnly: true,
+  );
   final currentMaintenanceMet =
       currentActiveDays >= currentRule.requiredActiveDays &&
       (!currentRule.requiresBossClear || currentBossCompleted);
   final nextBoss = nextRank == null ? null : weeklyBossForRank(nextRank);
-  final nextBossCompleted = nextBoss?.isCompleted(player) ?? false;
+  final nextBossCompleted =
+      nextBoss?.isCompleted(player, competitiveOnly: true) ?? false;
   final targetRequiredLevel = nextRule?.minimumLevel ?? player.level;
   final targetLevelGateMet =
       nextRule == null ? true : player.level >= nextRule.minimumLevel;
@@ -493,9 +500,9 @@ String _detailForStatus({
 }) {
   final bossLine = currentRule.requiresBossClear
       ? (bossCompleted
-            ? 'Boss semanal concluido.'
-            : 'Boss semanal ainda pendente.')
-      : 'Boss semanal nao e exigido neste rank.';
+            ? 'Boss competitivo confirmado.'
+            : 'Boss competitivo ainda pendente.')
+      : 'Boss competitivo nao e exigido neste rank.';
   final levelLine = nextRank == null
       ? 'Voce ja esta no topo do sistema.'
       : targetLevelGateMet
@@ -507,15 +514,15 @@ String _detailForStatus({
 
   return switch (status) {
     RankMaintenanceStatus.secure =>
-      'Voce garantiu $activeDays/${currentRule.requiredActiveDays} dias ativos. $bossLine $reconquestLine $levelLine',
+      'Voce garantiu $activeDays/${currentRule.requiredActiveDays} dias competitivos validados. $bossLine $reconquestLine $levelLine',
     RankMaintenanceStatus.warning =>
-      'Voce tem $activeDays/${currentRule.requiredActiveDays} dias ativos. Falhar esta semana deixa o sistema em pressao real. $levelLine',
+      'Voce tem $activeDays/${currentRule.requiredActiveDays} dias competitivos validados. Falhar esta semana deixa o sistema em pressao real. $levelLine',
     RankMaintenanceStatus.critical =>
       'Voce esta abaixo da manutencao do rank $currentRank. Strikes atuais: $demotionStrikes. $bossLine',
     RankMaintenanceStatus.promotionReady =>
       advancementMode == RankAdvancementMode.reconquest
-          ? 'Voce sustentou o padrao para reconquistar o rank ${nextRank ?? currentRank}. O exame agora valida a retomada do seu pico historico.'
-          : 'Voce atingiu o padrao do proximo rank${nextRank == null ? '' : ' $nextRank'}. Agora falta transformar isso em exame de promocao.',
+          ? 'Voce sustentou o padrao com atividade competitiva validada para reconquistar o rank ${nextRank ?? currentRank}. O exame agora valida a retomada do seu pico historico.'
+          : 'Voce atingiu o padrao competitivo validado do proximo rank${nextRank == null ? '' : ' $nextRank'}. Agora falta transformar isso em exame de promocao.',
     RankMaintenanceStatus.demoted =>
       'A manutencao falhou por semanas seguidas. O sistema aplicou queda de rank para preservar a seriedade da progressao. Seu pico historico continua registrado em $peakRank.',
   };

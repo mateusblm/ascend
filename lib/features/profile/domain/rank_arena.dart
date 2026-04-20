@@ -97,12 +97,14 @@ int _activeDaysThisWeek(Player player, {DateTime? now}) {
     current.day,
   ).subtract(Duration(days: current.weekday - 1));
   final weekEnd = weekStart.add(const Duration(days: 7));
+  final history = player.competitiveActivityHistory;
+  final lastCompletion = player.lastCompetitiveQuestCompletionDate;
+
   final activeDates = <DateTime>{
-    ...player.activityHistory.map(
+    ...history.map(
       (entry) => DateTime(entry.year, entry.month, entry.day),
     ),
   };
-  final lastCompletion = player.lastQuestCompletionDate;
   if (lastCompletion != null) {
     activeDates.add(
       DateTime(lastCompletion.year, lastCompletion.month, lastCompletion.day),

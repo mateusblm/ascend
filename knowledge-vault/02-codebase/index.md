@@ -1,7 +1,7 @@
 # Codebase Index
 
-- generated_at: 2026-04-18T12:17:43.2546740-03:00
-- file_count: 20
+- generated_at: 2026-04-19T22:02:25.7580735-03:00
+- file_count: 44
 
 ## Files
 
@@ -12,16 +12,40 @@
 - [[lib-features-auth-presentation-auth-controller-dart]] (lib\features\auth\presentation\auth_controller.dart)
 - [[lib-features-auth-presentation-login-screen-dart]] (lib\features\auth\presentation\login_screen.dart)
 - [[lib-features-main-navigation-screen-dart]] (lib\features\main_navigation_screen.dart)
+- [[lib-features-profile-data-rank-progression-repository-dart]] (lib\features\profile\data\rank_progression_repository.dart)
 - [[lib-features-profile-domain-achievement-modal-dart]] (lib\features\profile\domain\achievement_modal.dart)
+- [[lib-features-profile-domain-competitive-integrity-dart]] (lib\features\profile\domain\competitive_integrity.dart)
 - [[lib-features-profile-domain-player-model-dart]] (lib\features\profile\domain\player_model.dart)
 - [[lib-features-profile-domain-player-model-g-dart]] (lib\features\profile\domain\player_model.g.dart)
+- [[lib-features-profile-domain-promotion-exam-dart]] (lib\features\profile\domain\promotion_exam.dart)
+- [[lib-features-profile-domain-rank-arena-dart]] (lib\features\profile\domain\rank_arena.dart)
+- [[lib-features-profile-domain-rank-prestige-dart]] (lib\features\profile\domain\rank_prestige.dart)
+- [[lib-features-profile-domain-rank-progression-dart]] (lib\features\profile\domain\rank_progression.dart)
+- [[lib-features-profile-domain-rank-season-dart]] (lib\features\profile\domain\rank_season.dart)
+- [[lib-features-profile-domain-rank-season-leaderboard-dart]] (lib\features\profile\domain\rank_season_leaderboard.dart)
+- [[lib-features-profile-domain-season-legacy-reward-dart]] (lib\features\profile\domain\season_legacy_reward.dart)
+- [[lib-features-profile-domain-season-profile-snapshot-dart]] (lib\features\profile\domain\season_profile_snapshot.dart)
+- [[lib-features-profile-domain-season-reward-snapshot-dart]] (lib\features\profile\domain\season_reward_snapshot.dart)
+- [[lib-features-profile-domain-weekly-boss-dart]] (lib\features\profile\domain\weekly_boss.dart)
+- [[lib-features-profile-domain-weekly-insights-dart]] (lib\features\profile\domain\weekly_insights.dart)
+- [[lib-features-profile-presentation-awakening-onboarding-screen-dart]] (lib\features\profile\presentation\awakening_onboarding_screen.dart)
+- [[lib-features-profile-presentation-focus-selection-sheet-dart]] (lib\features\profile\presentation\focus_selection_sheet.dart)
 - [[lib-features-profile-presentation-home-screen-dart]] (lib\features\profile\presentation\home_screen.dart)
+- [[lib-features-profile-presentation-info-tooltip-dart]] (lib\features\profile\presentation\info_tooltip.dart)
 - [[lib-features-profile-presentation-player-controller-dart]] (lib\features\profile\presentation\player_controller.dart)
+- [[lib-features-profile-presentation-rank-progression-provider-dart]] (lib\features\profile\presentation\rank_progression_provider.dart)
+- [[lib-features-profile-presentation-rank-screen-dart]] (lib\features\profile\presentation\rank_screen.dart)
 - [[lib-features-profile-presentation-stats-screen-dart]] (lib\features\profile\presentation\stats_screen.dart)
+- [[lib-features-quests-domain-competitive-quest-template-dart]] (lib\features\quests\domain\competitive_quest_template.dart)
 - [[lib-features-quests-domain-quest-model-dart]] (lib\features\quests\domain\quest_model.dart)
 - [[lib-features-quests-domain-quest-model-g-dart]] (lib\features\quests\domain\quest_model.g.dart)
+- [[lib-features-quests-domain-quest-suggestion-dart]] (lib\features\quests\domain\quest_suggestion.dart)
 - [[lib-features-quests-presentation-quest-controller-dart]] (lib\features\quests\presentation\quest_controller.dart)
 - [[lib-features-quests-presentation-quests-screen-dart]] (lib\features\quests\presentation\quests_screen.dart)
 - [[lib-features-quests-presentation-widgets-add-quest-modal-dart]] (lib\features\quests\presentation\widgets\add_quest_modal.dart)
 - [[lib-features-quests-presentation-widgets-quest-card-dart]] (lib\features\quests\presentation\widgets\quest_card.dart)
+- [[lib-features-weekly-boss-data-weekly-boss-repository-dart]] (lib\features\weekly_boss\data\weekly_boss_repository.dart)
+- [[lib-features-weekly-boss-domain-remote-weekly-boss-dart]] (lib\features\weekly_boss\domain\remote_weekly_boss.dart)
+- [[lib-features-weekly-boss-domain-weekly-boss-completion-dart]] (lib\features\weekly_boss\domain\weekly_boss_completion.dart)
+- [[lib-features-weekly-boss-presentation-weekly-boss-provider-dart]] (lib\features\weekly_boss\presentation\weekly_boss_provider.dart)
 - [[lib-main-dart]] (lib\main.dart)

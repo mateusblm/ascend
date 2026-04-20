@@ -95,6 +95,17 @@ Current competitive additions to protect:
     - level gate for upward movement
     - weekly maintenance for rank survival
     - reconquest flow after falling below peak rank
+22. rank screen section switching (`Agora`, `Temporada`, `Legado`) and primary CTA visibility
+23. personal quest completion still grants XP without influencing competitive history
+24. competitive quest verification gates rank-facing credit:
+    - timer must be started
+    - timer must reach minimum duration
+    - reflection must be supplied when required
+25. duplicate official competitive templates should not create stacked open quests of the same template type
+26. weekly boss and rank arena should prefer competitive activity history when available
+27. personal-only activity must not unlock promotion or weekly boss completion
+28. competitive integrity scoring should react to suspicious personal-only bursts without blocking honest competitive activity
+29. home and rank should render integrity state without breaking their primary CTA flows
 
 ## AI Test Rules
 

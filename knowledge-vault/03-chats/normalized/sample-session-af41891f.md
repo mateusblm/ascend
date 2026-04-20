@@ -1,7 +1,7 @@
 ---
 type: chat-note
 source_file: sample-session.md
-imported_at: 2026-04-18T12:17:43.5553073-03:00
+imported_at: 2026-04-19T22:02:25.9164616-03:00
 status: imported
 tags:
   - architecture
@@ -14,7 +14,7 @@ tags:
 ## Summary
 
 - source: sample-session.md
-- imported_at: 2026-04-18T12:17:43.5553073-03:00
+- imported_at: 2026-04-19T22:02:25.9164616-03:00
 - raw_note: [[raw/sample-session-af41891f]]
 
 ## Related Files
@@ -23,7 +23,7 @@ tags:
 
 ## Related Notes
 
-- [[Player]]
+- none
 
 ## Excerpt
 

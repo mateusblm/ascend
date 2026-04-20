@@ -27,7 +27,23 @@ class LoginScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 10),
-            const Text("SISTEMA DE DESPERTAR", style: TextStyle(fontSize: 12, color: Colors.white24)),
+            const Text(
+              "PROGRESSAO PESSOAL EM MODO RPG",
+              style: TextStyle(fontSize: 12, color: Colors.white38),
+            ),
+            const SizedBox(height: 14),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                "Entre para acompanhar suas quests, proteger seu rank e evoluir semana apos semana.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white54,
+                  height: 1.45,
+                ),
+              ),
+            ),
             const SizedBox(height: 60),
             
             if (state is AuthLoading)
@@ -42,7 +58,7 @@ class LoginScreen extends ConsumerWidget {
                 ),
                 onPressed: () => ref.read(authProvider.notifier).signInWithGoogle(),
                 icon: const Icon(Icons.login, color: AppColors.neonBlue),
-                label: const Text("CONECTAR VIA GOOGLE"),
+                label: const Text("ENTRAR COM GOOGLE"),
               ),
               if (state is AuthFailure)
                 Padding(

@@ -65,11 +65,11 @@ Player _player() {
     maxXp: 100,
     attributes: PlayerAttributes(),
     lastResetDate: DateTime(2026, 4, 18),
-    activityHistory: [
+    competitiveActivityHistory: [
       DateTime(2026, 4, 14),
       DateTime(2026, 4, 16),
       DateTime(2026, 4, 17),
     ],
-    lastQuestCompletionDate: DateTime(2026, 4, 17),
+    lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 17),
   );
 }

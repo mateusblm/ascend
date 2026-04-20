@@ -1,4 +1,5 @@
 import 'package:ascend/features/profile/data/rank_progression_repository.dart';
+import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
@@ -58,6 +59,18 @@ final seasonProfileProvider =
     StreamProvider.autoDispose<SeasonProfileSnapshot?>((ref) {
       final repository = ref.watch(rankProgressionRepositoryProvider);
       return repository.watchSeasonProfile();
+    });
+
+final currentCompetitiveIntegrityProvider =
+    StreamProvider.autoDispose<CompetitiveIntegritySnapshot?>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchCurrentIntegrity();
+    });
+
+final competitiveIntegrityHistoryProvider =
+    StreamProvider.autoDispose<List<CompetitiveIntegritySnapshot>>((ref) {
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.watchIntegrityHistory();
     });
 
 final competitiveRankProvider = Provider<String>((ref) {

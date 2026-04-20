@@ -20,6 +20,10 @@ type CompetitiveRankPayload = {
   seasonReward?: unknown;
 };
 
+type CompetitiveIntegrityPayload = {
+  integrity?: unknown;
+};
+
 type ValidatedSeasonReward = NonNullable<
   ReturnType<typeof validateSeasonRewardPayload>
 >;
@@ -52,6 +56,10 @@ function isValidSyncSource(value: string): boolean {
 
 function isValidSeasonRewardClaimStatus(value: string): boolean {
   return ['locked', 'readyToClaim', 'claimed'].includes(value);
+}
+
+function isValidTrustBand(value: string): boolean {
+  return ['high', 'stable', 'attention', 'restricted'].includes(value);
 }
 
 function isValidRankEventType(value: string): boolean {
@@ -266,6 +274,62 @@ function validateSeasonRewardPayload(seasonReward: unknown) {
   };
 }
 
+function validateIntegrityPayload(integrity: unknown) {
+  if (integrity == null) return null;
+  if (typeof integrity !== 'object') {
+    throw new HttpsError('invalid-argument', 'integrity invalida.');
+  }
+
+  const data = integrity as Record<string, unknown>;
+  const trustBand = ensureString(data.trustBand, 'trustBand', 32);
+  const syncSource = normalizeSyncSource(data.syncSource);
+
+  if (!isValidTrustBand(trustBand)) {
+    throw new HttpsError('invalid-argument', 'trustBand invalido.');
+  }
+  if (!isValidSyncSource(syncSource)) {
+    throw new HttpsError('invalid-argument', 'syncSource invalido.');
+  }
+
+  return {
+    weekKey: ensureString(data.weekKey, 'weekKey', 24),
+    trustScore: ensureInt(data.trustScore, 'trustScore', 0),
+    trustBand,
+    weeklyActiveDays: ensureInt(data.weeklyActiveDays, 'weeklyActiveDays', 0),
+    weeklyCompetitiveDays: ensureInt(
+      data.weeklyCompetitiveDays,
+      'weeklyCompetitiveDays',
+      0,
+    ),
+    personalQuestCompletionsToday: ensureInt(
+      data.personalQuestCompletionsToday,
+      'personalQuestCompletionsToday',
+      0,
+    ),
+    competitiveQuestCompletionsToday: ensureInt(
+      data.competitiveQuestCompletionsToday,
+      'competitiveQuestCompletionsToday',
+      0,
+    ),
+    personalXpToday: ensureInt(data.personalXpToday, 'personalXpToday', 0),
+    competitiveXpToday: ensureInt(
+      data.competitiveXpToday,
+      'competitiveXpToday',
+      0,
+    ),
+    suspiciousPatternCount: ensureInt(
+      data.suspiciousPatternCount,
+      'suspiciousPatternCount',
+      0,
+    ),
+    summary: ensureString(data.summary, 'summary', 80),
+    detail: ensureString(data.detail, 'detail', 500),
+    syncSchemaVersion: ensureInt(data.syncSchemaVersion, 'syncSchemaVersion', 1),
+    syncSource,
+    updatedAt: ensureTimestamp(data.updatedAt, 'updatedAt'),
+  };
+}
+
 function buildSeasonLegacyPayload(
   seasonReward: ValidatedSeasonReward,
   claimedAt: admin.firestore.Timestamp,
@@ -476,6 +540,44 @@ export const upsertCompetitiveProgression = onCall(
       weekKey: snapshot.weekKey,
       wroteExam: Boolean(exam),
       wroteSeasonReward: Boolean(validatedSeasonReward),
+    };
+  },
+);
+
+export const upsertCompetitiveIntegrity = onCall(
+  {
+    region: 'southamerica-east1',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = (request.data ?? {}) as CompetitiveIntegrityPayload;
+    const integrity = validateIntegrityPayload(payload.integrity);
+    if (integrity == null) {
+      throw new HttpsError('invalid-argument', 'integrity obrigatoria.');
+    }
+
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    const currentRef = db.collection('users').doc(uid).collection('integrity').doc('current');
+    const historyRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('integrity_history')
+      .doc(integrity.weekKey);
+
+    const batch = db.batch();
+    batch.set(currentRef, integrity, { merge: true });
+    batch.set(historyRef, integrity, { merge: true });
+    await batch.commit();
+
+    return {
+      status: 'synced' as const,
+      weekKey: integrity.weekKey,
+      trustBand: integrity.trustBand,
+      trustScore: integrity.trustScore,
     };
   },
 );

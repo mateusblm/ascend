@@ -45,6 +45,10 @@ service cloud.firestore {
       return status in ['locked', 'readyToClaim', 'claimed'];
     }
 
+    function isValidTrustBand(band) {
+      return band in ['high', 'stable', 'attention', 'restricted'];
+    }
+
     function validProgressionSnapshot(docId, shouldMatchDocId) {
       return request.resource.data.keys().hasOnly([
             'currentRank',
@@ -301,6 +305,55 @@ service cloud.firestore {
           request.resource.data.updatedAt is timestamp;
     }
 
+    function validIntegritySnapshot(docId, shouldMatchDocId) {
+      return request.resource.data.keys().hasOnly([
+            'weekKey',
+            'trustScore',
+            'trustBand',
+            'weeklyActiveDays',
+            'weeklyCompetitiveDays',
+            'personalQuestCompletionsToday',
+            'competitiveQuestCompletionsToday',
+            'personalXpToday',
+            'competitiveXpToday',
+            'suspiciousPatternCount',
+            'summary',
+            'detail',
+            'syncSchemaVersion',
+            'syncSource',
+            'updatedAt'
+          ]) &&
+          request.resource.data.weekKey is string &&
+          (!shouldMatchDocId || request.resource.data.weekKey == docId) &&
+          request.resource.data.trustScore is int &&
+          request.resource.data.trustScore >= 0 &&
+          request.resource.data.trustScore <= 100 &&
+          isValidTrustBand(request.resource.data.trustBand) &&
+          request.resource.data.weeklyActiveDays is int &&
+          request.resource.data.weeklyActiveDays >= 0 &&
+          request.resource.data.weeklyCompetitiveDays is int &&
+          request.resource.data.weeklyCompetitiveDays >= 0 &&
+          request.resource.data.personalQuestCompletionsToday is int &&
+          request.resource.data.personalQuestCompletionsToday >= 0 &&
+          request.resource.data.competitiveQuestCompletionsToday is int &&
+          request.resource.data.competitiveQuestCompletionsToday >= 0 &&
+          request.resource.data.personalXpToday is int &&
+          request.resource.data.personalXpToday >= 0 &&
+          request.resource.data.competitiveXpToday is int &&
+          request.resource.data.competitiveXpToday >= 0 &&
+          request.resource.data.suspiciousPatternCount is int &&
+          request.resource.data.suspiciousPatternCount >= 0 &&
+          request.resource.data.summary is string &&
+          request.resource.data.summary.size() <= 80 &&
+          request.resource.data.detail is string &&
+          request.resource.data.detail.size() <= 500 &&
+          request.resource.data.syncSchemaVersion is int &&
+          request.resource.data.syncSchemaVersion >= 1 &&
+          request.resource.data.syncSchemaVersion <= 3 &&
+          isValidSyncSource(request.resource.data.syncSource) &&
+          request.resource.data.updatedAt is timestamp;
+    }
+
     function validCompletionPayload(userId) {
       return request.resource.data.keys().hasOnly([
             'uid',
@@ -404,6 +457,23 @@ service cloud.firestore {
         allow create, update: if isSignedIn() &&
             request.auth.uid == userId &&
             validSeasonProfile(docId);
+        allow delete: if false;
+      }
+
+      match /integrity/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            docId == 'current' &&
+            validIntegritySnapshot(docId, false);
+        allow delete: if false;
+      }
+
+      match /integrity_history/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() &&
+            request.auth.uid == userId &&
+            validIntegritySnapshot(docId, true);
         allow delete: if false;
       }
     }

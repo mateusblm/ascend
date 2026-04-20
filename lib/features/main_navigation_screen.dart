@@ -37,6 +37,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     ref.listenManual(playerProvider, (_, next) {
       _scheduleCompetitiveSync(next);
     });
+    ref.listenManual(questProvider, (_, __) {
+      _scheduleCompetitiveSync(ref.read(playerProvider));
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(questProvider.notifier).ensureDailyReset();
@@ -143,7 +146,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   }) {
     _syncDebounce?.cancel();
     _syncDebounce = Timer(delay, () {
-      ref.read(rankProgressionRepositoryProvider).syncCompetitiveState(player);
+      final repository = ref.read(rankProgressionRepositoryProvider);
+      final quests = ref.read(questProvider);
+      repository.syncCompetitiveState(player);
+      repository.syncCompetitiveIntegrity(player: player, quests: quests);
     });
   }
 }

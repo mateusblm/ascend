@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
@@ -8,6 +9,7 @@ import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/season_reward_snapshot.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -135,6 +137,41 @@ class RankProgressionRepository {
     });
   }
 
+  Stream<CompetitiveIntegritySnapshot?> watchCurrentIntegrity() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      return Stream.value(null);
+    }
+
+    return _integrityDoc(uid).snapshots().map((snapshot) {
+      if (!snapshot.exists) return null;
+      final data = snapshot.data();
+      if (data == null) return null;
+      return CompetitiveIntegritySnapshot.fromFirestore(data);
+    });
+  }
+
+  Stream<List<CompetitiveIntegritySnapshot>> watchIntegrityHistory({
+    int limit = 6,
+  }) {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      return Stream.value(const <CompetitiveIntegritySnapshot>[]);
+    }
+
+    return _integrityHistoryCollection(uid)
+        .orderBy('updatedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map(
+                (doc) => CompetitiveIntegritySnapshot.fromFirestore(doc.data()),
+              )
+              .toList();
+        });
+  }
+
   Future<CompetitiveRankSnapshot?> syncCompetitiveState(Player player) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -245,6 +282,36 @@ class RankProgressionRepository {
 
   Future<CompetitiveRankSnapshot?> syncSnapshot(Player player) =>
       syncCompetitiveState(player);
+
+  Future<CompetitiveIntegritySnapshot?> syncCompetitiveIntegrity({
+    required Player player,
+    required List<Quest> quests,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return null;
+
+    final snapshot = evaluateCompetitiveIntegrity(
+      player: player,
+      quests: quests,
+    );
+    final currentRef = _integrityDoc(uid);
+    final historyRef = _integrityHistoryCollection(uid).doc(snapshot.weekKey);
+    final batch = _firestore.batch();
+    batch.set(currentRef, snapshot.toFirestore(), SetOptions(merge: true));
+    batch.set(historyRef, snapshot.toFirestore(), SetOptions(merge: true));
+    await batch.commit();
+
+    try {
+      final callable = _functions.httpsCallable('upsertCompetitiveIntegrity');
+      await callable
+          .call({'integrity': snapshot.toFirestore()})
+          .timeout(_rpcTimeout);
+    } catch (_) {
+      // Silent fallback keeps integrity signals local-first.
+    }
+
+    return snapshot;
+  }
 
   Future<void> syncPromotionExam(CompetitiveRankSnapshot snapshot) async {
     final uid = _auth.currentUser?.uid;
@@ -687,6 +754,23 @@ class RankProgressionRepository {
         .doc(uid)
         .collection('season_profile')
         .doc('current');
+  }
+
+  DocumentReference<Map<String, dynamic>> _integrityDoc(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('integrity')
+        .doc('current');
+  }
+
+  CollectionReference<Map<String, dynamic>> _integrityHistoryCollection(
+    String uid,
+  ) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('integrity_history');
   }
 
   PromotionExam? _resolveExamAfterSnapshot({

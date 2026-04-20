@@ -121,3 +121,33 @@ Near-term follow-up deliverables:
   - level gates upward eligibility
   - weekly maintenance prevents or causes demotion
   - peak rank enables accelerated reconquest instead of treating returning players like full beginners
+- rank UI reorganized around three user-facing layers instead of one long technical panel:
+  - Agora
+  - Temporada
+  - Legado
+- stats UI repositioned as support for numbers and planning, not as the main place to explain rank rules
+- competitive quest architecture split:
+  - personal quests stay flexible and low-friction
+  - official competitive templates now act as the trustworthy path into rank, boss, and season systems
+- lightweight verification track introduced for competitive quests:
+  - timer
+  - timer plus short reflection
+- competitive activity now has its own history so future anti-fraud systems can evolve without breaking the casual quest loop
+- competitive progression rule clarified:
+  - personal quests may still increase `Level`
+  - promotion, boss progress, and seasonal competitive standing only advance from validated competitive activity
+  - personal quests now belong to a lighter XP lane than official competitive templates
+
+Next hardening steps for quest integrity:
+
+- expand automated coverage for the new quest verification flow
+- add trust-scoring and suspicious-pattern detection before heavier proof systems
+- keep health/location/photo verification as later layers, not v1 defaults
+
+Current anti-abuse layer now includes:
+
+- official competitive templates
+- lightweight competitive verification
+- level/rank trust split
+- lighter XP lane for personal quests
+- silent competitive trust score with suspicious-pattern tracking

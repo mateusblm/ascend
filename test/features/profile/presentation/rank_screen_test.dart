@@ -1,4 +1,5 @@
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
@@ -159,6 +160,27 @@ void main() {
               ),
             ]),
           ),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(
+              CompetitiveIntegritySnapshot(
+                weekKey: '2026W0414',
+                trustScore: 82,
+                trustBand: CompetitiveTrustBand.stable,
+                weeklyActiveDays: 5,
+                weeklyCompetitiveDays: 5,
+                personalQuestCompletionsToday: 1,
+                competitiveQuestCompletionsToday: 1,
+                personalXpToday: 12,
+                competitiveXpToday: 35,
+                suspiciousPatternCount: 0,
+                summary: 'Integridade estavel',
+                detail: 'Sua trilha competitiva segue confiavel.',
+                syncSchemaVersion: 1,
+                syncSource: 'client',
+                updatedAt: DateTime(2026, 4, 18),
+              ),
+            ),
+          ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(boss)),
           weeklyBossTopCompletionsProvider.overrideWith(
             (ref) => Stream.value(top),
@@ -169,19 +191,31 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('CAMARA DE RANK'), findsOneWidget);
-    expect(find.text('TEMPORADA'), findsOneWidget);
+    expect(find.text('RANK'), findsOneWidget);
+    expect(find.text('TEMPORADA'), findsWidgets);
+    expect(find.text('LEGADO'), findsWidgets);
+    expect(find.text('EXAME EM CURSO'), findsOneWidget);
+    expect(find.text('CONFIANCA COMPETITIVA'), findsOneWidget);
+    expect(find.text('SUBIR PARA B'), findsOneWidget);
+    expect(find.text('DIAS PARA B'), findsOneWidget);
+    expect(find.text('LEVEL OK'), findsOneWidget);
+    expect(find.text('Primeiro clear: Mateus abriu a arena.'), findsOneWidget);
+
+    await tester.tap(find.text('TEMPORADA'));
+    await tester.pumpAndSettle();
+
     expect(find.text('PLACAR SAZONAL'), findsOneWidget);
-    expect(find.text('ARQUIVO SAZONAL'), findsOneWidget);
-    expect(find.text('LEGADO ATIVO'), findsOneWidget);
-    expect(find.text('Primeira Ruptura'), findsOneWidget);
-    expect(find.text('EXAME DE PROMOCAO EM CURSO'), findsOneWidget);
     expect(find.textContaining('2/3 semanas seguras'), findsOneWidget);
     expect(find.text('Pacote de Manutencao'), findsOneWidget);
     expect(find.text('RESGATAR TEMPORADA'), findsOneWidget);
-    expect(find.text('Primeiro clear: Mateus abriu a arena.'), findsOneWidget);
-    expect(find.text('Mateus'), findsWidgets);
-    expect(find.text('AURA DE DISCIPLINA'), findsWidgets);
+    expect(find.text('Mateus'), findsOneWidget);
+
+    await tester.tap(find.text('LEGADO'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('LEGADO ATIVO'), findsOneWidget);
+    expect(find.text('ARQUIVO SAZONAL'), findsOneWidget);
+    expect(find.text('AURA DE DISCIPLINA'), findsOneWidget);
   });
 
   testWidgets('RankScreen shows inactive arena copy without boss', (
@@ -204,6 +238,9 @@ void main() {
           seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
           seasonLegacyHistoryProvider.overrideWith(
             (ref) => Stream.value(const <SeasonLegacyReward>[]),
+          ),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(null),
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
@@ -248,6 +285,9 @@ void main() {
           seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
           seasonLegacyHistoryProvider.overrideWith(
             (ref) => Stream.value(const <SeasonLegacyReward>[]),
+          ),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(null),
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
@@ -306,6 +346,9 @@ void main() {
           seasonLegacyHistoryProvider.overrideWith(
             (ref) => Stream.value(const <SeasonLegacyReward>[]),
           ),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(null),
+          ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
             (ref) => Stream.value(const <WeeklyBossCompletion>[]),
@@ -345,7 +388,15 @@ Player _buildPlayer({int level = 6}) {
       DateTime(2026, 4, 17),
       DateTime(2026, 4, 18),
     ],
+    competitiveActivityHistory: [
+      DateTime(2026, 4, 14),
+      DateTime(2026, 4, 15),
+      DateTime(2026, 4, 16),
+      DateTime(2026, 4, 17),
+      DateTime(2026, 4, 18),
+    ],
     lastQuestCompletionDate: DateTime(2026, 4, 18),
+    lastCompetitiveQuestCompletionDate: DateTime(2026, 4, 18),
     hasCompletedOnboarding: true,
   );
 }

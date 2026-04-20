@@ -28,7 +28,7 @@ class _AwakeningOnboardingScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'SEU DESPERTAR',
+                'COMECO DA JORNADA',
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
@@ -37,7 +37,7 @@ class _AwakeningOnboardingScreenState
               ),
               const SizedBox(height: 12),
               const Text(
-                'Escolha o foco inicial do seu sistema. Vamos gerar uma build de quests para o seu momento atual.',
+                'Escolha por onde voce quer comecar. Vamos montar um kit inicial de quests para combinar com o seu momento.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white60,
@@ -126,7 +126,7 @@ class _AwakeningOnboardingScreenState
                   ),
                   onPressed: _completeOnboarding,
                   child: const Text(
-                    'INICIAR JORNADA',
+                    'COMECAR',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.4,

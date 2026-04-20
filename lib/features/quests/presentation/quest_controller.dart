@@ -1,8 +1,9 @@
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
-import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
@@ -17,6 +18,15 @@ bool isDailyResetDue({
   return now.year != lastReset.year ||
       now.month != lastReset.month ||
       now.day != lastReset.day;
+}
+
+enum QuestCompletionResult {
+  success,
+  notFound,
+  alreadyCompleted,
+  invalidFlow,
+  timerStillRunning,
+  missingReflection,
 }
 
 class QuestNotifier extends StateNotifier<List<Quest>> {
@@ -52,7 +62,18 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     _isar.writeTxnSync(() {
       final allQuests = _isar.quests.where().findAllSync();
-      final resetQuests = allQuests.map((q) => q.copyWith(isCompleted: false)).toList();
+      final resetQuests = allQuests
+          .map(
+            (q) => q.copyWith(
+              isCompleted: false,
+              verificationStatus: q.isCompetitive
+                  ? QuestVerificationStatus.none
+                  : QuestVerificationStatus.none,
+              clearPreRewardSnapshot: true,
+              clearVerificationProgress: true,
+            ),
+          )
+          .toList();
       _isar.quests.putAllSync(resetQuests);
     });
 
@@ -68,41 +89,61 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   List<Quest> _starterQuestsFor(AwakeningPath focus) {
-    return switch (focus) {
-      AwakeningPath.discipline => [
-          _buildStarterQuest('discipline-1', 'Arrumar a cama ao acordar', AttributeType.vitality, 20),
-          _buildStarterQuest('discipline-2', 'Fazer 15 minutos de foco total', AttributeType.intelligence, 30),
-          _buildStarterQuest('discipline-3', 'Revisar metas do dia', AttributeType.agility, 25),
-        ],
-      AwakeningPath.study => [
-          _buildStarterQuest('study-1', 'Estudar por 30 minutos', AttributeType.intelligence, 35),
-          _buildStarterQuest('study-2', 'Anotar 3 aprendizados do dia', AttributeType.intelligence, 25),
-          _buildStarterQuest('study-3', 'Resolver 1 exercicio dificil', AttributeType.agility, 30),
-        ],
-      AwakeningPath.training => [
-          _buildStarterQuest('training-1', 'Treino rapido de 20 minutos', AttributeType.strength, 35),
-          _buildStarterQuest('training-2', 'Alongamento e mobilidade', AttributeType.vitality, 25),
-          _buildStarterQuest('training-3', 'Caminhada energica de 15 minutos', AttributeType.agility, 30),
-        ],
-      AwakeningPath.health => [
-          _buildStarterQuest('health-1', 'Beber 2L de agua', AttributeType.vitality, 25),
-          _buildStarterQuest('health-2', 'Dormir no horario alvo', AttributeType.vitality, 35),
-          _buildStarterQuest('health-3', 'Fazer uma refeicao sem ultraprocessados', AttributeType.strength, 30),
-        ],
-      AwakeningPath.productivity => [
-          _buildStarterQuest('productivity-1', 'Concluir a tarefa mais importante do dia', AttributeType.intelligence, 40),
-          _buildStarterQuest('productivity-2', 'Executar 2 blocos de foco sem distração', AttributeType.agility, 30),
-          _buildStarterQuest('productivity-3', 'Encerrar o dia com inbox zerada', AttributeType.vitality, 25),
-        ],
+    final competitiveTemplates = templatesForFocus(focus)
+        .take(2)
+        .map((template) => template.toQuest())
+        .toList();
+
+    final personalQuest = switch (focus) {
+      AwakeningPath.discipline => _buildPersonalQuest(
+          id: 'discipline-personal',
+          title: 'Arrumar a cama ao acordar',
+          rewardAttribute: AttributeType.vitality,
+          xpReward: personalQuestDefaultXp,
+        ),
+      AwakeningPath.study => _buildPersonalQuest(
+          id: 'study-personal',
+          title: 'Organizar material de estudo',
+          rewardAttribute: AttributeType.intelligence,
+          xpReward: personalQuestDefaultXp,
+        ),
+      AwakeningPath.training => _buildPersonalQuest(
+          id: 'training-personal',
+          title: 'Separar roupa e agua para o treino',
+          rewardAttribute: AttributeType.vitality,
+          xpReward: personalQuestDefaultXp,
+        ),
+      AwakeningPath.health => _buildPersonalQuest(
+          id: 'health-personal',
+          title: 'Bater a meta de agua do dia',
+          rewardAttribute: AttributeType.vitality,
+          xpReward: personalQuestDefaultXp,
+        ),
+      AwakeningPath.productivity => _buildPersonalQuest(
+          id: 'productivity-personal',
+          title: 'Definir a tarefa critica do dia',
+          rewardAttribute: AttributeType.agility,
+          xpReward: personalQuestDefaultXp,
+        ),
     };
+
+    return [...competitiveTemplates, personalQuest];
   }
 
-  Quest _buildStarterQuest(String id, String title, AttributeType rewardAttribute, int xpReward) {
+  Quest _buildPersonalQuest({
+    required String id,
+    required String title,
+    required AttributeType rewardAttribute,
+    required int xpReward,
+  }) {
     return Quest(
       id: id,
       title: title,
       rewardAttribute: rewardAttribute,
-      xpReward: xpReward,
+      xpReward: normalizePersonalQuestXp(xpReward),
+      category: QuestCategory.personal,
+      verificationMode: QuestVerificationMode.manual,
+      verificationStatus: QuestVerificationStatus.none,
     );
   }
 
@@ -112,68 +153,38 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   void toggleQuest(String id, {void Function(int level)? onLevelUp}) {
-    final index = state.indexWhere((q) => q.id == id);
-    if (index == -1) return;
+    final quest = _findQuest(id);
+    if (quest == null || quest.isCompetitive) return;
 
-    final questOriginal = state[index];
-    final wasCompleted = questOriginal.isCompleted;
-
-    if (!wasCompleted) {
-      // Captura snapshot do jogador ANTES de aplicar a recompensa
-      final player = ref.read(playerProvider);
-      final updatedQuest = questOriginal.copyWith(
-        isCompleted: true,
-        preRewardLevel: player.level,
-        preRewardXp: player.xp,
-        preRewardMaxXp: player.maxXp,
-        preRewardStatPoints: player.statPoints,
-        preRewardStrength: player.attributes.strength,
-        preRewardIntelligence: player.attributes.intelligence,
-        preRewardVitality: player.attributes.vitality,
-        preRewardAgility: player.attributes.agility,
+    if (!quest.isCompleted) {
+      _applyCompletion(
+        quest.copyWith(
+          isCompleted: true,
+          completedAt: DateTime.now(),
+          verifiedAt: DateTime.now(),
+          verificationStatus: QuestVerificationStatus.verified,
+        ),
+        onLevelUp: onLevelUp,
       );
-
-      _isar.writeTxnSync(() {
-        _isar.quests.putSync(updatedQuest);
-      });
-
-      final newState = [...state];
-      newState[index] = updatedQuest;
-      state = newState;
-
-      ref.read(playerProvider.notifier).addReward(
-            updatedQuest.xpReward,
-            updatedQuest.rewardAttribute,
-            onLevelUp: onLevelUp,
-          );
-      ref.read(playerProvider.notifier).recordQuestCompletion();
       return;
     }
 
-    // Desfazendo: limpa o snapshot e reverte recompensa
-    final updatedQuest = questOriginal.copyWith(
-      isCompleted: false,
-      clearPreRewardSnapshot: true,
-    );
-
-    _isar.writeTxnSync(() {
-      _isar.quests.putSync(updatedQuest);
-    });
-
-    final newState = [...state];
-    newState[index] = updatedQuest;
-    state = newState;
-
-    ref.read(playerProvider.notifier).undoReward(questOriginal);
+    _undoCompletion(quest);
   }
 
   void addQuest(String title, AttributeType attribute, int xp) {
+    addPersonalQuest(title, attribute, xp);
+  }
+
+  void addPersonalQuest(String title, AttributeType attribute, int xp) {
     final newQuest = Quest(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       rewardAttribute: attribute,
-      xpReward: xp,
-      isCompleted: false,
+      xpReward: normalizePersonalQuestXp(xp),
+      category: QuestCategory.personal,
+      verificationMode: QuestVerificationMode.manual,
+      verificationStatus: QuestVerificationStatus.none,
     );
 
     _isar.writeTxnSync(() {
@@ -181,6 +192,82 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     });
 
     state = [...state, newQuest];
+  }
+
+  bool addCompetitiveTemplate(CompetitiveQuestTemplate template) {
+    final alreadyExists = state.any(
+      (quest) =>
+          quest.isCompetitive &&
+          !quest.isCompleted &&
+          quest.templateType == template.templateType,
+    );
+    if (alreadyExists) return false;
+
+    final newQuest = template.toQuest();
+    _isar.writeTxnSync(() {
+      _isar.quests.putSync(newQuest);
+    });
+
+    state = [...state, newQuest];
+    return true;
+  }
+
+  QuestCompletionResult startCompetitiveQuest(String id) {
+    final quest = _findQuest(id);
+    if (quest == null) return QuestCompletionResult.notFound;
+    if (!quest.isCompetitive || quest.isCompleted) {
+      return QuestCompletionResult.invalidFlow;
+    }
+    if (!quest.requiresTimer) return QuestCompletionResult.invalidFlow;
+
+    final updatedQuest = quest.copyWith(
+      verificationStatus: QuestVerificationStatus.inProgress,
+      verificationStartedAt: DateTime.now(),
+    );
+    _persistQuestUpdate(updatedQuest);
+    return QuestCompletionResult.success;
+  }
+
+  QuestCompletionResult completeCompetitiveQuest(
+    String id, {
+    String? reflectionAnswer,
+    void Function(int level)? onLevelUp,
+  }) {
+    final quest = _findQuest(id);
+    if (quest == null) return QuestCompletionResult.notFound;
+    if (!quest.isCompetitive || quest.isCompleted) {
+      return QuestCompletionResult.invalidFlow;
+    }
+
+    final now = DateTime.now();
+    if (quest.requiresTimer) {
+      if (quest.verificationStartedAt == null ||
+          quest.verificationStatus != QuestVerificationStatus.inProgress) {
+        return QuestCompletionResult.invalidFlow;
+      }
+
+      final elapsedMinutes = now
+          .difference(quest.verificationStartedAt!)
+          .inMinutes;
+      if (elapsedMinutes < quest.targetDurationMinutes) {
+        return QuestCompletionResult.timerStillRunning;
+      }
+    }
+
+    if (quest.requiresReflection &&
+        (reflectionAnswer == null || reflectionAnswer.trim().isEmpty)) {
+      return QuestCompletionResult.missingReflection;
+    }
+
+    final updatedQuest = quest.copyWith(
+      isCompleted: true,
+      verificationStatus: QuestVerificationStatus.verified,
+      completedAt: now,
+      verifiedAt: now,
+      reflectionAnswer: reflectionAnswer?.trim(),
+    );
+    _applyCompletion(updatedQuest, onLevelUp: onLevelUp);
+    return QuestCompletionResult.success;
   }
 
   int addSuggestedQuests(List<QuestSuggestion> suggestions) {
@@ -199,8 +286,10 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           id: '${DateTime.now().microsecondsSinceEpoch}-${newQuests.length}',
           title: suggestion.title,
           rewardAttribute: suggestion.rewardAttribute,
-          xpReward: suggestion.xpReward,
-          isCompleted: false,
+          xpReward: normalizePersonalQuestXp(suggestion.xpReward),
+          category: QuestCategory.personal,
+          verificationMode: QuestVerificationMode.manual,
+          verificationStatus: QuestVerificationStatus.none,
         ),
       );
     }
@@ -224,6 +313,64 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     });
 
     state = state.where((q) => q.id != id).toList();
+  }
+
+  Quest? _findQuest(String id) {
+    final index = state.indexWhere((q) => q.id == id);
+    if (index == -1) return null;
+    return state[index];
+  }
+
+  void _persistQuestUpdate(Quest updatedQuest) {
+    _isar.writeTxnSync(() {
+      _isar.quests.putSync(updatedQuest);
+    });
+
+    final index = state.indexWhere((q) => q.id == updatedQuest.id);
+    if (index == -1) return;
+    final newState = [...state];
+    newState[index] = updatedQuest;
+    state = newState;
+  }
+
+  void _applyCompletion(Quest completedQuest, {void Function(int level)? onLevelUp}) {
+    final player = ref.read(playerProvider);
+    final questWithSnapshot = completedQuest.copyWith(
+      preRewardLevel: player.level,
+      preRewardXp: player.xp,
+      preRewardMaxXp: player.maxXp,
+      preRewardStatPoints: player.statPoints,
+      preRewardStrength: player.attributes.strength,
+      preRewardIntelligence: player.attributes.intelligence,
+      preRewardVitality: player.attributes.vitality,
+      preRewardAgility: player.attributes.agility,
+    );
+
+    _persistQuestUpdate(questWithSnapshot);
+
+    ref.read(playerProvider.notifier).addReward(
+          questWithSnapshot.xpReward,
+          questWithSnapshot.rewardAttribute,
+          onLevelUp: onLevelUp,
+        );
+    ref.read(playerProvider.notifier).recordQuestCompletion(
+          completedAt: questWithSnapshot.completedAt,
+          countsForCompetitive: questWithSnapshot.countsTowardCompetitive,
+        );
+  }
+
+  void _undoCompletion(Quest quest) {
+    final updatedQuest = quest.copyWith(
+      isCompleted: false,
+      verificationStatus: quest.isCompetitive
+          ? QuestVerificationStatus.none
+          : QuestVerificationStatus.none,
+      clearPreRewardSnapshot: true,
+      clearVerificationProgress: true,
+    );
+
+    _persistQuestUpdate(updatedQuest);
+    ref.read(playerProvider.notifier).undoReward(quest);
   }
 
   String _normalizeTitle(String value) => value.trim().toLowerCase();

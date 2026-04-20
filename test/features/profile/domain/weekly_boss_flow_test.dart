@@ -16,14 +16,14 @@ void main() {
         maxXp: 100,
         attributes: PlayerAttributes(),
         lastResetDate: now,
-        activityHistory: [
+        competitiveActivityHistory: [
           weekStart,
           weekStart.add(const Duration(days: 1)),
           weekStart.add(const Duration(days: 2)),
           weekStart.add(const Duration(days: 3)),
           weekStart.subtract(const Duration(days: 2)),
         ],
-        lastQuestCompletionDate: weekStart.add(const Duration(days: 3)),
+        lastCompetitiveQuestCompletionDate: weekStart.add(const Duration(days: 3)),
         hasCompletedOnboarding: true,
       );
 
@@ -31,6 +31,38 @@ void main() {
 
       expect(boss.progressFor(player), 4);
       expect(boss.isCompleted(player), isTrue);
+    });
+
+    test('progress prefers competitive activity history when it exists', () {
+      final now = DateTime.now();
+      final weekStart = weekStartFor(now);
+      final player = Player(
+        name: 'Hunter',
+        level: 10,
+        xp: 80,
+        maxXp: 100,
+        attributes: PlayerAttributes(),
+        lastResetDate: now,
+        activityHistory: [
+          weekStart,
+          weekStart.add(const Duration(days: 1)),
+          weekStart.add(const Duration(days: 2)),
+          weekStart.add(const Duration(days: 3)),
+          weekStart.add(const Duration(days: 4)),
+        ],
+        competitiveActivityHistory: [
+          weekStart,
+          weekStart.add(const Duration(days: 1)),
+        ],
+        lastQuestCompletionDate: weekStart.add(const Duration(days: 4)),
+        lastCompetitiveQuestCompletionDate: weekStart.add(const Duration(days: 1)),
+        hasCompletedOnboarding: true,
+      );
+
+      final boss = weeklyBossForRank('C');
+
+      expect(boss.progressFor(player), 2);
+      expect(boss.isCompleted(player), isFalse);
     });
 
     test('claimWeeklyBossReward applies reward once and blocks duplicate claim in the same week', () {
@@ -45,13 +77,13 @@ void main() {
           maxXp: 100,
           attributes: PlayerAttributes(),
           lastResetDate: now,
-          activityHistory: [
+          competitiveActivityHistory: [
             weekStart,
             weekStart.add(const Duration(days: 1)),
             weekStart.add(const Duration(days: 2)),
             weekStart.add(const Duration(days: 3)),
           ],
-          lastQuestCompletionDate: weekStart.add(const Duration(days: 3)),
+          lastCompetitiveQuestCompletionDate: weekStart.add(const Duration(days: 3)),
           hasCompletedOnboarding: true,
         ),
       );

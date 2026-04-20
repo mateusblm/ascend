@@ -2,7 +2,7 @@
 type: code-file
 path: lib\features\quests\domain\quest_model.dart
 feature: quests
-symbol_count: 1
+symbol_count: 6
 import_count: 1
 ---
 # lib\features\quests\domain\quest_model.dart
@@ -11,11 +11,16 @@ import_count: 1
 
 - feature: quests
 - imports: 1
-- symbols: 1
+- symbols: 6
 
 ## Symbols
 
-- QuestAttributeType
+- AttributeType
+- Quest
+- QuestCategory
+- QuestTemplateType
+- QuestVerificationMode
+- QuestVerificationStatus
 
 ## Imports
 

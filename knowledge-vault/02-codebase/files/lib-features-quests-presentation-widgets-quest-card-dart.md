@@ -2,7 +2,7 @@
 type: code-file
 path: lib\features\quests\presentation\widgets\quest_card.dart
 feature: quests
-symbol_count: 1
+symbol_count: 2
 import_count: 3
 ---
 # lib\features\quests\presentation\widgets\quest_card.dart
@@ -11,14 +11,15 @@ import_count: 3
 
 - feature: quests
 - imports: 3
-- symbols: 1
+- symbols: 2
 
 ## Symbols
 
+- _QuestChip
 - QuestCard
 
 ## Imports
 
-- lib/features/quests/domain/quest_model.dart
 - lib/core/theme/app_colors.dart
+- lib/features/quests/domain/quest_model.dart
 - package:flutter/material.dart

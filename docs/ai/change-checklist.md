@@ -15,6 +15,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - daily reset
   - auth
   - persistence
+  - release identity or Firebase environment
 - Prefer the smallest safe implementation that solves the request.
 
 ## During Editing
@@ -26,6 +27,10 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Avoid adding dependencies unless clearly justified.
 - If changing an Isar model, treat it as a schema change and call it out explicitly.
 - If changing Android identifiers or Firebase-related setup, verify the configuration impact before proceeding.
+- If changing release-readiness surfaces, check whether the work also needs updates to:
+  - `docs/product/release-checklist.md`
+  - `docs/product/firebase-operations-dashboard.md`
+  - `docs/product/roadmap.md`
 
 ## Before Finishing
 
@@ -33,10 +38,15 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Check whether docs need to be updated:
   - `AGENTS.md`
   - `docs/ai/architecture-map.md`
+  - `docs/ai/testing-strategy.md`
   - `docs/product/vision.md`
   - `docs/product/roadmap.md`
 - Check whether tests should be added or updated.
 - Note any validation step that could not be run.
+- If the work affects production readiness, state:
+  - what was validated automatically
+  - what still needs real-device smoke validation
+  - what environment/release assumptions were made
 
 ## High-Risk Change Flags
 
@@ -47,6 +57,8 @@ Pause and review more carefully if the change includes:
 - auth flow changes
 - Isar schema changes
 - package identifier changes
+- Firebase project/environment changes
+- account/session-management changes
 - new animation-heavy UI
 - new dependencies
 

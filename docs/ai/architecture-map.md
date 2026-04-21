@@ -33,6 +33,12 @@ lib/
 - initialization happens in `main.dart`
 - user state is exposed through `authProvider`
 - login and onboarding are now part of the product-critical first-session flow, not just access screens
+- account/session controls should now prefer a dedicated account surface instead of being scattered across unrelated tabs
+- auth state now carries enough user identity for account-facing UI:
+  - `uid`
+  - `displayName`
+  - `photoUrl`
+  - `email`
 - product analytics now has a central boundary through:
   - `core/analytics/analytics_service.dart`
   - feature code logs product events through that wrapper instead of calling Firebase Analytics directly
@@ -45,6 +51,9 @@ lib/
 ### Player Progression
 - player state is exposed through `playerProvider`
 - leveling, XP, stat points, and attribute growth are product-critical rules
+- local player profile now also includes lightweight identity settings:
+  - player name is editable through the player controller
+  - primary focus can be changed from a dedicated account-management flow
 - competitive rank state is mirrored remotely through Firestore progression snapshots
 - competitive rank now uses a hybrid progression model:
   - level defines the highest rank the player is eligible to attempt
@@ -56,6 +65,14 @@ lib/
   - `Temporada`: trilha mensal, recompensa e placar sazonal
   - `Legado`: pico, titulo sazonal ativo, arquivo de temporadas e historico recente
 - the stats screen is now positioned as a supporting analytics view instead of the primary place to explain rank rules
+- account and identity management now have their own dedicated screen:
+  - `account_screen.dart`
+  - it is entered from `Stats`, but it is not a bottom-navigation destination
+  - it currently owns:
+    - account visibility
+    - player-name editing
+    - focus-change entry
+    - logout
 - the rank screen now reads from dedicated domain summaries:
   - `rank_progression.dart`
   - `promotion_exam.dart`
@@ -222,6 +239,37 @@ The preferred direction for upcoming work is:
 4. protect domain rules with tests before deep refactors
 5. keep UI-specific behavior out of domain models
 
+## Production Readiness Direction
+
+The current architecture priority is to move from "feature-complete prototype" toward "operationally shippable app".
+
+That means upcoming changes should prefer:
+- explicit release identity over placeholder defaults
+- environment clarity over ad-hoc Firebase usage
+- dedicated account/trust surfaces over hidden session actions
+- centralized analytics/crash/reporting boundaries over feature-local SDK calls
+- release-safe operational controls over permanent reliance on manual hotfixes
+
+Current production-oriented architectural targets:
+
+1. make release identity explicit:
+   - package/application id
+   - versioning
+   - signing path
+2. make runtime environment explicit:
+   - staging/prod strategy
+   - Firebase target clarity
+   - deployment discipline
+3. keep product trust surfaces first-class:
+   - account screen
+   - support/privacy entry points
+   - clear session visibility
+4. keep live-service controls centralized:
+   - analytics wrapper
+   - crash wrapper
+   - future Remote Config / kill-switch boundary
+5. validate critical product flows on real devices before treating a release as stable
+
 ## Near-Term Refactor Targets
 
 - introduce repositories for player and quest persistence
@@ -236,11 +284,13 @@ The preferred direction for upcoming work is:
   - in-app verification first
   - heavier proofs such as health/location/photo only after the base loop proves useful
 - next high-value hardening target:
-  - add explicit automated coverage for competitive quest authority callables and UI reactions
+  - add explicit automated and smoke coverage for account, auth, and competitive authority flows together
   - confirm backend grant records are the long-term source for competitive activity, not only a transitional overlay
+  - define where release/environment configuration should live before broadening the distribution footprint
 
 ## Constraints
 
 - do not break Firebase setup by changing Android identifiers casually
+- if Android identifiers are changed for release readiness, update Firebase config in the same workstream
 - do not edit Isar generated files manually
 - do not perform broad directory reshuffles without updating documentation and imports

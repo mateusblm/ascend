@@ -12,6 +12,7 @@ AI contributions must protect:
 - correctness of progression logic
 - persistence safety for local data
 - authentication stability
+- release/environment correctness
 - predictable UI behavior
 - mobile performance on mid-range devices
 
@@ -41,6 +42,19 @@ Before changing code, use these files as the primary guides:
 6. If architecture changes, update `AGENTS.md` and `docs/ai/architecture-map.md`.
 7. If Isar models change, regenerate code through the supported workflow.
 
+## Current Priority Bias
+
+Until the app clears its production-readiness gap, AI should prefer:
+- hardening critical flows
+- clarifying release/deployment setup
+- improving trust surfaces such as account, privacy, and support
+
+AI should avoid prioritizing broad new feature surface over:
+- release identity
+- environment clarity
+- smoke-test coverage
+- operational safety
+
 ## Safety Rules
 
 ### Persistence
@@ -51,6 +65,7 @@ Before changing code, use these files as the primary guides:
 ### Authentication
 - Do not modify login flow or Firebase initialization without validating the impact on Android setup.
 - Do not change package identifiers unless Firebase config is updated in the same change.
+- Treat account/session UX as a production-critical trust surface, not as a cosmetic detail.
 
 ### Progression Logic
 - Leveling, XP, stat distribution, and daily reset are product-critical systems.
@@ -85,3 +100,4 @@ A change is not done unless:
 - the relevant docs stay aligned
 - there is no obvious safety regression
 - any required validation steps are called out if they could not be run
+- if the change is release-facing, the remaining smoke-test and environment assumptions are explicit

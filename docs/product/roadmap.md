@@ -82,6 +82,86 @@ Success criteria:
 - product has a credible premium offer
 - app is ready for early user validation
 
+## Current Strategic Shift: Production Readiness
+
+The next major goal is not more feature breadth. It is turning the current build into something that behaves like a real product in the hands of real users.
+
+This means the main execution focus should now be:
+- release identity instead of prototype defaults
+- operational reliability instead of feature expansion
+- market trust surfaces instead of internal-only polish
+
+## Production Readiness Program
+
+### Block 1: Release Identity and Environment Separation
+
+Goal:
+- remove prototype signals and make release artifacts safe to ship
+
+Deliverables:
+- definitive Android package/application id instead of example identity
+- explicit Firebase environment strategy (`staging` and `prod`) or a consciously documented single-project release policy
+- release signing and versioning discipline
+- real app branding package:
+  - app name
+  - launcher icon
+  - splash treatment
+  - store-safe metadata
+- release build path documented and repeatable
+
+Success criteria:
+- no production build ships with placeholder identity
+- Firebase target and release artifact are unambiguous before deployment
+- the app looks and installs like a product, not a dev shell
+
+### Block 2: Operational Hardening
+
+Goal:
+- trust critical flows under real-world usage, not only under local validation
+
+Deliverables:
+- real-device smoke-test matrix covering:
+  - login
+  - onboarding
+  - personal quest completion
+  - competitive quest start and verification
+  - rank/integrity refresh
+  - account access and logout
+  - session restoration after app restart
+- stronger automated protection for production-critical UI and backend flows
+- release-candidate validation discipline using:
+  - `docs/product/release-checklist.md`
+  - `docs/product/firebase-operations-dashboard.md`
+  - `docs/product/first-week-funnel.md`
+- Remote Config / feature-flag / kill-switch direction for risky competitive or live-service behavior
+- operational alerting expectations for auth, funnel drop, callable failure, and crash spikes
+
+Success criteria:
+- critical user journeys are validated both automatically and on a real device
+- release regressions are easier to detect before users report them
+- live operations can react without emergency code edits where possible
+
+### Block 3: Market Trust and Store Readiness
+
+Goal:
+- close the trust gaps that matter when strangers install the app
+
+Deliverables:
+- dedicated account surface for session and identity controls
+- privacy policy and terms links
+- support/contact path inside the product
+- account/data deletion policy and implementation plan
+- store-readiness package:
+  - screenshots
+  - description
+  - onboarding copy review
+  - closed-test distribution plan
+
+Success criteria:
+- the app has the minimum trust surface expected from a market-facing product
+- users can understand who they are signed in as, how to leave, and how to get help
+- the product is credible enough for staged external testing
+
 ## Current Build Priority
 
 The current implementation priority should be:
@@ -91,6 +171,16 @@ The current implementation priority should be:
 3. home/rank/stats polish around progression identity
 4. leaderboard and season depth
 5. guided growth and AI planner integration
+
+Current production priority above the roadmap queue:
+
+1. release identity and Firebase environment separation
+2. real-device smoke testing and release hardening
+3. market trust surfaces:
+   - account
+   - privacy/support
+   - store readiness
+4. only then resume broader progression and guided-growth expansion
 
 ## Current Competitive Track
 
@@ -222,18 +312,35 @@ Recent follow-through:
   - the quest timer helper in Quests now refreshes live while a competitive session is running
   - completed competitive quests no longer appear duplicated in both the active competitive section and the completed section
   - competitive quest completion now triggers immediate competitive sync instead of waiting only for navigation debounce
+- the latest competitive authority rollout has now been operationalized:
+  - `functions` and `firestore.rules` were deployed to the active Firebase project
+  - backend authority coverage now includes session start, early rejection, valid completion grant, and duplicate-grant protection
+- account surface is now moving toward market-readiness instead of hiding session controls inside a stats-only action:
+  - a dedicated account screen now exists for identity and session management
+  - name editing, focus change, connected-account visibility, and logout now live behind that dedicated surface
 
 Recommended next production steps:
 
-- deploy the new Functions and Firestore rules for competitive quest authority
+- finish release identity work:
+  - replace prototype package identity
+  - define staging/prod Firebase policy
+  - lock release versioning/signing flow
 - run a real-device smoke test for:
+  - account entry
+  - name update
+  - focus change
+  - logout and session restore
   - start competitive session
   - early completion rejection
   - valid completion after minimum time
   - authoritative grant creation
   - rank/integrity refresh after completion
-- add automated coverage for the new authority path:
-  - callable validation
-  - duplicate grant prevention
-  - UI reaction after successful grant
+- add release-hardening coverage for:
+  - account screen flows
+  - login/logout/session restore
+  - verified competitive quest happy path in UI
+- define production trust surfaces:
+  - privacy policy
+  - support/contact path
+  - account/data deletion policy
 - decide whether personal XP should remain local indefinitely or move to a softer server-audited model later

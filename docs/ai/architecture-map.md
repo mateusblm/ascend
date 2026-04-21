@@ -37,6 +37,10 @@ lib/
 - user state is exposed through `authProvider`
 - login and onboarding are now part of the product-critical first-session flow, not just access screens
 - account/session controls should now prefer a dedicated account surface instead of being scattered across unrelated tabs
+- account access now also has an active-session boundary:
+  - one account should keep only one active device session at a time
+  - active session registration and refresh now happen through backend callables
+  - session conflicts should sign the local device out and return the user to login with a clear error message
 - auth state now carries enough user identity for account-facing UI:
   - `uid`
   - `displayName`
@@ -59,6 +63,10 @@ lib/
   - Isar now acts as a per-user local cache instead of the only source of truth
   - first login after this change migrates an existing local player profile when meaningful progress already exists
   - a fresh device with no meaningful local progress should not create an empty remote profile automatically
+- player profile writes are no longer direct client Firestore writes:
+  - `syncPlayerProfileFromSource` is now the audited write path
+  - the backend sanitizes and stamps the profile document before it becomes visible as account state
+  - this is currently a `server-audited` boundary, not a full reward-authoritative simulation of personal XP history
 - local player profile now also includes lightweight identity settings:
   - player name is editable through the player controller
   - primary focus can be changed from a dedicated account-management flow
@@ -174,6 +182,10 @@ lib/
   - `users/{uid}/quests_meta/current` distinguishes an intentionally empty remote inventory from a not-yet-migrated account
   - Isar now acts as a per-user quest cache instead of the only source of truth
   - first login after this change migrates existing local quests when they exist
+- quest inventory writes are no longer direct client Firestore writes:
+  - `syncQuestInventoryFromSource` is now the audited write path
+  - the backend normalizes personal quests, validates competitive quests against official templates, and blocks duplicate open competitive templates
+  - this keeps quest state `server-audited` even while personal completion and XP application still start on the client
 - quest progression now has two explicit tracks:
   - `personal` quests keep low-friction habit tracking and still reward XP
   - `competitive` quests use official templates and lightweight verification before they influence rank-facing systems

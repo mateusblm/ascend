@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
+import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
@@ -15,7 +16,10 @@ import 'package:isar/isar.dart';
 final playerProfileRepositoryProvider = Provider<PlayerProfileRepository>((
   ref,
 ) {
-  return PlayerProfileRepository(FirebaseFirestore.instance);
+  return PlayerProfileRepository(
+    FirebaseFirestore.instance,
+    sessionRepository: ActiveSessionRepository(),
+  );
 });
 
 final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
@@ -173,10 +177,14 @@ class PlayerNotifier extends StateNotifier<Player> {
       return;
     }
 
-    await repository.upsertProfile(
-      uid: uid,
-      player: nextState.copyWith(ownerUid: uid),
-    );
+    try {
+      await repository.upsertProfile(
+        uid: uid,
+        player: nextState.copyWith(ownerUid: uid),
+      );
+    } catch (_) {
+      // Auth heartbeat handles session conflicts and temporary backend failures.
+    }
   }
 
   void _saveToDb({bool syncRemote = true}) {

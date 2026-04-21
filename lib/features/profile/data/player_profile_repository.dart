@@ -1,5 +1,7 @@
+import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 bool shouldUploadPlayerProfileWhenRemoteMissing(
   Player player, {
@@ -75,9 +77,18 @@ Player parsePlayerProfileData(
 }
 
 class PlayerProfileRepository {
-  PlayerProfileRepository(this._firestore);
+  PlayerProfileRepository(
+    this._firestore, {
+    FirebaseFunctions? functions,
+    required ActiveSessionRepository sessionRepository,
+  }) : _functions =
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
+  final ActiveSessionRepository _sessionRepository;
 
   Stream<Player?> watchProfile({
     required String uid,
@@ -91,41 +102,22 @@ class PlayerProfileRepository {
     });
   }
 
-  Future<void> upsertProfile({required String uid, required Player player}) {
-    return _profileDoc(uid).set(<String, dynamic>{
-      'name': player.name.trim().isEmpty ? 'Jogador' : player.name.trim(),
-      'level': player.level,
-      'xp': player.xp,
-      'maxXp': player.maxXp,
-      'statPoints': player.statPoints,
-      'attributes': <String, dynamic>{
-        'strength': player.attributes.strength,
-        'intelligence': player.attributes.intelligence,
-        'vitality': player.attributes.vitality,
-        'agility': player.attributes.agility,
-      },
-      'lastResetDate': Timestamp.fromDate(player.lastResetDate),
-      'currentStreak': player.currentStreak,
-      'bestStreak': player.bestStreak,
-      'lastQuestCompletionDate': _timestampOrNull(
-        player.lastQuestCompletionDate,
-      ),
-      'activityHistory': player.activityHistory
-          .map(Timestamp.fromDate)
-          .toList(growable: false),
-      'lastCompetitiveQuestCompletionDate': _timestampOrNull(
-        player.lastCompetitiveQuestCompletionDate,
-      ),
-      'competitiveActivityHistory': player.competitiveActivityHistory
-          .map(Timestamp.fromDate)
-          .toList(growable: false),
-      'primaryFocus': player.primaryFocus.name,
-      'hasCompletedOnboarding': player.hasCompletedOnboarding,
-      'weeklyBossLastClaimedAt': _timestampOrNull(
-        player.weeklyBossLastClaimedAt,
-      ),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> upsertProfile({
+    required String uid,
+    required Player player,
+  }) async {
+    final callable = _functions.httpsCallable('syncPlayerProfileFromSource');
+    try {
+      await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'source': _profileSourceFor(player),
+      });
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
   }
 
   DocumentReference<Map<String, dynamic>> _profileDoc(String uid) {
@@ -137,9 +129,45 @@ class PlayerProfileRepository {
   }
 }
 
-Timestamp? _timestampOrNull(DateTime? value) {
+Map<String, dynamic> _profileSourceFor(Player player) {
+  return <String, dynamic>{
+    'name': player.name.trim().isEmpty ? 'Jogador' : player.name.trim(),
+    'level': player.level,
+    'xp': player.xp,
+    'maxXp': player.maxXp,
+    'statPoints': player.statPoints,
+    'attributes': <String, dynamic>{
+      'strength': player.attributes.strength,
+      'intelligence': player.attributes.intelligence,
+      'vitality': player.attributes.vitality,
+      'agility': player.attributes.agility,
+    },
+    'lastResetDate': player.lastResetDate.toIso8601String(),
+    'currentStreak': player.currentStreak,
+    'bestStreak': player.bestStreak,
+    'lastQuestCompletionDate': _dateStringOrNull(
+      player.lastQuestCompletionDate,
+    ),
+    'activityHistory': player.activityHistory
+        .map((entry) => entry.toIso8601String())
+        .toList(growable: false),
+    'lastCompetitiveQuestCompletionDate': _dateStringOrNull(
+      player.lastCompetitiveQuestCompletionDate,
+    ),
+    'competitiveActivityHistory': player.competitiveActivityHistory
+        .map((entry) => entry.toIso8601String())
+        .toList(growable: false),
+    'primaryFocus': player.primaryFocus.name,
+    'hasCompletedOnboarding': player.hasCompletedOnboarding,
+    'weeklyBossLastClaimedAt': _dateStringOrNull(
+      player.weeklyBossLastClaimedAt,
+    ),
+  };
+}
+
+String? _dateStringOrNull(DateTime? value) {
   if (value == null) return null;
-  return Timestamp.fromDate(value);
+  return value.toIso8601String();
 }
 
 DateTime? _dateFrom(Object? value) {

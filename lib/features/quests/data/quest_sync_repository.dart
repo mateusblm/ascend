@@ -1,5 +1,7 @@
+import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
   return quests.isNotEmpty;
@@ -43,9 +45,18 @@ Quest parseQuestSyncData(
 }
 
 class QuestSyncRepository {
-  QuestSyncRepository(this._firestore);
+  QuestSyncRepository(
+    this._firestore, {
+    FirebaseFunctions? functions,
+    required ActiveSessionRepository sessionRepository,
+  }) : _functions =
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
+  final ActiveSessionRepository _sessionRepository;
 
   Future<bool> hasInitializedSnapshot(String uid) async {
     final snapshot = await _metaDoc(uid).get();
@@ -68,29 +79,20 @@ class QuestSyncRepository {
     required String uid,
     required List<Quest> quests,
   }) async {
-    final collection = _questsCollection(uid);
-    final metaDoc = _metaDoc(uid);
-    final previousDocs = await collection.get();
-    final nextIds = quests.map((quest) => quest.id).toSet();
-    final batch = _firestore.batch();
-
-    for (final doc in previousDocs.docs) {
-      if (!nextIds.contains(doc.id)) {
-        batch.delete(doc.reference);
+    final callable = _functions.httpsCallable('syncQuestInventoryFromSource');
+    try {
+      await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'source': <String, dynamic>{
+          'quests': quests.map(_questSourceFor).toList(growable: false),
+        },
+      });
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
       }
+      rethrow;
     }
-
-    for (var index = 0; index < quests.length; index++) {
-      final quest = quests[index];
-      batch.set(collection.doc(quest.id), _toFirestore(quest, index: index));
-    }
-
-    batch.set(metaDoc, <String, dynamic>{
-      'initialized': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await batch.commit();
   }
 
   CollectionReference<Map<String, dynamic>> _questsCollection(String uid) {
@@ -106,8 +108,9 @@ class QuestSyncRepository {
   }
 }
 
-Map<String, dynamic> _toFirestore(Quest quest, {required int index}) {
+Map<String, dynamic> _questSourceFor(Quest quest) {
   return <String, dynamic>{
+    'id': quest.id,
     'title': quest.title,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
@@ -130,14 +133,12 @@ Map<String, dynamic> _toFirestore(Quest quest, {required int index}) {
     'preRewardIntelligence': quest.preRewardIntelligence,
     'preRewardVitality': quest.preRewardVitality,
     'preRewardAgility': quest.preRewardAgility,
-    'orderIndex': index,
-    'updatedAt': FieldValue.serverTimestamp(),
   };
 }
 
-Timestamp? _timestampOrNull(DateTime? value) {
+String? _timestampOrNull(DateTime? value) {
   if (value == null) return null;
-  return Timestamp.fromDate(value);
+  return value.toIso8601String();
 }
 
 DateTime? _dateFrom(Object? value) {

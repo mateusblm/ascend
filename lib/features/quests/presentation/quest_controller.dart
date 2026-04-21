@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
+import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
@@ -26,7 +27,10 @@ final competitiveQuestAuthorityRepositoryProvider =
     });
 
 final questSyncRepositoryProvider = Provider<QuestSyncRepository>((ref) {
-  return QuestSyncRepository(FirebaseFirestore.instance);
+  return QuestSyncRepository(
+    FirebaseFirestore.instance,
+    sessionRepository: ActiveSessionRepository(),
+  );
 });
 
 final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
@@ -255,12 +259,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return;
     }
 
-    await repository.replaceQuests(
-      uid: uid,
-      quests: quests
-          .map((quest) => quest.copyWith(ownerUid: uid))
-          .toList(growable: false),
-    );
+    try {
+      await repository.replaceQuests(
+        uid: uid,
+        quests: quests
+            .map((quest) => quest.copyWith(ownerUid: uid))
+            .toList(growable: false),
+      );
+    } catch (_) {
+      // Auth heartbeat handles session conflicts and temporary backend failures.
+    }
   }
 
   void _replaceLocalState(List<Quest> quests, {bool syncRemote = true}) {

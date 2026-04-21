@@ -24,6 +24,7 @@ These rules should have automated coverage first:
 - account screen rendering and session visibility
 - local profile edits such as player name updates
 - cloud profile migration and account restore behavior
+- active-session conflict handling between devices
 - quest list rendering
 - add quest flow
 - delete quest flow
@@ -164,6 +165,12 @@ Current competitive additions to protect:
     - intentionally empty remote quests do not get repopulated from stale cache
     - starter kit and manual quest creation keep syncing across devices
     - local quest cache stays scoped to the signed-in uid
+51. session and authority hardening should protect:
+    - second device login is rejected while another active session is still valid
+    - heartbeat/session refresh keeps the active device lease alive
+    - profile sync uses the audited callable path instead of direct client writes
+    - quest sync uses the audited callable path instead of direct client writes
+    - competitive quest templates remain validated against official backend definitions during quest inventory sync
 
 ## AI Test Rules
 

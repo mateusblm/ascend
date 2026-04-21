@@ -159,6 +159,11 @@ Current competitive additions to protect:
     - no automatic upload of an empty fresh profile
     - restored level/xp/streak/focus/onboarding on a second device
     - local cache remaining scoped to the signed-in uid instead of one shared device record
+50. account-backed quest continuity should protect:
+    - first login migration from local quest cache to remote quest inventory
+    - intentionally empty remote quests do not get repopulated from stale cache
+    - starter kit and manual quest creation keep syncing across devices
+    - local quest cache stays scoped to the signed-in uid
 
 ## AI Test Rules
 

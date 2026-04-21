@@ -7,10 +7,13 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
+import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
@@ -22,13 +25,23 @@ final competitiveQuestAuthorityRepositoryProvider =
       );
     });
 
+final questSyncRepositoryProvider = Provider<QuestSyncRepository>((ref) {
+  return QuestSyncRepository(FirebaseFirestore.instance);
+});
+
 final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
-  return QuestNotifier(
+  final notifier = QuestNotifier(
     ref,
     ref.watch(isarProvider),
     analytics: ref.read(analyticsProvider),
     competitiveAuthority: ref.read(competitiveQuestAuthorityRepositoryProvider),
+    auth: FirebaseAuth.instance,
+    questSyncRepository: ref.read(questSyncRepositoryProvider),
+    enableCloudSync: true,
   );
+
+  ref.onDispose(notifier.dispose);
+  return notifier;
 });
 
 List<Quest> starterQuestsForFocus(AwakeningPath focus) {
@@ -110,18 +123,34 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     this._isar, {
     AppAnalytics? analytics,
     CompetitiveQuestAuthorityRepository? competitiveAuthority,
+    FirebaseAuth? auth,
+    QuestSyncRepository? questSyncRepository,
+    bool enableCloudSync = false,
   }) : _analytics = analytics ?? const NoopAppAnalytics(),
        _competitiveAuthority = competitiveAuthority,
+       _auth = enableCloudSync ? (auth ?? FirebaseAuth.instance) : auth,
+       _questSyncRepository = questSyncRepository,
        super([]) {
-    _init();
+    if (enableCloudSync) {
+      _bindCloudQuests();
+    } else {
+      _initLocal();
+    }
   }
 
   final Ref ref;
   final Isar _isar;
   final AppAnalytics _analytics;
   final CompetitiveQuestAuthorityRepository? _competitiveAuthority;
+  final FirebaseAuth? _auth;
+  final QuestSyncRepository? _questSyncRepository;
+  StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<List<Quest>>? _remoteQuestSubscription;
+  String? _activeUid;
+  bool _isApplyingRemoteSnapshot = false;
+  bool _handledMissingRemoteForActiveUser = false;
 
-  void _init() {
+  void _initLocal() {
     final savedQuests = _isar.quests.where().findAllSync();
     final player = ref.read(playerProvider);
 
@@ -131,8 +160,156 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       } else {
         state = [];
       }
+      return;
+    }
+
+    state = savedQuests;
+  }
+
+  void _bindCloudQuests() {
+    final auth = _auth;
+    if (auth == null) {
+      _initLocal();
+      return;
+    }
+
+    _authSubscription = auth.authStateChanges().listen(_handleAuthChanged);
+    unawaited(_handleAuthChanged(auth.currentUser));
+  }
+
+  Future<void> _handleAuthChanged(User? user) async {
+    await _remoteQuestSubscription?.cancel();
+    _remoteQuestSubscription = null;
+    _handledMissingRemoteForActiveUser = false;
+    _activeUid = user?.uid;
+
+    if (user == null) {
+      state = const <Quest>[];
+      return;
+    }
+
+    final cachedQuests = _loadCachedQuestsForUid(user.uid);
+    final legacyQuests = cachedQuests.isEmpty
+        ? _loadLegacyCachedQuests()
+        : const <Quest>[];
+    final seededQuests = cachedQuests.isNotEmpty ? cachedQuests : legacyQuests;
+    if (seededQuests.isNotEmpty) {
+      _replaceLocalState(seededQuests, syncRemote: false);
     } else {
-      state = _isar.quests.where().findAllSync();
+      state = const <Quest>[];
+    }
+
+    final repository = _questSyncRepository;
+    final remoteInitialized = repository == null
+        ? false
+        : await repository.hasInitializedSnapshot(user.uid);
+
+    _remoteQuestSubscription = repository?.watchQuests(user.uid).listen((
+      remoteQuests,
+    ) {
+      if (remoteQuests.isNotEmpty) {
+        _applyRemoteQuests(remoteQuests);
+        return;
+      }
+
+      if (remoteInitialized) {
+        _applyRemoteQuests(const <Quest>[]);
+        return;
+      }
+
+      if (_handledMissingRemoteForActiveUser) {
+        return;
+      }
+      _handledMissingRemoteForActiveUser = true;
+
+      if (shouldUploadQuestCacheWhenRemoteMissing(state)) {
+        unawaited(_pushRemoteQuests(state));
+      }
+    });
+  }
+
+  void _applyRemoteQuests(List<Quest> remoteQuests) {
+    _isApplyingRemoteSnapshot = true;
+    _replaceLocalState(remoteQuests, syncRemote: false);
+    _isApplyingRemoteSnapshot = false;
+  }
+
+  List<Quest> _loadCachedQuestsForUid(String uid) {
+    final quests = _isar.quests.where().findAllSync();
+    return quests
+        .where((quest) => quest.ownerUid == uid)
+        .toList(growable: false);
+  }
+
+  List<Quest> _loadLegacyCachedQuests() {
+    final quests = _isar.quests.where().findAllSync();
+    return quests
+        .where((quest) => quest.ownerUid == null)
+        .toList(growable: false);
+  }
+
+  Future<void> _pushRemoteQuests(List<Quest> quests) async {
+    final uid = _activeUid;
+    final repository = _questSyncRepository;
+    if (uid == null || repository == null || _isApplyingRemoteSnapshot) {
+      return;
+    }
+
+    await repository.replaceQuests(
+      uid: uid,
+      quests: quests
+          .map((quest) => quest.copyWith(ownerUid: uid))
+          .toList(growable: false),
+    );
+  }
+
+  void _replaceLocalState(List<Quest> quests, {bool syncRemote = true}) {
+    final uid = _activeUid;
+    final normalized = quests
+        .map((quest) => quest.copyWith(ownerUid: uid ?? quest.ownerUid))
+        .toList(growable: false);
+    final byId = <String, Quest>{
+      for (final quest in _isar.quests.where().findAllSync())
+        if (uid == null || quest.ownerUid == uid) quest.id: quest,
+    };
+
+    final normalizedWithIds = normalized
+        .map((quest) {
+          final existing = byId[quest.id];
+          if (existing == null || existing.isarId == quest.isarId) {
+            return quest;
+          }
+
+          return quest.copyWith()..isarId = existing.isarId;
+        })
+        .toList(growable: false);
+
+    _isar.writeTxnSync(() {
+      final existingForUser = _isar.quests
+          .where()
+          .findAllSync()
+          .where((quest) {
+            if (uid == null) {
+              return quest.ownerUid == null;
+            }
+            return quest.ownerUid == uid;
+          })
+          .toList(growable: false);
+      final nextIds = normalizedWithIds.map((quest) => quest.id).toSet();
+
+      for (final quest in existingForUser) {
+        if (!nextIds.contains(quest.id)) {
+          _isar.quests.deleteSync(quest.isarId);
+        }
+      }
+
+      _isar.quests.putAllSync(normalizedWithIds);
+    });
+
+    state = normalizedWithIds;
+
+    if (syncRemote) {
+      unawaited(_pushRemoteQuests(normalizedWithIds));
     }
   }
 
@@ -145,8 +322,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     if (!isDailyResetDue(lastReset: player.lastResetDate, now: now)) return;
 
     _isar.writeTxnSync(() {
-      final allQuests = _isar.quests.where().findAllSync();
-      final resetQuests = allQuests
+      final resetQuests = state
           .map(
             (q) => q.copyWith(
               isCompleted: false,
@@ -158,18 +334,35 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
             ),
           )
           .toList();
-      _isar.quests.putAllSync(resetQuests);
+      _isar.quests.putAllSync(
+        resetQuests
+            .map(
+              (quest) => quest.copyWith(ownerUid: _activeUid ?? quest.ownerUid),
+            )
+            .toList(growable: false),
+      );
     });
 
     ref.read(playerProvider.notifier).handleDailyReset(now);
-    state = _isar.quests.where().findAllSync();
+    state = state
+        .map(
+          (q) => q.copyWith(
+            isCompleted: false,
+            verificationStatus: QuestVerificationStatus.none,
+            clearPreRewardSnapshot: true,
+            clearVerificationProgress: true,
+          ),
+        )
+        .toList(growable: false);
+    unawaited(_pushRemoteQuests(state));
   }
 
   void _seedInitialQuests(AwakeningPath focus) {
-    final initialQuests = starterQuestsForFocus(focus);
+    final initialQuests = starterQuestsForFocus(focus)
+        .map((quest) => quest.copyWith(ownerUid: _activeUid))
+        .toList(growable: false);
 
-    _isar.writeTxnSync(() => _isar.quests.putAllSync(initialQuests));
-    state = initialQuests;
+    _replaceLocalState(initialQuests);
   }
 
   void applyStarterKit(AwakeningPath focus) {
@@ -216,6 +409,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
   void addPersonalQuest(String title, AttributeType attribute, int xp) {
     final newQuest = Quest(
+      ownerUid: _activeUid,
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       rewardAttribute: attribute,
@@ -225,11 +419,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       verificationStatus: QuestVerificationStatus.none,
     );
 
-    _isar.writeTxnSync(() {
-      _isar.quests.putSync(newQuest);
-    });
-
-    state = [...state, newQuest];
+    _replaceLocalState([...state, newQuest]);
     unawaited(
       _analytics.logQuestCreated(
         category: newQuest.category.name,
@@ -257,12 +447,8 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return false;
     }
 
-    final newQuest = template.toQuest();
-    _isar.writeTxnSync(() {
-      _isar.quests.putSync(newQuest);
-    });
-
-    state = [...state, newQuest];
+    final newQuest = template.toQuest().copyWith(ownerUid: _activeUid);
+    _replaceLocalState([...state, newQuest]);
     unawaited(
       _analytics.logQuestCreated(
         category: newQuest.category.name,
@@ -415,6 +601,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       existingTitles.add(normalizedTitle);
       newQuests.add(
         Quest(
+          ownerUid: _activeUid,
           id: '${DateTime.now().microsecondsSinceEpoch}-${newQuests.length}',
           title: suggestion.title,
           rewardAttribute: suggestion.rewardAttribute,
@@ -428,24 +615,15 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     if (newQuests.isEmpty) return 0;
 
-    _isar.writeTxnSync(() {
-      _isar.quests.putAllSync(newQuests);
-    });
-
-    state = [...state, ...newQuests];
+    _replaceLocalState([...state, ...newQuests]);
     unawaited(_analytics.logSuggestedWeekAdded(addedCount: newQuests.length));
     return newQuests.length;
   }
 
   void deleteQuest(String id) {
-    _isar.writeTxnSync(() {
-      final questToDelete = _isar.quests.filter().idEqualTo(id).findFirstSync();
-      if (questToDelete != null) {
-        _isar.quests.deleteSync(questToDelete.isarId);
-      }
-    });
-
-    state = state.where((q) => q.id != id).toList();
+    _replaceLocalState(
+      state.where((quest) => quest.id != id).toList(growable: false),
+    );
   }
 
   Quest? _findQuest(String id) {
@@ -455,15 +633,11 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   void _persistQuestUpdate(Quest updatedQuest) {
-    _isar.writeTxnSync(() {
-      _isar.quests.putSync(updatedQuest);
-    });
-
     final index = state.indexWhere((q) => q.id == updatedQuest.id);
     if (index == -1) return;
     final newState = [...state];
-    newState[index] = updatedQuest;
-    state = newState;
+    newState[index] = updatedQuest.copyWith(ownerUid: _activeUid);
+    _replaceLocalState(newState);
   }
 
   void _applyCompletion(
@@ -535,4 +709,11 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   String _normalizeTitle(String value) => value.trim().toLowerCase();
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _remoteQuestSubscription?.cancel();
+    super.dispose();
+  }
 }

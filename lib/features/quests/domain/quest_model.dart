@@ -3,9 +3,13 @@ import 'package:isar/isar.dart';
 part 'quest_model.g.dart';
 
 enum AttributeType { strength, intelligence, vitality, agility }
+
 enum QuestCategory { personal, competitive }
+
 enum QuestTemplateType { custom, focusSession, studySession, readingSession }
+
 enum QuestVerificationMode { manual, timer, timerWithReflection }
+
 enum QuestVerificationStatus { none, ready, inProgress, verified }
 
 const int personalQuestDefaultXp = 12;
@@ -20,6 +24,7 @@ int normalizePersonalQuestXp(int value) {
 class Quest {
   Id isarId = Isar.autoIncrement;
 
+  final String? ownerUid;
   final String id;
   final String title;
 
@@ -61,6 +66,7 @@ class Quest {
 
   Quest({
     this.isarId = Isar.autoIncrement,
+    this.ownerUid,
     required this.id,
     required this.title,
     required this.rewardAttribute,
@@ -101,6 +107,7 @@ class Quest {
       verificationMode == QuestVerificationMode.timerWithReflection;
 
   Quest copyWith({
+    String? ownerUid,
     bool? isCompleted,
     QuestCategory? category,
     QuestTemplateType? templateType,
@@ -125,6 +132,7 @@ class Quest {
   }) {
     return Quest(
       isarId: isarId,
+      ownerUid: ownerUid ?? this.ownerUid,
       id: id,
       title: title,
       rewardAttribute: rewardAttribute,
@@ -133,7 +141,8 @@ class Quest {
       templateType: templateType ?? this.templateType,
       verificationMode: verificationMode ?? this.verificationMode,
       verificationStatus: verificationStatus ?? this.verificationStatus,
-      targetDurationMinutes: targetDurationMinutes ?? this.targetDurationMinutes,
+      targetDurationMinutes:
+          targetDurationMinutes ?? this.targetDurationMinutes,
       reflectionPrompt: reflectionPrompt ?? this.reflectionPrompt,
       reflectionAnswer: clearVerificationProgress
           ? null
@@ -141,17 +150,37 @@ class Quest {
       verificationStartedAt: clearVerificationProgress
           ? null
           : (verificationStartedAt ?? this.verificationStartedAt),
-      completedAt: clearVerificationProgress ? null : (completedAt ?? this.completedAt),
-      verifiedAt: clearVerificationProgress ? null : (verifiedAt ?? this.verifiedAt),
+      completedAt: clearVerificationProgress
+          ? null
+          : (completedAt ?? this.completedAt),
+      verifiedAt: clearVerificationProgress
+          ? null
+          : (verifiedAt ?? this.verifiedAt),
       isCompleted: isCompleted ?? this.isCompleted,
-      preRewardLevel: clearPreRewardSnapshot ? null : (preRewardLevel ?? this.preRewardLevel),
-      preRewardXp: clearPreRewardSnapshot ? null : (preRewardXp ?? this.preRewardXp),
-      preRewardMaxXp: clearPreRewardSnapshot ? null : (preRewardMaxXp ?? this.preRewardMaxXp),
-      preRewardStatPoints: clearPreRewardSnapshot ? null : (preRewardStatPoints ?? this.preRewardStatPoints),
-      preRewardStrength: clearPreRewardSnapshot ? null : (preRewardStrength ?? this.preRewardStrength),
-      preRewardIntelligence: clearPreRewardSnapshot ? null : (preRewardIntelligence ?? this.preRewardIntelligence),
-      preRewardVitality: clearPreRewardSnapshot ? null : (preRewardVitality ?? this.preRewardVitality),
-      preRewardAgility: clearPreRewardSnapshot ? null : (preRewardAgility ?? this.preRewardAgility),
+      preRewardLevel: clearPreRewardSnapshot
+          ? null
+          : (preRewardLevel ?? this.preRewardLevel),
+      preRewardXp: clearPreRewardSnapshot
+          ? null
+          : (preRewardXp ?? this.preRewardXp),
+      preRewardMaxXp: clearPreRewardSnapshot
+          ? null
+          : (preRewardMaxXp ?? this.preRewardMaxXp),
+      preRewardStatPoints: clearPreRewardSnapshot
+          ? null
+          : (preRewardStatPoints ?? this.preRewardStatPoints),
+      preRewardStrength: clearPreRewardSnapshot
+          ? null
+          : (preRewardStrength ?? this.preRewardStrength),
+      preRewardIntelligence: clearPreRewardSnapshot
+          ? null
+          : (preRewardIntelligence ?? this.preRewardIntelligence),
+      preRewardVitality: clearPreRewardSnapshot
+          ? null
+          : (preRewardVitality ?? this.preRewardVitality),
+      preRewardAgility: clearPreRewardSnapshot
+          ? null
+          : (preRewardAgility ?? this.preRewardAgility),
     );
   }
 }

@@ -53,112 +53,117 @@ const QuestSchema = CollectionSchema(
       name: r'isCompleted',
       type: IsarType.bool,
     ),
-    r'preRewardAgility': PropertySchema(
+    r'ownerUid': PropertySchema(
       id: 7,
+      name: r'ownerUid',
+      type: IsarType.string,
+    ),
+    r'preRewardAgility': PropertySchema(
+      id: 8,
       name: r'preRewardAgility',
       type: IsarType.long,
     ),
     r'preRewardIntelligence': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'preRewardIntelligence',
       type: IsarType.long,
     ),
     r'preRewardLevel': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'preRewardLevel',
       type: IsarType.long,
     ),
     r'preRewardMaxXp': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'preRewardMaxXp',
       type: IsarType.long,
     ),
     r'preRewardStatPoints': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'preRewardStatPoints',
       type: IsarType.long,
     ),
     r'preRewardStrength': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'preRewardStrength',
       type: IsarType.long,
     ),
     r'preRewardVitality': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'preRewardVitality',
       type: IsarType.long,
     ),
     r'preRewardXp': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'preRewardXp',
       type: IsarType.long,
     ),
     r'reflectionAnswer': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'reflectionAnswer',
       type: IsarType.string,
     ),
     r'reflectionPrompt': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'reflectionPrompt',
       type: IsarType.string,
     ),
     r'requiresReflection': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'requiresReflection',
       type: IsarType.bool,
     ),
     r'requiresTimer': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'requiresTimer',
       type: IsarType.bool,
     ),
     r'rewardAttribute': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'rewardAttribute',
       type: IsarType.byte,
       enumMap: _QuestrewardAttributeEnumValueMap,
     ),
     r'targetDurationMinutes': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'targetDurationMinutes',
       type: IsarType.long,
     ),
     r'templateType': PropertySchema(
-      id: 21,
+      id: 22,
       name: r'templateType',
       type: IsarType.byte,
       enumMap: _QuesttemplateTypeEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 22,
+      id: 23,
       name: r'title',
       type: IsarType.string,
     ),
     r'verificationMode': PropertySchema(
-      id: 23,
+      id: 24,
       name: r'verificationMode',
       type: IsarType.byte,
       enumMap: _QuestverificationModeEnumValueMap,
     ),
     r'verificationStartedAt': PropertySchema(
-      id: 24,
+      id: 25,
       name: r'verificationStartedAt',
       type: IsarType.dateTime,
     ),
     r'verificationStatus': PropertySchema(
-      id: 25,
+      id: 26,
       name: r'verificationStatus',
       type: IsarType.byte,
       enumMap: _QuestverificationStatusEnumValueMap,
     ),
     r'verifiedAt': PropertySchema(
-      id: 26,
+      id: 27,
       name: r'verifiedAt',
       type: IsarType.dateTime,
     ),
     r'xpReward': PropertySchema(
-      id: 27,
+      id: 28,
       name: r'xpReward',
       type: IsarType.long,
     )
@@ -184,6 +189,12 @@ int _questEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.id.length * 3;
+  {
+    final value = object.ownerUid;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.reflectionAnswer;
     if (value != null) {
@@ -213,27 +224,28 @@ void _questSerialize(
   writer.writeString(offsets[4], object.id);
   writer.writeBool(offsets[5], object.isCompetitive);
   writer.writeBool(offsets[6], object.isCompleted);
-  writer.writeLong(offsets[7], object.preRewardAgility);
-  writer.writeLong(offsets[8], object.preRewardIntelligence);
-  writer.writeLong(offsets[9], object.preRewardLevel);
-  writer.writeLong(offsets[10], object.preRewardMaxXp);
-  writer.writeLong(offsets[11], object.preRewardStatPoints);
-  writer.writeLong(offsets[12], object.preRewardStrength);
-  writer.writeLong(offsets[13], object.preRewardVitality);
-  writer.writeLong(offsets[14], object.preRewardXp);
-  writer.writeString(offsets[15], object.reflectionAnswer);
-  writer.writeString(offsets[16], object.reflectionPrompt);
-  writer.writeBool(offsets[17], object.requiresReflection);
-  writer.writeBool(offsets[18], object.requiresTimer);
-  writer.writeByte(offsets[19], object.rewardAttribute.index);
-  writer.writeLong(offsets[20], object.targetDurationMinutes);
-  writer.writeByte(offsets[21], object.templateType.index);
-  writer.writeString(offsets[22], object.title);
-  writer.writeByte(offsets[23], object.verificationMode.index);
-  writer.writeDateTime(offsets[24], object.verificationStartedAt);
-  writer.writeByte(offsets[25], object.verificationStatus.index);
-  writer.writeDateTime(offsets[26], object.verifiedAt);
-  writer.writeLong(offsets[27], object.xpReward);
+  writer.writeString(offsets[7], object.ownerUid);
+  writer.writeLong(offsets[8], object.preRewardAgility);
+  writer.writeLong(offsets[9], object.preRewardIntelligence);
+  writer.writeLong(offsets[10], object.preRewardLevel);
+  writer.writeLong(offsets[11], object.preRewardMaxXp);
+  writer.writeLong(offsets[12], object.preRewardStatPoints);
+  writer.writeLong(offsets[13], object.preRewardStrength);
+  writer.writeLong(offsets[14], object.preRewardVitality);
+  writer.writeLong(offsets[15], object.preRewardXp);
+  writer.writeString(offsets[16], object.reflectionAnswer);
+  writer.writeString(offsets[17], object.reflectionPrompt);
+  writer.writeBool(offsets[18], object.requiresReflection);
+  writer.writeBool(offsets[19], object.requiresTimer);
+  writer.writeByte(offsets[20], object.rewardAttribute.index);
+  writer.writeLong(offsets[21], object.targetDurationMinutes);
+  writer.writeByte(offsets[22], object.templateType.index);
+  writer.writeString(offsets[23], object.title);
+  writer.writeByte(offsets[24], object.verificationMode.index);
+  writer.writeDateTime(offsets[25], object.verificationStartedAt);
+  writer.writeByte(offsets[26], object.verificationStatus.index);
+  writer.writeDateTime(offsets[27], object.verifiedAt);
+  writer.writeLong(offsets[28], object.xpReward);
 }
 
 Quest _questDeserialize(
@@ -249,33 +261,34 @@ Quest _questDeserialize(
     id: reader.readString(offsets[4]),
     isCompleted: reader.readBoolOrNull(offsets[6]) ?? false,
     isarId: id,
-    preRewardAgility: reader.readLongOrNull(offsets[7]),
-    preRewardIntelligence: reader.readLongOrNull(offsets[8]),
-    preRewardLevel: reader.readLongOrNull(offsets[9]),
-    preRewardMaxXp: reader.readLongOrNull(offsets[10]),
-    preRewardStatPoints: reader.readLongOrNull(offsets[11]),
-    preRewardStrength: reader.readLongOrNull(offsets[12]),
-    preRewardVitality: reader.readLongOrNull(offsets[13]),
-    preRewardXp: reader.readLongOrNull(offsets[14]),
-    reflectionAnswer: reader.readStringOrNull(offsets[15]),
-    reflectionPrompt: reader.readStringOrNull(offsets[16]),
+    ownerUid: reader.readStringOrNull(offsets[7]),
+    preRewardAgility: reader.readLongOrNull(offsets[8]),
+    preRewardIntelligence: reader.readLongOrNull(offsets[9]),
+    preRewardLevel: reader.readLongOrNull(offsets[10]),
+    preRewardMaxXp: reader.readLongOrNull(offsets[11]),
+    preRewardStatPoints: reader.readLongOrNull(offsets[12]),
+    preRewardStrength: reader.readLongOrNull(offsets[13]),
+    preRewardVitality: reader.readLongOrNull(offsets[14]),
+    preRewardXp: reader.readLongOrNull(offsets[15]),
+    reflectionAnswer: reader.readStringOrNull(offsets[16]),
+    reflectionPrompt: reader.readStringOrNull(offsets[17]),
     rewardAttribute:
-        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[19])] ??
+        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[20])] ??
             AttributeType.strength,
-    targetDurationMinutes: reader.readLongOrNull(offsets[20]) ?? 0,
+    targetDurationMinutes: reader.readLongOrNull(offsets[21]) ?? 0,
     templateType:
-        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[21])] ??
+        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[22])] ??
             QuestTemplateType.custom,
-    title: reader.readString(offsets[22]),
+    title: reader.readString(offsets[23]),
     verificationMode: _QuestverificationModeValueEnumMap[
-            reader.readByteOrNull(offsets[23])] ??
+            reader.readByteOrNull(offsets[24])] ??
         QuestVerificationMode.manual,
-    verificationStartedAt: reader.readDateTimeOrNull(offsets[24]),
+    verificationStartedAt: reader.readDateTimeOrNull(offsets[25]),
     verificationStatus: _QuestverificationStatusValueEnumMap[
-            reader.readByteOrNull(offsets[25])] ??
+            reader.readByteOrNull(offsets[26])] ??
         QuestVerificationStatus.none,
-    verifiedAt: reader.readDateTimeOrNull(offsets[26]),
-    xpReward: reader.readLong(offsets[27]),
+    verifiedAt: reader.readDateTimeOrNull(offsets[27]),
+    xpReward: reader.readLong(offsets[28]),
   );
   return object;
 }
@@ -303,7 +316,7 @@ P _questDeserializeProp<P>(
     case 6:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 7:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readLongOrNull(offset)) as P;
     case 9:
@@ -319,37 +332,39 @@ P _questDeserializeProp<P>(
     case 14:
       return (reader.readLongOrNull(offset)) as P;
     case 15:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 16:
       return (reader.readStringOrNull(offset)) as P;
     case 17:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 18:
       return (reader.readBool(offset)) as P;
     case 19:
+      return (reader.readBool(offset)) as P;
+    case 20:
       return (_QuestrewardAttributeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           AttributeType.strength) as P;
-    case 20:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 21:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 22:
       return (_QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offset)] ??
           QuestTemplateType.custom) as P;
-    case 22:
-      return (reader.readString(offset)) as P;
     case 23:
+      return (reader.readString(offset)) as P;
+    case 24:
       return (_QuestverificationModeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationMode.manual) as P;
-    case 24:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 25:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 26:
       return (_QuestverificationStatusValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationStatus.none) as P;
-    case 26:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 27:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 28:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -837,6 +852,152 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'ownerUid',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'ownerUid',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ownerUid',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'ownerUid',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ownerUid',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> ownerUidIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'ownerUid',
+        value: '',
       ));
     });
   }
@@ -2404,6 +2565,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByOwnerUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByOwnerUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByPreRewardAgility() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'preRewardAgility', Sort.asc);
@@ -2754,6 +2927,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByOwnerUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByOwnerUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByPreRewardAgility() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'preRewardAgility', Sort.asc);
@@ -3051,6 +3236,13 @@ extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QDistinct> distinctByOwnerUid(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ownerUid', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QDistinct> distinctByPreRewardAgility() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'preRewardAgility');
@@ -3230,6 +3422,12 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
   QueryBuilder<Quest, bool, QQueryOperations> isCompletedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isCompleted');
+    });
+  }
+
+  QueryBuilder<Quest, String?, QQueryOperations> ownerUidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ownerUid');
     });
   }
 

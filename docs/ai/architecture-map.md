@@ -169,6 +169,11 @@ lib/
 - quest state is exposed through `questProvider`
 - quest completion drives XP and attribute rewards
 - daily reset behavior depends on the player's `lastResetDate`
+- quest inventory is no longer device-only:
+  - canonical quest continuity now lives in Firestore under `users/{uid}/quests/{questId}`
+  - `users/{uid}/quests_meta/current` distinguishes an intentionally empty remote inventory from a not-yet-migrated account
+  - Isar now acts as a per-user quest cache instead of the only source of truth
+  - first login after this change migrates existing local quests when they exist
 - quest progression now has two explicit tracks:
   - `personal` quests keep low-friction habit tracking and still reward XP
   - `competitive` quests use official templates and lightweight verification before they influence rank-facing systems

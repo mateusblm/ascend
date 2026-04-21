@@ -29,6 +29,7 @@ The goal is simple:
 - `flutter test`
 - `flutter build apk --debug --flavor staging`
 - `flutter build apk --debug --flavor production`
+- `flutter build apk --release --flavor production`
 - `cd functions && npm run build`
 
 ### Firebase
@@ -37,6 +38,7 @@ The goal is simple:
 - deploy Functions if callables or remote validation changed
 - confirm the app is pointing to the correct Firebase project
 - confirm the Android flavor matches the intended Firebase app identity
+- confirm the production Firebase Android app has the current release SHA registered
 
 ### Production Signals
 

@@ -1,0 +1,4 @@
+storeFile=app/keystore/ascend-release.jks
+storePassword=replace-with-store-password
+keyAlias=ascend-release
+keyPassword=replace-with-key-password

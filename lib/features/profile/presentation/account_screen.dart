@@ -24,12 +24,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final authState = ref.watch(authProvider);
     final authProfile = authState is AuthSuccess ? authState : null;
 
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (previous is AuthSuccess && next is! AuthSuccess && mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    });
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -422,13 +416,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   Future<void> _handleSignOut(BuildContext context) async {
     if (_isSigningOut) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isSigningOut = true);
     try {
       await ref.read(authProvider.notifier).signOut();
+      if (!context.mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (_) {
-      if (!mounted) return;
-      messenger.showSnackBar(
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nao foi possivel sair da conta agora.')),
       );
     } finally {

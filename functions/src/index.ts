@@ -324,9 +324,29 @@ function ensureBool(value: unknown, field: string): boolean {
   return value;
 }
 
-function ensureTimestamp(value: unknown, field: string): admin.firestore.Timestamp {
+export function parseTimestampInput(value: unknown): admin.firestore.Timestamp | null {
   if (value instanceof admin.firestore.Timestamp) {
     return value;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return admin.firestore.Timestamp.fromDate(value);
+  }
+
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return admin.firestore.Timestamp.fromDate(parsed);
+    }
+  }
+
+  return null;
+}
+
+function ensureTimestamp(value: unknown, field: string): admin.firestore.Timestamp {
+  const timestamp = parseTimestampInput(value);
+  if (timestamp != null) {
+    return timestamp;
   }
 
   throw new HttpsError('invalid-argument', `${field} invalido.`);

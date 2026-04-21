@@ -23,6 +23,20 @@ Inside that project, Android identities are now separated by flavor:
 
 The legacy package `com.example.ascend` should now be treated as old local/dev identity, not as the long-term release identity.
 
+## Current Release Signing State
+
+Android release signing now supports a real keystore path through:
+
+- local config file: `android/key.properties`
+- example template: `android/key.properties.example`
+- keystore path: `android/app/keystore/ascend-release.jks`
+- key alias: `ascend-release`
+
+The current production Firebase Android app now has the generated release fingerprints registered:
+
+- SHA-1: `C1:23:A0:E6:97:2A:62:38:45:8B:D8:4E:46:A3:E5:B0:5C:85:FA:4B`
+- SHA-256: `26:6C:C7:77:82:0B:C5:17:4D:A8:BE:3A:28:AF:53:3E:C0:D1:D2:0E:DE:72:42:AD:21:22:83:99:09:04:C8:CC`
+
 ## Why This Policy Exists
 
 - production should stop shipping with placeholder package identity
@@ -51,14 +65,16 @@ flutter build apk --release --flavor production
 
 ## Current Constraints
 
-- release build is still signing with the debug signing config until a real release keystore is introduced
 - the current Firebase project is shared by staging and production for now
 - before public store launch, decide whether production should stay in this Firebase project or move to a dedicated production project
-- before public store launch, register the real release SHA certificates for the production Android app
+- before public store launch, register the real release SHA certificates for the production Android app if the keystore changes again
 
 ## Required Next Steps Before Store Submission
 
-1. introduce a real release keystore and stop shipping `release` with debug signing
-2. register release SHA-1 and SHA-256 on the production Firebase Android app
-3. decide whether Firebase remains shared or splits into dedicated `staging` and `prod` projects
-4. verify install, update, login, and Google Sign-In on real staging and production builds
+1. decide whether Firebase remains shared or splits into dedicated `staging` and `prod` projects
+2. verify install, update, login, and Google Sign-In on real staging and production builds
+3. move the keystore backup and password escrow to the final operational owner before store submission
+
+## Operational Requirement
+
+The keystore file and the credentials stored in `android/key.properties` must be backed up outside the repository before store submission.

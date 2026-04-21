@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/features/auth/domain/auth_state.dart';
+import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
@@ -39,6 +41,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     });
     ref.listenManual(questProvider, (_, __) {
       _scheduleCompetitiveSync(ref.read(playerProvider));
+    });
+    ref.listenManual(authProvider, (previous, next) {
+      if (previous is AuthSuccess && next is! AuthSuccess) {
+        _syncDebounce?.cancel();
+      }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -144,8 +151,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     Player player, {
     Duration delay = const Duration(milliseconds: 500),
   }) {
+    if (ref.read(authProvider) is! AuthSuccess) {
+      _syncDebounce?.cancel();
+      return;
+    }
+
     _syncDebounce?.cancel();
     _syncDebounce = Timer(delay, () {
+      if (!mounted || ref.read(authProvider) is! AuthSuccess) {
+        return;
+      }
+
       final repository = ref.read(rankProgressionRepositoryProvider);
       final quests = ref.read(questProvider);
       repository.syncCompetitiveState(player);

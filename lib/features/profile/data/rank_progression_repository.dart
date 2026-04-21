@@ -23,7 +23,8 @@ class RankProgressionRepository {
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
   }) : _functions =
-           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
@@ -166,17 +167,15 @@ class RankProgressionRepository {
       return Stream.value(const <CompetitiveIntegritySnapshot>[]);
     }
 
-    return _integrityHistoryCollection(uid)
-        .orderBy('updatedAt', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map(
-                (doc) => CompetitiveIntegritySnapshot.fromFirestore(doc.data()),
-              )
-              .toList();
-        });
+    return _integrityHistoryCollection(
+      uid,
+    ).orderBy('updatedAt', descending: true).limit(limit).snapshots().map((
+      snapshot,
+    ) {
+      return snapshot.docs
+          .map((doc) => CompetitiveIntegritySnapshot.fromFirestore(doc.data()))
+          .toList();
+    });
   }
 
   Future<CompetitiveRankSnapshot?> syncCompetitiveState(Player player) async {
@@ -215,9 +214,7 @@ class RankProgressionRepository {
   ) async {
     final callable = _functions.httpsCallable('syncCompetitiveStateFromSource');
     final response = await callable
-        .call(<String, dynamic>{
-          'source': _competitiveSourceFor(player),
-        })
+        .call(<String, dynamic>{'source': _competitiveSourceFor(player)})
         .timeout(_rpcTimeout);
     final data = response.data;
     if (data is! Map) {
@@ -306,7 +303,8 @@ class RankProgressionRepository {
     }
   }
 
-  Future<CompetitiveIntegritySnapshot?> _syncCompetitiveIntegrityFromSourceRemotely({
+  Future<CompetitiveIntegritySnapshot?>
+  _syncCompetitiveIntegrityFromSourceRemotely({
     required Player player,
     required List<Quest> quests,
   }) async {
@@ -340,10 +338,10 @@ class RankProgressionRepository {
     return <String, dynamic>{
       'playerLevel': player.level,
       'activityHistory': player.activityHistory
-          .map(Timestamp.fromDate)
+          .map((entry) => entry.toIso8601String())
           .toList(growable: false),
       'competitiveActivityHistory': player.competitiveActivityHistory
-          .map(Timestamp.fromDate)
+          .map((entry) => entry.toIso8601String())
           .toList(growable: false),
     };
   }
@@ -354,10 +352,10 @@ class RankProgressionRepository {
   }) {
     return <String, dynamic>{
       'activityHistory': player.activityHistory
-          .map(Timestamp.fromDate)
+          .map((entry) => entry.toIso8601String())
           .toList(growable: false),
       'competitiveActivityHistory': player.competitiveActivityHistory
-          .map(Timestamp.fromDate)
+          .map((entry) => entry.toIso8601String())
           .toList(growable: false),
       'quests': quests
           .map(
@@ -367,9 +365,7 @@ class RankProgressionRepository {
               'isCompetitive': quest.isCompetitive,
               'countsTowardCompetitive': quest.countsTowardCompetitive,
               'isCompleted': quest.isCompleted,
-              'completedAt': quest.completedAt == null
-                  ? null
-                  : Timestamp.fromDate(quest.completedAt!),
+              'completedAt': quest.completedAt?.toIso8601String(),
             },
           )
           .toList(growable: false),
@@ -420,20 +416,15 @@ class RankProgressionRepository {
           _analytics.logPromotionExamStarted(
             sourceRank: snapshot.currentRank,
             targetRank: snapshot.promotionTargetRank ?? '',
-            mode:
-                (snapshot.advancementMode ?? RankAdvancementMode.ascension)
-                    .name,
+            mode: (snapshot.advancementMode ?? RankAdvancementMode.ascension)
+                .name,
             status: status,
           ),
         );
       }
       return status == 'started' || status == 'already_in_progress';
     } catch (error, stackTrace) {
-      _reportRecoverable(
-        error,
-        stackTrace,
-        stage: 'start_promotion_exam',
-      );
+      _reportRecoverable(error, stackTrace, stage: 'start_promotion_exam');
       return false;
     }
   }
@@ -449,20 +440,15 @@ class RankProgressionRepository {
           _analytics.logPromotionConfirmed(
             sourceRank: snapshot.currentRank,
             targetRank: snapshot.promotionTargetRank ?? '',
-            mode:
-                (snapshot.advancementMode ?? RankAdvancementMode.ascension)
-                    .name,
+            mode: (snapshot.advancementMode ?? RankAdvancementMode.ascension)
+                .name,
             status: status,
           ),
         );
       }
       return status == 'promoted' || status == 'already_promoted';
     } catch (error, stackTrace) {
-      _reportRecoverable(
-        error,
-        stackTrace,
-        stage: 'confirm_promotion',
-      );
+      _reportRecoverable(error, stackTrace, stage: 'confirm_promotion');
       return false;
     }
   }
@@ -499,14 +485,16 @@ class RankProgressionRepository {
         currentRank: baseSnapshot.currentRank,
         peakRank: baseSnapshot.peakRank,
       ),
-      eventType: _promotionModeFor(
+      eventType:
+          _promotionModeFor(
                 currentRank: baseSnapshot.currentRank,
                 peakRank: baseSnapshot.peakRank,
               ) ==
               RankAdvancementMode.reconquest
           ? CompetitiveRankEventType.reconquestUnlocked
           : CompetitiveRankEventType.promotionUnlocked,
-      summary: _promotionModeFor(
+      summary:
+          _promotionModeFor(
                 currentRank: baseSnapshot.currentRank,
                 peakRank: baseSnapshot.peakRank,
               ) ==
@@ -662,11 +650,7 @@ class RankProgressionRepository {
       }
       return status == 'claimed' || status == 'already_claimed';
     } catch (error, stackTrace) {
-      _reportRecoverable(
-        error,
-        stackTrace,
-        stage: 'claim_season_reward',
-      );
+      _reportRecoverable(error, stackTrace, stage: 'claim_season_reward');
       return false;
     }
   }
@@ -711,7 +695,9 @@ class RankProgressionRepository {
         .collection('season_reward_history');
   }
 
-  CollectionReference<Map<String, dynamic>> _seasonLegacyCollection(String uid) {
+  CollectionReference<Map<String, dynamic>> _seasonLegacyCollection(
+    String uid,
+  ) {
     return _firestore.collection('users').doc(uid).collection('season_legacy');
   }
 
@@ -828,7 +814,8 @@ class RankProgressionRepository {
           .call({
             'snapshot': snapshot.toFirestore(),
             if (exam != null) 'exam': exam.toFirestore(),
-            if (seasonReward != null) 'seasonReward': seasonReward.toFirestore(),
+            if (seasonReward != null)
+              'seasonReward': seasonReward.toFirestore(),
           })
           .timeout(_rpcTimeout);
     } catch (error, stackTrace) {
@@ -883,6 +870,7 @@ class RankProgressionRepository {
 
     return true;
   }
+
   Future<String> _claimSeasonRewardRemotely(
     SeasonRewardSnapshot currentReward,
   ) async {

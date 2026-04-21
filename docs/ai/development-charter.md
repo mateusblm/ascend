@@ -29,6 +29,7 @@ Before changing code, use these files as the primary guides:
 - `AGENTS.md`
 - `docs/product/vision.md`
 - `docs/product/roadmap.md`
+- `docs/product/progression-architecture.md`
 - `docs/ai/architecture-map.md`
 - `analysis_options.yaml`
 
@@ -70,6 +71,9 @@ AI should avoid prioritizing broad new feature surface over:
 ### Progression Logic
 - Leveling, XP, stat distribution, and daily reset are product-critical systems.
 - Changes in these rules must be explicit and reviewed as behavior changes, not "cleanup".
+- Reward-bearing rules should prefer backend commands and backend-authored aggregates over frontend-owned calculations.
+- AI must not move security-sensitive or abuse-sensitive progression logic into Flutter controllers for convenience.
+- If a change affects progression truth, the backend authority boundary must be stated explicitly.
 
 ### UI Stability
 - Do not introduce nested scrolling, rebuild-heavy charts, or expensive animations without reason.

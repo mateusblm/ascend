@@ -17,6 +17,8 @@ These rules should have automated coverage first:
 - stat increase and rollback behavior
 - daily quest reset behavior
 - reward removal when unchecking a completed quest
+- backend command validation for reward-bearing actions
+- aggregate updates after canonical fact writes
 
 ### Tier 2: Important Flows
 
@@ -160,6 +162,7 @@ Current competitive additions to protect:
     - no automatic upload of an empty fresh profile
     - restored level/xp/streak/focus/onboarding on a second device
     - local cache remaining scoped to the signed-in uid instead of one shared device record
+    - server-derived profile recomputation from quests does not drift after quest completion, undo, or weekly boss claim
 50. account-backed quest continuity should protect:
     - first login migration from local quest cache to remote quest inventory
     - intentionally empty remote quests do not get repopulated from stale cache
@@ -168,9 +171,18 @@ Current competitive additions to protect:
 51. session and authority hardening should protect:
     - second device login is rejected while another active session is still valid
     - heartbeat/session refresh keeps the active device lease alive
-    - profile sync uses the audited callable path instead of direct client writes
+    - profile sync uses the backend-derived callable path instead of trusting client `level/xp/streak/history`
     - quest sync uses the audited callable path instead of direct client writes
     - competitive quest templates remain validated against official backend definitions during quest inventory sync
+52. final progression architecture should protect:
+    - frontend commands do not become the final authority for account progression
+    - backend facts and aggregates stay aligned after personal quest completion
+    - backend facts and aggregates stay aligned after personal quest revocation
+    - backend facts and aggregates stay aligned after competitive quest verification
+    - backend facts and aggregates stay aligned after weekly boss claim
+    - attribute allocation updates the authoritative profile instead of only local UI state
+    - callable responses are applied back into the local cache instead of local reward math running in parallel
+    - full recomputation remains a repair/migration path, not the default production write path
 
 ## AI Test Rules
 

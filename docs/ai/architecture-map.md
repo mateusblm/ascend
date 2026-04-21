@@ -58,15 +58,27 @@ lib/
 ### Player Progression
 - player state is exposed through `playerProvider`
 - leveling, XP, stat points, and attribute growth are product-critical rules
+- final authority for reward-bearing progression should not live in Flutter:
+  - the frontend may start commands and render optimistic UI
+  - the backend must own canonical facts, aggregates, and sensitive progression rules
 - player profile is no longer device-only:
   - canonical account progress now lives in Firestore at `users/{uid}/profile/current`
   - Isar now acts as a per-user local cache instead of the only source of truth
   - first login after this change migrates an existing local player profile when meaningful progress already exists
   - a fresh device with no meaningful local progress should not create an empty remote profile automatically
 - player profile writes are no longer direct client Firestore writes:
-  - `syncPlayerProfileFromSource` is now the audited write path
-  - the backend sanitizes and stamps the profile document before it becomes visible as account state
-  - this is currently a `server-audited` boundary, not a full reward-authoritative simulation of personal XP history
+  - normal progression now uses backend commands instead of client snapshots:
+    - `completePersonalQuest`
+    - `revokePersonalQuestCompletion`
+    - `verifyCompetitiveQuestCompletion`
+    - `allocateAttributePoint`
+    - `claimWeeklyBoss`
+    - `updateProfileSettings`
+  - these commands update `users/{uid}/profile/current` as the account aggregate and return the backend-authored result
+  - `syncPlayerProfileFromSource` remains only as migration/repair tooling for old local progress or audited recovery
+- the repo should treat command -> fact -> aggregate update as the normal production path:
+  - full profile recomputation is no longer the intended steady-state write path
+  - if a change tries to reintroduce reward-bearing snapshot writes from Flutter, that change is architecturally wrong
 - local player profile now also includes lightweight identity settings:
   - player name is editable through the player controller
   - primary focus can be changed from a dedicated account-management flow
@@ -158,10 +170,7 @@ lib/
   - season legacy/profile
   - integrity
   - weekly boss completions
-- player profile is the current exception to the competitive read-model rule:
-  - `users/{uid}/profile/current` is user-owned and client-written
-  - it is meant for account continuity of level, XP, attributes, streak, onboarding state, focus, and related profile progress
-  - competitive progression and integrity remain backend-authored separately
+- `users/{uid}/profile/current` should evolve toward a backend-authored aggregate instead of remaining a client-shaped snapshot
 - weekly boss claim no longer falls back to direct client writes once the callable path is available
 - competitive integrity now has its own silent read-model:
   - `competitive_integrity.dart`
@@ -183,9 +192,10 @@ lib/
   - Isar now acts as a per-user quest cache instead of the only source of truth
   - first login after this change migrates existing local quests when they exist
 - quest inventory writes are no longer direct client Firestore writes:
-  - `syncQuestInventoryFromSource` is now the audited write path
-  - the backend normalizes personal quests, validates competitive quests against official templates, and blocks duplicate open competitive templates
-  - this keeps quest state `server-audited` even while personal completion and XP application still start on the client
+  - normal personal/competitive completion no longer depends on direct quest inventory sync from the client
+  - backend command responses now update the authoritative quest documents directly
+  - `syncQuestInventoryFromSource` remains an audited migration/repair path for restoring quest cache state
+  - the backend still validates competitive quests against official templates and blocks duplicate open competitive templates
 - quest progression now has two explicit tracks:
   - `personal` quests keep low-friction habit tracking and still reward XP
   - `competitive` quests use official templates and lightweight verification before they influence rank-facing systems
@@ -193,7 +203,7 @@ lib/
   - `timer`
   - `timerWithReflection`
 - level and rank now have intentionally different trust boundaries:
-  - `Level` may continue to grow from both personal and competitive quests
+  - `Level` is now updated by backend-owned progression commands from both personal and competitive quests
   - competitive rank systems only read validated competitive activity
 - only verified competitive quests should advance competitive systems such as:
   - weekly boss progress
@@ -267,6 +277,19 @@ The preferred direction for upcoming work is:
 3. move toward repository boundaries for auth, player, and quests
 4. protect domain rules with tests before deep refactors
 5. keep UI-specific behavior out of domain models
+
+## Final Progression Direction
+
+The target production architecture for progression is:
+
+1. frontend issues commands instead of deciding final account outcomes
+2. backend writes canonical facts for reward-bearing actions
+3. backend updates `profile/current` as the official aggregate
+4. backend maintains specialized read-models for competitive systems
+5. Isar remains a cache/offline layer, not the final authority
+
+Reference:
+- `docs/product/progression-architecture.md`
 
 ## Production Readiness Direction
 

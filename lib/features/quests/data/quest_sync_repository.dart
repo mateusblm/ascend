@@ -1,10 +1,31 @@
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/player_profile_repository.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
   return quests.isNotEmpty;
+}
+
+enum PersonalQuestMutationStatus {
+  completed,
+  alreadyCompleted,
+  revoked,
+  alreadyPending,
+}
+
+class PersonalQuestMutationResult {
+  const PersonalQuestMutationResult({
+    required this.status,
+    required this.player,
+    required this.quest,
+  });
+
+  final PersonalQuestMutationStatus status;
+  final Player player;
+  final Quest quest;
 }
 
 Quest parseQuestSyncData(
@@ -95,6 +116,57 @@ class QuestSyncRepository {
     }
   }
 
+  Future<PersonalQuestMutationResult> completePersonalQuest({
+    required String uid,
+    required String fallbackName,
+    required Quest quest,
+  }) async {
+    final callable = _functions.httpsCallable('completePersonalQuest');
+    try {
+      final response = await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'questId': quest.id,
+        'quest': _questSourceFor(quest),
+      });
+      return _personalQuestMutationFromResponse(
+        response.data,
+        uid: uid,
+        fallbackName: fallbackName,
+        fallbackQuestId: quest.id,
+      );
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
+  }
+
+  Future<PersonalQuestMutationResult> revokePersonalQuestCompletion({
+    required String uid,
+    required String fallbackName,
+    required Quest quest,
+  }) async {
+    final callable = _functions.httpsCallable('revokePersonalQuestCompletion');
+    try {
+      final response = await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'questId': quest.id,
+      });
+      return _personalQuestMutationFromResponse(
+        response.data,
+        uid: uid,
+        fallbackName: fallbackName,
+        fallbackQuestId: quest.id,
+      );
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
+  }
+
   CollectionReference<Map<String, dynamic>> _questsCollection(String uid) {
     return _firestore.collection('users').doc(uid).collection('quests');
   }
@@ -106,6 +178,43 @@ class QuestSyncRepository {
         .collection('quests_meta')
         .doc('current');
   }
+}
+
+PersonalQuestMutationResult _personalQuestMutationFromResponse(
+  Object? payload, {
+  required String uid,
+  required String fallbackName,
+  required String fallbackQuestId,
+}) {
+  if (payload is! Map) {
+    throw StateError('Resposta invalida da mutacao de quest pessoal.');
+  }
+  final profile = payload['profile'];
+  final quest = payload['quest'];
+  final questId = payload['questId'] as String? ?? fallbackQuestId;
+  if (profile is! Map || quest is! Map) {
+    throw StateError('Payload remoto incompleto para quest pessoal.');
+  }
+
+  final rawStatus = payload['status'] as String?;
+  return PersonalQuestMutationResult(
+    status: switch (rawStatus) {
+      'already_completed' => PersonalQuestMutationStatus.alreadyCompleted,
+      'revoked' => PersonalQuestMutationStatus.revoked,
+      'already_pending' => PersonalQuestMutationStatus.alreadyPending,
+      _ => PersonalQuestMutationStatus.completed,
+    },
+    player: parsePlayerProfileData(
+      Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+      uid: uid,
+      fallbackName: fallbackName,
+    ),
+    quest: parseQuestSyncData(
+      Map<String, dynamic>.from(quest.cast<Object?, Object?>()),
+      uid: uid,
+      questId: questId,
+    ),
+  );
 }
 
 Map<String, dynamic> _questSourceFor(Quest quest) {

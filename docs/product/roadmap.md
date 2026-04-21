@@ -90,6 +90,28 @@ This means the main execution focus should now be:
 - release identity instead of prototype defaults
 - operational reliability instead of feature expansion
 - market trust surfaces instead of internal-only polish
+- backend-owned progression architecture instead of frontend-owned reward rules
+
+## Final Progression Architecture
+
+Goal:
+- make account progression secure, consistent across devices, and cheap to read
+
+Deliverables:
+- canonical progression facts persisted by the backend
+- backend-authored `profile/current` aggregate
+- backend-authored command paths for:
+  - personal quest completion
+  - personal quest revocation
+  - attribute allocation
+  - weekly boss claim
+- client snapshots downgraded to migration/repair tooling instead of normal truth
+- local Isar persistence treated as cache/offline support, not final account authority
+
+Success criteria:
+- reward-bearing business rules no longer depend on Flutter controllers as final authority
+- level/xp/stat/streak state converges across devices through backend-authored aggregates
+- recomputation of the whole profile is not the normal production write path
 
 ## Production Readiness Program
 

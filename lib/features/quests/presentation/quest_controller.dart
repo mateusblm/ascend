@@ -4,6 +4,8 @@ import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/auth/domain/auth_state.dart';
+import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
@@ -266,8 +268,10 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
             .map((quest) => quest.copyWith(ownerUid: uid))
             .toList(growable: false),
       );
+    } on ActiveSessionConflictException {
+      unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
     } catch (_) {
-      // Auth heartbeat handles session conflicts and temporary backend failures.
+      // Temporary backend failures should not block the local quest flow.
     }
   }
 
@@ -391,26 +395,6 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     );
   }
 
-  void toggleQuest(String id, {void Function(int level)? onLevelUp}) {
-    final quest = _findQuest(id);
-    if (quest == null || quest.isCompetitive) return;
-
-    if (!quest.isCompleted) {
-      _applyCompletion(
-        quest.copyWith(
-          isCompleted: true,
-          completedAt: DateTime.now(),
-          verifiedAt: DateTime.now(),
-          verificationStatus: QuestVerificationStatus.verified,
-        ),
-        onLevelUp: onLevelUp,
-      );
-      return;
-    }
-
-    _undoCompletion(quest);
-  }
-
   void addQuest(String title, AttributeType attribute, int xp) {
     addPersonalQuest(title, attribute, xp);
   }
@@ -494,10 +478,15 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     DateTime startedAt = DateTime.now();
     if (_competitiveAuthority != null) {
-      final session = await _competitiveAuthority.startQuestSession(
-        quest: quest,
-      );
-      startedAt = session.startedAt;
+      try {
+        final session = await _competitiveAuthority.startQuestSession(
+          quest: quest,
+        );
+        startedAt = session.startedAt;
+      } on ActiveSessionConflictException {
+        unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+        return QuestCompletionResult.invalidFlow;
+      }
     }
 
     final updatedQuest = quest.copyWith(
@@ -513,6 +502,67 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       ),
     );
     return QuestCompletionResult.success;
+  }
+
+  Future<QuestCompletionResult> toggleQuest(
+    String id, {
+    void Function(int level)? onLevelUp,
+  }) async {
+    final quest = _findQuest(id);
+    if (quest == null) return QuestCompletionResult.notFound;
+    if (quest.isCompetitive) return QuestCompletionResult.invalidFlow;
+
+    final uid = _activeUid;
+    final repository = _questSyncRepository;
+    final authState = ref.read(authProvider);
+    final fallbackName = authState is AuthSuccess
+        ? authState.displayName
+        : ref.read(playerProvider).name;
+
+    if (uid == null || repository == null) {
+      if (!quest.isCompleted) {
+        _applyCompletion(
+          quest.copyWith(
+            isCompleted: true,
+            completedAt: DateTime.now(),
+            verifiedAt: DateTime.now(),
+            verificationStatus: QuestVerificationStatus.verified,
+          ),
+          onLevelUp: onLevelUp,
+        );
+        return QuestCompletionResult.success;
+      }
+
+      _undoCompletion(quest);
+      return QuestCompletionResult.success;
+    }
+
+    try {
+      final result = !quest.isCompleted
+          ? await repository.completePersonalQuest(
+              uid: uid,
+              fallbackName: fallbackName,
+              quest: quest,
+            )
+          : await repository.revokePersonalQuestCompletion(
+              uid: uid,
+              fallbackName: fallbackName,
+              quest: quest,
+            );
+      _applyAuthoritativeQuestMutation(result.quest, syncRemote: false);
+      ref
+          .read(playerProvider.notifier)
+          .applyAuthoritativeProfile(result.player, onLevelUp: onLevelUp);
+      _logQuestMutationResult(result.quest, result.player);
+      return switch (result.status) {
+        PersonalQuestMutationStatus.alreadyCompleted =>
+          QuestCompletionResult.alreadyCompleted,
+        _ => QuestCompletionResult.success,
+      };
+    } on ActiveSessionConflictException {
+      unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+      return QuestCompletionResult.invalidFlow;
+    }
   }
 
   Future<QuestCompletionResult> completeCompetitiveQuest(
@@ -576,11 +626,36 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     DateTime completedAt = now;
     if (_competitiveAuthority != null) {
-      final verification = await _competitiveAuthority.verifyQuestCompletion(
-        quest: quest,
-        reflectionAnswer: reflectionAnswer?.trim(),
-      );
-      completedAt = verification.completedAt;
+      final uid = _activeUid;
+      if (uid == null) {
+        return QuestCompletionResult.invalidFlow;
+      }
+      final authState = ref.read(authProvider);
+      final fallbackName = authState is AuthSuccess
+          ? authState.displayName
+          : ref.read(playerProvider).name;
+
+      try {
+        final verification = await _competitiveAuthority.verifyQuestCompletion(
+          quest: quest,
+          uid: uid,
+          fallbackName: fallbackName,
+          reflectionAnswer: reflectionAnswer?.trim(),
+        );
+        completedAt = verification.completedAt;
+        _applyAuthoritativeQuestMutation(verification.quest, syncRemote: false);
+        ref
+            .read(playerProvider.notifier)
+            .applyAuthoritativeProfile(
+              verification.player,
+              onLevelUp: onLevelUp,
+            );
+        _logQuestMutationResult(verification.quest, verification.player);
+        return QuestCompletionResult.success;
+      } on ActiveSessionConflictException {
+        unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+        return QuestCompletionResult.invalidFlow;
+      }
     }
 
     final updatedQuest = quest.copyWith(
@@ -640,12 +715,39 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     return state[index];
   }
 
-  void _persistQuestUpdate(Quest updatedQuest) {
+  void _persistQuestUpdate(Quest updatedQuest, {bool syncRemote = true}) {
     final index = state.indexWhere((q) => q.id == updatedQuest.id);
     if (index == -1) return;
     final newState = [...state];
     newState[index] = updatedQuest.copyWith(ownerUid: _activeUid);
-    _replaceLocalState(newState);
+    _replaceLocalState(newState, syncRemote: syncRemote);
+  }
+
+  void _applyAuthoritativeQuestMutation(Quest updatedQuest, {bool syncRemote = false}) {
+    _persistQuestUpdate(updatedQuest, syncRemote: syncRemote);
+  }
+
+  void _logQuestMutationResult(Quest quest, Player updatedPlayer) {
+    if (quest.countsTowardCompetitive) {
+      final repository = ref.read(rankProgressionRepositoryProvider);
+      unawaited(repository.syncCompetitiveState(updatedPlayer));
+      unawaited(
+        repository.syncCompetitiveIntegrity(
+          player: updatedPlayer,
+          quests: state,
+        ),
+      );
+    }
+    unawaited(
+      _analytics.logQuestCompleted(
+        category: quest.category.name,
+        verificationMode: quest.verificationMode.name,
+        xpReward: quest.xpReward,
+        countsTowardRank: quest.countsTowardCompetitive,
+        levelAfter: updatedPlayer.level,
+        templateType: quest.templateType.name,
+      ),
+    );
   }
 
   void _applyCompletion(
@@ -680,26 +782,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           countsForCompetitive: questWithSnapshot.countsTowardCompetitive,
         );
     final updatedPlayer = ref.read(playerProvider);
-    if (questWithSnapshot.countsTowardCompetitive) {
-      final repository = ref.read(rankProgressionRepositoryProvider);
-      unawaited(repository.syncCompetitiveState(updatedPlayer));
-      unawaited(
-        repository.syncCompetitiveIntegrity(
-          player: updatedPlayer,
-          quests: state,
-        ),
-      );
-    }
-    unawaited(
-      _analytics.logQuestCompleted(
-        category: questWithSnapshot.category.name,
-        verificationMode: questWithSnapshot.verificationMode.name,
-        xpReward: questWithSnapshot.xpReward,
-        countsTowardRank: questWithSnapshot.countsTowardCompetitive,
-        levelAfter: updatedPlayer.level,
-        templateType: questWithSnapshot.templateType.name,
-      ),
-    );
+    _logQuestMutationResult(questWithSnapshot, updatedPlayer);
   }
 
   void _undoCompletion(Quest quest) {

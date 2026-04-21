@@ -1,5 +1,6 @@
 import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -105,13 +106,84 @@ class PlayerProfileRepository {
   Future<void> upsertProfile({
     required String uid,
     required Player player,
+    required List<Quest> quests,
   }) async {
     final callable = _functions.httpsCallable('syncPlayerProfileFromSource');
     try {
       await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
-        'source': _profileSourceFor(player),
+        'source': _profileSourceFor(player, quests: quests),
       });
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
+  }
+
+  Future<Player> updateProfileSettings({
+    required String uid,
+    required String fallbackName,
+    required String name,
+    required AwakeningPath primaryFocus,
+    required bool hasCompletedOnboarding,
+    required DateTime lastResetDate,
+  }) async {
+    final callable = _functions.httpsCallable('updateProfileSettings');
+    try {
+      final response = await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'name': name.trim().isEmpty ? fallbackName : name.trim(),
+        'primaryFocus': primaryFocus.name,
+        'hasCompletedOnboarding': hasCompletedOnboarding,
+        'lastResetDate': lastResetDate.toIso8601String(),
+      });
+      final payload = response.data;
+      if (payload is! Map) {
+        throw StateError('Resposta invalida ao atualizar perfil.');
+      }
+      final profile = payload['profile'];
+      if (profile is! Map) {
+        throw StateError('Perfil remoto invalido.');
+      }
+      return parsePlayerProfileData(
+        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+        uid: uid,
+        fallbackName: fallbackName,
+      );
+    } catch (error) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
+  }
+
+  Future<Player> allocateAttributePoint({
+    required String uid,
+    required String fallbackName,
+    required AttributeType attribute,
+  }) async {
+    final callable = _functions.httpsCallable('allocateAttributePoint');
+    try {
+      final response = await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'attribute': attribute.name,
+      });
+      final payload = response.data;
+      if (payload is! Map) {
+        throw StateError('Resposta invalida ao alocar atributo.');
+      }
+      final profile = payload['profile'];
+      if (profile is! Map) {
+        throw StateError('Perfil remoto invalido.');
+      }
+      return parsePlayerProfileData(
+        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+        uid: uid,
+        fallbackName: fallbackName,
+      );
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -129,13 +201,12 @@ class PlayerProfileRepository {
   }
 }
 
-Map<String, dynamic> _profileSourceFor(Player player) {
+Map<String, dynamic> _profileSourceFor(
+  Player player, {
+  required List<Quest> quests,
+}) {
   return <String, dynamic>{
     'name': player.name.trim().isEmpty ? 'Jogador' : player.name.trim(),
-    'level': player.level,
-    'xp': player.xp,
-    'maxXp': player.maxXp,
-    'statPoints': player.statPoints,
     'attributes': <String, dynamic>{
       'strength': player.attributes.strength,
       'intelligence': player.attributes.intelligence,
@@ -143,31 +214,43 @@ Map<String, dynamic> _profileSourceFor(Player player) {
       'agility': player.attributes.agility,
     },
     'lastResetDate': player.lastResetDate.toIso8601String(),
-    'currentStreak': player.currentStreak,
-    'bestStreak': player.bestStreak,
-    'lastQuestCompletionDate': _dateStringOrNull(
-      player.lastQuestCompletionDate,
-    ),
-    'activityHistory': player.activityHistory
-        .map((entry) => entry.toIso8601String())
-        .toList(growable: false),
-    'lastCompetitiveQuestCompletionDate': _dateStringOrNull(
-      player.lastCompetitiveQuestCompletionDate,
-    ),
-    'competitiveActivityHistory': player.competitiveActivityHistory
-        .map((entry) => entry.toIso8601String())
-        .toList(growable: false),
     'primaryFocus': player.primaryFocus.name,
     'hasCompletedOnboarding': player.hasCompletedOnboarding,
-    'weeklyBossLastClaimedAt': _dateStringOrNull(
-      player.weeklyBossLastClaimedAt,
-    ),
+    'quests': quests.map(_questSourceFor).toList(growable: false),
   };
 }
 
 String? _dateStringOrNull(DateTime? value) {
   if (value == null) return null;
   return value.toIso8601String();
+}
+
+Map<String, dynamic> _questSourceFor(Quest quest) {
+  return <String, dynamic>{
+    'id': quest.id,
+    'title': quest.title,
+    'rewardAttribute': quest.rewardAttribute.name,
+    'xpReward': quest.xpReward,
+    'category': quest.category.name,
+    'templateType': quest.templateType.name,
+    'verificationMode': quest.verificationMode.name,
+    'verificationStatus': quest.verificationStatus.name,
+    'targetDurationMinutes': quest.targetDurationMinutes,
+    'reflectionPrompt': quest.reflectionPrompt,
+    'reflectionAnswer': quest.reflectionAnswer,
+    'verificationStartedAt': _dateStringOrNull(quest.verificationStartedAt),
+    'completedAt': _dateStringOrNull(quest.completedAt),
+    'verifiedAt': _dateStringOrNull(quest.verifiedAt),
+    'isCompleted': quest.isCompleted,
+    'preRewardLevel': quest.preRewardLevel,
+    'preRewardXp': quest.preRewardXp,
+    'preRewardMaxXp': quest.preRewardMaxXp,
+    'preRewardStatPoints': quest.preRewardStatPoints,
+    'preRewardStrength': quest.preRewardStrength,
+    'preRewardIntelligence': quest.preRewardIntelligence,
+    'preRewardVitality': quest.preRewardVitality,
+    'preRewardAgility': quest.preRewardAgility,
+  };
 }
 
 DateTime? _dateFrom(Object? value) {

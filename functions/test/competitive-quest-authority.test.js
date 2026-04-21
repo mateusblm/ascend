@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const admin = require('firebase-admin');
 
 const {
+  competitiveQuestAttemptDayKey,
+  matchesCompetitiveAttemptDay,
   resolveCompetitiveQuestSessionStart,
   resolveCompetitiveQuestCompletionVerification,
 } = require('../lib/index.js');
@@ -111,4 +113,60 @@ test('prevents duplicate grants by returning the existing verification result', 
   assert.equal(result.completedAt, '2026-04-21T15:25:00.000Z');
   assert.equal(result.grantWrite, null);
   assert.equal(result.sessionWrite, null);
+});
+
+test('starts a fresh session when the previous record is already verified', () => {
+  const now = timestamp('2026-04-21T18:00:00.000Z');
+
+  const result = resolveCompetitiveQuestSessionStart({
+    quest: buildQuest(),
+    session: {
+      startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+      status: 'verified',
+    },
+    grant: null,
+    now,
+  });
+
+  assert.equal(result.status, 'started');
+  assert.equal(result.startedAt, '2026-04-21T18:00:00.000Z');
+  assert.ok(result.sessionWrite);
+  assert.equal(result.sessionWrite.dayKey, '2026-04-21');
+});
+
+test('uses the verificationStartedAt day when resolving the attempt day key', () => {
+  const now = timestamp('2026-04-22T00:10:00.000Z');
+
+  const dayKey = competitiveQuestAttemptDayKey({
+    quest: buildQuest({
+      verificationStartedAt: timestamp('2026-04-21T23:50:00.000Z'),
+    }),
+    now,
+  });
+
+  assert.equal(dayKey, '2026-04-21');
+});
+
+test('matches only records from the same competitive attempt day', () => {
+  assert.equal(
+    matchesCompetitiveAttemptDay({
+      record: {
+        startedAt: timestamp('2026-04-21T23:50:00.000Z'),
+      },
+      dayKey: '2026-04-21',
+      timestampField: 'startedAt',
+    }),
+    true,
+  );
+
+  assert.equal(
+    matchesCompetitiveAttemptDay({
+      record: {
+        startedAt: timestamp('2026-04-20T23:50:00.000Z'),
+      },
+      dayKey: '2026-04-21',
+      timestampField: 'startedAt',
+    }),
+    false,
+  );
 });

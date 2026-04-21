@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
+import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/player_profile_repository.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,19 +16,33 @@ enum ClaimWeeklyBossRemoteResult {
   alreadyCompleted,
 }
 
+class ClaimWeeklyBossCommandResult {
+  const ClaimWeeklyBossCommandResult({
+    required this.status,
+    required this.player,
+  });
+
+  final ClaimWeeklyBossRemoteResult status;
+  final Player player;
+}
+
 class WeeklyBossRepository {
   WeeklyBossRepository(
     this._firestore, {
     FirebaseFunctions? functions,
+    ActiveSessionRepository? sessionRepository,
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
   }) : _functions =
            functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _sessionRepository =
+           sessionRepository ?? ActiveSessionRepository(),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
+  final ActiveSessionRepository _sessionRepository;
   final AppAnalytics _analytics;
   final AppCrashReporter _crashReporter;
 
@@ -68,8 +85,10 @@ class WeeklyBossRepository {
         });
   }
 
-  Future<ClaimWeeklyBossRemoteResult> claimWeeklyBoss({
+  Future<ClaimWeeklyBossCommandResult> claimWeeklyBoss({
     required String bossId,
+    required String uid,
+    required String fallbackName,
     required String displayName,
     required String photoUrl,
     required String rankAtCompletion,
@@ -77,6 +96,7 @@ class WeeklyBossRepository {
     try {
       final callable = _functions.httpsCallable('claimWeeklyBoss');
       final response = await callable.call(<String, dynamic>{
+        'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'bossId': bossId,
         'displayName': displayName,
         'photoUrl': photoUrl,
@@ -89,6 +109,15 @@ class WeeklyBossRepository {
       }
 
       final status = payload['status'] as String?;
+      final profile = payload['profile'];
+      if (profile is! Map) {
+        throw StateError('Perfil remoto ausente no claim do boss semanal.');
+      }
+      final player = parsePlayerProfileData(
+        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+        uid: uid,
+        fallbackName: fallbackName,
+      );
       if (status == 'claimed') {
         unawaited(
           _analytics.logWeeklyBossClaimed(
@@ -97,7 +126,10 @@ class WeeklyBossRepository {
             status: status!,
           ),
         );
-        return ClaimWeeklyBossRemoteResult.claimed;
+        return ClaimWeeklyBossCommandResult(
+          status: ClaimWeeklyBossRemoteResult.claimed,
+          player: player,
+        );
       }
       if (status == 'already_completed') {
         unawaited(
@@ -107,7 +139,10 @@ class WeeklyBossRepository {
             status: status!,
           ),
         );
-        return ClaimWeeklyBossRemoteResult.alreadyCompleted;
+        return ClaimWeeklyBossCommandResult(
+          status: ClaimWeeklyBossRemoteResult.alreadyCompleted,
+          player: player,
+        );
       }
 
       throw StateError('Status desconhecido retornado pela callable: $status');

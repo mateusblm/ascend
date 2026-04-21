@@ -481,7 +481,16 @@ class QuestsScreen extends ConsumerWidget {
         primaryActionEnabled: !quest.isCompleted || !quest.isCompetitive,
         onPrimaryAction: () => _handleQuestPrimaryAction(context, ref, quest),
         onSecondaryAction: quest.isCompleted && !quest.isCompetitive
-            ? () => controller.toggleQuest(quest.id)
+            ? () async {
+                try {
+                  final result = await controller.toggleQuest(quest.id);
+                  if (!context.mounted) return;
+                  _showQuestResult(context, quest, result);
+                } catch (_) {
+                  if (!context.mounted) return;
+                  _showRemoteFailure(context);
+                }
+              }
             : null,
         secondaryActionLabel: quest.isCompleted && !quest.isCompetitive
             ? 'DESFAZER'
@@ -498,10 +507,17 @@ class QuestsScreen extends ConsumerWidget {
     final controller = ref.read(questProvider.notifier);
 
     if (!quest.isCompetitive) {
-      controller.toggleQuest(
-        quest.id,
-        onLevelUp: (level) => _showLevelUpDialog(context, level),
-      );
+      try {
+        final result = await controller.toggleQuest(
+          quest.id,
+          onLevelUp: (level) => _showLevelUpDialog(context, level),
+        );
+        if (!context.mounted) return;
+        _showQuestResult(context, quest, result);
+      } catch (_) {
+        if (!context.mounted) return;
+        _showRemoteFailure(context);
+      }
       return;
     }
 

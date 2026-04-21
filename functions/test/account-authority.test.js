@@ -15,10 +15,6 @@ test('buildPlayerProfileSyncWrite stamps audited sync metadata', () => {
   const write = buildPlayerProfileSyncWrite({
     source: {
       name: 'Hunter',
-      level: 6,
-      xp: 22,
-      maxXp: 248,
-      statPoints: 3,
       attributes: {
         strength: 12,
         intelligence: 15,
@@ -26,26 +22,57 @@ test('buildPlayerProfileSyncWrite stamps audited sync metadata', () => {
         agility: 14,
       },
       lastResetDate: timestamp('2026-04-21T08:00:00.000Z'),
-      currentStreak: 4,
-      bestStreak: 7,
-      lastQuestCompletionDate: timestamp('2026-04-21T10:00:00.000Z'),
-      activityHistory: [timestamp('2026-04-21T00:00:00.000Z')],
-      lastCompetitiveQuestCompletionDate: null,
-      competitiveActivityHistory: [],
       primaryFocus: 'study',
       hasCompletedOnboarding: true,
-      weeklyBossLastClaimedAt: null,
+      quests: [
+        {
+          id: 'quest-1',
+          title: 'Sessao focada',
+          rewardAttribute: 'agility',
+          xpReward: 25,
+          category: 'competitive',
+          templateType: 'focusSession',
+          verificationMode: 'timer',
+          verificationStatus: 'verified',
+          targetDurationMinutes: 20,
+          reflectionPrompt: null,
+          reflectionAnswer: null,
+          verificationStartedAt: timestamp('2026-04-21T10:00:00.000Z'),
+          completedAt: timestamp('2026-04-21T10:20:00.000Z'),
+          verifiedAt: timestamp('2026-04-21T10:20:00.000Z'),
+          isCompleted: true,
+          preRewardLevel: 1,
+          preRewardXp: 0,
+          preRewardMaxXp: 100,
+          preRewardStatPoints: 0,
+          preRewardStrength: 10,
+          preRewardIntelligence: 10,
+          preRewardVitality: 10,
+          preRewardAgility: 10,
+        },
+      ],
     },
+    weeklyBossClaims: [
+      {
+        completedAt: timestamp('2026-04-21T11:00:00.000Z'),
+        rewardXp: 120,
+        rewardStatPoints: 2,
+      },
+    ],
     deviceSessionId: 'session-1',
     deviceLabel: 'android',
     now: timestamp('2026-04-21T12:00:00.000Z'),
   });
 
   assert.equal(write.syncSchemaVersion, 1);
-  assert.equal(write.syncSource, 'callable_session_audited');
+  assert.equal(write.syncSource, 'callable_server_authoritative');
   assert.equal(write.activeDeviceSessionId, 'session-1');
   assert.equal(write.activeDeviceLabel, 'android');
-  assert.equal(write.level, 6);
+  assert.equal(write.level, 2);
+  assert.equal(write.xp, 45);
+  assert.equal(write.maxXp, 120);
+  assert.equal(write.authoritativeQuestXp, 25);
+  assert.equal(write.authoritativeWeeklyBossXp, 120);
 });
 
 test('buildQuestInventorySyncWrites stamps audited sync metadata per quest', () => {

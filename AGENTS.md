@@ -9,6 +9,7 @@ Ascend is a Flutter mobile app that gamifies daily tasks using an RPG progressio
 Additional source-of-truth documents:
 - `docs/product/vision.md`
 - `docs/product/roadmap.md`
+- `docs/product/progression-architecture.md`
 - `docs/ai/development-charter.md`
 - `docs/ai/architecture-map.md`
 - `docs/ai/change-checklist.md`
@@ -102,6 +103,8 @@ Controllers use Riverpod providers. The main examples are:
 - Read the relevant feature files before editing.
 - Prefer small, safe changes over broad refactors.
 - Treat progression logic, persistence, and auth as sensitive areas.
+- Keep reward-bearing and trust-bearing business rules out of the frontend whenever possible.
+- Prefer backend-authored facts, aggregates, and read-models over client-owned progression snapshots.
 - Update the docs above when architecture or product behavior changes.
 - Do not manually edit generated Isar files.
 - Use the AI docs to avoid repeating repo-wide context in every session.

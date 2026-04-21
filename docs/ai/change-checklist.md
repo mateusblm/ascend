@@ -9,6 +9,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Confirm the feature area being changed.
 - Read the relevant model, controller, and screen files.
 - Read `AGENTS.md` and any related file in `docs/ai/` or `docs/product/` if the change affects architecture or behavior.
+- For progression/account changes, read `docs/product/progression-architecture.md` before deciding where the rule should live.
 - Identify whether the change touches a critical system:
   - progression logic
   - quest completion
@@ -25,6 +26,8 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Preserve behavior unless the user explicitly asked for behavior change.
 - Keep naming and file placement consistent with the current architecture.
 - Avoid adding dependencies unless clearly justified.
+- If the change introduces or changes a reward-bearing rule, ask whether that rule belongs in the backend instead of Flutter.
+- Prefer storing canonical facts and backend-authored aggregates rather than trusting client snapshots for account progression.
 - If changing an Isar model, treat it as a schema change and call it out explicitly.
 - If changing Android identifiers or Firebase-related setup, verify the configuration impact before proceeding.
 - If changing release-readiness surfaces, check whether the work also needs updates to:
@@ -54,6 +57,7 @@ Pause and review more carefully if the change includes:
 - level or XP formula changes
 - stat allocation changes
 - quest reset behavior changes
+- reward or entitlement rules implemented only in frontend state/controllers
 - auth flow changes
 - Isar schema changes
 - package identifier changes

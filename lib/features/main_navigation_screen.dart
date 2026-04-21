@@ -64,6 +64,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(ref.read(authProvider.notifier).refreshActiveSession());
       ref.read(questProvider.notifier).ensureDailyReset();
       _scheduleCompetitiveSync(ref.read(playerProvider));
     }

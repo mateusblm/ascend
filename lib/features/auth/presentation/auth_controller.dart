@@ -83,6 +83,7 @@ class AuthController extends StateNotifier<AuthState> {
   bool _loginFlowInProgress = false;
   Timer? _sessionHeartbeat;
   String? _pendingSignOutFailureMessage;
+  bool _sessionConflictSignOutInFlight = false;
 
   Future<void> signInWithGoogle() async {
     state = AuthLoading();
@@ -114,9 +115,18 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> signOut() async {
     _stopSessionHeartbeat();
+    _pendingSignOutFailureMessage = null;
     await _sessionRepository?.releaseActiveSession();
     await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  Future<void> refreshActiveSession() async {
+    await _establishActiveSession(enforceConflictSignOut: true);
+  }
+
+  Future<void> handleActiveSessionConflict() async {
+    await _forceSignOutDueToConflict();
   }
 
   AuthSuccess _successStateFor(User user) {
@@ -174,10 +184,18 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> _forceSignOutDueToConflict() async {
+    if (_sessionConflictSignOutInFlight) {
+      return;
+    }
+    _sessionConflictSignOutInFlight = true;
     _pendingSignOutFailureMessage =
         'Essa conta ja esta ativa em outro dispositivo.';
     _stopSessionHeartbeat();
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } finally {
+      _sessionConflictSignOutInFlight = false;
+    }
   }
 }

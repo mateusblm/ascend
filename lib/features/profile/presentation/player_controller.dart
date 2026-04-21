@@ -178,16 +178,24 @@ class PlayerNotifier extends StateNotifier<Player> {
     }
 
     try {
+      final quests = _isar.quests
+          .where()
+          .findAllSync()
+          .where((quest) => quest.ownerUid == uid)
+          .toList(growable: false);
       await repository.upsertProfile(
         uid: uid,
         player: nextState.copyWith(ownerUid: uid),
+        quests: quests,
       );
+    } on ActiveSessionConflictException {
+      // Auth heartbeat and resume checks handle session conflicts centrally.
     } catch (_) {
-      // Auth heartbeat handles session conflicts and temporary backend failures.
+      // Temporary backend failures should not block the local profile flow.
     }
   }
 
-  void _saveToDb({bool syncRemote = true}) {
+  void _saveToDb({bool syncRemote = false}) {
     final localState = state.copyWith(ownerUid: _activeUid ?? state.ownerUid);
     final existing = _activeUid == null
         ? null
@@ -336,30 +344,41 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
   }
 
-  void upgradeAttribute(AttributeType type) {
-    if (state.statPoints <= 0) return;
-
-    final newAttrs = PlayerAttributes(
-      strength:
-          state.attributes.strength + (type == AttributeType.strength ? 1 : 0),
-      intelligence:
-          state.attributes.intelligence +
-          (type == AttributeType.intelligence ? 1 : 0),
-      vitality:
-          state.attributes.vitality + (type == AttributeType.vitality ? 1 : 0),
-      agility:
-          state.attributes.agility + (type == AttributeType.agility ? 1 : 0),
-    );
-
-    state = state.copyWith(
-      statPoints: state.statPoints - 1,
-      attributes: newAttrs,
-    );
-
-    _saveToDb();
+  void applyAuthoritativeProfile(
+    Player nextPlayer, {
+    void Function(int level)? onLevelUp,
+  }) {
+    final oldLevel = state.level;
+    _applyRemoteProfile(nextPlayer);
+    if (nextPlayer.level > oldLevel && onLevelUp != null) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        onLevelUp(nextPlayer.level);
+      });
+    }
   }
 
-  void updateName(String value) {
+  Future<void> upgradeAttribute(
+    AttributeType type, {
+    void Function(int level)? onLevelUp,
+  }) async {
+    if (state.statPoints <= 0) return;
+    final uid = _activeUid;
+    final repository = _profileRepository;
+    if (uid == null || repository == null) return;
+
+    try {
+      final updated = await repository.allocateAttributePoint(
+        uid: uid,
+        fallbackName: state.name,
+        attribute: type,
+      );
+      applyAuthoritativeProfile(updated, onLevelUp: onLevelUp);
+    } on ActiveSessionConflictException {
+      // Auth heartbeat and resume checks handle session conflicts centrally.
+    }
+  }
+
+  Future<void> updateName(String value) async {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return;
 
@@ -370,6 +389,7 @@ class PlayerNotifier extends StateNotifier<Player> {
 
     state = state.copyWith(name: normalizedName);
     _saveToDb();
+    await _pushProfileSettings();
   }
 
   void recordQuestCompletion({
@@ -428,7 +448,7 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
   }
 
-  void handleDailyReset(DateTime now) {
+  Future<void> handleDailyReset(DateTime now) async {
     final lastCompletion = state.lastQuestCompletionDate;
     var nextStreak = state.currentStreak;
 
@@ -439,9 +459,10 @@ class PlayerNotifier extends StateNotifier<Player> {
     state = state.copyWith(lastResetDate: now, currentStreak: nextStreak);
 
     _saveToDb();
+    await _pushProfileSettings();
   }
 
-  void completeOnboarding(AwakeningPath focus) {
+  Future<void> completeOnboarding(AwakeningPath focus) async {
     final starterKit = starterQuestsForFocus(focus);
     final competitiveCount = starterKit
         .where((quest) => quest.isCompetitive)
@@ -451,6 +472,7 @@ class PlayerNotifier extends StateNotifier<Player> {
     state = state.copyWith(primaryFocus: focus, hasCompletedOnboarding: true);
 
     _saveToDb();
+    await _pushProfileSettings();
     unawaited(
       _analytics.logOnboardingCompleted(
         focus: focus.name,
@@ -461,13 +483,39 @@ class PlayerNotifier extends StateNotifier<Player> {
     );
   }
 
-  void updatePrimaryFocus(AwakeningPath focus) {
+  Future<void> updatePrimaryFocus(AwakeningPath focus) async {
     final previousFocus = state.primaryFocus;
     state = state.copyWith(primaryFocus: focus);
     _saveToDb();
+    await _pushProfileSettings();
     unawaited(
       _analytics.logFocusChanged(from: previousFocus.name, to: focus.name),
     );
+  }
+
+  Future<void> _pushProfileSettings() async {
+    final uid = _activeUid;
+    final repository = _profileRepository;
+    final currentUser = _auth?.currentUser;
+    if (uid == null || repository == null || currentUser == null) {
+      return;
+    }
+
+    try {
+      final updated = await repository.updateProfileSettings(
+        uid: uid,
+        fallbackName: _fallbackNameFor(currentUser),
+        name: state.name,
+        primaryFocus: state.primaryFocus,
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        lastResetDate: state.lastResetDate,
+      );
+      _applyRemoteProfile(updated);
+    } on ActiveSessionConflictException {
+      // Auth heartbeat and resume checks handle session conflicts centrally.
+    } catch (_) {
+      // Settings failures should not erase local cache state.
+    }
   }
 
   bool claimWeeklyBossReward(

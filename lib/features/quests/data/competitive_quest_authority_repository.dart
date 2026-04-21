@@ -1,8 +1,13 @@
 import 'dart:async';
 
+import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/player_profile_repository.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
 enum CompetitiveQuestSessionStartStatus {
   started,
@@ -28,23 +33,30 @@ class CompetitiveQuestVerificationResult {
   const CompetitiveQuestVerificationResult({
     required this.status,
     required this.completedAt,
+    required this.player,
+    required this.quest,
   });
 
   final CompetitiveQuestVerificationStatusResult status;
   final DateTime completedAt;
+  final Player player;
+  final Quest quest;
 }
 
 class CompetitiveQuestAuthorityRepository {
   CompetitiveQuestAuthorityRepository({
     FirebaseFunctions? functions,
+    ActiveSessionRepository? sessionRepository,
     AppCrashReporter? crashReporter,
   }) : _functions =
            functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   static const Duration _rpcTimeout = Duration(seconds: 6);
 
   final FirebaseFunctions _functions;
+  final ActiveSessionRepository _sessionRepository;
   final AppCrashReporter _crashReporter;
 
   Future<CompetitiveQuestSessionStartResult> startQuestSession({
@@ -53,7 +65,7 @@ class CompetitiveQuestAuthorityRepository {
     try {
       final callable = _functions.httpsCallable('startCompetitiveQuestSession');
       final response = await callable
-          .call(_questPayload(quest))
+          .call(await _questPayload(quest))
           .timeout(_rpcTimeout);
       final data = response.data;
       if (data is! Map) {
@@ -71,6 +83,9 @@ class CompetitiveQuestAuthorityRepository {
         startedAt: startedAt,
       );
     } catch (error, stackTrace) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
       _reportRecoverable(
         error,
         stackTrace,
@@ -82,6 +97,8 @@ class CompetitiveQuestAuthorityRepository {
 
   Future<CompetitiveQuestVerificationResult> verifyQuestCompletion({
     required Quest quest,
+    required String uid,
+    required String fallbackName,
     String? reflectionAnswer,
   }) async {
     try {
@@ -90,7 +107,7 @@ class CompetitiveQuestAuthorityRepository {
       );
       final response = await callable
           .call(<String, dynamic>{
-            ..._questPayload(quest),
+            ...await _questPayload(quest),
             if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,
           })
           .timeout(_rpcTimeout);
@@ -103,12 +120,31 @@ class CompetitiveQuestAuthorityRepository {
       final status = data['status'] == 'already_verified'
           ? CompetitiveQuestVerificationStatusResult.alreadyVerified
           : CompetitiveQuestVerificationStatusResult.verified;
+      final profile = data['profile'];
+      final remoteQuest = data['quest'];
+      final questId = data['questId'] as String? ?? quest.id;
+      if (profile is! Map || remoteQuest is! Map) {
+        throw StateError('Payload remoto incompleto para quest competitiva.');
+      }
 
       return CompetitiveQuestVerificationResult(
         status: status,
         completedAt: completedAt,
+        player: parsePlayerProfileData(
+          Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+          uid: uid,
+          fallbackName: fallbackName,
+        ),
+        quest: parseQuestSyncData(
+          Map<String, dynamic>.from(remoteQuest.cast<Object?, Object?>()),
+          uid: uid,
+          questId: questId,
+        ),
       );
     } catch (error, stackTrace) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
       _reportRecoverable(
         error,
         stackTrace,
@@ -118,8 +154,10 @@ class CompetitiveQuestAuthorityRepository {
     }
   }
 
-  Map<String, dynamic> _questPayload(Quest quest) {
+  Future<Map<String, dynamic>> _questPayload(Quest quest) async {
     return <String, dynamic>{
+      'deviceSessionId': await _sessionRepository.deviceSessionId(),
+      'deviceLabel': defaultTargetPlatform.name,
       'questId': quest.id,
       'title': quest.title,
       'templateType': quest.templateType.name,

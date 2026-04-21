@@ -428,34 +428,25 @@ class HomeScreen extends ConsumerWidget {
 
     try {
       final repository = ref.read(weeklyBossRepositoryProvider);
+      final fallbackPlayer = ref.read(playerProvider);
       final remoteResult = await repository.claimWeeklyBoss(
         bossId: remoteBoss.id,
+        uid: authState.uid,
+        fallbackName: fallbackPlayer.name,
         displayName: authState.displayName,
         photoUrl: authState.photoUrl,
         rankAtCompletion: rank,
       );
+      ref
+          .read(playerProvider.notifier)
+          .applyAuthoritativeProfile(remoteResult.player);
       if (!context.mounted) return;
 
-      if (remoteResult == ClaimWeeklyBossRemoteResult.alreadyCompleted) {
-        ref.read(playerProvider.notifier).markWeeklyBossClaimedNow();
+      if (remoteResult.status == ClaimWeeklyBossRemoteResult.alreadyCompleted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'Seu clear remoto ja estava registrado nesta semana.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      final applied = ref
-          .read(playerProvider.notifier)
-          .claimWeeklyBossReward(weeklyBoss);
-      if (!applied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Clear remoto registrado, mas recompensa local ja estava aplicada.',
             ),
           ),
         );

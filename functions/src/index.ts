@@ -4,6 +4,8 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 admin.initializeApp();
 
 type ClaimWeeklyBossPayload = {
+  deviceSessionId?: unknown;
+  deviceLabel?: unknown;
   bossId?: unknown;
   displayName?: unknown;
   photoUrl?: unknown;
@@ -61,7 +63,28 @@ type QuestInventorySyncPayload = {
   source?: unknown;
 };
 
+type UpdateProfileSettingsPayload = {
+  deviceSessionId?: unknown;
+  name?: unknown;
+  primaryFocus?: unknown;
+  hasCompletedOnboarding?: unknown;
+  lastResetDate?: unknown;
+};
+
+type AllocateAttributePointPayload = {
+  deviceSessionId?: unknown;
+  attribute?: unknown;
+};
+
+type PersonalQuestCommandPayload = {
+  deviceSessionId?: unknown;
+  questId?: unknown;
+  quest?: unknown;
+};
+
 type CompetitiveQuestSessionPayload = {
+  deviceSessionId?: unknown;
+  deviceLabel?: unknown;
   questId?: unknown;
   title?: unknown;
   templateType?: unknown;
@@ -84,10 +107,13 @@ type CompetitiveIntegritySource = ReturnType<
 
 type CompetitiveQuestSessionRecord = {
   startedAt?: admin.firestore.Timestamp | null;
+  status?: string | null;
+  dayKey?: string | null;
 };
 
 type CompetitiveQuestGrantRecord = {
   completedAt?: admin.firestore.Timestamp | null;
+  dayKey?: string | null;
 };
 
 const COMPETITIVE_SYNC_SCHEMA_VERSION = 3;
@@ -125,10 +151,6 @@ type ServerCompetitiveQuestDefinition = {
 
 type ServerPlayerProfileSource = {
   name: string;
-  level: number;
-  xp: number;
-  maxXp: number;
-  statPoints: number;
   attributes: {
     strength: number;
     intelligence: number;
@@ -136,15 +158,15 @@ type ServerPlayerProfileSource = {
     agility: number;
   };
   lastResetDate: admin.firestore.Timestamp;
-  currentStreak: number;
-  bestStreak: number;
-  lastQuestCompletionDate: admin.firestore.Timestamp | null;
-  activityHistory: admin.firestore.Timestamp[];
-  lastCompetitiveQuestCompletionDate: admin.firestore.Timestamp | null;
-  competitiveActivityHistory: admin.firestore.Timestamp[];
   primaryFocus: string;
   hasCompletedOnboarding: boolean;
-  weeklyBossLastClaimedAt: admin.firestore.Timestamp | null;
+  quests: ServerQuestInventorySource['quests'];
+};
+
+type ServerWeeklyBossClaim = {
+  completedAt: admin.firestore.Timestamp;
+  rewardXp: number;
+  rewardStatPoints: number;
 };
 
 type ServerQuestInventorySource = {
@@ -921,11 +943,6 @@ function validatePlayerProfileSourcePayload(source: unknown): ServerPlayerProfil
   }
 
   const data = source as Record<string, unknown>;
-  const level = ensureInt(data.level, 'level', 1);
-  const expectedMaxXp = playerMaxXpForLevel(level);
-  const xp = Math.min(ensureInt(data.xp, 'xp', 0), Math.max(expectedMaxXp - 1, 0));
-  const currentStreak = ensureInt(data.currentStreak, 'currentStreak', 0);
-  const bestStreak = Math.max(ensureInt(data.bestStreak, 'bestStreak', 0), currentStreak);
 
   if (!data.attributes || typeof data.attributes !== 'object') {
     throw new HttpsError('invalid-argument', 'attributes invalidos.');
@@ -934,10 +951,6 @@ function validatePlayerProfileSourcePayload(source: unknown): ServerPlayerProfil
 
   return {
     name: ensureString(data.name, 'name', 40),
-    level,
-    xp,
-    maxXp: expectedMaxXp,
-    statPoints: ensureInt(data.statPoints, 'statPoints', 0),
     attributes: {
       strength: ensureInt(attributes.strength, 'attributes.strength', 10),
       intelligence: ensureInt(attributes.intelligence, 'attributes.intelligence', 10),
@@ -945,66 +958,203 @@ function validatePlayerProfileSourcePayload(source: unknown): ServerPlayerProfil
       agility: ensureInt(attributes.agility, 'attributes.agility', 10),
     },
     lastResetDate: ensureTimestamp(data.lastResetDate, 'lastResetDate'),
-    currentStreak,
-    bestStreak,
-    lastQuestCompletionDate: ensureTimestampOrNull(
-      data.lastQuestCompletionDate,
-      'lastQuestCompletionDate',
-    ),
-    activityHistory: uniqueTimestampsByDay(
-      ensureTimestampArray(data.activityHistory, 'activityHistory'),
-    ),
-    lastCompetitiveQuestCompletionDate: ensureTimestampOrNull(
-      data.lastCompetitiveQuestCompletionDate,
-      'lastCompetitiveQuestCompletionDate',
-    ),
-    competitiveActivityHistory: uniqueTimestampsByDay(
-      ensureTimestampArray(
-        data.competitiveActivityHistory,
-        'competitiveActivityHistory',
-      ),
-    ),
     primaryFocus: ensurePrimaryFocus(data.primaryFocus, 'primaryFocus'),
     hasCompletedOnboarding: ensureBool(
       data.hasCompletedOnboarding,
       'hasCompletedOnboarding',
     ),
-    weeklyBossLastClaimedAt: ensureTimestampOrNull(
-      data.weeklyBossLastClaimedAt,
-      'weeklyBossLastClaimedAt',
-    ),
+    quests: validateQuestInventorySourcePayload(source).quests,
   };
 }
 
 export function buildPlayerProfileSyncWrite(args: {
   source: ServerPlayerProfileSource;
+  weeklyBossClaims: ServerWeeklyBossClaim[];
   deviceSessionId: string;
   deviceLabel: string;
   now: admin.firestore.Timestamp;
 }) {
+  const completedQuests = args.source.quests
+    .filter((quest) => quest.isCompleted && quest.completedAt instanceof admin.firestore.Timestamp)
+    .sort((a, b) => (a.completedAt?.toMillis() ?? 0) - (b.completedAt?.toMillis() ?? 0));
+  const competitiveCompletedQuests = completedQuests
+    .filter((quest) => quest.category === 'competitive' && quest.verificationStatus === 'verified');
+  const activityHistory = uniqueTimestampsByDay(
+    completedQuests
+      .map((quest) => quest.completedAt)
+      .filter((value): value is admin.firestore.Timestamp => value instanceof admin.firestore.Timestamp),
+  );
+  const competitiveActivityHistory = uniqueTimestampsByDay(
+    competitiveCompletedQuests
+      .map((quest) => quest.completedAt)
+      .filter((value): value is admin.firestore.Timestamp => value instanceof admin.firestore.Timestamp),
+  );
+  const lastQuestCompletionDate = activityHistory.length === 0
+    ? null
+    : activityHistory[activityHistory.length - 1];
+  const lastCompetitiveQuestCompletionDate = competitiveActivityHistory.length === 0
+    ? null
+    : competitiveActivityHistory[competitiveActivityHistory.length - 1];
+  const questXp = completedQuests.reduce((sum, quest) => sum + quest.xpReward, 0);
+  const weeklyBossXp = args.weeklyBossClaims.reduce((sum, claim) => sum + claim.rewardXp, 0);
+  const weeklyBossStatPoints = args.weeklyBossClaims.reduce(
+    (sum, claim) => sum + claim.rewardStatPoints,
+    0,
+  );
+  const progression = progressionFromTotalXp(questXp + weeklyBossXp);
+  const questAttributeRewards = completedQuests.reduce<{
+    strength: number;
+    intelligence: number;
+    vitality: number;
+    agility: number;
+  }>((accumulator, quest) => {
+    switch (quest.rewardAttribute) {
+    case 'strength':
+      accumulator.strength += 1;
+      break;
+    case 'intelligence':
+      accumulator.intelligence += 1;
+      break;
+    case 'vitality':
+      accumulator.vitality += 1;
+      break;
+    case 'agility':
+      accumulator.agility += 1;
+      break;
+    }
+    return accumulator;
+  }, {
+    strength: 0,
+    intelligence: 0,
+    vitality: 0,
+    agility: 0,
+  });
+  const baseAttributes = {
+    strength: 10 + questAttributeRewards.strength,
+    intelligence: 10 + questAttributeRewards.intelligence,
+    vitality: 10 + questAttributeRewards.vitality,
+    agility: 10 + questAttributeRewards.agility,
+  };
+  const authoritativeAttributes = {
+    strength: Math.max(args.source.attributes.strength, baseAttributes.strength),
+    intelligence: Math.max(args.source.attributes.intelligence, baseAttributes.intelligence),
+    vitality: Math.max(args.source.attributes.vitality, baseAttributes.vitality),
+    agility: Math.max(args.source.attributes.agility, baseAttributes.agility),
+  };
+  const allocatedStatPoints =
+    (authoritativeAttributes.strength - baseAttributes.strength) +
+    (authoritativeAttributes.intelligence - baseAttributes.intelligence) +
+    (authoritativeAttributes.vitality - baseAttributes.vitality) +
+    (authoritativeAttributes.agility - baseAttributes.agility);
+  const earnedStatPoints = progression.levelUpStatPoints + weeklyBossStatPoints;
+  const streaks = streakMetricsFromHistory(activityHistory, args.now);
+  const weeklyBossLastClaimedAt = args.weeklyBossClaims.length === 0
+    ? null
+    : args.weeklyBossClaims
+      .map((claim) => claim.completedAt)
+      .sort((a, b) => a.toMillis() - b.toMillis())[args.weeklyBossClaims.length - 1];
+
   return {
     name: args.source.name,
-    level: args.source.level,
-    xp: args.source.xp,
-    maxXp: args.source.maxXp,
-    statPoints: args.source.statPoints,
-    attributes: args.source.attributes,
+    level: progression.level,
+    xp: progression.xp,
+    maxXp: progression.maxXp,
+    statPoints: Math.max(0, earnedStatPoints - allocatedStatPoints),
+    attributes: authoritativeAttributes,
     lastResetDate: args.source.lastResetDate,
-    currentStreak: args.source.currentStreak,
-    bestStreak: args.source.bestStreak,
-    lastQuestCompletionDate: args.source.lastQuestCompletionDate,
-    activityHistory: args.source.activityHistory,
-    lastCompetitiveQuestCompletionDate:
-      args.source.lastCompetitiveQuestCompletionDate,
-    competitiveActivityHistory: args.source.competitiveActivityHistory,
+    currentStreak: streaks.currentStreak,
+    bestStreak: streaks.bestStreak,
+    lastQuestCompletionDate,
+    activityHistory,
+    lastCompetitiveQuestCompletionDate,
+    competitiveActivityHistory,
     primaryFocus: args.source.primaryFocus,
     hasCompletedOnboarding: args.source.hasCompletedOnboarding,
-    weeklyBossLastClaimedAt: args.source.weeklyBossLastClaimedAt,
+    weeklyBossLastClaimedAt,
+    authoritativeQuestXp: questXp,
+    authoritativeWeeklyBossXp: weeklyBossXp,
+    authoritativeWeeklyBossStatPoints: weeklyBossStatPoints,
+    authoritativeAllocatedStatPoints: allocatedStatPoints,
     syncSchemaVersion: PLAYER_PROFILE_SYNC_SCHEMA_VERSION,
-    syncSource: 'callable_session_audited',
+    syncSource: 'callable_server_authoritative',
     activeDeviceSessionId: args.deviceSessionId,
     activeDeviceLabel: args.deviceLabel,
     updatedAt: args.now,
+  };
+}
+
+function progressionFromTotalXp(totalXp: number) {
+  let remainingXp = Math.max(0, totalXp);
+  let level = 1;
+  let maxXp = 100;
+  let levelUpStatPoints = 0;
+
+  while (remainingXp >= maxXp) {
+    remainingXp -= maxXp;
+    level += 1;
+    levelUpStatPoints += 5;
+    maxXp = playerMaxXpForLevel(level);
+  }
+
+  return {
+    level,
+    xp: remainingXp,
+    maxXp,
+    levelUpStatPoints,
+  };
+}
+
+function streakMetricsFromHistory(
+  activityHistory: admin.firestore.Timestamp[],
+  now: admin.firestore.Timestamp,
+) {
+  if (activityHistory.length === 0) {
+    return {
+      currentStreak: 0,
+      bestStreak: 0,
+    };
+  }
+
+  const dayKeys = activityHistory.map((entry) => normalizedDateKey(entry));
+  let bestStreak = 1;
+  let running = 1;
+  for (let index = 1; index < dayKeys.length; index += 1) {
+    const previous = normalizedDateFromKey(dayKeys[index - 1]);
+    const current = normalizedDateFromKey(dayKeys[index]);
+    const diffDays = Math.round((current.getTime() - previous.getTime()) / 86400000);
+    if (diffDays === 1) {
+      running += 1;
+      bestStreak = Math.max(bestStreak, running);
+      continue;
+    }
+
+    running = 1;
+  }
+
+  const lastDay = normalizedDateFromKey(dayKeys[dayKeys.length - 1]);
+  const nowDay = normalizedDateFromKey(normalizedDateKey(now));
+  const gapDays = Math.round((nowDay.getTime() - lastDay.getTime()) / 86400000);
+  if (gapDays > 1) {
+    return {
+      currentStreak: 0,
+      bestStreak,
+    };
+  }
+
+  let currentStreak = 1;
+  for (let index = dayKeys.length - 1; index > 0; index -= 1) {
+    const current = normalizedDateFromKey(dayKeys[index]);
+    const previous = normalizedDateFromKey(dayKeys[index - 1]);
+    const diffDays = Math.round((current.getTime() - previous.getTime()) / 86400000);
+    if (diffDays !== 1) {
+      break;
+    }
+    currentStreak += 1;
+  }
+
+  return {
+    currentStreak,
+    bestStreak,
   };
 }
 
@@ -1212,37 +1362,336 @@ export function buildQuestInventorySyncWrites(args: {
 }) {
   return args.source.quests.map((quest, index) => ({
     id: quest.id,
-    data: {
-      title: quest.title,
-      rewardAttribute: quest.rewardAttribute,
-      xpReward: quest.xpReward,
-      category: quest.category,
-      templateType: quest.templateType,
-      verificationMode: quest.verificationMode,
-      verificationStatus: quest.verificationStatus,
-      targetDurationMinutes: quest.targetDurationMinutes,
-      reflectionPrompt: quest.reflectionPrompt,
-      reflectionAnswer: quest.reflectionAnswer,
-      verificationStartedAt: quest.verificationStartedAt,
-      completedAt: quest.completedAt,
-      verifiedAt: quest.verifiedAt,
-      isCompleted: quest.isCompleted,
-      preRewardLevel: quest.preRewardLevel,
-      preRewardXp: quest.preRewardXp,
-      preRewardMaxXp: quest.preRewardMaxXp,
-      preRewardStatPoints: quest.preRewardStatPoints,
-      preRewardStrength: quest.preRewardStrength,
-      preRewardIntelligence: quest.preRewardIntelligence,
-      preRewardVitality: quest.preRewardVitality,
-      preRewardAgility: quest.preRewardAgility,
+    data: buildQuestDocData(quest, {
       orderIndex: index,
-      syncSchemaVersion: QUEST_INVENTORY_SYNC_SCHEMA_VERSION,
+      deviceSessionId: args.deviceSessionId,
+      deviceLabel: args.deviceLabel,
+      now: args.now,
       syncSource: 'callable_session_audited',
-      activeDeviceSessionId: args.deviceSessionId,
-      activeDeviceLabel: args.deviceLabel,
-      updatedAt: args.now,
-    },
+    }),
   }));
+}
+
+function buildQuestDocData(
+  quest: ServerQuestInventorySource['quests'][number],
+  args: {
+    orderIndex: number;
+    deviceSessionId: string;
+    deviceLabel: string;
+    now: admin.firestore.Timestamp;
+    syncSource: string;
+  },
+) {
+  return {
+    title: quest.title,
+    rewardAttribute: quest.rewardAttribute,
+    xpReward: quest.xpReward,
+    category: quest.category,
+    templateType: quest.templateType,
+    verificationMode: quest.verificationMode,
+    verificationStatus: quest.verificationStatus,
+    targetDurationMinutes: quest.targetDurationMinutes,
+    reflectionPrompt: quest.reflectionPrompt,
+    reflectionAnswer: quest.reflectionAnswer,
+    verificationStartedAt: quest.verificationStartedAt,
+    completedAt: quest.completedAt,
+    verifiedAt: quest.verifiedAt,
+    isCompleted: quest.isCompleted,
+    preRewardLevel: quest.preRewardLevel,
+    preRewardXp: quest.preRewardXp,
+    preRewardMaxXp: quest.preRewardMaxXp,
+    preRewardStatPoints: quest.preRewardStatPoints,
+    preRewardStrength: quest.preRewardStrength,
+    preRewardIntelligence: quest.preRewardIntelligence,
+    preRewardVitality: quest.preRewardVitality,
+    preRewardAgility: quest.preRewardAgility,
+    orderIndex: args.orderIndex,
+    syncSchemaVersion: QUEST_INVENTORY_SYNC_SCHEMA_VERSION,
+    syncSource: args.syncSource,
+    activeDeviceSessionId: args.deviceSessionId,
+    activeDeviceLabel: args.deviceLabel,
+    updatedAt: args.now,
+  };
+}
+
+function validateSingleQuestSourcePayload(
+  source: unknown,
+  questId: string,
+): ServerQuestInventorySource['quests'][number] {
+  if (!source || typeof source !== 'object') {
+    throw new HttpsError('invalid-argument', 'quest invalida.');
+  }
+
+  const data = source as Record<string, unknown>;
+  if (typeof data.id === 'string' && data.id.trim() !== questId) {
+    throw new HttpsError('invalid-argument', 'questId divergente.');
+  }
+
+  return validateQuestInventorySourcePayload({
+    quests: [{...data, id: questId}],
+  }).quests[0];
+}
+
+function validateQuestFromStoredDoc(
+  questId: string,
+  data: admin.firestore.DocumentData | undefined,
+): ServerQuestInventorySource['quests'][number] {
+  return validateQuestInventorySourcePayload({
+    quests: [{...(data ?? {}), id: questId}],
+  }).quests[0];
+}
+
+function profileDocRef(db: admin.firestore.Firestore, uid: string) {
+  return db.collection('users').doc(uid).collection('profile').doc('current');
+}
+
+function questDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  questId: string,
+) {
+  return db.collection('users').doc(uid).collection('quests').doc(questId);
+}
+
+function questCompletionsCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+) {
+  return db.collection('users').doc(uid).collection('quest_completions');
+}
+
+function weeklyBossClaimsCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+) {
+  return db.collection('users').doc(uid).collection('weekly_boss_claims');
+}
+
+function attributeAllocationsCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+) {
+  return db.collection('users').doc(uid).collection('attribute_allocations');
+}
+
+function asTimestampArray(value: unknown): admin.firestore.Timestamp[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (entry): entry is admin.firestore.Timestamp =>
+      entry instanceof admin.firestore.Timestamp,
+  );
+}
+
+function asTimestampOrNull(value: unknown): admin.firestore.Timestamp | null {
+  return value instanceof admin.firestore.Timestamp ? value : null;
+}
+
+function asNonNegativeInt(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    return fallback;
+  }
+  return value;
+}
+
+function asName(value: unknown, fallback: string): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
+  return value.trim().slice(0, 40);
+}
+
+function profileAggregateFromData(args: {
+  data: admin.firestore.DocumentData | undefined;
+  fallbackName: string;
+  deviceSessionId: string;
+  deviceLabel: string;
+  now: admin.firestore.Timestamp;
+}) {
+  const {data, fallbackName, deviceSessionId, deviceLabel, now} = args;
+  const level = asNonNegativeInt(data?.level, 1) < 1 ? 1 : asNonNegativeInt(data?.level, 1);
+  const maxXp = Math.max(1, asNonNegativeInt(data?.maxXp, playerMaxXpForLevel(level)));
+  const xp = Math.min(asNonNegativeInt(data?.xp, 0), Math.max(0, maxXp - 1));
+
+  return {
+    name: asName(data?.name, fallbackName),
+    level,
+    xp,
+    maxXp,
+    statPoints: asNonNegativeInt(data?.statPoints, 0),
+    attributes: {
+      strength: Math.max(10, asNonNegativeInt(data?.attributes?.strength, 10)),
+      intelligence: Math.max(10, asNonNegativeInt(data?.attributes?.intelligence, 10)),
+      vitality: Math.max(10, asNonNegativeInt(data?.attributes?.vitality, 10)),
+      agility: Math.max(10, asNonNegativeInt(data?.attributes?.agility, 10)),
+    },
+    lastResetDate: asTimestampOrNull(data?.lastResetDate) ?? now,
+    currentStreak: asNonNegativeInt(data?.currentStreak, 0),
+    bestStreak: asNonNegativeInt(data?.bestStreak, 0),
+    lastQuestCompletionDate: asTimestampOrNull(data?.lastQuestCompletionDate),
+    activityHistory: uniqueTimestampsByDay(asTimestampArray(data?.activityHistory)),
+    lastCompetitiveQuestCompletionDate: asTimestampOrNull(
+      data?.lastCompetitiveQuestCompletionDate,
+    ),
+    competitiveActivityHistory: uniqueTimestampsByDay(
+      asTimestampArray(data?.competitiveActivityHistory),
+    ),
+    primaryFocus: ensurePrimaryFocus(data?.primaryFocus ?? 'discipline', 'primaryFocus'),
+    hasCompletedOnboarding: typeof data?.hasCompletedOnboarding === 'boolean'
+      ? data.hasCompletedOnboarding
+      : false,
+    weeklyBossLastClaimedAt: asTimestampOrNull(data?.weeklyBossLastClaimedAt),
+    authoritativeQuestXp: asNonNegativeInt(data?.authoritativeQuestXp, 0),
+    authoritativeWeeklyBossXp: asNonNegativeInt(data?.authoritativeWeeklyBossXp, 0),
+    authoritativeWeeklyBossStatPoints: asNonNegativeInt(
+      data?.authoritativeWeeklyBossStatPoints,
+      0,
+    ),
+    authoritativeAllocatedStatPoints: asNonNegativeInt(
+      data?.authoritativeAllocatedStatPoints,
+      0,
+    ),
+    syncSchemaVersion: PLAYER_PROFILE_SYNC_SCHEMA_VERSION,
+    syncSource: typeof data?.syncSource === 'string'
+      ? data.syncSource
+      : 'callable_server_authoritative',
+    activeDeviceSessionId: typeof data?.activeDeviceSessionId === 'string'
+      ? data.activeDeviceSessionId
+      : deviceSessionId,
+    activeDeviceLabel: typeof data?.activeDeviceLabel === 'string'
+      ? data.activeDeviceLabel
+      : deviceLabel,
+    updatedAt: asTimestampOrNull(data?.updatedAt) ?? now,
+  };
+}
+
+function withProfileMetadata(args: {
+  profile: ReturnType<typeof profileAggregateFromData>;
+  deviceSessionId: string;
+  deviceLabel: string;
+  now: admin.firestore.Timestamp;
+  syncSource: string;
+}) {
+  return {
+    ...args.profile,
+    syncSchemaVersion: PLAYER_PROFILE_SYNC_SCHEMA_VERSION,
+    syncSource: args.syncSource,
+    activeDeviceSessionId: args.deviceSessionId,
+    activeDeviceLabel: args.deviceLabel,
+    updatedAt: args.now,
+  };
+}
+
+function applyXpRewardToProfile(
+  profile: ReturnType<typeof profileAggregateFromData>,
+  args: {xpReward: number; bonusStatPoints: number},
+) {
+  let currentXp = profile.xp + args.xpReward;
+  let currentLevel = profile.level;
+  let currentMaxXp = profile.maxXp;
+  let currentStatPoints = profile.statPoints + args.bonusStatPoints;
+
+  while (currentXp >= currentMaxXp) {
+    currentXp -= currentMaxXp;
+    currentLevel += 1;
+    currentStatPoints += 5;
+    currentMaxXp = playerMaxXpForLevel(currentLevel);
+  }
+
+  return {
+    ...profile,
+    level: currentLevel,
+    xp: currentXp,
+    maxXp: currentMaxXp,
+    statPoints: currentStatPoints,
+  };
+}
+
+function historyWithDay(
+  history: admin.firestore.Timestamp[],
+  completedAt: admin.firestore.Timestamp,
+) {
+  return uniqueTimestampsByDay([...history, completedAt]);
+}
+
+function questCompletionProjectionFromDocs(
+  docs: admin.firestore.QueryDocumentSnapshot[],
+) {
+  const completionDocs = docs
+    .map((doc) => doc.data())
+    .filter((data) => data.completedAt instanceof admin.firestore.Timestamp);
+  const activityHistory = uniqueTimestampsByDay(
+    completionDocs.map((data) => data.completedAt as admin.firestore.Timestamp),
+  );
+  const competitiveHistory = uniqueTimestampsByDay(
+    completionDocs
+      .filter((data) => data.countsTowardCompetitive === true)
+      .map((data) => data.completedAt as admin.firestore.Timestamp),
+  );
+  const lastQuestCompletionDate = activityHistory.length === 0
+    ? null
+    : activityHistory[activityHistory.length - 1];
+  const lastCompetitiveQuestCompletionDate = competitiveHistory.length === 0
+    ? null
+    : competitiveHistory[competitiveHistory.length - 1];
+  const questXp = completionDocs.reduce(
+    (sum, data) => sum + asNonNegativeInt(data.xpReward, 0),
+    0,
+  );
+
+  return {
+    activityHistory,
+    competitiveHistory,
+    lastQuestCompletionDate,
+    lastCompetitiveQuestCompletionDate,
+    questXp,
+  };
+}
+
+function validateProfileSettingsPayload(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    throw new HttpsError('invalid-argument', 'Payload de perfil invalido.');
+  }
+
+  const data = payload as Record<string, unknown>;
+  return {
+    session: ensureActiveSessionPayload(payload),
+    name: ensureString(data.name, 'name', 40),
+    primaryFocus: ensurePrimaryFocus(data.primaryFocus, 'primaryFocus'),
+    hasCompletedOnboarding: ensureBool(
+      data.hasCompletedOnboarding,
+      'hasCompletedOnboarding',
+    ),
+    lastResetDate: ensureTimestamp(data.lastResetDate, 'lastResetDate'),
+  };
+}
+
+function validateAllocateAttributePointPayload(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    throw new HttpsError('invalid-argument', 'Payload de atributo invalido.');
+  }
+
+  const data = payload as Record<string, unknown>;
+  return {
+    session: ensureActiveSessionPayload(payload),
+    attribute: ensureAttributeName(data.attribute, 'attribute'),
+  };
+}
+
+function validatePersonalQuestCommandPayload(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    throw new HttpsError('invalid-argument', 'Payload de quest pessoal invalido.');
+  }
+
+  const data = payload as Record<string, unknown>;
+  const questId = ensureString(data.questId, 'questId', 120);
+  return {
+    session: ensureActiveSessionPayload(payload),
+    questId,
+    quest: data.quest == null ? null : validateSingleQuestSourcePayload(data.quest, questId),
+  };
 }
 
 function validateCompetitiveQuestSessionPayload(payload: unknown) {
@@ -1262,6 +1711,10 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
   );
   const xpReward = ensureInt(data.xpReward, 'xpReward', 0);
   const rewardAttribute = ensureString(data.rewardAttribute, 'rewardAttribute', 32);
+  const verificationStartedAt = ensureTimestampOrNull(
+    data.verificationStartedAt,
+    'verificationStartedAt',
+  );
   const reflectionAnswer =
     data.reflectionAnswer == null ? null : ensureString(data.reflectionAnswer, 'reflectionAnswer', 500);
 
@@ -1289,8 +1742,40 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
     targetDurationMinutes,
     xpReward,
     rewardAttribute,
+    verificationStartedAt,
     reflectionAnswer,
   };
+}
+
+export function competitiveQuestAttemptDayKey(args: {
+  quest: ReturnType<typeof validateCompetitiveQuestSessionPayload>;
+  now: admin.firestore.Timestamp;
+}): string {
+  return normalizedDateKey(args.quest.verificationStartedAt ?? args.now);
+}
+
+export function competitiveQuestAttemptDocId(questId: string, dayKey: string): string {
+  return `${questId}__${dayKey}`;
+}
+
+export function matchesCompetitiveAttemptDay(args: {
+  record: CompetitiveQuestSessionRecord | CompetitiveQuestGrantRecord | null;
+  dayKey: string;
+  timestampField: 'startedAt' | 'completedAt';
+}): boolean {
+  const {record, dayKey, timestampField} = args;
+  if (!record) {
+    return false;
+  }
+
+  if (typeof record.dayKey === 'string' && record.dayKey === dayKey) {
+    return true;
+  }
+
+  const timestamp = args.timestampField === 'startedAt'
+    ? ('startedAt' in record ? record.startedAt : null)
+    : ('completedAt' in record ? record.completedAt : null);
+  return timestamp instanceof admin.firestore.Timestamp && normalizedDateKey(timestamp) === dayKey;
 }
 
 export function resolveCompetitiveQuestSessionStart(args: {
@@ -1305,7 +1790,10 @@ export function resolveCompetitiveQuestSessionStart(args: {
     throw new HttpsError('failed-precondition', 'Essa quest ja foi validada.');
   }
 
-  if (session?.startedAt instanceof admin.firestore.Timestamp) {
+  if (
+    session?.startedAt instanceof admin.firestore.Timestamp &&
+    session.status !== 'verified'
+  ) {
     return {
       status: 'already_started' as const,
       startedAt: session.startedAt.toDate().toISOString(),
@@ -1319,6 +1807,7 @@ export function resolveCompetitiveQuestSessionStart(args: {
     sessionWrite: {
       questId: quest.questId,
       title: quest.title,
+      dayKey: normalizedDateKey(now),
       templateType: quest.templateType,
       verificationMode: quest.verificationMode,
       targetDurationMinutes: quest.targetDurationMinutes,
@@ -1371,16 +1860,17 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
     grantWrite: {
       questId: quest.questId,
       title: quest.title,
+      dayKey: normalizedDateKey(session?.startedAt ?? now),
       templateType: quest.templateType,
       verificationMode: quest.verificationMode,
       targetDurationMinutes: quest.targetDurationMinutes,
       xpReward: quest.xpReward,
       rewardAttribute: quest.rewardAttribute,
       completedAt: now,
-      dayKey: normalizedDateKey(now),
       approvedAt: now,
     },
     sessionWrite: {
+      dayKey: normalizedDateKey(session?.startedAt ?? now),
       status: 'verified',
       completedAt: now,
       updatedAt: now,
@@ -2387,6 +2877,448 @@ export const releaseActiveSession = onCall(
   },
 );
 
+export const updateProfileSettings = onCall(
+  {
+    region: 'southamerica-east1',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = validateProfileSettingsPayload(request.data ?? {});
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    await assertActiveSession(db, uid, payload.session.deviceSessionId);
+
+    const now = admin.firestore.Timestamp.now();
+    const fallbackName = sanitizeDisplayName(request.auth.token.name ?? payload.name);
+    const result = await db.runTransaction(async (transaction) => {
+      const profileRef = profileDocRef(db, uid);
+      const profileSnap = await transaction.get(profileRef);
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName,
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+      });
+
+      let currentStreak = currentProfile.currentStreak;
+      if (currentProfile.lastQuestCompletionDate instanceof admin.firestore.Timestamp) {
+        const lastCompletion = normalizedDateFromKey(
+          normalizedDateKey(currentProfile.lastQuestCompletionDate),
+        );
+        const nextReset = normalizedDateFromKey(normalizedDateKey(payload.lastResetDate));
+        const diffDays = Math.round((nextReset.getTime() - lastCompletion.getTime()) / 86400000);
+        if (diffDays > 1) {
+          currentStreak = 0;
+        }
+      }
+
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...currentProfile,
+          name: payload.name,
+          primaryFocus: payload.primaryFocus,
+          hasCompletedOnboarding: payload.hasCompletedOnboarding,
+          lastResetDate: payload.lastResetDate,
+          currentStreak,
+        },
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
+      transaction.set(profileRef, nextProfile, {merge: true});
+      return nextProfile;
+    });
+
+    return {
+      status: 'updated' as const,
+      profile: result,
+    };
+  },
+);
+
+export const allocateAttributePoint = onCall(
+  {
+    region: 'southamerica-east1',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = validateAllocateAttributePointPayload(request.data ?? {});
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    await assertActiveSession(db, uid, payload.session.deviceSessionId);
+
+    const now = admin.firestore.Timestamp.now();
+    const fallbackName = sanitizeDisplayName(request.auth.token.name);
+    const result = await db.runTransaction(async (transaction) => {
+      const profileRef = profileDocRef(db, uid);
+      const profileSnap = await transaction.get(profileRef);
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName,
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+      });
+
+      if (currentProfile.statPoints <= 0) {
+        throw new HttpsError('failed-precondition', 'Nenhum ponto disponivel.');
+      }
+
+      const nextAttributes = {
+        ...currentProfile.attributes,
+      };
+      switch (payload.attribute) {
+      case 'strength':
+        nextAttributes.strength += 1;
+        break;
+      case 'intelligence':
+        nextAttributes.intelligence += 1;
+        break;
+      case 'vitality':
+        nextAttributes.vitality += 1;
+        break;
+      case 'agility':
+        nextAttributes.agility += 1;
+        break;
+      }
+
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...currentProfile,
+          statPoints: currentProfile.statPoints - 1,
+          attributes: nextAttributes,
+          authoritativeAllocatedStatPoints:
+            currentProfile.authoritativeAllocatedStatPoints + 1,
+        },
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
+      transaction.set(profileRef, nextProfile, {merge: true});
+      transaction.set(
+        attributeAllocationsCollectionRef(db, uid).doc(),
+        {
+          attribute: payload.attribute,
+          allocatedAt: now,
+          syncSource: 'backend',
+          activeDeviceSessionId: payload.session.deviceSessionId,
+          activeDeviceLabel: payload.session.deviceLabel,
+        },
+      );
+
+      return nextProfile;
+    });
+
+    return {
+      status: 'allocated' as const,
+      profile: result,
+    };
+  },
+);
+
+export const completePersonalQuest = onCall(
+  {
+    region: 'southamerica-east1',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = validatePersonalQuestCommandPayload(request.data ?? {});
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    await assertActiveSession(db, uid, payload.session.deviceSessionId);
+
+    const now = admin.firestore.Timestamp.now();
+    const fallbackName = sanitizeDisplayName(request.auth.token.name);
+    const result = await db.runTransaction(async (transaction) => {
+      const profileRef = profileDocRef(db, uid);
+      const questRef = questDocRef(db, uid, payload.questId);
+      const completionRef = questCompletionsCollectionRef(db, uid).doc(payload.questId);
+      const [profileSnap, questSnap, completionSnap] = await Promise.all([
+        transaction.get(profileRef),
+        transaction.get(questRef),
+        transaction.get(completionRef),
+      ]);
+
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName,
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+      });
+      const existingQuest = questSnap.exists
+        ? validateQuestFromStoredDoc(payload.questId, questSnap.data())
+        : null;
+      const quest = existingQuest ?? payload.quest;
+      if (!quest) {
+        throw new HttpsError('not-found', 'Quest pessoal nao encontrada.');
+      }
+      if (quest.category !== 'personal') {
+        throw new HttpsError('failed-precondition', 'Apenas quests pessoais usam este comando.');
+      }
+      if (quest.isCompleted || completionSnap.exists) {
+        return {
+          status: 'already_completed' as const,
+          profile: currentProfile,
+          questId: payload.questId,
+          quest: buildQuestDocData(existingQuest ?? {
+            ...quest,
+            isCompleted: true,
+            verificationStatus: 'verified',
+            completedAt: asTimestampOrNull(quest.completedAt) ?? now,
+            verifiedAt: asTimestampOrNull(quest.verifiedAt) ?? now,
+          }, {
+            orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+            deviceSessionId: payload.session.deviceSessionId,
+            deviceLabel: payload.session.deviceLabel,
+            now,
+            syncSource: 'callable_server_authoritative',
+          }),
+        };
+      }
+
+      const rewardedProfile = applyXpRewardToProfile(currentProfile, {
+        xpReward: quest.xpReward,
+        bonusStatPoints: 0,
+      });
+      const nextAttributes = {
+        ...rewardedProfile.attributes,
+      };
+      switch (quest.rewardAttribute) {
+      case 'strength':
+        nextAttributes.strength += 1;
+        break;
+      case 'intelligence':
+        nextAttributes.intelligence += 1;
+        break;
+      case 'vitality':
+        nextAttributes.vitality += 1;
+        break;
+      case 'agility':
+        nextAttributes.agility += 1;
+        break;
+      }
+      const nextHistory = historyWithDay(currentProfile.activityHistory, now);
+      const streaks = streakMetricsFromHistory(nextHistory, now);
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...rewardedProfile,
+          attributes: nextAttributes,
+          activityHistory: nextHistory,
+          lastQuestCompletionDate: now,
+          currentStreak: streaks.currentStreak,
+          bestStreak: streaks.bestStreak,
+          authoritativeQuestXp: currentProfile.authoritativeQuestXp + quest.xpReward,
+        },
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+      const updatedQuest = {
+        ...quest,
+        verificationStatus: 'verified' as const,
+        isCompleted: true,
+        completedAt: now,
+        verifiedAt: now,
+        preRewardLevel: currentProfile.level,
+        preRewardXp: currentProfile.xp,
+        preRewardMaxXp: currentProfile.maxXp,
+        preRewardStatPoints: currentProfile.statPoints,
+        preRewardStrength: currentProfile.attributes.strength,
+        preRewardIntelligence: currentProfile.attributes.intelligence,
+        preRewardVitality: currentProfile.attributes.vitality,
+        preRewardAgility: currentProfile.attributes.agility,
+      };
+      const questWrite = buildQuestDocData(updatedQuest, {
+        orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
+      transaction.set(profileRef, nextProfile, {merge: true});
+      transaction.set(questRef, questWrite, {merge: true});
+      transaction.set(
+        completionRef,
+        {
+          questId: payload.questId,
+          title: quest.title,
+          rewardAttribute: quest.rewardAttribute,
+          xpReward: quest.xpReward,
+          countsTowardCompetitive: false,
+          completedAt: now,
+          preRewardLevel: currentProfile.level,
+          preRewardXp: currentProfile.xp,
+          preRewardMaxXp: currentProfile.maxXp,
+          preRewardStatPoints: currentProfile.statPoints,
+          preRewardStrength: currentProfile.attributes.strength,
+          preRewardIntelligence: currentProfile.attributes.intelligence,
+          preRewardVitality: currentProfile.attributes.vitality,
+          preRewardAgility: currentProfile.attributes.agility,
+          syncSource: 'backend',
+        },
+      );
+
+      return {
+        status: 'completed' as const,
+        profile: nextProfile,
+        questId: payload.questId,
+        quest: questWrite,
+      };
+    });
+
+    return result;
+  },
+);
+
+export const revokePersonalQuestCompletion = onCall(
+  {
+    region: 'southamerica-east1',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = validatePersonalQuestCommandPayload(request.data ?? {});
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    await assertActiveSession(db, uid, payload.session.deviceSessionId);
+
+    const now = admin.firestore.Timestamp.now();
+    const fallbackName = sanitizeDisplayName(request.auth.token.name);
+    const result = await db.runTransaction(async (transaction) => {
+      const profileRef = profileDocRef(db, uid);
+      const questRef = questDocRef(db, uid, payload.questId);
+      const completionRef = questCompletionsCollectionRef(db, uid).doc(payload.questId);
+      const [profileSnap, questSnap, completionSnap, completionQuerySnap] = await Promise.all([
+        transaction.get(profileRef),
+        transaction.get(questRef),
+        transaction.get(completionRef),
+        transaction.get(questCompletionsCollectionRef(db, uid)),
+      ]);
+
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName,
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+      });
+      if (!questSnap.exists) {
+        throw new HttpsError('not-found', 'Quest pessoal nao encontrada.');
+      }
+      const quest = validateQuestFromStoredDoc(payload.questId, questSnap.data());
+      if (quest.category !== 'personal') {
+        throw new HttpsError('failed-precondition', 'Apenas quests pessoais usam este comando.');
+      }
+      if (!quest.isCompleted || !completionSnap.exists) {
+        return {
+          status: 'already_pending' as const,
+          profile: currentProfile,
+          questId: payload.questId,
+          quest: buildQuestDocData(quest, {
+            orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+            deviceSessionId: payload.session.deviceSessionId,
+            deviceLabel: payload.session.deviceLabel,
+            now,
+            syncSource: 'callable_server_authoritative',
+          }),
+        };
+      }
+
+      const remainingCompletionDocs = completionQuerySnap.docs.filter(
+        (doc) => doc.id !== payload.questId,
+      );
+      const completionProjection = questCompletionProjectionFromDocs(
+        remainingCompletionDocs,
+      );
+      const streaks = streakMetricsFromHistory(
+        completionProjection.activityHistory,
+        now,
+      );
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...currentProfile,
+          level: quest.preRewardLevel ?? currentProfile.level,
+          xp: quest.preRewardXp ?? currentProfile.xp,
+          maxXp: quest.preRewardMaxXp ?? currentProfile.maxXp,
+          statPoints: quest.preRewardStatPoints ?? currentProfile.statPoints,
+          attributes: {
+            strength: quest.preRewardStrength ?? currentProfile.attributes.strength,
+            intelligence: quest.preRewardIntelligence ?? currentProfile.attributes.intelligence,
+            vitality: quest.preRewardVitality ?? currentProfile.attributes.vitality,
+            agility: quest.preRewardAgility ?? currentProfile.attributes.agility,
+          },
+          activityHistory: completionProjection.activityHistory,
+          competitiveActivityHistory: completionProjection.competitiveHistory,
+          lastQuestCompletionDate: completionProjection.lastQuestCompletionDate,
+          lastCompetitiveQuestCompletionDate:
+            completionProjection.lastCompetitiveQuestCompletionDate,
+          currentStreak: streaks.currentStreak,
+          bestStreak: streaks.bestStreak,
+          authoritativeQuestXp: completionProjection.questXp,
+        },
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+      const revertedQuest = {
+        ...quest,
+        verificationStatus: 'none' as const,
+        isCompleted: false,
+        completedAt: null,
+        verifiedAt: null,
+        preRewardLevel: null,
+        preRewardXp: null,
+        preRewardMaxXp: null,
+        preRewardStatPoints: null,
+        preRewardStrength: null,
+        preRewardIntelligence: null,
+        preRewardVitality: null,
+        preRewardAgility: null,
+      };
+      const questWrite = buildQuestDocData(revertedQuest, {
+        orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+        deviceSessionId: payload.session.deviceSessionId,
+        deviceLabel: payload.session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
+      transaction.set(profileRef, nextProfile, {merge: true});
+      transaction.set(questRef, questWrite, {merge: true});
+      transaction.delete(completionRef);
+
+      return {
+        status: 'revoked' as const,
+        profile: nextProfile,
+        questId: payload.questId,
+        quest: questWrite,
+      };
+    });
+
+    return result;
+  },
+);
+
 export const syncPlayerProfileFromSource = onCall(
   {
     region: 'southamerica-east1',
@@ -2405,8 +3337,10 @@ export const syncPlayerProfileFromSource = onCall(
     await assertActiveSession(db, uid, session.deviceSessionId);
 
     const now = admin.firestore.Timestamp.now();
+    const weeklyBossClaims = await loadWeeklyBossClaimsForUser(db, uid);
     const write = buildPlayerProfileSyncWrite({
       source,
+      weeklyBossClaims,
       deviceSessionId: session.deviceSessionId,
       deviceLabel: session.deviceLabel,
       now,
@@ -2425,6 +3359,46 @@ export const syncPlayerProfileFromSource = onCall(
     };
   },
 );
+
+async function loadWeeklyBossClaimsForUser(
+  db: admin.firestore.Firestore,
+  uid: string,
+): Promise<ServerWeeklyBossClaim[]> {
+  const claimsSnap = await db.collectionGroup('completions').where('uid', '==', uid).get();
+
+  const claims = await Promise.all(claimsSnap.docs.map(async (doc) => {
+    const data = doc.data();
+    if (!(data.completedAt instanceof admin.firestore.Timestamp)) {
+      return null;
+    }
+
+    let rewardXp = typeof data.rewardXp === 'number' ? Math.max(0, Math.floor(data.rewardXp)) : null;
+    let rewardStatPoints = typeof data.rewardStatPoints === 'number'
+      ? Math.max(0, Math.floor(data.rewardStatPoints))
+      : null;
+
+    if (rewardXp == null || rewardStatPoints == null) {
+      const bossSnap = await doc.ref.parent.parent?.get();
+      const bossData = bossSnap?.data() ?? {};
+      rewardXp = rewardXp ?? ensureInt(bossData.rewardXp, 'weeklyBoss.rewardXp', 0);
+      rewardStatPoints = rewardStatPoints ?? ensureInt(
+        bossData.rewardStatPoints,
+        'weeklyBoss.rewardStatPoints',
+        0,
+      );
+    }
+
+    return {
+      completedAt: data.completedAt,
+      rewardXp,
+      rewardStatPoints,
+    };
+  }));
+
+  return claims
+    .filter((claim): claim is ServerWeeklyBossClaim => claim != null)
+    .sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis());
+}
 
 export const syncQuestInventoryFromSource = onCall(
   {
@@ -2499,6 +3473,7 @@ export const claimWeeklyBoss = onCall(
     }
 
     const payload = (request.data ?? {}) as ClaimWeeklyBossPayload;
+    const session = ensureActiveSessionPayload(payload);
     const bossId = typeof payload.bossId === 'string' ? payload.bossId.trim() : '';
 
     if (!bossId) {
@@ -2511,22 +3486,23 @@ export const claimWeeklyBoss = onCall(
     const uid = request.auth.uid;
     const db = admin.firestore();
     const now = admin.firestore.Timestamp.now();
+    await assertActiveSession(db, uid, session.deviceSessionId);
 
     const bossRef = db.collection('weekly_bosses').doc(bossId);
     const completionRef = bossRef.collection('completions').doc(uid);
+    const userClaimRef = weeklyBossClaimsCollectionRef(db, uid).doc(bossId);
+    const profileRef = profileDocRef(db, uid);
 
     return db.runTransaction(async (transaction) => {
-      const [bossSnap, completionSnap] = await Promise.all([
+      const [bossSnap, completionSnap, userClaimSnap, profileSnap] = await Promise.all([
         transaction.get(bossRef),
         transaction.get(completionRef),
+        transaction.get(userClaimRef),
+        transaction.get(profileRef),
       ]);
 
       if (!bossSnap.exists) {
         throw new HttpsError('not-found', 'Boss semanal nao encontrado.');
-      }
-
-      if (completionSnap.exists) {
-        return { status: 'already_completed' as const };
       }
 
       const data = bossSnap.data() ?? {};
@@ -2534,6 +3510,8 @@ export const claimWeeklyBoss = onCall(
       const startsAt = data.startsAt as admin.firestore.Timestamp | undefined;
       const endsAt = data.endsAt as admin.firestore.Timestamp | undefined;
       const bossRank = normalizeRank(data.rank);
+      const rewardXp = ensureInt(data.rewardXp, 'rewardXp', 0);
+      const rewardStatPoints = ensureInt(data.rewardStatPoints, 'rewardStatPoints', 0);
 
       if (!isActive) {
         throw new HttpsError('failed-precondition', 'Boss semanal inativo.');
@@ -2555,19 +3533,69 @@ export const claimWeeklyBoss = onCall(
         throw new HttpsError('permission-denied', 'Rank enviado nao corresponde ao boss.');
       }
 
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName: displayName,
+        deviceSessionId: session.deviceSessionId,
+        deviceLabel: session.deviceLabel,
+        now,
+      });
+
+      if (completionSnap.exists || userClaimSnap.exists) {
+        return {
+          status: 'already_completed' as const,
+          profile: currentProfile,
+        };
+      }
+
+      const rewardedProfile = applyXpRewardToProfile(currentProfile, {
+        xpReward: rewardXp,
+        bonusStatPoints: rewardStatPoints,
+      });
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...rewardedProfile,
+          weeklyBossLastClaimedAt: now,
+          authoritativeWeeklyBossXp:
+            currentProfile.authoritativeWeeklyBossXp + rewardXp,
+          authoritativeWeeklyBossStatPoints:
+            currentProfile.authoritativeWeeklyBossStatPoints + rewardStatPoints,
+        },
+        deviceSessionId: session.deviceSessionId,
+        deviceLabel: session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
       transaction.set(completionRef, {
         uid,
         displayName,
         photoUrl,
         rankAtCompletion: bossRank,
         completedAt: now,
+        rewardXp,
+        rewardStatPoints,
       });
+      transaction.set(userClaimRef, {
+        bossId,
+        rankAtCompletion: bossRank,
+        rewardXp,
+        rewardStatPoints,
+        claimedAt: now,
+        syncSource: 'backend',
+        activeDeviceSessionId: session.deviceSessionId,
+        activeDeviceLabel: session.deviceLabel,
+      });
+      transaction.set(profileRef, nextProfile, {merge: true});
 
       transaction.update(bossRef, {
         completedCount: admin.firestore.FieldValue.increment(1),
       });
 
-      return { status: 'claimed' as const };
+      return {
+        status: 'claimed' as const,
+        profile: nextProfile,
+      };
     });
   },
 );
@@ -2582,30 +3610,63 @@ export const startCompetitiveQuestSession = onCall(
     }
 
     const payload = (request.data ?? {}) as CompetitiveQuestSessionPayload;
+    const session = ensureActiveSessionPayload(payload);
     const quest = validateCompetitiveQuestSessionPayload(payload);
     const uid = request.auth.uid;
     const db = admin.firestore();
     const now = admin.firestore.Timestamp.now();
+    await assertActiveSession(db, uid, session.deviceSessionId);
+    const dayKey = competitiveQuestAttemptDayKey({quest, now});
     const sessionRef = db
       .collection('users')
       .doc(uid)
       .collection('competitive_quest_sessions')
-      .doc(quest.questId);
+      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
     const grantRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('competitive_quest_grants')
+      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
+    const legacySessionRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('competitive_quest_sessions')
+      .doc(quest.questId);
+    const legacyGrantRef = db
       .collection('users')
       .doc(uid)
       .collection('competitive_quest_grants')
       .doc(quest.questId);
 
     return db.runTransaction(async (transaction) => {
-      const [sessionSnap, grantSnap] = await Promise.all([
+      const [sessionSnap, grantSnap, legacySessionSnap, legacyGrantSnap] = await Promise.all([
         transaction.get(sessionRef),
         transaction.get(grantRef),
+        transaction.get(legacySessionRef),
+        transaction.get(legacyGrantRef),
       ]);
+      const scopedSession = sessionSnap.exists ? (sessionSnap.data() ?? null) : null;
+      const scopedGrant = grantSnap.exists ? (grantSnap.data() ?? null) : null;
+      const legacySession = legacySessionSnap.exists &&
+          matchesCompetitiveAttemptDay({
+            record: legacySessionSnap.data() ?? null,
+            dayKey,
+            timestampField: 'startedAt',
+          })
+        ? (legacySessionSnap.data() ?? null)
+        : null;
+      const legacyGrant = legacyGrantSnap.exists &&
+          matchesCompetitiveAttemptDay({
+            record: legacyGrantSnap.data() ?? null,
+            dayKey,
+            timestampField: 'completedAt',
+          })
+        ? (legacyGrantSnap.data() ?? null)
+        : null;
       const resolution = resolveCompetitiveQuestSessionStart({
         quest,
-        session: sessionSnap.exists ? (sessionSnap.data() ?? null) : null,
-        grant: grantSnap.exists ? (grantSnap.data() ?? null) : null,
+        session: scopedSession ?? legacySession,
+        grant: scopedGrant ?? legacyGrant,
         now,
       });
 
@@ -2631,43 +3692,250 @@ export const verifyCompetitiveQuestCompletion = onCall(
     }
 
     const payload = (request.data ?? {}) as CompetitiveQuestSessionPayload;
+    const session = ensureActiveSessionPayload(payload);
     const quest = validateCompetitiveQuestSessionPayload(payload);
     const uid = request.auth.uid;
     const db = admin.firestore();
     const now = admin.firestore.Timestamp.now();
+    await assertActiveSession(db, uid, session.deviceSessionId);
+    const dayKey = competitiveQuestAttemptDayKey({quest, now});
     const sessionRef = db
       .collection('users')
       .doc(uid)
       .collection('competitive_quest_sessions')
-      .doc(quest.questId);
+      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
     const grantRef = db
       .collection('users')
       .doc(uid)
       .collection('competitive_quest_grants')
+      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
+    const legacySessionRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('competitive_quest_sessions')
       .doc(quest.questId);
+    const legacyGrantRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('competitive_quest_grants')
+      .doc(quest.questId);
+    const profileRef = profileDocRef(db, uid);
+    const questRef = questDocRef(db, uid, quest.questId);
+    const completionRef = questCompletionsCollectionRef(
+      db,
+      uid,
+    ).doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
+    const fallbackName = sanitizeDisplayName(request.auth.token.name);
 
     return db.runTransaction(async (transaction) => {
-      const [sessionSnap, grantSnap] = await Promise.all([
+      const [
+        sessionSnap,
+        grantSnap,
+        legacySessionSnap,
+        legacyGrantSnap,
+        profileSnap,
+        questSnap,
+      ] = await Promise.all([
         transaction.get(sessionRef),
         transaction.get(grantRef),
+        transaction.get(legacySessionRef),
+        transaction.get(legacyGrantRef),
+        transaction.get(profileRef),
+        transaction.get(questRef),
       ]);
+      const scopedSession = sessionSnap.exists ? (sessionSnap.data() ?? null) : null;
+      const scopedGrant = grantSnap.exists ? (grantSnap.data() ?? null) : null;
+      const legacySession = legacySessionSnap.exists &&
+          matchesCompetitiveAttemptDay({
+            record: legacySessionSnap.data() ?? null,
+            dayKey,
+            timestampField: 'startedAt',
+          })
+        ? (legacySessionSnap.data() ?? null)
+        : null;
+      const legacyGrant = legacyGrantSnap.exists &&
+          matchesCompetitiveAttemptDay({
+            record: legacyGrantSnap.data() ?? null,
+            dayKey,
+            timestampField: 'completedAt',
+          })
+        ? (legacyGrantSnap.data() ?? null)
+        : null;
       const resolution = resolveCompetitiveQuestCompletionVerification({
         quest,
-        session: sessionSnap.exists ? (sessionSnap.data() ?? null) : null,
-        grant: grantSnap.exists ? (grantSnap.data() ?? null) : null,
+        session: scopedSession ?? legacySession,
+        grant: scopedGrant ?? legacyGrant,
         now,
       });
+      const currentProfile = profileAggregateFromData({
+        data: profileSnap.data(),
+        fallbackName,
+        deviceSessionId: session.deviceSessionId,
+        deviceLabel: session.deviceLabel,
+        now,
+      });
+      const existingQuest = questSnap.exists
+        ? validateQuestFromStoredDoc(quest.questId, questSnap.data())
+        : null;
+      const competitiveQuest = existingQuest ?? {
+        id: quest.questId,
+        title: quest.title,
+        rewardAttribute: quest.rewardAttribute,
+        xpReward: quest.xpReward,
+        category: 'competitive' as const,
+        templateType: quest.templateType,
+        verificationMode: quest.verificationMode,
+        verificationStatus: 'none' as const,
+        targetDurationMinutes: quest.targetDurationMinutes,
+        reflectionPrompt: null,
+        reflectionAnswer: quest.reflectionAnswer,
+        verificationStartedAt: quest.verificationStartedAt,
+        completedAt: null,
+        verifiedAt: null,
+        isCompleted: false,
+        preRewardLevel: null,
+        preRewardXp: null,
+        preRewardMaxXp: null,
+        preRewardStatPoints: null,
+        preRewardStrength: null,
+        preRewardIntelligence: null,
+        preRewardVitality: null,
+        preRewardAgility: null,
+      };
 
-      if (resolution.grantWrite) {
-        transaction.set(grantRef, resolution.grantWrite, {merge: true});
+      if (!resolution.grantWrite) {
+        const completedAt = scopedGrant?.completedAt instanceof admin.firestore.Timestamp
+          ? scopedGrant.completedAt
+          : legacyGrant?.completedAt instanceof admin.firestore.Timestamp
+            ? legacyGrant.completedAt
+            : now;
+        const alreadyVerifiedQuest = {
+          ...competitiveQuest,
+          verificationStatus: 'verified' as const,
+          isCompleted: true,
+          completedAt,
+          verifiedAt: completedAt,
+          reflectionAnswer: quest.reflectionAnswer ?? competitiveQuest.reflectionAnswer,
+        };
+
+        return {
+          status: resolution.status,
+          completedAt: resolution.completedAt,
+          profile: currentProfile,
+          questId: quest.questId,
+          quest: buildQuestDocData(alreadyVerifiedQuest, {
+            orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+            deviceSessionId: session.deviceSessionId,
+            deviceLabel: session.deviceLabel,
+            now,
+            syncSource: 'callable_server_authoritative',
+          }),
+        };
       }
+
+      const rewardedProfile = applyXpRewardToProfile(currentProfile, {
+        xpReward: quest.xpReward,
+        bonusStatPoints: 0,
+      });
+      const nextAttributes = {
+        ...rewardedProfile.attributes,
+      };
+      switch (quest.rewardAttribute) {
+      case 'strength':
+        nextAttributes.strength += 1;
+        break;
+      case 'intelligence':
+        nextAttributes.intelligence += 1;
+        break;
+      case 'vitality':
+        nextAttributes.vitality += 1;
+        break;
+      case 'agility':
+        nextAttributes.agility += 1;
+        break;
+      }
+      const nextHistory = historyWithDay(currentProfile.activityHistory, now);
+      const nextCompetitiveHistory = historyWithDay(
+        currentProfile.competitiveActivityHistory,
+        now,
+      );
+      const streaks = streakMetricsFromHistory(nextHistory, now);
+      const nextProfile = withProfileMetadata({
+        profile: {
+          ...rewardedProfile,
+          attributes: nextAttributes,
+          activityHistory: nextHistory,
+          competitiveActivityHistory: nextCompetitiveHistory,
+          lastQuestCompletionDate: now,
+          lastCompetitiveQuestCompletionDate: now,
+          currentStreak: streaks.currentStreak,
+          bestStreak: streaks.bestStreak,
+          authoritativeQuestXp: currentProfile.authoritativeQuestXp + quest.xpReward,
+        },
+        deviceSessionId: session.deviceSessionId,
+        deviceLabel: session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+      const updatedQuest = {
+        ...competitiveQuest,
+        verificationStatus: 'verified' as const,
+        isCompleted: true,
+        completedAt: now,
+        verifiedAt: now,
+        reflectionAnswer: quest.reflectionAnswer ?? competitiveQuest.reflectionAnswer,
+        preRewardLevel: currentProfile.level,
+        preRewardXp: currentProfile.xp,
+        preRewardMaxXp: currentProfile.maxXp,
+        preRewardStatPoints: currentProfile.statPoints,
+        preRewardStrength: currentProfile.attributes.strength,
+        preRewardIntelligence: currentProfile.attributes.intelligence,
+        preRewardVitality: currentProfile.attributes.vitality,
+        preRewardAgility: currentProfile.attributes.agility,
+      };
+      const questWrite = buildQuestDocData(updatedQuest, {
+        orderIndex: asNonNegativeInt(questSnap.data()?.orderIndex, 0),
+        deviceSessionId: session.deviceSessionId,
+        deviceLabel: session.deviceLabel,
+        now,
+        syncSource: 'callable_server_authoritative',
+      });
+
+      transaction.set(grantRef, resolution.grantWrite, {merge: true});
       if (resolution.sessionWrite) {
         transaction.set(sessionRef, resolution.sessionWrite, {merge: true});
       }
+      transaction.set(profileRef, nextProfile, {merge: true});
+      transaction.set(questRef, questWrite, {merge: true});
+      transaction.set(
+        completionRef,
+        {
+          questId: quest.questId,
+          title: quest.title,
+          rewardAttribute: quest.rewardAttribute,
+          xpReward: quest.xpReward,
+          countsTowardCompetitive: true,
+          completedAt: now,
+          preRewardLevel: currentProfile.level,
+          preRewardXp: currentProfile.xp,
+          preRewardMaxXp: currentProfile.maxXp,
+          preRewardStatPoints: currentProfile.statPoints,
+          preRewardStrength: currentProfile.attributes.strength,
+          preRewardIntelligence: currentProfile.attributes.intelligence,
+          preRewardVitality: currentProfile.attributes.vitality,
+          preRewardAgility: currentProfile.attributes.agility,
+          syncSource: 'backend',
+          activeDeviceSessionId: session.deviceSessionId,
+          activeDeviceLabel: session.deviceLabel,
+        },
+      );
 
       return {
         status: resolution.status,
         completedAt: resolution.completedAt,
+        profile: nextProfile,
+        questId: quest.questId,
+        quest: questWrite,
       };
     });
   },

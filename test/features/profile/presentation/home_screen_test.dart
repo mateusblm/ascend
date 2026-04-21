@@ -51,11 +51,7 @@ void main() {
         overrides: [
           authProvider.overrideWith(
             (ref) => _FakeAuthController(
-              AuthSuccess(
-                uid: 'uid-1',
-                displayName: 'Mateus',
-                photoUrl: '',
-              ),
+              AuthSuccess(uid: 'uid-1', displayName: 'Mateus', photoUrl: ''),
             ),
           ),
           playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
@@ -110,7 +106,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SEU MOMENTO'), findsOneWidget);
-    expect(find.textContaining('JOGADOR: TESTER | VIGIA DO CICLO'), findsOneWidget);
+    expect(
+      find.textContaining('JOGADOR: TESTER | VIGIA DO CICLO'),
+      findsOneWidget,
+    );
     expect(find.text('SIGILO DE BRONZE'), findsOneWidget);
     expect(find.text('PROXIMO GANHO'), findsOneWidget);
     expect(find.text('DISPUTA DA SEMANA'), findsOneWidget);
@@ -122,47 +121,51 @@ void main() {
     expect(find.text('RESGATAR'), findsOneWidget);
   });
 
-  testWidgets('HomeScreen renders idle weekly boss state without active event', (
-    tester,
-  ) async {
-    final player = _buildPlayer(level: 2);
+  testWidgets(
+    'HomeScreen renders idle weekly boss state without active event',
+    (tester) async {
+      final player = _buildPlayer(level: 2);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authProvider.overrideWith(
-            (ref) => _FakeAuthController(AuthInitial()),
-          ),
-          playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
-          competitiveRankProvider.overrideWith((ref) => 'E'),
-          rankProgressionSnapshotProvider.overrideWith(
-            (ref) => Stream.value(null),
-          ),
-          rankProgressionHistoryProvider.overrideWith(
-            (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
-          ),
-          seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
-          currentCompetitiveIntegrityProvider.overrideWith(
-            (ref) => Stream.value(null),
-          ),
-          seasonBracketLeaderboardProvider.overrideWith(
-            (ref) async => const <RankSeasonLeaderboardEntry>[],
-          ),
-          remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
-          weeklyBossTopCompletionsProvider.overrideWith(
-            (ref) => Stream.value(const <WeeklyBossCompletion>[]),
-          ),
-        ],
-        child: const MaterialApp(home: HomeScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(
+              (ref) => _FakeAuthController(AuthInitial()),
+            ),
+            playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
+            competitiveRankProvider.overrideWith((ref) => 'E'),
+            rankProgressionSnapshotProvider.overrideWith(
+              (ref) => Stream.value(null),
+            ),
+            rankProgressionHistoryProvider.overrideWith(
+              (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
+            ),
+            seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
+            currentCompetitiveIntegrityProvider.overrideWith(
+              (ref) => Stream.value(null),
+            ),
+            seasonBracketLeaderboardProvider.overrideWith(
+              (ref) async => const <RankSeasonLeaderboardEntry>[],
+            ),
+            remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
+            weeklyBossTopCompletionsProvider.overrideWith(
+              (ref) => Stream.value(const <WeeklyBossCompletion>[]),
+            ),
+          ],
+          child: const MaterialApp(home: HomeScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Nenhum desafio semanal ativo agora.'), findsOneWidget);
-    expect(find.textContaining('Seu estado competitivo esta sincronizando'), findsOneWidget);
-    expect(find.text('PRIMEIRA SEMANA'), findsOneWidget);
-    expect(find.text('PROXIMO GANHO'), findsOneWidget);
-  });
+      expect(find.text('Nenhum desafio semanal ativo agora.'), findsOneWidget);
+      expect(
+        find.textContaining('Seu estado competitivo esta sincronizando'),
+        findsOneWidget,
+      );
+      expect(find.text('PRIMEIRA SEMANA'), findsOneWidget);
+      expect(find.text('PROXIMO GANHO'), findsOneWidget);
+    },
+  );
 }
 
 class _TestPlayerNotifier extends PlayerNotifier {
@@ -172,6 +175,12 @@ class _TestPlayerNotifier extends PlayerNotifier {
 class _FakeAuthController extends StateNotifier<AuthState>
     implements AuthController {
   _FakeAuthController(super.state);
+
+  @override
+  Future<void> handleActiveSessionConflict() async {}
+
+  @override
+  Future<void> refreshActiveSession() async {}
 
   @override
   Future<void> signInWithGoogle() async {}

@@ -26,6 +26,7 @@ class StatsScreen extends ConsumerStatefulWidget {
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
   _StatsSection _currentSection = _StatsSection.overview;
+  bool _isSigningOut = false;
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +64,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               RevealBlock(
                 child: _buildHeader(
                   context,
@@ -145,9 +146,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'STATS',
                   style: TextStyle(
@@ -157,6 +158,51 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (authState is AuthSuccess) ...[
+                TextButton.icon(
+                  onPressed: _isSigningOut
+                      ? null
+                      : () => _handleSignOut(context),
+                  style: TextButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  icon: _isSigningOut
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.logout_rounded,
+                          size: 16,
+                          color: Colors.redAccent,
+                        ),
+                  label: Text(
+                    _isSigningOut ? 'SAINDO' : 'SAIR',
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               InfoTooltipIcon(
                 title: 'Como ler esta tela',
                 message:
@@ -291,9 +337,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                       : 'Promocao pronta para confirmar.',
                 PromotionExamStatus.failed =>
                   'A prova expirou ou nao foi sustentada.',
-                PromotionExamStatus.promoted => promotionExam.mode == PromotionExamMode.reconquest
-                    ? 'Reconquista ja registrada.'
-                    : 'Promocao ja registrada.',
+                PromotionExamStatus.promoted =>
+                  promotionExam.mode == PromotionExamMode.reconquest
+                      ? 'Reconquista ja registrada.'
+                      : 'Promocao ja registrada.',
               },
               accent: AppColors.neonBlue,
             ),
@@ -301,6 +348,25 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleSignOut(BuildContext context) async {
+    if (_isSigningOut) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isSigningOut = true);
+    try {
+      await ref.read(authProvider.notifier).signOut();
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel sair da conta agora.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningOut = false);
+      }
+    }
   }
 
   Widget _buildSectionTabs() {
@@ -913,11 +979,7 @@ class _SectionChip extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (selected) ...[
-                  Icon(
-                    Icons.check,
-                    size: 14,
-                    color: foregroundColor,
-                  ),
+                  Icon(Icons.check, size: 14, color: foregroundColor),
                   const SizedBox(width: 6),
                 ],
                 Text(

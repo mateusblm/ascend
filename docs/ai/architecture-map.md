@@ -200,6 +200,12 @@ lib/
   - `verifyCompetitiveQuestCompletion`
   - backend stores session state and authoritative reward grants
   - competitive state/integrity sync can prefer `competitive_quest_grants` over client-only competitive history
+- quest presentation also has two important behavioral guarantees now:
+  - `QuestsScreen` keeps a live timer helper through a lightweight time stream instead of frozen `DateTime.now()` text
+  - `QuestNotifier._applyCompletion(...)` triggers immediate competitive sync after a verified competitive completion so Rank does not wait only for navigation-level debounce
+- competitive quest UI should now avoid duplicate perception:
+  - active competitive section only shows unfinished competitive quests
+  - completed competitive quests remain in the completed section only
 - product telemetry should now be read together with:
   - `docs/product/first-week-funnel.md`
   - `docs/product/firebase-operations-dashboard.md`
@@ -229,6 +235,9 @@ The preferred direction for upcoming work is:
   - official competitive templates first
   - in-app verification first
   - heavier proofs such as health/location/photo only after the base loop proves useful
+- next high-value hardening target:
+  - add explicit automated coverage for competitive quest authority callables and UI reactions
+  - confirm backend grant records are the long-term source for competitive activity, not only a transitional overlay
 
 ## Constraints
 

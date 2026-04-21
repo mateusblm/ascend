@@ -218,3 +218,22 @@ Recent follow-through:
   - session start is registered in backend
   - completion creates an authoritative competitive grant in backend
   - sync paths can prefer server grant history over client-reported competitive dates
+- quest UX and sync follow-through were also tightened:
+  - the quest timer helper in Quests now refreshes live while a competitive session is running
+  - completed competitive quests no longer appear duplicated in both the active competitive section and the completed section
+  - competitive quest completion now triggers immediate competitive sync instead of waiting only for navigation debounce
+
+Recommended next production steps:
+
+- deploy the new Functions and Firestore rules for competitive quest authority
+- run a real-device smoke test for:
+  - start competitive session
+  - early completion rejection
+  - valid completion after minimum time
+  - authoritative grant creation
+  - rank/integrity refresh after completion
+- add automated coverage for the new authority path:
+  - callable validation
+  - duplicate grant prevention
+  - UI reaction after successful grant
+- decide whether personal XP should remain local indefinitely or move to a softer server-audited model later

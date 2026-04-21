@@ -2,23 +2,25 @@
 type: code-file
 path: lib\features\quests\presentation\quests_screen.dart
 feature: quests
-symbol_count: 1
-import_count: 15
+symbol_count: 2
+import_count: 16
 ---
 # lib\features\quests\presentation\quests_screen.dart
 
 ## Summary
 
 - feature: quests
-- imports: 15
-- symbols: 1
+- imports: 16
+- symbols: 2
 
 ## Symbols
 
+- questLiveNowProvider
 - QuestsScreen
 
 ## Imports
 
+- dart:async
 - lib/core/widgets/reveal_block.dart
 - lib/core/theme/app_colors.dart
 - lib/features/profile/domain/first_week_journey.dart

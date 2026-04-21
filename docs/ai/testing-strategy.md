@@ -124,6 +124,10 @@ Current competitive additions to protect:
     - server-side completion grant
     - duplicate grant prevention
     - sync behavior when authoritative grants exist
+44. quest UX should protect:
+    - live elapsed-time helper during competitive sessions
+    - no duplicate rendering of completed competitive quests
+    - immediate rank/integrity refresh after verified competitive completion
 
 ## AI Test Rules
 

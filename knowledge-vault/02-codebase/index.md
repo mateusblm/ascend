@@ -1,6 +1,6 @@
 # Codebase Index
 
-- generated_at: 2026-04-21T08:48:11.3748148-03:00
+- generated_at: 2026-04-21T12:03:34.5055278-03:00
 - file_count: 51
 
 ## Files

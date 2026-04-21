@@ -5,6 +5,7 @@ import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
@@ -488,13 +489,24 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           completedAt: questWithSnapshot.completedAt,
           countsForCompetitive: questWithSnapshot.countsTowardCompetitive,
         );
+    final updatedPlayer = ref.read(playerProvider);
+    if (questWithSnapshot.countsTowardCompetitive) {
+      final repository = ref.read(rankProgressionRepositoryProvider);
+      unawaited(repository.syncCompetitiveState(updatedPlayer));
+      unawaited(
+        repository.syncCompetitiveIntegrity(
+          player: updatedPlayer,
+          quests: state,
+        ),
+      );
+    }
     unawaited(
       _analytics.logQuestCompleted(
         category: questWithSnapshot.category.name,
         verificationMode: questWithSnapshot.verificationMode.name,
         xpReward: questWithSnapshot.xpReward,
         countsTowardRank: questWithSnapshot.countsTowardCompetitive,
-        levelAfter: ref.read(playerProvider).level,
+        levelAfter: updatedPlayer.level,
         templateType: questWithSnapshot.templateType.name,
       ),
     );

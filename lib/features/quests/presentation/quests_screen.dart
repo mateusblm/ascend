@@ -66,7 +66,9 @@ class QuestsScreen extends ConsumerWidget {
         )
         .toList();
 
-    final competitiveQuests = quests.where((q) => q.isCompetitive).toList();
+    final competitiveQuests = quests
+        .where((q) => q.isCompetitive && !q.isCompleted)
+        .toList();
     final personalActiveQuests = quests
         .where((q) => !q.isCompetitive && !q.isCompleted)
         .toList();

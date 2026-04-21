@@ -15,3 +15,4 @@ Store durable architectural and product decisions here after curating them from 
 - [[decision-2026-04-20-production-crash-boundary]]
 - [[decision-2026-04-21-operational-dashboard-and-recoverable-failures]]
 - [[decision-2026-04-21-competitive-quest-authority]]
+- [[decision-2026-04-21-quest-live-sync-followthrough]]

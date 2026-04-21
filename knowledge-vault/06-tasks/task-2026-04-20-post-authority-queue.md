@@ -21,6 +21,13 @@ priority: high
 - calibrate when trust score only signals versus when it actually limits standing or rewards
 - create a more ceremonial season closeout and reward reveal
 - deepen the daily return loop after the first-week guided phase
+- add automated coverage and smoke discipline for competitive quest authority:
+  - start session
+  - reject early completion
+  - approve valid completion
+  - prevent duplicate grants
+  - refresh rank/integrity after grant
+- decide whether personal XP remains local or moves toward server-audited progression later
 
 ## Related Notes
 

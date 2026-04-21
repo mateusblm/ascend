@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\quests\presentation\quest_controller.dart
 feature: quests
 symbol_count: 4
-import_count: 13
+import_count: 14
 ---
 # lib\features\quests\presentation\quest_controller.dart
 
 ## Summary
 
 - feature: quests
-- imports: 13
+- imports: 14
 - symbols: 4
 
 ## Symbols
@@ -28,6 +28,7 @@ import_count: 13
 - lib/core/database/isar_provider.dart
 - lib/features/profile/domain/player_model.dart
 - lib/features/profile/presentation/player_controller.dart
+- lib/features/profile/presentation/rank_progression_provider.dart
 - lib/features/quests/data/competitive_quest_authority_repository.dart
 - lib/features/quests/domain/competitive_quest_template.dart
 - lib/features/quests/domain/quest_model.dart

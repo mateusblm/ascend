@@ -6,20 +6,22 @@ enum AwakeningPath { discipline, study, training, health, productivity }
 
 extension AwakeningPathX on AwakeningPath {
   String get label => switch (this) {
-        AwakeningPath.discipline => 'DISCIPLINA',
-        AwakeningPath.study => 'ESTUDO',
-        AwakeningPath.training => 'TREINO',
-        AwakeningPath.health => 'SAUDE',
-        AwakeningPath.productivity => 'PRODUTIVIDADE',
-      };
+    AwakeningPath.discipline => 'DISCIPLINA',
+    AwakeningPath.study => 'ESTUDO',
+    AwakeningPath.training => 'TREINO',
+    AwakeningPath.health => 'SAUDE',
+    AwakeningPath.productivity => 'PRODUTIVIDADE',
+  };
 
   String get description => switch (this) {
-        AwakeningPath.discipline => 'Cria constancia com pequenas vitorias diarias.',
-        AwakeningPath.study => 'Foca em aprendizado, leitura e progresso intelectual.',
-        AwakeningPath.training => 'Fortalece corpo, energia e presenca fisica.',
-        AwakeningPath.health => 'Prioriza sono, hidratacao e recuperacao.',
-        AwakeningPath.productivity => 'Organiza entregas, foco e execucao do dia.',
-      };
+    AwakeningPath.discipline =>
+      'Cria constancia com pequenas vitorias diarias.',
+    AwakeningPath.study =>
+      'Foca em aprendizado, leitura e progresso intelectual.',
+    AwakeningPath.training => 'Fortalece corpo, energia e presenca fisica.',
+    AwakeningPath.health => 'Prioriza sono, hidratacao e recuperacao.',
+    AwakeningPath.productivity => 'Organiza entregas, foco e execucao do dia.',
+  };
 }
 
 @embedded
@@ -80,6 +82,7 @@ class Player {
   });
 
   Player copyWith({
+    String? name,
     int? level,
     int? xp,
     int? maxXp,
@@ -101,7 +104,7 @@ class Player {
   }) {
     return Player(
       id: id,
-      name: name,
+      name: name ?? this.name,
       level: level ?? this.level,
       xp: xp ?? this.xp,
       maxXp: maxXp ?? this.maxXp,
@@ -114,14 +117,16 @@ class Player {
           ? null
           : (lastQuestCompletionDate ?? this.lastQuestCompletionDate),
       activityHistory: activityHistory ?? this.activityHistory,
-      lastCompetitiveQuestCompletionDate: clearLastCompetitiveQuestCompletionDate
+      lastCompetitiveQuestCompletionDate:
+          clearLastCompetitiveQuestCompletionDate
           ? null
           : (lastCompetitiveQuestCompletionDate ??
-              this.lastCompetitiveQuestCompletionDate),
+                this.lastCompetitiveQuestCompletionDate),
       competitiveActivityHistory:
           competitiveActivityHistory ?? this.competitiveActivityHistory,
       primaryFocus: primaryFocus ?? this.primaryFocus,
-      hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      hasCompletedOnboarding:
+          hasCompletedOnboarding ?? this.hasCompletedOnboarding,
       weeklyBossLastClaimedAt: clearWeeklyBossLastClaimedAt
           ? null
           : (weeklyBossLastClaimedAt ?? this.weeklyBossLastClaimedAt),

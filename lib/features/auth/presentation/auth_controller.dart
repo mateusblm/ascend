@@ -16,11 +16,9 @@ final authProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
 });
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController([
-    AppAnalytics? analytics,
-    AppCrashReporter? crashReporter,
-  ]) : _analytics = analytics ?? const NoopAppAnalytics(),
-       _crashReporter = crashReporter ?? const NoopAppCrashReporter(),
+  AuthController([AppAnalytics? analytics, AppCrashReporter? crashReporter])
+    : _analytics = analytics ?? const NoopAppAnalytics(),
+      _crashReporter = crashReporter ?? const NoopAppCrashReporter(),
       super(AuthInitial()) {
     final user = _auth.currentUser;
     if (user != null) {
@@ -106,6 +104,7 @@ class AuthController extends StateNotifier<AuthState> {
       uid: user.uid,
       displayName: user.displayName ?? 'Jogador',
       photoUrl: user.photoURL ?? '',
+      email: user.email,
     );
   }
 

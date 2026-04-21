@@ -7,6 +7,7 @@ import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
+import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/info_tooltip.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
@@ -26,7 +27,6 @@ class StatsScreen extends ConsumerStatefulWidget {
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
   _StatsSection _currentSection = _StatsSection.overview;
-  bool _isSigningOut = false;
 
   @override
   Widget build(BuildContext context) {
@@ -132,10 +132,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     CompetitiveRankSnapshot? rankSnapshot,
     PromotionExam? promotionExam,
   ) {
-    final displayName = switch (authState) {
-      AuthSuccess(:final displayName) => displayName,
-      _ => player.name,
-    };
     final currentRank =
         rankSnapshot?.currentRank ?? playerRankForLevel(player.level);
     final progress = player.maxXp == 0
@@ -166,9 +162,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             children: [
               if (authState is AuthSuccess) ...[
                 TextButton.icon(
-                  onPressed: _isSigningOut
-                      ? null
-                      : () => _handleSignOut(context),
+                  onPressed: () => _openAccountScreen(context),
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(
@@ -177,24 +171,15 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  icon: _isSigningOut
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.logout_rounded,
-                          size: 16,
-                          color: Colors.redAccent,
-                        ),
-                  label: Text(
-                    _isSigningOut ? 'SAINDO' : 'SAIR',
-                    style: const TextStyle(
-                      color: Colors.redAccent,
+                  icon: const Icon(
+                    Icons.manage_accounts_rounded,
+                    size: 16,
+                    color: AppColors.neonBlue,
+                  ),
+                  label: const Text(
+                    'CONTA',
+                    style: TextStyle(
+                      color: AppColors.neonBlue,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.1,
@@ -253,7 +238,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        displayName,
+                        player.name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -350,23 +335,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     );
   }
 
-  Future<void> _handleSignOut(BuildContext context) async {
-    if (_isSigningOut) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _isSigningOut = true);
-    try {
-      await ref.read(authProvider.notifier).signOut();
-    } catch (_) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel sair da conta agora.')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSigningOut = false);
-      }
-    }
+  void _openAccountScreen(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AccountScreen()));
   }
 
   Widget _buildSectionTabs() {

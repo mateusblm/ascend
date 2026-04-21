@@ -32,11 +32,8 @@ final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
 });
 
 class PlayerNotifier extends StateNotifier<Player> {
-  PlayerNotifier(
-    this._isar,
-    super.state, {
-    AppAnalytics? analytics,
-  }) : _analytics = analytics ?? const NoopAppAnalytics();
+  PlayerNotifier(this._isar, super.state, {AppAnalytics? analytics})
+    : _analytics = analytics ?? const NoopAppAnalytics();
 
   final Isar _isar;
   final AppAnalytics _analytics;
@@ -55,11 +52,17 @@ class PlayerNotifier extends StateNotifier<Player> {
     return _dateOnly(to).difference(_dateOnly(from)).inDays;
   }
 
-  List<DateTime> _upsertActivityDate(List<DateTime> activityHistory, DateTime completionDate) {
+  List<DateTime> _upsertActivityDate(
+    List<DateTime> activityHistory,
+    DateTime completionDate,
+  ) {
     final normalizedDate = _dateOnly(completionDate);
-    final updatedHistory = activityHistory.where((entry) => _dateOnly(entry) != normalizedDate).toList()
-      ..add(normalizedDate)
-      ..sort();
+    final updatedHistory =
+        activityHistory
+            .where((entry) => _dateOnly(entry) != normalizedDate)
+            .toList()
+          ..add(normalizedDate)
+          ..sort();
 
     return updatedHistory;
   }
@@ -106,17 +109,21 @@ class PlayerNotifier extends StateNotifier<Player> {
     void Function(int level)? onLevelUp,
   }) {
     final newAttrs = PlayerAttributes(
-      strength: state.attributes.strength + (attribute == AttributeType.strength ? 1 : 0),
-      intelligence: state.attributes.intelligence + (attribute == AttributeType.intelligence ? 1 : 0),
-      vitality: state.attributes.vitality + (attribute == AttributeType.vitality ? 1 : 0),
-      agility: state.attributes.agility + (attribute == AttributeType.agility ? 1 : 0),
+      strength:
+          state.attributes.strength +
+          (attribute == AttributeType.strength ? 1 : 0),
+      intelligence:
+          state.attributes.intelligence +
+          (attribute == AttributeType.intelligence ? 1 : 0),
+      vitality:
+          state.attributes.vitality +
+          (attribute == AttributeType.vitality ? 1 : 0),
+      agility:
+          state.attributes.agility +
+          (attribute == AttributeType.agility ? 1 : 0),
     );
 
-    _applyXpReward(
-      xpReward,
-      attributes: newAttrs,
-      onLevelUp: onLevelUp,
-    );
+    _applyXpReward(xpReward, attributes: newAttrs, onLevelUp: onLevelUp);
   }
 
   /// Reverte completamente uma recompensa de quest usando o snapshot pré-recompensa.
@@ -130,7 +137,8 @@ class PlayerNotifier extends StateNotifier<Player> {
         statPoints: quest.preRewardStatPoints,
         attributes: PlayerAttributes(
           strength: quest.preRewardStrength ?? state.attributes.strength,
-          intelligence: quest.preRewardIntelligence ?? state.attributes.intelligence,
+          intelligence:
+              quest.preRewardIntelligence ?? state.attributes.intelligence,
           vitality: quest.preRewardVitality ?? state.attributes.vitality,
           agility: quest.preRewardAgility ?? state.attributes.agility,
         ),
@@ -141,17 +149,25 @@ class PlayerNotifier extends StateNotifier<Player> {
       final attribute = quest.rewardAttribute;
 
       final newAttrs = PlayerAttributes(
-        strength: (state.attributes.strength - (attribute == AttributeType.strength ? 1 : 0)).clamp(10, 999),
-        intelligence: (state.attributes.intelligence - (attribute == AttributeType.intelligence ? 1 : 0))
-            .clamp(10, 999),
-        vitality: (state.attributes.vitality - (attribute == AttributeType.vitality ? 1 : 0)).clamp(10, 999),
-        agility: (state.attributes.agility - (attribute == AttributeType.agility ? 1 : 0)).clamp(10, 999),
+        strength:
+            (state.attributes.strength -
+                    (attribute == AttributeType.strength ? 1 : 0))
+                .clamp(10, 999),
+        intelligence:
+            (state.attributes.intelligence -
+                    (attribute == AttributeType.intelligence ? 1 : 0))
+                .clamp(10, 999),
+        vitality:
+            (state.attributes.vitality -
+                    (attribute == AttributeType.vitality ? 1 : 0))
+                .clamp(10, 999),
+        agility:
+            (state.attributes.agility -
+                    (attribute == AttributeType.agility ? 1 : 0))
+                .clamp(10, 999),
       );
 
-      state = state.copyWith(
-        xp: newXp,
-        attributes: newAttrs,
-      );
+      state = state.copyWith(xp: newXp, attributes: newAttrs);
     }
 
     _saveToDb();
@@ -161,10 +177,15 @@ class PlayerNotifier extends StateNotifier<Player> {
     if (state.statPoints <= 0) return;
 
     final newAttrs = PlayerAttributes(
-      strength: state.attributes.strength + (type == AttributeType.strength ? 1 : 0),
-      intelligence: state.attributes.intelligence + (type == AttributeType.intelligence ? 1 : 0),
-      vitality: state.attributes.vitality + (type == AttributeType.vitality ? 1 : 0),
-      agility: state.attributes.agility + (type == AttributeType.agility ? 1 : 0),
+      strength:
+          state.attributes.strength + (type == AttributeType.strength ? 1 : 0),
+      intelligence:
+          state.attributes.intelligence +
+          (type == AttributeType.intelligence ? 1 : 0),
+      vitality:
+          state.attributes.vitality + (type == AttributeType.vitality ? 1 : 0),
+      agility:
+          state.attributes.agility + (type == AttributeType.agility ? 1 : 0),
     );
 
     state = state.copyWith(
@@ -175,21 +196,40 @@ class PlayerNotifier extends StateNotifier<Player> {
     _saveToDb();
   }
 
+  void updateName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return;
+
+    final normalizedName = trimmed.length > 40
+        ? trimmed.substring(0, 40)
+        : trimmed;
+    if (normalizedName == state.name) return;
+
+    state = state.copyWith(name: normalizedName);
+    _saveToDb();
+  }
+
   void recordQuestCompletion({
     DateTime? completedAt,
     bool countsForCompetitive = false,
   }) {
     final completionDate = completedAt ?? DateTime.now();
     final lastCompletion = state.lastQuestCompletionDate;
-    final updatedHistory = _upsertActivityDate(state.activityHistory, completionDate);
+    final updatedHistory = _upsertActivityDate(
+      state.activityHistory,
+      completionDate,
+    );
     final updatedCompetitiveHistory = countsForCompetitive
         ? _upsertActivityDate(state.competitiveActivityHistory, completionDate)
         : state.competitiveActivityHistory;
 
-    if (lastCompletion != null && _daysBetween(lastCompletion, completionDate) == 0) {
-      final historyChanged = updatedHistory.length != state.activityHistory.length;
+    if (lastCompletion != null &&
+        _daysBetween(lastCompletion, completionDate) == 0) {
+      final historyChanged =
+          updatedHistory.length != state.activityHistory.length;
       final competitiveHistoryChanged =
-          updatedCompetitiveHistory.length != state.competitiveActivityHistory.length;
+          updatedCompetitiveHistory.length !=
+          state.competitiveActivityHistory.length;
 
       if (historyChanged || competitiveHistoryChanged) {
         state = state.copyWith(
@@ -206,7 +246,8 @@ class PlayerNotifier extends StateNotifier<Player> {
 
     final streak = switch (lastCompletion) {
       null => 1,
-      _ when _daysBetween(lastCompletion, completionDate) == 1 => state.currentStreak + 1,
+      _ when _daysBetween(lastCompletion, completionDate) == 1 =>
+        state.currentStreak + 1,
       _ => 1,
     };
 
@@ -232,24 +273,19 @@ class PlayerNotifier extends StateNotifier<Player> {
       nextStreak = 0;
     }
 
-    state = state.copyWith(
-      lastResetDate: now,
-      currentStreak: nextStreak,
-    );
+    state = state.copyWith(lastResetDate: now, currentStreak: nextStreak);
 
     _saveToDb();
   }
 
   void completeOnboarding(AwakeningPath focus) {
     final starterKit = starterQuestsForFocus(focus);
-    final competitiveCount =
-        starterKit.where((quest) => quest.isCompetitive).length;
+    final competitiveCount = starterKit
+        .where((quest) => quest.isCompetitive)
+        .length;
     final personalCount = starterKit.length - competitiveCount;
 
-    state = state.copyWith(
-      primaryFocus: focus,
-      hasCompletedOnboarding: true,
-    );
+    state = state.copyWith(primaryFocus: focus, hasCompletedOnboarding: true);
 
     _saveToDb();
     unawaited(
@@ -267,10 +303,7 @@ class PlayerNotifier extends StateNotifier<Player> {
     state = state.copyWith(primaryFocus: focus);
     _saveToDb();
     unawaited(
-      _analytics.logFocusChanged(
-        from: previousFocus.name,
-        to: focus.name,
-      ),
+      _analytics.logFocusChanged(from: previousFocus.name, to: focus.name),
     );
   }
 

@@ -27,7 +27,8 @@ The goal is simple:
 
 - `flutter analyze`
 - `flutter test`
-- `flutter build apk --debug`
+- `flutter build apk --debug --flavor staging`
+- `flutter build apk --debug --flavor production`
 - `cd functions && npm run build`
 
 ### Firebase
@@ -35,12 +36,14 @@ The goal is simple:
 - deploy Firestore rules if the data model or authority boundary changed
 - deploy Functions if callables or remote validation changed
 - confirm the app is pointing to the correct Firebase project
+- confirm the Android flavor matches the intended Firebase app identity
 
 ### Production Signals
 
 - confirm product analytics events still exist for the changed flow
 - confirm Crashlytics remains wired at startup
 - confirm new recoverable remote failures use the centralized crash boundary instead of silent swallow
+- confirm support/privacy/deletion surfaces still reflect the current operational policy
 
 ### Competitive Safety
 
@@ -59,8 +62,12 @@ Run these on a real authenticated build whenever the release touches progression
 4. start one competitive quest
 5. complete one competitive quest
 6. open Home, Rank, Quests, Stats
-7. trigger weekly boss panel if available
-8. confirm no obvious Crashlytics-worthy failure appears in flow
+7. open Conta and verify:
+   - connected account visibility
+   - policy/support visibility
+   - logout behavior
+8. trigger weekly boss panel if available
+9. confirm no obvious Crashlytics-worthy failure appears in flow
 
 ## Post-Release Review
 

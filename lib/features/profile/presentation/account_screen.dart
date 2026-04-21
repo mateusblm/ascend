@@ -24,6 +24,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final authState = ref.watch(authProvider);
     final authProfile = authState is AuthSuccess ? authState : null;
 
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (previous is AuthSuccess && next is! AuthSuccess && mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -192,6 +198,108 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
+                        'PRIVACIDADE E TERMOS',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white54,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'A base de privacidade, uso e responsabilidade do produto ja esta definida e pode ser consultada dentro do app enquanto os links publicos nao entram.',
+                        style: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12.5,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _openPolicyDialog(
+                                context,
+                                title: 'Politica de privacidade',
+                                content: _privacyPolicySummary,
+                              ),
+                              child: const Text('PRIVACIDADE'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _openPolicyDialog(
+                                context,
+                                title: 'Termos de uso',
+                                content: _termsOfUseSummary,
+                              ),
+                              child: const Text('TERMOS'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              RevealBlock(
+                delay: const Duration(milliseconds: 360),
+                child: _AccountPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'SUPORTE E DADOS',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white54,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const _InfoLine(
+                        label: 'Canal inicial de suporte',
+                        value: _supportEmail,
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Substitua esse inbox por um canal real antes de distribuir o app fora do teste controlado.',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11.8,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _SettingRow(
+                        label: 'Exclusao de conta e dados',
+                        value: 'Pedido manual com revisao operacional',
+                        helper:
+                            'O processo atual cobre remocao de acesso e limpeza dos dados remotos usados pelo app.',
+                        actionLabel: 'COMO FUNCIONA',
+                        onPressed: () => _openPolicyDialog(
+                          context,
+                          title: 'Exclusao de conta e dados',
+                          content: _accountDeletionSummary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              RevealBlock(
+                delay: const Duration(milliseconds: 420),
+                child: _AccountPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
                         'SESSAO',
                         style: TextStyle(
                           fontSize: 13,
@@ -329,7 +437,59 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       }
     }
   }
+
+  Future<void> _openPolicyDialog(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Text(
+              content,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12.8,
+                height: 1.5,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('FECHAR'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+const String _supportEmail = 'support@ascend.app';
+
+const String _privacyPolicySummary =
+    'Ascend coleta somente os dados necessarios para autenticacao, progresso do jogador, quests, estado competitivo, analytics operacionais e erros de execucao. '
+    'O objetivo e operar o produto, medir o funil principal e proteger a integridade competitiva. '
+    'O app nao deve vender dados pessoais. Dados de analytics e crash podem ser usados para diagnostico, estabilidade e melhoria de produto. '
+    'O usuario pode solicitar revisao ou exclusao dos dados operacionais pelos canais de suporte definidos pela release.';
+
+const String _termsOfUseSummary =
+    'Ascend e um produto de progressao pessoal com camadas competitivas e regras de integridade. '
+    'O usuario e responsavel pelas informacoes que registra, pelo uso da propria conta Google e pelo respeito ao uso honesto das mecanicas competitivas. '
+    'O app pode ajustar regras, temporadas, recompensas, verificacoes e politicas operacionais para manter estabilidade, seguranca e equilibrio de produto. '
+    'Abuso competitivo, manipulacao de fluxo ou exploracao deliberada podem gerar revisao operacional e perda de standing competitivo.';
+
+const String _accountDeletionSummary =
+    'Durante a fase atual, pedidos de exclusao devem ser tratados manualmente. '
+    'O fluxo minimo esperado e: confirmar a identidade do titular, registrar o pedido, remover o acesso autenticado quando aplicavel e limpar os dados remotos vinculados ao usuario usados pelo app. '
+    'Colecoes de leitura competitiva, season state e demais registros operacionais devem ser revisados no mesmo processo. '
+    'Antes de beta publica ou distribuicao aberta, esse fluxo precisa apontar para um canal real de suporte e uma politica publica de prazo de atendimento.';
 
 class _AccountAvatar extends StatelessWidget {
   const _AccountAvatar({required this.photoUrl});

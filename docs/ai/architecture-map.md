@@ -24,6 +24,9 @@ lib/
 - Riverpod is the state management solution.
 - Isar is the local persistence layer.
 - Firebase Auth provides authentication.
+- Android release identity now prefers explicit flavors instead of one placeholder package:
+  - `production` -> `com.ascend.mobile`
+  - `staging` -> `com.ascend.mobile.staging`
 - The app currently uses feature-local controllers with domain and presentation separation.
 - Isar is injected through `isarProvider` instead of relying on a global in `main.dart`.
 
@@ -257,7 +260,7 @@ Current production-oriented architectural targets:
    - versioning
    - signing path
 2. make runtime environment explicit:
-   - staging/prod strategy
+   - staging/prod flavor strategy
    - Firebase target clarity
    - deployment discipline
 3. keep product trust surfaces first-class:
@@ -292,5 +295,6 @@ Current production-oriented architectural targets:
 
 - do not break Firebase setup by changing Android identifiers casually
 - if Android identifiers are changed for release readiness, update Firebase config in the same workstream
+- if Android flavors are changed, keep Firebase Android app registrations aligned with each flavor package id
 - do not edit Isar generated files manually
 - do not perform broad directory reshuffles without updating documentation and imports

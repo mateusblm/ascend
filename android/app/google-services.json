@@ -7,6 +7,80 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:331143433117:android:71c7404432cda669ed3d74",
+        "android_client_info": {
+          "package_name": "com.ascend.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "331143433117-151dk21v7spem3a7smmnp9vjeaq3vaf5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ascend.mobile",
+            "certificate_hash": "3f156ef44f6d774cff745a7a580770db918e0c05"
+          }
+        },
+        {
+          "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCMV0CoYEo2qZT8rhw30zqIKxJoAy_R9c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:331143433117:android:097ed08659aeb9f3ed3d74",
+        "android_client_info": {
+          "package_name": "com.ascend.mobile.staging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "331143433117-smroqrlnp5e2s851ijhbfpf6r0miakrl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ascend.mobile.staging",
+            "certificate_hash": "3f156ef44f6d774cff745a7a580770db918e0c05"
+          }
+        },
+        {
+          "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCMV0CoYEo2qZT8rhw30zqIKxJoAy_R9c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:331143433117:android:34c7b84f0a0a89c2ed3d74",
         "android_client_info": {
           "package_name": "com.example.ascend"

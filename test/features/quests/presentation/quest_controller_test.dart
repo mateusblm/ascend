@@ -19,17 +19,11 @@ void main() {
       final now = DateTime(2026, 4, 19, 8, 0);
 
       expect(
-        isDailyResetDue(
-          lastReset: DateTime(2026, 4, 18, 23, 59),
-          now: now,
-        ),
+        isDailyResetDue(lastReset: DateTime(2026, 4, 18, 23, 59), now: now),
         isTrue,
       );
       expect(
-        isDailyResetDue(
-          lastReset: DateTime(2026, 4, 19, 0, 1),
-          now: now,
-        ),
+        isDailyResetDue(lastReset: DateTime(2026, 4, 19, 0, 1), now: now),
         isFalse,
       );
     });
@@ -57,28 +51,31 @@ void main() {
       expect(notifier.state.lastResetDate, DateTime(2026, 4, 19));
     });
 
-    test('handleDailyReset preserves streak when the last completion was yesterday', () {
-      final notifier = PlayerNotifier(
-        _NoopIsar(),
-        Player(
-          name: 'Tester',
-          level: 3,
-          xp: 10,
-          maxXp: 100,
-          attributes: PlayerAttributes(),
-          lastResetDate: DateTime(2026, 4, 18),
-          currentStreak: 5,
-          bestStreak: 5,
-          lastQuestCompletionDate: DateTime(2026, 4, 18),
-          hasCompletedOnboarding: true,
-        ),
-      );
+    test(
+      'handleDailyReset preserves streak when the last completion was yesterday',
+      () {
+        final notifier = PlayerNotifier(
+          _NoopIsar(),
+          Player(
+            name: 'Tester',
+            level: 3,
+            xp: 10,
+            maxXp: 100,
+            attributes: PlayerAttributes(),
+            lastResetDate: DateTime(2026, 4, 18),
+            currentStreak: 5,
+            bestStreak: 5,
+            lastQuestCompletionDate: DateTime(2026, 4, 18),
+            hasCompletedOnboarding: true,
+          ),
+        );
 
-      notifier.handleDailyReset(DateTime(2026, 4, 19));
+        notifier.handleDailyReset(DateTime(2026, 4, 19));
 
-      expect(notifier.state.currentStreak, 5);
-      expect(notifier.state.lastResetDate, DateTime(2026, 4, 19));
-    });
+        expect(notifier.state.currentStreak, 5);
+        expect(notifier.state.lastResetDate, DateTime(2026, 4, 19));
+      },
+    );
   });
 }
 

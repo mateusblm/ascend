@@ -32,42 +32,41 @@ final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
 });
 
 List<Quest> starterQuestsForFocus(AwakeningPath focus) {
-  final competitiveTemplates = templatesForFocus(focus)
-      .take(2)
-      .map((template) => template.toQuest())
-      .toList();
+  final competitiveTemplates = templatesForFocus(
+    focus,
+  ).take(2).map((template) => template.toQuest()).toList();
 
   final personalQuest = switch (focus) {
     AwakeningPath.discipline => _buildStarterPersonalQuest(
-        id: 'discipline-personal',
-        title: 'Arrumar a cama ao acordar',
-        rewardAttribute: AttributeType.vitality,
-        xpReward: personalQuestDefaultXp,
-      ),
+      id: 'discipline-personal',
+      title: 'Arrumar a cama ao acordar',
+      rewardAttribute: AttributeType.vitality,
+      xpReward: personalQuestDefaultXp,
+    ),
     AwakeningPath.study => _buildStarterPersonalQuest(
-        id: 'study-personal',
-        title: 'Organizar material de estudo',
-        rewardAttribute: AttributeType.intelligence,
-        xpReward: personalQuestDefaultXp,
-      ),
+      id: 'study-personal',
+      title: 'Organizar material de estudo',
+      rewardAttribute: AttributeType.intelligence,
+      xpReward: personalQuestDefaultXp,
+    ),
     AwakeningPath.training => _buildStarterPersonalQuest(
-        id: 'training-personal',
-        title: 'Separar roupa e agua para o treino',
-        rewardAttribute: AttributeType.vitality,
-        xpReward: personalQuestDefaultXp,
-      ),
+      id: 'training-personal',
+      title: 'Separar roupa e agua para o treino',
+      rewardAttribute: AttributeType.vitality,
+      xpReward: personalQuestDefaultXp,
+    ),
     AwakeningPath.health => _buildStarterPersonalQuest(
-        id: 'health-personal',
-        title: 'Bater a meta de agua do dia',
-        rewardAttribute: AttributeType.vitality,
-        xpReward: personalQuestDefaultXp,
-      ),
+      id: 'health-personal',
+      title: 'Bater a meta de agua do dia',
+      rewardAttribute: AttributeType.vitality,
+      xpReward: personalQuestDefaultXp,
+    ),
     AwakeningPath.productivity => _buildStarterPersonalQuest(
-        id: 'productivity-personal',
-        title: 'Definir a tarefa critica do dia',
-        rewardAttribute: AttributeType.agility,
-        xpReward: personalQuestDefaultXp,
-      ),
+      id: 'productivity-personal',
+      title: 'Definir a tarefa critica do dia',
+      rewardAttribute: AttributeType.agility,
+      xpReward: personalQuestDefaultXp,
+    ),
   };
 
   return [...competitiveTemplates, personalQuest];
@@ -90,10 +89,7 @@ Quest _buildStarterPersonalQuest({
   );
 }
 
-bool isDailyResetDue({
-  required DateTime lastReset,
-  required DateTime now,
-}) {
+bool isDailyResetDue({required DateTime lastReset, required DateTime now}) {
   return now.year != lastReset.year ||
       now.month != lastReset.month ||
       now.day != lastReset.day;
@@ -127,11 +123,11 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
   void _init() {
     final savedQuests = _isar.quests.where().findAllSync();
-    final player = _isar.players.where().findFirstSync();
+    final player = ref.read(playerProvider);
 
     if (savedQuests.isEmpty) {
-      if (player?.hasCompletedOnboarding == true) {
-        _seedInitialQuests(player!.primaryFocus);
+      if (player.hasCompletedOnboarding) {
+        _seedInitialQuests(player.primaryFocus);
       } else {
         state = [];
       }
@@ -180,8 +176,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     if (state.isNotEmpty) return;
     final starterKit = starterQuestsForFocus(focus);
     _seedInitialQuests(focus);
-    final competitiveCount =
-        starterKit.where((quest) => quest.isCompetitive).length;
+    final competitiveCount = starterKit
+        .where((quest) => quest.isCompetitive)
+        .length;
     final personalCount = starterKit.length - competitiveCount;
     unawaited(
       _analytics.logStarterKitApplied(
@@ -303,7 +300,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     DateTime startedAt = DateTime.now();
     if (_competitiveAuthority != null) {
-      final session = await _competitiveAuthority.startQuestSession(quest: quest);
+      final session = await _competitiveAuthority.startQuestSession(
+        quest: quest,
+      );
       startedAt = session.startedAt;
     }
 
@@ -404,7 +403,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   int addSuggestedQuests(List<QuestSuggestion> suggestions) {
     if (suggestions.isEmpty) return 0;
 
-    final existingTitles = state.map((quest) => _normalizeTitle(quest.title)).toSet();
+    final existingTitles = state
+        .map((quest) => _normalizeTitle(quest.title))
+        .toSet();
     final newQuests = <Quest>[];
 
     for (final suggestion in suggestions) {
@@ -465,7 +466,10 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     state = newState;
   }
 
-  void _applyCompletion(Quest completedQuest, {void Function(int level)? onLevelUp}) {
+  void _applyCompletion(
+    Quest completedQuest, {
+    void Function(int level)? onLevelUp,
+  }) {
     final player = ref.read(playerProvider);
     final questWithSnapshot = completedQuest.copyWith(
       preRewardLevel: player.level,
@@ -480,12 +484,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
     _persistQuestUpdate(questWithSnapshot);
 
-    ref.read(playerProvider.notifier).addReward(
+    ref
+        .read(playerProvider.notifier)
+        .addReward(
           questWithSnapshot.xpReward,
           questWithSnapshot.rewardAttribute,
           onLevelUp: onLevelUp,
         );
-    ref.read(playerProvider.notifier).recordQuestCompletion(
+    ref
+        .read(playerProvider.notifier)
+        .recordQuestCompletion(
           completedAt: questWithSnapshot.completedAt,
           countsForCompetitive: questWithSnapshot.countsTowardCompetitive,
         );

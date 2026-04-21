@@ -23,6 +23,7 @@ These rules should have automated coverage first:
 - login state transitions
 - account screen rendering and session visibility
 - local profile edits such as player name updates
+- cloud profile migration and account restore behavior
 - quest list rendering
 - add quest flow
 - delete quest flow
@@ -153,6 +154,11 @@ Current competitive additions to protect:
     - package identifier
     - Firebase environment selection
     - install/update behavior on a real device
+49. account-backed player profile continuity should protect:
+    - first login migration from local cache to remote profile
+    - no automatic upload of an empty fresh profile
+    - restored level/xp/streak/focus/onboarding on a second device
+    - local cache remaining scoped to the signed-in uid instead of one shared device record
 
 ## AI Test Rules
 

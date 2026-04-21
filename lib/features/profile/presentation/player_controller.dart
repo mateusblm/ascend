@@ -2,46 +2,201 @@ import 'dart:async';
 
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
+import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
-final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
-  final isar = ref.watch(isarProvider);
-  final savedPlayer = isar.players.where().findFirstSync();
-  final currentUser = FirebaseAuth.instance.currentUser;
+final playerProfileRepositoryProvider = Provider<PlayerProfileRepository>((
+  ref,
+) {
+  return PlayerProfileRepository(FirebaseFirestore.instance);
+});
 
-  return PlayerNotifier(
-    isar,
-    savedPlayer ??
-        Player(
-          name: currentUser?.displayName ?? 'Jogador',
-          level: 1,
-          xp: 0,
-          maxXp: 100,
-          statPoints: 0,
-          attributes: PlayerAttributes(),
-          lastResetDate: DateTime.now(),
-        ),
+final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
+  final notifier = PlayerNotifier(
+    ref.watch(isarProvider),
+    Player.initial(
+      name: FirebaseAuth.instance.currentUser?.displayName ?? 'Jogador',
+    ),
     analytics: ref.read(analyticsProvider),
+    auth: FirebaseAuth.instance,
+    profileRepository: ref.read(playerProfileRepositoryProvider),
+    enableCloudSync: true,
   );
+
+  ref.onDispose(notifier.dispose);
+  return notifier;
 });
 
 class PlayerNotifier extends StateNotifier<Player> {
-  PlayerNotifier(this._isar, super.state, {AppAnalytics? analytics})
-    : _analytics = analytics ?? const NoopAppAnalytics();
+  PlayerNotifier(
+    this._isar,
+    super.state, {
+    AppAnalytics? analytics,
+    FirebaseAuth? auth,
+    PlayerProfileRepository? profileRepository,
+    bool enableCloudSync = false,
+  }) : _analytics = analytics ?? const NoopAppAnalytics(),
+       _auth = enableCloudSync ? (auth ?? FirebaseAuth.instance) : auth,
+       _profileRepository = profileRepository {
+    if (enableCloudSync) {
+      _bindCloudProfile();
+    }
+  }
 
   final Isar _isar;
   final AppAnalytics _analytics;
+  final FirebaseAuth? _auth;
+  final PlayerProfileRepository? _profileRepository;
+  StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<Player?>? _remoteProfileSubscription;
+  String? _activeUid;
+  bool _isApplyingRemoteSnapshot = false;
+  bool _handledMissingRemoteForActiveUser = false;
 
-  void _saveToDb() {
+  void _bindCloudProfile() {
+    final auth = _auth;
+    if (auth == null) {
+      return;
+    }
+
+    _authSubscription = auth.authStateChanges().listen(_handleAuthChanged);
+    unawaited(_handleAuthChanged(auth.currentUser));
+  }
+
+  Future<void> _handleAuthChanged(User? user) async {
+    await _remoteProfileSubscription?.cancel();
+    _remoteProfileSubscription = null;
+    _handledMissingRemoteForActiveUser = false;
+    _activeUid = user?.uid;
+
+    if (user == null) {
+      state = Player.initial(name: 'Jogador');
+      return;
+    }
+
+    final fallbackName = _fallbackNameFor(user);
+    final cachedPlayer = _loadCachedPlayerForUid(user.uid);
+    final legacyPlayer = cachedPlayer == null
+        ? _loadLegacyCachedPlayer()
+        : null;
+    final seededPlayer =
+        cachedPlayer ??
+        legacyPlayer ??
+        Player.initial(name: fallbackName, ownerUid: user.uid);
+
+    state = _normalizedPlayerForUser(
+      seededPlayer,
+      uid: user.uid,
+      fallbackName: fallbackName,
+    );
+    _saveToDb(syncRemote: false);
+
+    _remoteProfileSubscription = _profileRepository
+        ?.watchProfile(uid: user.uid, fallbackName: fallbackName)
+        .listen((remotePlayer) {
+          if (remotePlayer != null) {
+            _applyRemoteProfile(remotePlayer);
+            return;
+          }
+
+          if (_handledMissingRemoteForActiveUser) {
+            return;
+          }
+          _handledMissingRemoteForActiveUser = true;
+
+          if (shouldUploadPlayerProfileWhenRemoteMissing(
+            state,
+            fallbackName: fallbackName,
+          )) {
+            unawaited(_pushRemoteProfile(state));
+          }
+        });
+  }
+
+  Player _normalizedPlayerForUser(
+    Player player, {
+    required String uid,
+    required String fallbackName,
+  }) {
+    final normalizedName = player.name.trim().isEmpty
+        ? fallbackName
+        : player.name.trim();
+    return player.copyWith(ownerUid: uid, name: normalizedName);
+  }
+
+  String _fallbackNameFor(User user) {
+    final displayName = user.displayName?.trim();
+    if (displayName == null || displayName.isEmpty) {
+      return 'Jogador';
+    }
+    return displayName;
+  }
+
+  void _applyRemoteProfile(Player remotePlayer) {
+    _isApplyingRemoteSnapshot = true;
+    state = remotePlayer;
+    _saveToDb(syncRemote: false);
+    _isApplyingRemoteSnapshot = false;
+  }
+
+  Player? _loadCachedPlayerForUid(String uid) {
+    final players = _isar.players.where().findAllSync();
+    for (final player in players) {
+      if (player.ownerUid == uid) {
+        return player;
+      }
+    }
+    return null;
+  }
+
+  Player? _loadLegacyCachedPlayer() {
+    final players = _isar.players.where().findAllSync();
+    for (final player in players) {
+      if (player.ownerUid == null) {
+        return player;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _pushRemoteProfile(Player nextState) async {
+    final uid = _activeUid;
+    final repository = _profileRepository;
+    if (uid == null || repository == null || _isApplyingRemoteSnapshot) {
+      return;
+    }
+
+    await repository.upsertProfile(
+      uid: uid,
+      player: nextState.copyWith(ownerUid: uid),
+    );
+  }
+
+  void _saveToDb({bool syncRemote = true}) {
+    final localState = state.copyWith(ownerUid: _activeUid ?? state.ownerUid);
+    final existing = _activeUid == null
+        ? null
+        : _loadCachedPlayerForUid(_activeUid!);
+    if (existing != null && existing.id != localState.id) {
+      localState.id = existing.id;
+    }
+
     _isar.writeTxnSync(() {
-      _isar.players.putSync(state);
+      _isar.players.putSync(localState);
     });
+
+    state = localState;
+
+    if (syncRemote) {
+      unawaited(_pushRemoteProfile(localState));
+    }
   }
 
   DateTime _dateOnly(DateTime value) {
@@ -330,5 +485,12 @@ class PlayerNotifier extends StateNotifier<Player> {
   void markWeeklyBossClaimedNow() {
     state = state.copyWith(weeklyBossLastClaimedAt: DateTime.now());
     _saveToDb();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _remoteProfileSubscription?.cancel();
+    super.dispose();
   }
 }

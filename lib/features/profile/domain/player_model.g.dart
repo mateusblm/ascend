@@ -48,54 +48,64 @@ const PlayerSchema = CollectionSchema(
       name: r'hasCompletedOnboarding',
       type: IsarType.bool,
     ),
-    r'lastCompetitiveQuestCompletionDate': PropertySchema(
+    r'hasMeaningfulProgress': PropertySchema(
       id: 6,
+      name: r'hasMeaningfulProgress',
+      type: IsarType.bool,
+    ),
+    r'lastCompetitiveQuestCompletionDate': PropertySchema(
+      id: 7,
       name: r'lastCompetitiveQuestCompletionDate',
       type: IsarType.dateTime,
     ),
     r'lastQuestCompletionDate': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'lastQuestCompletionDate',
       type: IsarType.dateTime,
     ),
     r'lastResetDate': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'lastResetDate',
       type: IsarType.dateTime,
     ),
     r'level': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'level',
       type: IsarType.long,
     ),
     r'maxXp': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'maxXp',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'name',
       type: IsarType.string,
     ),
+    r'ownerUid': PropertySchema(
+      id: 13,
+      name: r'ownerUid',
+      type: IsarType.string,
+    ),
     r'primaryFocus': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'primaryFocus',
       type: IsarType.byte,
       enumMap: _PlayerprimaryFocusEnumValueMap,
     ),
     r'statPoints': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'statPoints',
       type: IsarType.long,
     ),
     r'weeklyBossLastClaimedAt': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'weeklyBossLastClaimedAt',
       type: IsarType.dateTime,
     ),
     r'xp': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'xp',
       type: IsarType.long,
     )
@@ -126,6 +136,12 @@ int _playerEstimateSize(
           object.attributes, allOffsets[PlayerAttributes]!, allOffsets);
   bytesCount += 3 + object.competitiveActivityHistory.length * 8;
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.ownerUid;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -146,16 +162,18 @@ void _playerSerialize(
   writer.writeDateTimeList(offsets[3], object.competitiveActivityHistory);
   writer.writeLong(offsets[4], object.currentStreak);
   writer.writeBool(offsets[5], object.hasCompletedOnboarding);
-  writer.writeDateTime(offsets[6], object.lastCompetitiveQuestCompletionDate);
-  writer.writeDateTime(offsets[7], object.lastQuestCompletionDate);
-  writer.writeDateTime(offsets[8], object.lastResetDate);
-  writer.writeLong(offsets[9], object.level);
-  writer.writeLong(offsets[10], object.maxXp);
-  writer.writeString(offsets[11], object.name);
-  writer.writeByte(offsets[12], object.primaryFocus.index);
-  writer.writeLong(offsets[13], object.statPoints);
-  writer.writeDateTime(offsets[14], object.weeklyBossLastClaimedAt);
-  writer.writeLong(offsets[15], object.xp);
+  writer.writeBool(offsets[6], object.hasMeaningfulProgress);
+  writer.writeDateTime(offsets[7], object.lastCompetitiveQuestCompletionDate);
+  writer.writeDateTime(offsets[8], object.lastQuestCompletionDate);
+  writer.writeDateTime(offsets[9], object.lastResetDate);
+  writer.writeLong(offsets[10], object.level);
+  writer.writeLong(offsets[11], object.maxXp);
+  writer.writeString(offsets[12], object.name);
+  writer.writeString(offsets[13], object.ownerUid);
+  writer.writeByte(offsets[14], object.primaryFocus.index);
+  writer.writeLong(offsets[15], object.statPoints);
+  writer.writeDateTime(offsets[16], object.weeklyBossLastClaimedAt);
+  writer.writeLong(offsets[17], object.xp);
 }
 
 Player _playerDeserialize(
@@ -177,18 +195,19 @@ Player _playerDeserialize(
     currentStreak: reader.readLongOrNull(offsets[4]) ?? 0,
     hasCompletedOnboarding: reader.readBoolOrNull(offsets[5]) ?? false,
     id: id,
-    lastCompetitiveQuestCompletionDate: reader.readDateTimeOrNull(offsets[6]),
-    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[7]),
-    lastResetDate: reader.readDateTime(offsets[8]),
-    level: reader.readLong(offsets[9]),
-    maxXp: reader.readLong(offsets[10]),
-    name: reader.readString(offsets[11]),
+    lastCompetitiveQuestCompletionDate: reader.readDateTimeOrNull(offsets[7]),
+    lastQuestCompletionDate: reader.readDateTimeOrNull(offsets[8]),
+    lastResetDate: reader.readDateTime(offsets[9]),
+    level: reader.readLong(offsets[10]),
+    maxXp: reader.readLong(offsets[11]),
+    name: reader.readString(offsets[12]),
+    ownerUid: reader.readStringOrNull(offsets[13]),
     primaryFocus:
-        _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[12])] ??
+        _PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offsets[14])] ??
             AwakeningPath.discipline,
-    statPoints: reader.readLongOrNull(offsets[13]) ?? 0,
-    weeklyBossLastClaimedAt: reader.readDateTimeOrNull(offsets[14]),
-    xp: reader.readLong(offsets[15]),
+    statPoints: reader.readLongOrNull(offsets[15]) ?? 0,
+    weeklyBossLastClaimedAt: reader.readDateTimeOrNull(offsets[16]),
+    xp: reader.readLong(offsets[17]),
   );
   return object;
 }
@@ -218,25 +237,29 @@ P _playerDeserializeProp<P>(
     case 5:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 6:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 10:
       return (reader.readLong(offset)) as P;
     case 11:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 12:
+      return (reader.readString(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
       return (_PlayerprimaryFocusValueEnumMap[reader.readByteOrNull(offset)] ??
           AwakeningPath.discipline) as P;
-    case 13:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 14:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 15:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 16:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 17:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -751,6 +774,16 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterFilterCondition>
+      hasMeaningfulProgressEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasMeaningfulProgress',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1237,6 +1270,152 @@ extension PlayerQueryFilter on QueryBuilder<Player, Player, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'ownerUid',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'ownerUid',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ownerUid',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'ownerUid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'ownerUid',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ownerUid',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterFilterCondition> ownerUidIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'ownerUid',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterFilterCondition> primaryFocusEqualTo(
       AwakeningPath value) {
     return QueryBuilder.apply(this, (query) {
@@ -1519,6 +1698,18 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> sortByHasMeaningfulProgress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasMeaningfulProgress', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByHasMeaningfulProgressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasMeaningfulProgress', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy>
       sortByLastCompetitiveQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
@@ -1591,6 +1782,18 @@ extension PlayerQuerySortBy on QueryBuilder<Player, Player, QSortBy> {
   QueryBuilder<Player, Player, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByOwnerUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> sortByOwnerUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.desc);
     });
   }
 
@@ -1682,6 +1885,18 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> thenByHasMeaningfulProgress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasMeaningfulProgress', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByHasMeaningfulProgressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasMeaningfulProgress', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1769,6 +1984,18 @@ extension PlayerQuerySortThenBy on QueryBuilder<Player, Player, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Player, Player, QAfterSortBy> thenByOwnerUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Player, Player, QAfterSortBy> thenByOwnerUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
   QueryBuilder<Player, Player, QAfterSortBy> thenByPrimaryFocus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'primaryFocus', Sort.asc);
@@ -1851,6 +2078,12 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
     });
   }
 
+  QueryBuilder<Player, Player, QDistinct> distinctByHasMeaningfulProgress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasMeaningfulProgress');
+    });
+  }
+
   QueryBuilder<Player, Player, QDistinct>
       distinctByLastCompetitiveQuestCompletionDate() {
     return QueryBuilder.apply(this, (query) {
@@ -1886,6 +2119,13 @@ extension PlayerQueryWhereDistinct on QueryBuilder<Player, Player, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Player, Player, QDistinct> distinctByOwnerUid(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ownerUid', caseSensitive: caseSensitive);
     });
   }
 
@@ -1961,6 +2201,12 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Player, bool, QQueryOperations> hasMeaningfulProgressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasMeaningfulProgress');
+    });
+  }
+
   QueryBuilder<Player, DateTime?, QQueryOperations>
       lastCompetitiveQuestCompletionDateProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1996,6 +2242,12 @@ extension PlayerQueryProperty on QueryBuilder<Player, Player, QQueryProperty> {
   QueryBuilder<Player, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Player, String?, QQueryOperations> ownerUidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ownerUid');
     });
   }
 

@@ -43,6 +43,7 @@ class PlayerAttributes {
 class Player {
   Id id = Isar.autoIncrement;
 
+  final String? ownerUid;
   final String name;
   final int level;
   final int xp;
@@ -63,6 +64,7 @@ class Player {
 
   Player({
     this.id = Isar.autoIncrement,
+    this.ownerUid,
     required this.name,
     required this.level,
     required this.xp,
@@ -81,7 +83,40 @@ class Player {
     this.weeklyBossLastClaimedAt,
   });
 
+  static Player initial({
+    required String name,
+    String? ownerUid,
+    DateTime? now,
+  }) {
+    final seedTime = now ?? DateTime.now();
+    return Player(
+      ownerUid: ownerUid,
+      name: name,
+      level: 1,
+      xp: 0,
+      maxXp: 100,
+      statPoints: 0,
+      attributes: PlayerAttributes(),
+      lastResetDate: seedTime,
+    );
+  }
+
+  bool get hasMeaningfulProgress {
+    return hasCompletedOnboarding ||
+        level > 1 ||
+        xp > 0 ||
+        statPoints > 0 ||
+        currentStreak > 0 ||
+        bestStreak > 0 ||
+        activityHistory.isNotEmpty ||
+        competitiveActivityHistory.isNotEmpty ||
+        lastQuestCompletionDate != null ||
+        lastCompetitiveQuestCompletionDate != null ||
+        weeklyBossLastClaimedAt != null;
+  }
+
   Player copyWith({
+    String? ownerUid,
     String? name,
     int? level,
     int? xp,
@@ -104,6 +139,7 @@ class Player {
   }) {
     return Player(
       id: id,
+      ownerUid: ownerUid ?? this.ownerUid,
       name: name ?? this.name,
       level: level ?? this.level,
       xp: xp ?? this.xp,

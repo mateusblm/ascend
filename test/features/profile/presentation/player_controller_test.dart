@@ -5,28 +5,31 @@ import 'package:isar/isar.dart';
 
 void main() {
   group('PlayerNotifier quest completion tracking', () {
-    test('personal completion updates general activity without touching competitive history', () {
-      final notifier = PlayerNotifier(
-        _NoopIsar(),
-        Player(
-          name: 'Hunter',
-          level: 6,
-          xp: 40,
-          maxXp: 100,
-          attributes: PlayerAttributes(),
-          lastResetDate: DateTime(2026, 4, 19),
-          hasCompletedOnboarding: true,
-        ),
-      );
-      final completedAt = DateTime(2026, 4, 19, 9);
+    test(
+      'personal completion updates general activity without touching competitive history',
+      () {
+        final notifier = PlayerNotifier(
+          _NoopIsar(),
+          Player(
+            name: 'Hunter',
+            level: 6,
+            xp: 40,
+            maxXp: 100,
+            attributes: PlayerAttributes(),
+            lastResetDate: DateTime(2026, 4, 19),
+            hasCompletedOnboarding: true,
+          ),
+        );
+        final completedAt = DateTime(2026, 4, 19, 9);
 
-      notifier.recordQuestCompletion(completedAt: completedAt);
+        notifier.recordQuestCompletion(completedAt: completedAt);
 
-      expect(notifier.state.activityHistory, [DateTime(2026, 4, 19)]);
-      expect(notifier.state.lastQuestCompletionDate, completedAt);
-      expect(notifier.state.competitiveActivityHistory, isEmpty);
-      expect(notifier.state.lastCompetitiveQuestCompletionDate, isNull);
-    });
+        expect(notifier.state.activityHistory, [DateTime(2026, 4, 19)]);
+        expect(notifier.state.lastQuestCompletionDate, completedAt);
+        expect(notifier.state.competitiveActivityHistory, isEmpty);
+        expect(notifier.state.lastCompetitiveQuestCompletionDate, isNull);
+      },
+    );
 
     test('competitive completion updates dedicated competitive history', () {
       final notifier = PlayerNotifier(
@@ -49,7 +52,9 @@ void main() {
       );
 
       expect(notifier.state.activityHistory, [DateTime(2026, 4, 19)]);
-      expect(notifier.state.competitiveActivityHistory, [DateTime(2026, 4, 19)]);
+      expect(notifier.state.competitiveActivityHistory, [
+        DateTime(2026, 4, 19),
+      ]);
       expect(notifier.state.lastCompetitiveQuestCompletionDate, completedAt);
     });
   });

@@ -54,6 +54,11 @@ lib/
 ### Player Progression
 - player state is exposed through `playerProvider`
 - leveling, XP, stat points, and attribute growth are product-critical rules
+- player profile is no longer device-only:
+  - canonical account progress now lives in Firestore at `users/{uid}/profile/current`
+  - Isar now acts as a per-user local cache instead of the only source of truth
+  - first login after this change migrates an existing local player profile when meaningful progress already exists
+  - a fresh device with no meaningful local progress should not create an empty remote profile automatically
 - local player profile now also includes lightweight identity settings:
   - player name is editable through the player controller
   - primary focus can be changed from a dedicated account-management flow
@@ -145,6 +150,10 @@ lib/
   - season legacy/profile
   - integrity
   - weekly boss completions
+- player profile is the current exception to the competitive read-model rule:
+  - `users/{uid}/profile/current` is user-owned and client-written
+  - it is meant for account continuity of level, XP, attributes, streak, onboarding state, focus, and related profile progress
+  - competitive progression and integrity remain backend-authored separately
 - weekly boss claim no longer falls back to direct client writes once the callable path is available
 - competitive integrity now has its own silent read-model:
   - `competitive_integrity.dart`

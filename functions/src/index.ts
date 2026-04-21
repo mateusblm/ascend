@@ -67,6 +67,14 @@ type CompetitiveIntegritySource = ReturnType<
   typeof validateCompetitiveIntegritySourcePayload
 >;
 
+type CompetitiveQuestSessionRecord = {
+  startedAt?: admin.firestore.Timestamp | null;
+};
+
+type CompetitiveQuestGrantRecord = {
+  completedAt?: admin.firestore.Timestamp | null;
+};
+
 const COMPETITIVE_SYNC_SCHEMA_VERSION = 3;
 
 type ServerRankStatus =
@@ -714,6 +722,101 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
     xpReward,
     rewardAttribute,
     reflectionAnswer,
+  };
+}
+
+export function resolveCompetitiveQuestSessionStart(args: {
+  quest: ReturnType<typeof validateCompetitiveQuestSessionPayload>;
+  session: CompetitiveQuestSessionRecord | null;
+  grant: CompetitiveQuestGrantRecord | null;
+  now: admin.firestore.Timestamp;
+}) {
+  const {quest, session, grant, now} = args;
+
+  if (grant) {
+    throw new HttpsError('failed-precondition', 'Essa quest ja foi validada.');
+  }
+
+  if (session?.startedAt instanceof admin.firestore.Timestamp) {
+    return {
+      status: 'already_started' as const,
+      startedAt: session.startedAt.toDate().toISOString(),
+      sessionWrite: null,
+    };
+  }
+
+  return {
+    status: 'started' as const,
+    startedAt: now.toDate().toISOString(),
+    sessionWrite: {
+      questId: quest.questId,
+      title: quest.title,
+      templateType: quest.templateType,
+      verificationMode: quest.verificationMode,
+      targetDurationMinutes: quest.targetDurationMinutes,
+      xpReward: quest.xpReward,
+      rewardAttribute: quest.rewardAttribute,
+      startedAt: now,
+      status: 'inProgress',
+      updatedAt: now,
+    },
+  };
+}
+
+export function resolveCompetitiveQuestCompletionVerification(args: {
+  quest: ReturnType<typeof validateCompetitiveQuestSessionPayload>;
+  session: CompetitiveQuestSessionRecord | null;
+  grant: CompetitiveQuestGrantRecord | null;
+  now: admin.firestore.Timestamp;
+}) {
+  const {quest, session, grant, now} = args;
+
+  if (grant) {
+    return {
+      status: 'already_verified' as const,
+      completedAt: grant.completedAt instanceof admin.firestore.Timestamp
+        ? grant.completedAt.toDate().toISOString()
+        : now.toDate().toISOString(),
+      grantWrite: null,
+      sessionWrite: null,
+    };
+  }
+
+  if (quest.verificationMode === 'timer' || quest.verificationMode === 'timerWithReflection') {
+    if (!(session?.startedAt instanceof admin.firestore.Timestamp)) {
+      throw new HttpsError('failed-precondition', 'A sessao ainda nao foi iniciada.');
+    }
+
+    const elapsedMinutes = Math.floor((now.toMillis() - session.startedAt.toMillis()) / (60 * 1000));
+    if (elapsedMinutes < quest.targetDurationMinutes) {
+      throw new HttpsError('failed-precondition', 'Ainda falta tempo para validar essa quest.');
+    }
+  }
+
+  if (quest.verificationMode === 'timerWithReflection' && !quest.reflectionAnswer) {
+    throw new HttpsError('failed-precondition', 'A resposta curta ainda nao foi enviada.');
+  }
+
+  return {
+    status: 'verified' as const,
+    completedAt: now.toDate().toISOString(),
+    grantWrite: {
+      questId: quest.questId,
+      title: quest.title,
+      templateType: quest.templateType,
+      verificationMode: quest.verificationMode,
+      targetDurationMinutes: quest.targetDurationMinutes,
+      xpReward: quest.xpReward,
+      rewardAttribute: quest.rewardAttribute,
+      completedAt: now,
+      dayKey: normalizedDateKey(now),
+      approvedAt: now,
+    },
+    sessionWrite: {
+      status: 'verified',
+      completedAt: now,
+      updatedAt: now,
+    },
   };
 }
 
@@ -1726,37 +1829,20 @@ export const startCompetitiveQuestSession = onCall(
         transaction.get(sessionRef),
         transaction.get(grantRef),
       ]);
+      const resolution = resolveCompetitiveQuestSessionStart({
+        quest,
+        session: sessionSnap.exists ? (sessionSnap.data() ?? null) : null,
+        grant: grantSnap.exists ? (grantSnap.data() ?? null) : null,
+        now,
+      });
 
-      if (grantSnap.exists) {
-        throw new HttpsError('failed-precondition', 'Essa quest ja foi validada.');
+      if (resolution.sessionWrite) {
+        transaction.set(sessionRef, resolution.sessionWrite, {merge: true});
       }
-
-      if (sessionSnap.exists) {
-        const existingStartedAt = sessionSnap.data()?.startedAt;
-        if (existingStartedAt instanceof admin.firestore.Timestamp) {
-          return {
-            status: 'already_started' as const,
-            startedAt: existingStartedAt.toDate().toISOString(),
-          };
-        }
-      }
-
-      transaction.set(sessionRef, {
-        questId: quest.questId,
-        title: quest.title,
-        templateType: quest.templateType,
-        verificationMode: quest.verificationMode,
-        targetDurationMinutes: quest.targetDurationMinutes,
-        xpReward: quest.xpReward,
-        rewardAttribute: quest.rewardAttribute,
-        startedAt: now,
-        status: 'inProgress',
-        updatedAt: now,
-      }, {merge: true});
 
       return {
-        status: 'started' as const,
-        startedAt: now.toDate().toISOString(),
+        status: resolution.status,
+        startedAt: resolution.startedAt,
       };
     });
   },
@@ -1792,59 +1878,23 @@ export const verifyCompetitiveQuestCompletion = onCall(
         transaction.get(sessionRef),
         transaction.get(grantRef),
       ]);
+      const resolution = resolveCompetitiveQuestCompletionVerification({
+        quest,
+        session: sessionSnap.exists ? (sessionSnap.data() ?? null) : null,
+        grant: grantSnap.exists ? (grantSnap.data() ?? null) : null,
+        now,
+      });
 
-      if (grantSnap.exists) {
-        const completedAt = grantSnap.data()?.completedAt;
-        return {
-          status: 'already_verified' as const,
-          completedAt: completedAt instanceof admin.firestore.Timestamp
-            ? completedAt.toDate().toISOString()
-            : now.toDate().toISOString(),
-        };
+      if (resolution.grantWrite) {
+        transaction.set(grantRef, resolution.grantWrite, {merge: true});
       }
-
-      if (quest.verificationMode === 'timer' || quest.verificationMode === 'timerWithReflection') {
-        if (!sessionSnap.exists || sessionSnap.data()?.startedAt == null) {
-          throw new HttpsError('failed-precondition', 'A sessao ainda nao foi iniciada.');
-        }
-
-        const startedAt = sessionSnap.data()?.startedAt;
-        if (!(startedAt instanceof admin.firestore.Timestamp)) {
-          throw new HttpsError('failed-precondition', 'Sessao competitiva invalida.');
-        }
-
-        const elapsedMinutes = Math.floor((now.toMillis() - startedAt.toMillis()) / (60 * 1000));
-        if (elapsedMinutes < quest.targetDurationMinutes) {
-          throw new HttpsError('failed-precondition', 'Ainda falta tempo para validar essa quest.');
-        }
+      if (resolution.sessionWrite) {
+        transaction.set(sessionRef, resolution.sessionWrite, {merge: true});
       }
-
-      if (quest.verificationMode === 'timerWithReflection' && !quest.reflectionAnswer) {
-        throw new HttpsError('failed-precondition', 'A resposta curta ainda nao foi enviada.');
-      }
-
-      transaction.set(grantRef, {
-        questId: quest.questId,
-        title: quest.title,
-        templateType: quest.templateType,
-        verificationMode: quest.verificationMode,
-        targetDurationMinutes: quest.targetDurationMinutes,
-        xpReward: quest.xpReward,
-        rewardAttribute: quest.rewardAttribute,
-        completedAt: now,
-        dayKey: normalizedDateKey(now),
-        approvedAt: now,
-      }, {merge: true});
-
-      transaction.set(sessionRef, {
-        status: 'verified',
-        completedAt: now,
-        updatedAt: now,
-      }, {merge: true});
 
       return {
-        status: 'verified' as const,
-        completedAt: now.toDate().toISOString(),
+        status: resolution.status,
+        completedAt: resolution.completedAt,
       };
     });
   },

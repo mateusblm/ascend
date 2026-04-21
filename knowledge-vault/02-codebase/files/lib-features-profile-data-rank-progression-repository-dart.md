@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\data\rank_progression_repository.dart
 feature: profile
 symbol_count: 1
-import_count: 14
+import_count: 15
 ---
 # lib\features\profile\data\rank_progression_repository.dart
 
 ## Summary
 
 - feature: profile
-- imports: 14
+- imports: 15
 - symbols: 1
 
 ## Symbols
@@ -20,11 +20,12 @@ import_count: 14
 ## Imports
 
 - dart:async
+- lib/core/analytics/analytics_service.dart
+- lib/core/crash/crash_reporting_service.dart
 - lib/features/profile/domain/competitive_integrity.dart
 - lib/features/profile/domain/player_model.dart
 - lib/features/profile/domain/promotion_exam.dart
 - lib/features/profile/domain/rank_progression.dart
-- lib/features/profile/domain/rank_season.dart
 - lib/features/profile/domain/rank_season_leaderboard.dart
 - lib/features/profile/domain/season_legacy_reward.dart
 - lib/features/profile/domain/season_profile_snapshot.dart

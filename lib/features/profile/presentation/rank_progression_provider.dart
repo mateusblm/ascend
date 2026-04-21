@@ -1,7 +1,10 @@
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/profile/data/rank_progression_repository.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/season_reward_snapshot.dart';
@@ -17,6 +20,8 @@ final rankProgressionRepositoryProvider = Provider<RankProgressionRepository>((
   return RankProgressionRepository(
     FirebaseFirestore.instance,
     FirebaseAuth.instance,
+    analytics: ref.read(analyticsProvider),
+    crashReporter: ref.read(crashReportingProvider),
   );
 });
 
@@ -59,6 +64,21 @@ final seasonProfileProvider =
     StreamProvider.autoDispose<SeasonProfileSnapshot?>((ref) {
       final repository = ref.watch(rankProgressionRepositoryProvider);
       return repository.watchSeasonProfile();
+    });
+
+final seasonBracketLeaderboardProvider =
+    FutureProvider.autoDispose<List<RankSeasonLeaderboardEntry>>((ref) async {
+      final reward = ref.watch(currentSeasonRewardProvider).valueOrNull;
+      final snapshot = ref.watch(rankProgressionSnapshotProvider).valueOrNull;
+      if (reward == null) {
+        return const <RankSeasonLeaderboardEntry>[];
+      }
+
+      final repository = ref.watch(rankProgressionRepositoryProvider);
+      return repository.fetchSeasonBracketLeaderboard(
+        seasonKey: reward.seasonKey,
+        rankBracket: snapshot?.currentRank ?? reward.currentRankBracket,
+      );
     });
 
 final currentCompetitiveIntegrityProvider =

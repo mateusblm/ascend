@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:ui';
+
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
@@ -16,6 +21,8 @@ import 'package:path_provider/path_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  final crashReporter = buildAppCrashReporter();
+  await crashReporter.initialize();
 
   final dir = await getApplicationDocumentsDirectory();
   final isar = await Isar.open(
@@ -23,13 +30,48 @@ void main() async {
     directory: dir.path,
   );
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        isarProvider.overrideWithValue(isar),
-      ],
-      child: const AscendApp(),
-    ),
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    unawaited(crashReporter.recordFlutterFatal(details));
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    unawaited(
+      crashReporter.recordError(
+        error,
+        stack,
+        reason: 'platform_dispatcher',
+        fatal: true,
+      ),
+    );
+    return true;
+  };
+
+  runZonedGuarded(
+    () {
+      runApp(
+        ProviderScope(
+          overrides: [
+            isarProvider.overrideWithValue(isar),
+            crashReportingProvider.overrideWithValue(crashReporter),
+          ],
+          observers: [
+            CrashReportingObserver(crashReporter),
+          ],
+          child: const AscendApp(),
+        ),
+      );
+    },
+    (error, stack) {
+      unawaited(
+        crashReporter.recordError(
+          error,
+          stack,
+          reason: 'run_zoned_guarded',
+          fatal: true,
+        ),
+      );
+    },
   );
 }
 
@@ -39,10 +81,14 @@ class AscendApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final analyticsObserver = ref.watch(analyticsNavigationObserverProvider);
 
     return MaterialApp(
       title: 'Ascend RPG',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        if (analyticsObserver != null) analyticsObserver,
+      ],
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.background,

@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\presentation\rank_screen.dart
 feature: profile
 symbol_count: 10
-import_count: 21
+import_count: 23
 ---
 # lib\features\profile\presentation\rank_screen.dart
 
 ## Summary
 
 - feature: profile
-- imports: 21
+- imports: 23
 - symbols: 10
 
 ## Symbols
@@ -28,6 +28,7 @@ import_count: 21
 
 ## Imports
 
+- lib/core/widgets/reveal_block.dart
 - lib/core/theme/app_colors.dart
 - lib/features/profile/domain/player_model.dart
 - lib/features/profile/domain/competitive_integrity.dart
@@ -35,6 +36,7 @@ import_count: 21
 - lib/features/profile/domain/rank_arena.dart
 - lib/features/profile/domain/rank_prestige.dart
 - lib/features/profile/domain/rank_progression.dart
+- lib/features/profile/domain/rank_rivalry.dart
 - lib/features/profile/domain/rank_season.dart
 - lib/features/profile/domain/rank_season_leaderboard.dart
 - lib/features/profile/domain/season_legacy_reward.dart

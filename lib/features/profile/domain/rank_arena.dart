@@ -36,7 +36,7 @@ RankArenaSummary buildRankArenaSummary({
     return const RankArenaSummary(
       hasActiveBoss: false,
       stateLabel: 'SEM EVENTO',
-      urgencyLabel: 'AGUARDANDO ROTACAO',
+      urgencyLabel: 'AGUARDANDO O PROXIMO',
       progress: 0,
       target: 0,
       completedCount: 0,
@@ -51,14 +51,14 @@ RankArenaSummary buildRankArenaSummary({
   final remaining = boss.endsAt.difference(now ?? DateTime.now());
   final urgencyLabel = switch (remaining.inHours) {
     <= 6 => 'JANELA FINAL',
-    <= 24 => 'PRESSAO MAXIMA',
-    <= 72 => 'SEMANA QUENTE',
+    <= 24 => 'ULTIMAS HORAS',
+    <= 72 => 'SEMANA DECISIVA',
     _ => 'ARENA ABERTA',
   };
   final stateLabel = switch (boss.completedCount) {
-    >= 100 => 'ARENA DOMINADA',
-    >= 25 => 'PRESSAO DE ELITE',
-    > 0 => 'PRIMEIROS HUNTERS',
+    >= 100 => 'ARENA LOTADA',
+    >= 25 => 'DISPUTA PESADA',
+    > 0 => 'PRIMEIROS CLEARS',
     _ => 'BOSS INVICTO',
   };
   final rewardLabel = '${boss.rewardXp} XP + ${boss.rewardStatPoints} ponto(s)';
@@ -67,13 +67,13 @@ RankArenaSummary buildRankArenaSummary({
       : 'Primeiro clear: ${topCompletions.first.displayName} abriu a arena.';
   final crowdReading = switch (boss.completedCount) {
     >= 100 =>
-      'Muitos hunters ja romperam o evento. Agora voce disputa reputacao e velocidade de clear.',
+      'Muita gente ja passou pelo evento. Agora a disputa fica em ritmo e posicao.',
     >= 25 =>
-      'O boss ainda oferece pressao competitiva real. O rank ja provou que e vencivel, mas ainda nao esta resolvido.',
+      'O boss ja caiu bastante, mas a disputa ainda esta longe de terminar.',
     > 0 =>
-      'Poucos hunters conseguiram passar. Esta e a zona ideal para ganhar prestigio rapido.',
+      'Pouca gente conseguiu passar. Esse e um bom momento para subir no placar.',
     _ =>
-      'Nenhum participante conseguiu clear ate agora. A arena ainda esta em estado bruto.',
+      'Ninguem passou ainda. Quem abrir o caminho primeiro muda o ritmo da semana.',
   };
 
   return RankArenaSummary(

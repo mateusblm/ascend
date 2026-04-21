@@ -1,6 +1,9 @@
+import 'dart:async';
+
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -14,10 +17,17 @@ class WeeklyBossRepository {
   WeeklyBossRepository(
     this._firestore, {
     FirebaseFunctions? functions,
-  }) : _functions = functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+    AppAnalytics? analytics,
+    AppCrashReporter? crashReporter,
+  }) : _functions =
+           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _analytics = analytics ?? const NoopAppAnalytics(),
+       _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
+  final AppAnalytics _analytics;
+  final AppCrashReporter _crashReporter;
 
   Stream<RemoteWeeklyBoss?> watchActiveBossForRank(String rank) {
     final normalizedRank = _normalizeRank(rank);
@@ -80,29 +90,46 @@ class WeeklyBossRepository {
 
       final status = payload['status'] as String?;
       if (status == 'claimed') {
+        unawaited(
+          _analytics.logWeeklyBossClaimed(
+            bossId: bossId,
+            rank: rankAtCompletion,
+            status: status!,
+          ),
+        );
         return ClaimWeeklyBossRemoteResult.claimed;
       }
       if (status == 'already_completed') {
+        unawaited(
+          _analytics.logWeeklyBossClaimed(
+            bossId: bossId,
+            rank: rankAtCompletion,
+            status: status!,
+          ),
+        );
         return ClaimWeeklyBossRemoteResult.alreadyCompleted;
       }
 
       throw StateError('Status desconhecido retornado pela callable: $status');
-    } on FirebaseFunctionsException catch (error) {
-      if (!_shouldFallbackToClientWrite(error)) {
-        rethrow;
-      }
-      if (kDebugMode) {
-        debugPrint(
-          '[WeeklyBossRepository] Callable indisponivel (${error.code}). Usando fallback cliente.',
-        );
-      }
-      return _claimWeeklyBossFromClient(
-        bossId: bossId,
-        displayName: displayName,
-        photoUrl: photoUrl,
-        rankAtCompletion: rankAtCompletion,
-      );
+    } on FirebaseFunctionsException catch (error, stackTrace) {
+      _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss');
+      rethrow;
     }
+  }
+
+  void _reportRecoverable(
+    Object error,
+    StackTrace stackTrace, {
+    required String stage,
+  }) {
+    unawaited(
+      _crashReporter.recordError(
+        error,
+        stackTrace,
+        reason: 'weekly_boss_remote:$stage',
+        fatal: false,
+      ),
+    );
   }
 
   bool _isWithinActiveWindow(DateTime now, RemoteWeeklyBoss boss) {
@@ -110,49 +137,4 @@ class WeeklyBossRepository {
   }
 
   String _normalizeRank(String rank) => rank.trim().toUpperCase();
-
-  bool _shouldFallbackToClientWrite(FirebaseFunctionsException error) {
-    const fallbackCodes = <String>{
-      'not-found',
-      'unimplemented',
-      'unavailable',
-    };
-    return fallbackCodes.contains(error.code);
-  }
-
-  Future<ClaimWeeklyBossRemoteResult> _claimWeeklyBossFromClient({
-    required String bossId,
-    required String displayName,
-    required String photoUrl,
-    required String rankAtCompletion,
-  }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      throw StateError('Usuario nao autenticado para fallback de claim.');
-    }
-
-    final bossRef = _firestore.collection('weekly_bosses').doc(bossId);
-    final completionRef = bossRef.collection('completions').doc(uid);
-
-    return _firestore.runTransaction((transaction) async {
-      final completionSnapshot = await transaction.get(completionRef);
-      if (completionSnapshot.exists) {
-        return ClaimWeeklyBossRemoteResult.alreadyCompleted;
-      }
-
-      transaction.set(completionRef, {
-        'uid': uid,
-        'displayName': displayName,
-        'photoUrl': photoUrl,
-        'rankAtCompletion': rankAtCompletion,
-        'completedAt': FieldValue.serverTimestamp(),
-      });
-
-      transaction.update(bossRef, {
-        'completedCount': FieldValue.increment(1),
-      });
-
-      return ClaimWeeklyBossRemoteResult.claimed;
-    });
-  }
 }

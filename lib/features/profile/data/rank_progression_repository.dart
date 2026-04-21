@@ -1,10 +1,11 @@
 import 'dart:async';
 
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
-import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
@@ -19,8 +20,12 @@ class RankProgressionRepository {
     this._firestore,
     this._auth, {
     FirebaseFunctions? functions,
+    AppAnalytics? analytics,
+    AppCrashReporter? crashReporter,
   }) : _functions =
-           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _analytics = analytics ?? const NoopAppAnalytics(),
+       _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   static const int syncSchemaVersion = 3;
   static const Duration _rpcTimeout = Duration(seconds: 4);
@@ -28,6 +33,8 @@ class RankProgressionRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final FirebaseFunctions _functions;
+  final AppAnalytics _analytics;
+  final AppCrashReporter _crashReporter;
   final Map<String, String> _lastSyncedFingerprintByUser = <String, String>{};
 
   Stream<CompetitiveRankSnapshot?> watchCurrentSnapshot() {
@@ -176,112 +183,100 @@ class RankProgressionRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
 
-    final snapshotRef = _progressionDoc(uid);
-    final examRef = _promotionExamDoc(uid);
-    final seasonRewardRef = _seasonRewardDoc(uid);
-    final previousDoc = await snapshotRef.get();
-    final examDoc = await examRef.get();
-    final seasonRewardDoc = await seasonRewardRef.get();
-
-    final previousSnapshot = previousDoc.exists && previousDoc.data() != null
-        ? CompetitiveRankSnapshot.fromFirestore(previousDoc.data()!)
-        : null;
-    final currentExam = examDoc.exists && examDoc.data() != null
-        ? PromotionExam.fromFirestore(examDoc.data()!)
-        : null;
-    final currentSeasonReward =
-        seasonRewardDoc.exists && seasonRewardDoc.data() != null
-        ? SeasonRewardSnapshot.fromFirestore(seasonRewardDoc.data()!)
-        : null;
-
-    final nextSnapshot = evaluateCompetitiveRank(
+    final localFallback = evaluateCompetitiveRank(
       player: player,
-      previousSnapshot: previousSnapshot,
     ).copyWith(syncSchemaVersion: syncSchemaVersion, syncSource: 'client');
-    final seasonHistory = await _loadCurrentSeasonHistory(uid);
-    final mergedSeasonHistory = _mergeSeasonHistory(
-      seasonHistory,
-      nextSnapshot,
-    );
-    final season = buildCurrentSeasonSummary(mergedSeasonHistory);
-    final seasonLeaderboard = buildRankSeasonLeaderboardSummary(
-      player: player,
-      season: season,
-      activeBoss: null,
-      topCompletions: const [],
-      snapshot: nextSnapshot,
-    );
-    final seasonRewardBase = SeasonRewardSnapshot.fromSeasonSummary(
-      season: season,
-      currentRankBracket: nextSnapshot.currentRank,
-      seasonScore: seasonLeaderboard.seasonScore,
-      scoreBandLabel: seasonLeaderboard.scoreBandLabel,
-      clearRateLabel: seasonLeaderboard.clearRateLabel,
-      playerStandingLabel: seasonLeaderboard.playerStandingLabel,
-      spotlightLabel: seasonLeaderboard.spotlightLabel,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-      updatedAt: nextSnapshot.updatedAt,
-    );
-    final seasonReward = _resolveSeasonRewardAfterSync(
-      nextReward: seasonRewardBase,
-      currentReward: currentSeasonReward,
-    );
-    final nextExam = _resolveExamAfterSnapshot(
-      snapshot: nextSnapshot,
-      currentExam: currentExam,
-    );
 
-    final fingerprint = _fingerprintFor(
-      nextSnapshot,
-      nextExam: nextExam,
-      seasonReward: seasonReward,
-    );
-    if (_lastSyncedFingerprintByUser[uid] == fingerprint &&
-        _shouldSkipRemoteWrite(
-          currentSnapshot: previousSnapshot,
-          nextSnapshot: nextSnapshot,
-          currentExam: currentExam,
-          nextExam: nextExam,
-          nextSeasonReward: seasonReward,
-        )) {
-      return nextSnapshot;
-    }
+    try {
+      final remoteSnapshot = await _syncCompetitiveStateFromSourceRemotely(
+        player,
+      );
+      if (remoteSnapshot == null) {
+        return localFallback;
+      }
 
-    final historyRef = _historyCollection(uid).doc(nextSnapshot.weekKey);
-    final seasonRewardHistoryRef = _seasonRewardHistoryCollection(uid).doc(
-      seasonReward.seasonKey,
-    );
-    final batch = _firestore.batch();
-    batch.set(snapshotRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
-    batch.set(historyRef, nextSnapshot.toFirestore(), SetOptions(merge: true));
-    batch.set(
-      seasonRewardRef,
-      seasonReward.toFirestore(),
-      SetOptions(merge: true),
-    );
-    batch.set(
-      seasonRewardHistoryRef,
-      seasonReward.toFirestore(),
-      SetOptions(merge: true),
-    );
-    if (nextExam != null) {
-      batch.set(examRef, nextExam.toFirestore(), SetOptions(merge: true));
+      _lastSyncedFingerprintByUser[uid] = _fingerprintFor(remoteSnapshot);
+      return remoteSnapshot;
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'sync_competitive_state_from_source',
+      );
+      return localFallback;
     }
-    
-    await _commitAndSyncRpc(
-      batch: batch,
-      snapshot: nextSnapshot,
-      exam: nextExam,
-      seasonReward: seasonReward,
-    );
-    
-    _lastSyncedFingerprintByUser[uid] = fingerprint;
-    return nextSnapshot;
   }
 
   Future<CompetitiveRankSnapshot?> syncSnapshot(Player player) =>
       syncCompetitiveState(player);
+
+  Future<CompetitiveRankSnapshot?> _syncCompetitiveStateFromSourceRemotely(
+    Player player,
+  ) async {
+    final callable = _functions.httpsCallable('syncCompetitiveStateFromSource');
+    final response = await callable
+        .call(<String, dynamic>{
+          'source': _competitiveSourceFor(player),
+        })
+        .timeout(_rpcTimeout);
+    final data = response.data;
+    if (data is! Map) {
+      return null;
+    }
+
+    final snapshotData = data['snapshot'];
+    if (snapshotData is! Map) {
+      return null;
+    }
+
+    return CompetitiveRankSnapshot.fromFirestore(
+      snapshotData.cast<String, dynamic>(),
+    );
+  }
+
+  Future<List<RankSeasonLeaderboardEntry>> fetchSeasonBracketLeaderboard({
+    required String seasonKey,
+    required String rankBracket,
+    int limit = 5,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const <RankSeasonLeaderboardEntry>[];
+
+    try {
+      final callable = _functions.httpsCallable('getSeasonBracketLeaderboard');
+      final response = await callable
+          .call(<String, dynamic>{
+            'seasonKey': seasonKey,
+            'rankBracket': rankBracket,
+            'limit': limit,
+          })
+          .timeout(_rpcTimeout);
+      final data = response.data;
+      if (data is! Map || data['entries'] is! List) {
+        return const <RankSeasonLeaderboardEntry>[];
+      }
+
+      return (data['entries'] as List)
+          .whereType<Map>()
+          .map((entry) {
+            final map = entry.cast<String, dynamic>();
+            return RankSeasonLeaderboardEntry(
+              position: (map['position'] as num?)?.toInt() ?? 0,
+              displayName: map['displayName'] as String? ?? 'HUNTER',
+              detail: map['detail'] as String? ?? '',
+              isPlayer: map['isPlayer'] as bool? ?? false,
+            );
+          })
+          .toList(growable: false);
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'fetch_season_bracket_leaderboard',
+      );
+      return const <RankSeasonLeaderboardEntry>[];
+    }
+  }
 
   Future<CompetitiveIntegritySnapshot?> syncCompetitiveIntegrity({
     required Player player,
@@ -290,27 +285,95 @@ class RankProgressionRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
 
-    final snapshot = evaluateCompetitiveIntegrity(
+    final localFallback = evaluateCompetitiveIntegrity(
       player: player,
       quests: quests,
     );
-    final currentRef = _integrityDoc(uid);
-    final historyRef = _integrityHistoryCollection(uid).doc(snapshot.weekKey);
-    final batch = _firestore.batch();
-    batch.set(currentRef, snapshot.toFirestore(), SetOptions(merge: true));
-    batch.set(historyRef, snapshot.toFirestore(), SetOptions(merge: true));
-    await batch.commit();
 
     try {
-      final callable = _functions.httpsCallable('upsertCompetitiveIntegrity');
-      await callable
-          .call({'integrity': snapshot.toFirestore()})
-          .timeout(_rpcTimeout);
-    } catch (_) {
-      // Silent fallback keeps integrity signals local-first.
+      final remoteIntegrity = await _syncCompetitiveIntegrityFromSourceRemotely(
+        player: player,
+        quests: quests,
+      );
+      return remoteIntegrity ?? localFallback;
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'sync_competitive_integrity_from_source',
+      );
+      return localFallback;
+    }
+  }
+
+  Future<CompetitiveIntegritySnapshot?> _syncCompetitiveIntegrityFromSourceRemotely({
+    required Player player,
+    required List<Quest> quests,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'syncCompetitiveIntegrityFromSource',
+    );
+    final response = await callable
+        .call(<String, dynamic>{
+          'source': _competitiveIntegritySourceFor(
+            player: player,
+            quests: quests,
+          ),
+        })
+        .timeout(_rpcTimeout);
+    final data = response.data;
+    if (data is! Map) {
+      return null;
     }
 
-    return snapshot;
+    final integrityData = data['integrity'];
+    if (integrityData is! Map) {
+      return null;
+    }
+
+    return CompetitiveIntegritySnapshot.fromFirestore(
+      integrityData.cast<String, dynamic>(),
+    );
+  }
+
+  Map<String, dynamic> _competitiveSourceFor(Player player) {
+    return <String, dynamic>{
+      'playerLevel': player.level,
+      'activityHistory': player.activityHistory
+          .map(Timestamp.fromDate)
+          .toList(growable: false),
+      'competitiveActivityHistory': player.competitiveActivityHistory
+          .map(Timestamp.fromDate)
+          .toList(growable: false),
+    };
+  }
+
+  Map<String, dynamic> _competitiveIntegritySourceFor({
+    required Player player,
+    required List<Quest> quests,
+  }) {
+    return <String, dynamic>{
+      'activityHistory': player.activityHistory
+          .map(Timestamp.fromDate)
+          .toList(growable: false),
+      'competitiveActivityHistory': player.competitiveActivityHistory
+          .map(Timestamp.fromDate)
+          .toList(growable: false),
+      'quests': quests
+          .map(
+            (quest) => <String, dynamic>{
+              'title': quest.title,
+              'xpReward': quest.xpReward,
+              'isCompetitive': quest.isCompetitive,
+              'countsTowardCompetitive': quest.countsTowardCompetitive,
+              'isCompleted': quest.isCompleted,
+              'completedAt': quest.completedAt == null
+                  ? null
+                  : Timestamp.fromDate(quest.completedAt!),
+            },
+          )
+          .toList(growable: false),
+    };
   }
 
   Future<void> syncPromotionExam(CompetitiveRankSnapshot snapshot) async {
@@ -335,13 +398,12 @@ class RankProgressionRepository {
       return;
     }
 
-    final batch = _firestore.batch();
-    batch.set(examRef, nextExam.toFirestore(), SetOptions(merge: true));
-    await _commitAndSyncRpc(
-      batch: batch,
-      snapshot: snapshot,
-      exam: nextExam,
-    );
+    if (_shouldDispatchRpc(snapshot: snapshot, exam: nextExam)) {
+      await _upsertCompetitiveProgressionRemotely(
+        snapshot: snapshot,
+        exam: nextExam,
+      );
+    }
   }
 
   Future<bool> startPromotionExam(CompetitiveRankSnapshot snapshot) async {
@@ -351,121 +413,58 @@ class RankProgressionRepository {
       return false;
     }
 
-    final examRef = _promotionExamDoc(uid);
-    final existing = await examRef.get();
-    if (existing.exists && existing.data() != null) {
-      final currentExam = PromotionExam.fromFirestore(existing.data()!);
-      if (currentExam.status == PromotionExamStatus.inProgress) {
-        return false;
+    try {
+      final status = await _startPromotionExamRemotely(snapshot);
+      if (status == 'started' || status == 'already_in_progress') {
+        unawaited(
+          _analytics.logPromotionExamStarted(
+            sourceRank: snapshot.currentRank,
+            targetRank: snapshot.promotionTargetRank ?? '',
+            mode:
+                (snapshot.advancementMode ?? RankAdvancementMode.ascension)
+                    .name,
+            status: status,
+          ),
+        );
       }
+      return status == 'started' || status == 'already_in_progress';
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'start_promotion_exam',
+      );
+      return false;
     }
-
-    final nextRule = rankRuleFor(snapshot.promotionTargetRank!);
-    final now = DateTime.now();
-    final exam = PromotionExam(
-      sourceRank: snapshot.currentRank,
-      targetRank: snapshot.promotionTargetRank!,
-      sourceWeekKey: snapshot.weekKey,
-      status: PromotionExamStatus.inProgress,
-      mode: (snapshot.advancementMode ?? RankAdvancementMode.ascension) ==
-              RankAdvancementMode.reconquest
-          ? PromotionExamMode.reconquest
-          : PromotionExamMode.ascension,
-      baselineActiveDays: snapshot.activeDays,
-      requiredExtraActiveDays: 1,
-      bossRequired: nextRule.requiresBossClear,
-      requiredLevel: snapshot.targetRequiredLevel,
-      startedAt: now,
-      expiresAt: now.add(const Duration(days: 3)),
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-    );
-
-    final batch = _firestore.batch();
-    batch.set(examRef, exam.toFirestore(), SetOptions(merge: true));
-    await _commitAndSyncRpc(
-      batch: batch,
-      snapshot: snapshot,
-      exam: exam,
-    );
-    
-    return true;
   }
 
   Future<bool> promoteIfExamPassed(CompetitiveRankSnapshot snapshot) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
 
-    final examRef = _promotionExamDoc(uid);
-    final examDoc = await examRef.get();
-    if (!examDoc.exists || examDoc.data() == null) return false;
-
-    final exam = PromotionExam.fromFirestore(examDoc.data()!);
-    if (exam.status != PromotionExamStatus.passed) return false;
-
-    final promotedRank = exam.targetRank;
-    final promotedRule = rankRuleFor(promotedRank);
-    final now = DateTime.now();
-    final promotedSnapshot = CompetitiveRankSnapshot(
-      currentRank: promotedRank,
-      peakRank: _higherRank(promotedRank, snapshot.peakRank),
-      highestEligibleRank: snapshot.highestEligibleRank,
-      weekKey: snapshot.weekKey,
-      activeDays: snapshot.activeDays,
-      requiredActiveDays: promotedRule.requiredActiveDays,
-      requiresBossClear: promotedRule.requiresBossClear,
-      bossCompleted: snapshot.bossCompleted,
-      status: RankMaintenanceStatus.secure,
-      demotionStrikes: 0,
-      promotionReady: false,
-      promotionTargetRank: rankAfter(promotedRank),
-      targetRequiredLevel:
-          rankAfter(promotedRank) == null ? promotedRule.minimumLevel : rankRuleFor(rankAfter(promotedRank)!).minimumLevel,
-      targetLevelGateMet: true,
-      advancementMode: _promotionModeFor(
-        currentRank: promotedRank,
-        peakRank: _higherRank(promotedRank, snapshot.peakRank),
-      ),
-      eventType: CompetitiveRankEventType.promotionConfirmed,
-      summary: exam.mode == PromotionExamMode.reconquest
-          ? 'Rank $promotedRank reconquistado.'
-          : 'Promovido para o rank $promotedRank.',
-      detail:
-          exam.mode == PromotionExamMode.reconquest
-              ? 'O exame de reconquista foi concluido e seu pico historico voltou a ficar ao alcance da rotina atual.'
-              : 'O exame foi concluido e sua promocao agora faz parte do historico competitivo.',
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-      updatedAt: now,
-    );
-
-    final batch = _firestore.batch();
-    batch.set(
-      _progressionDoc(uid),
-      promotedSnapshot.toFirestore(),
-      SetOptions(merge: true),
-    );
-    batch.set(
-      _historyCollection(uid).doc(promotedSnapshot.weekKey),
-      promotedSnapshot.toFirestore(),
-      SetOptions(merge: true),
-    );
-    final updatedExam = exam.copyWith(
-      status: PromotionExamStatus.promoted,
-      resolvedAt: now,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-    );
-    batch.set(examRef, updatedExam.toFirestore(), SetOptions(merge: true));
-    
-    await _commitAndSyncRpc(
-      batch: batch,
-      snapshot: promotedSnapshot,
-      exam: updatedExam,
-    );
-    
-    _lastSyncedFingerprintByUser[uid] = _fingerprintFor(promotedSnapshot);
-    return true;
+    try {
+      final status = await _confirmPromotionRemotely(snapshot);
+      if (status == 'promoted' || status == 'already_promoted') {
+        unawaited(
+          _analytics.logPromotionConfirmed(
+            sourceRank: snapshot.currentRank,
+            targetRank: snapshot.promotionTargetRank ?? '',
+            mode:
+                (snapshot.advancementMode ?? RankAdvancementMode.ascension)
+                    .name,
+            status: status,
+          ),
+        );
+      }
+      return status == 'promoted' || status == 'already_promoted';
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'confirm_promotion',
+      );
+      return false;
+    }
   }
 
   Future<bool> debugForcePromotionReady(Player player) async {
@@ -653,55 +652,23 @@ class RankProgressionRepository {
     try {
       final status = await _claimSeasonRewardRemotely(currentReward);
       if (status == 'claimed' || status == 'already_claimed') {
-        return true;
+        unawaited(
+          _analytics.logSeasonRewardClaimed(
+            seasonKey: currentReward.seasonKey,
+            rewardName: currentReward.rewardName,
+            status: status,
+          ),
+        );
       }
-    } catch (error) {
-      if (!_canFallbackSeasonClaim(error)) {
-        rethrow;
-      }
+      return status == 'claimed' || status == 'already_claimed';
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'claim_season_reward',
+      );
+      return false;
     }
-
-    final now = DateTime.now();
-    final claimedReward = currentReward.copyWith(
-      claimStatus: SeasonRewardClaimStatus.claimed,
-      claimedAt: now,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-      updatedAt: now,
-    );
-    final legacyReward = SeasonLegacyReward.fromSeasonReward(
-      reward: claimedReward,
-      claimedAt: claimedReward.claimedAt ?? now,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-      updatedAt: now,
-    );
-    final seasonProfile = SeasonProfileSnapshot.fromLegacyReward(
-      legacyReward: legacyReward,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-      updatedAt: now,
-    );
-
-    final batch = _firestore.batch();
-    batch.set(rewardRef, claimedReward.toFirestore(), SetOptions(merge: true));
-    batch.set(
-      _seasonRewardHistoryCollection(uid).doc(claimedReward.seasonKey),
-      claimedReward.toFirestore(),
-      SetOptions(merge: true),
-    );
-    batch.set(
-      _seasonLegacyCollection(uid).doc(legacyReward.seasonKey),
-      legacyReward.toFirestore(),
-      SetOptions(merge: true),
-    );
-    batch.set(
-      _seasonProfileDoc(uid),
-      seasonProfile.toFirestore(),
-      SetOptions(merge: true),
-    );
-    await batch.commit();
-    return true;
   }
 
   DocumentReference<Map<String, dynamic>> _progressionDoc(String uid) {
@@ -815,46 +782,8 @@ class RankProgressionRepository {
     );
   }
 
-  bool _shouldSkipRemoteWrite({
-    required CompetitiveRankSnapshot? currentSnapshot,
-    required CompetitiveRankSnapshot nextSnapshot,
-    required PromotionExam? currentExam,
-    required PromotionExam? nextExam,
-    required SeasonRewardSnapshot nextSeasonReward,
-  }) {
-    if (currentSnapshot == null) return false;
-
-    final snapshotUnchanged =
-        _logicalSnapshotFingerprint(currentSnapshot) ==
-        _logicalSnapshotFingerprint(nextSnapshot);
-    final examUnchanged = switch ((currentExam, nextExam)) {
-      (null, null) => true,
-      (final examA?, final examB?) =>
-        _logicalExamFingerprint(examA) == _logicalExamFingerprint(examB),
-      _ => false,
-    };
-    return snapshotUnchanged &&
-        examUnchanged &&
-        _lastSyncedFingerprintByUser[_auth.currentUser?.uid] ==
-            _fingerprintFor(
-              nextSnapshot,
-              nextExam: nextExam,
-              seasonReward: nextSeasonReward,
-            );
-  }
-
-  String _fingerprintFor(
-    CompetitiveRankSnapshot snapshot, {
-    PromotionExam? nextExam,
-    SeasonRewardSnapshot? seasonReward,
-  }) {
-    return [
-      _logicalSnapshotFingerprint(snapshot),
-      nextExam?.status.name ?? 'no_exam',
-      nextExam?.targetRank ?? '',
-      nextExam?.syncSource ?? '',
-      seasonReward == null ? 'no_season' : _logicalSeasonRewardFingerprint(seasonReward),
-    ].join('|');
+  String _fingerprintFor(CompetitiveRankSnapshot snapshot) {
+    return _logicalSnapshotFingerprint(snapshot);
   }
 
   String _logicalSnapshotFingerprint(CompetitiveRankSnapshot snapshot) {
@@ -880,59 +809,19 @@ class RankProgressionRepository {
     ].join('|');
   }
 
-  String _logicalExamFingerprint(PromotionExam exam) {
-    return [
-      exam.sourceRank,
-      exam.targetRank,
-      exam.sourceWeekKey,
-      exam.status.name,
-      exam.mode.name,
-      exam.baselineActiveDays,
-      exam.requiredExtraActiveDays,
-      exam.bossRequired,
-      exam.requiredLevel,
-      exam.syncSchemaVersion,
-      exam.syncSource,
-      exam.resolvedAt?.millisecondsSinceEpoch ?? 0,
-    ].join('|');
-  }
-
-  String _logicalSeasonRewardFingerprint(SeasonRewardSnapshot reward) {
-    return [
-      reward.seasonKey,
-      reward.currentRankBracket,
-      reward.rewardTierLabel,
-      reward.rewardStatusLabel,
-      reward.rewardUnlocked,
-      reward.claimStatus.name,
-      reward.claimedAt?.millisecondsSinceEpoch ?? 0,
-      reward.seasonScore,
-      reward.scoreBandLabel,
-      reward.playerStandingLabel,
-      reward.syncSchemaVersion,
-      reward.syncSource,
-    ].join('|');
-  }
-  
-  Future<void> _commitAndSyncRpc({
-    required WriteBatch batch,
+  Future<void> _upsertCompetitiveProgressionRemotely({
     required CompetitiveRankSnapshot snapshot,
     PromotionExam? exam,
     SeasonRewardSnapshot? seasonReward,
   }) async {
-    // 1. Otimismo local / Offline fallback
-    await batch.commit();
-
-    if (
-        !_shouldDispatchRpc(
-          snapshot: snapshot,
-          exam: exam,
-          seasonReward: seasonReward,
-        )) {
+    if (!_shouldDispatchRpc(
+      snapshot: snapshot,
+      exam: exam,
+      seasonReward: seasonReward,
+    )) {
       return;
     }
 
-    // 2. Chamada remota para o backend (autoritativo)
     try {
       final callable = _functions.httpsCallable('upsertCompetitiveProgression');
       await callable
@@ -942,9 +831,28 @@ class RankProgressionRepository {
             if (seasonReward != null) 'seasonReward': seasonReward.toFirestore(),
           })
           .timeout(_rpcTimeout);
-    } catch (_) {
-      // Fallback silencioso permite funcionamento da UI offline ou se o Cloud demorar
+    } catch (error, stackTrace) {
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'upsert_competitive_progression',
+      );
     }
+  }
+
+  void _reportRecoverable(
+    Object error,
+    StackTrace stackTrace, {
+    required String stage,
+  }) {
+    unawaited(
+      _crashReporter.recordError(
+        error,
+        stackTrace,
+        reason: 'competitive_remote:$stage',
+        fatal: false,
+      ),
+    );
   }
 
   bool _shouldDispatchRpc({
@@ -975,54 +883,6 @@ class RankProgressionRepository {
 
     return true;
   }
-
-  Future<List<CompetitiveRankSnapshot>> _loadCurrentSeasonHistory(String uid) async {
-    final docs = await _historyCollection(uid)
-        .orderBy('updatedAt', descending: true)
-        .limit(8)
-        .get();
-    return docs.docs
-        .map((doc) => CompetitiveRankSnapshot.fromFirestore(doc.data()))
-        .toList();
-  }
-
-  List<CompetitiveRankSnapshot> _mergeSeasonHistory(
-    List<CompetitiveRankSnapshot> history,
-    CompetitiveRankSnapshot nextSnapshot,
-  ) {
-    final merged = history
-        .where((entry) => entry.weekKey != nextSnapshot.weekKey)
-        .toList(growable: true)
-      ..add(nextSnapshot);
-    return merged;
-  }
-
-  SeasonRewardSnapshot _resolveSeasonRewardAfterSync({
-    required SeasonRewardSnapshot nextReward,
-    required SeasonRewardSnapshot? currentReward,
-  }) {
-    if (currentReward == null || currentReward.seasonKey != nextReward.seasonKey) {
-      return nextReward;
-    }
-
-    if (currentReward.claimStatus == SeasonRewardClaimStatus.claimed) {
-      return nextReward.copyWith(
-        claimStatus: SeasonRewardClaimStatus.claimed,
-        claimedAt: currentReward.claimedAt,
-        syncSchemaVersion: syncSchemaVersion,
-        syncSource: 'client',
-      );
-    }
-
-    return nextReward.copyWith(
-      claimStatus: nextReward.rewardUnlocked
-          ? SeasonRewardClaimStatus.readyToClaim
-          : SeasonRewardClaimStatus.locked,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-    );
-  }
-
   Future<String> _claimSeasonRewardRemotely(
     SeasonRewardSnapshot currentReward,
   ) async {
@@ -1037,18 +897,32 @@ class RankProgressionRepository {
     return 'claimed';
   }
 
-  bool _canFallbackSeasonClaim(Object error) {
-    if (error is! FirebaseFunctionsException) {
-      return true;
+  Future<String> _startPromotionExamRemotely(
+    CompetitiveRankSnapshot snapshot,
+  ) async {
+    final callable = _functions.httpsCallable('startPromotionExam');
+    final response = await callable
+        .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
+        .timeout(_rpcTimeout);
+    final data = response.data;
+    if (data is Map && data['status'] is String) {
+      return data['status'] as String;
     }
+    return 'started';
+  }
 
-    return switch (error.code) {
-      'not-found' || 'unimplemented' || 'unavailable' || 'deadline-exceeded' =>
-        true,
-      'failed-precondition' || 'permission-denied' || 'unauthenticated' =>
-        false,
-      _ => true,
-    };
+  Future<String> _confirmPromotionRemotely(
+    CompetitiveRankSnapshot snapshot,
+  ) async {
+    final callable = _functions.httpsCallable('confirmPromotion');
+    final response = await callable
+        .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
+        .timeout(_rpcTimeout);
+    final data = response.data;
+    if (data is Map && data['status'] is String) {
+      return data['status'] as String;
+    }
+    return 'promoted';
   }
 
   RankAdvancementMode _promotionModeFor({
@@ -1062,10 +936,6 @@ class RankProgressionRepository {
     return _rankOrder(nextRank) <= _rankOrder(peakRank)
         ? RankAdvancementMode.reconquest
         : RankAdvancementMode.ascension;
-  }
-
-  String _higherRank(String rankA, String rankB) {
-    return _rankOrder(rankA) >= _rankOrder(rankB) ? rankA : rankB;
   }
 
   int _rankOrder(String rank) {

@@ -1,13 +1,16 @@
 # Codebase Index
 
-- generated_at: 2026-04-19T22:02:25.7580735-03:00
-- file_count: 44
+- generated_at: 2026-04-21T08:48:11.3748148-03:00
+- file_count: 51
 
 ## Files
 
+- [[lib-core-analytics-analytics-service-dart]] (lib\core\analytics\analytics_service.dart)
+- [[lib-core-crash-crash-reporting-service-dart]] (lib\core\crash\crash_reporting_service.dart)
 - [[lib-core-database-isar-provider-dart]] (lib\core\database\isar_provider.dart)
 - [[lib-core-navigation-navigation-provider-dart]] (lib\core\navigation\navigation_provider.dart)
 - [[lib-core-theme-app-colors-dart]] (lib\core\theme\app_colors.dart)
+- [[lib-core-widgets-reveal-block-dart]] (lib\core\widgets\reveal_block.dart)
 - [[lib-features-auth-domain-auth-state-dart]] (lib\features\auth\domain\auth_state.dart)
 - [[lib-features-auth-presentation-auth-controller-dart]] (lib\features\auth\presentation\auth_controller.dart)
 - [[lib-features-auth-presentation-login-screen-dart]] (lib\features\auth\presentation\login_screen.dart)
@@ -15,12 +18,15 @@
 - [[lib-features-profile-data-rank-progression-repository-dart]] (lib\features\profile\data\rank_progression_repository.dart)
 - [[lib-features-profile-domain-achievement-modal-dart]] (lib\features\profile\domain\achievement_modal.dart)
 - [[lib-features-profile-domain-competitive-integrity-dart]] (lib\features\profile\domain\competitive_integrity.dart)
+- [[lib-features-profile-domain-first-week-journey-dart]] (lib\features\profile\domain\first_week_journey.dart)
 - [[lib-features-profile-domain-player-model-dart]] (lib\features\profile\domain\player_model.dart)
 - [[lib-features-profile-domain-player-model-g-dart]] (lib\features\profile\domain\player_model.g.dart)
+- [[lib-features-profile-domain-progress-payoff-dart]] (lib\features\profile\domain\progress_payoff.dart)
 - [[lib-features-profile-domain-promotion-exam-dart]] (lib\features\profile\domain\promotion_exam.dart)
 - [[lib-features-profile-domain-rank-arena-dart]] (lib\features\profile\domain\rank_arena.dart)
 - [[lib-features-profile-domain-rank-prestige-dart]] (lib\features\profile\domain\rank_prestige.dart)
 - [[lib-features-profile-domain-rank-progression-dart]] (lib\features\profile\domain\rank_progression.dart)
+- [[lib-features-profile-domain-rank-rivalry-dart]] (lib\features\profile\domain\rank_rivalry.dart)
 - [[lib-features-profile-domain-rank-season-dart]] (lib\features\profile\domain\rank_season.dart)
 - [[lib-features-profile-domain-rank-season-leaderboard-dart]] (lib\features\profile\domain\rank_season_leaderboard.dart)
 - [[lib-features-profile-domain-season-legacy-reward-dart]] (lib\features\profile\domain\season_legacy_reward.dart)
@@ -36,6 +42,7 @@
 - [[lib-features-profile-presentation-rank-progression-provider-dart]] (lib\features\profile\presentation\rank_progression_provider.dart)
 - [[lib-features-profile-presentation-rank-screen-dart]] (lib\features\profile\presentation\rank_screen.dart)
 - [[lib-features-profile-presentation-stats-screen-dart]] (lib\features\profile\presentation\stats_screen.dart)
+- [[lib-features-quests-data-competitive-quest-authority-repository-dart]] (lib\features\quests\data\competitive_quest_authority_repository.dart)
 - [[lib-features-quests-domain-competitive-quest-template-dart]] (lib\features\quests\domain\competitive_quest_template.dart)
 - [[lib-features-quests-domain-quest-model-dart]] (lib\features\quests\domain\quest_model.dart)
 - [[lib-features-quests-domain-quest-model-g-dart]] (lib\features\quests\domain\quest_model.g.dart)

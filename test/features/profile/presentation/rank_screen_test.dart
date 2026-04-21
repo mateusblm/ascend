@@ -2,6 +2,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/season_reward_snapshot.dart';
@@ -173,13 +174,23 @@ void main() {
                 personalXpToday: 12,
                 competitiveXpToday: 35,
                 suspiciousPatternCount: 0,
-                summary: 'Integridade estavel',
-                detail: 'Sua trilha competitiva segue confiavel.',
+                summary: 'Conta estavel',
+                detail: 'Seu ritmo recente segue confiavel.',
                 syncSchemaVersion: 1,
                 syncSource: 'client',
                 updatedAt: DateTime(2026, 4, 18),
               ),
             ),
+          ),
+          seasonBracketLeaderboardProvider.overrideWith(
+            (ref) async => const <RankSeasonLeaderboardEntry>[
+              RankSeasonLeaderboardEntry(
+                position: 1,
+                displayName: 'VOCE',
+                detail: 'LIDER | 10 pts',
+                isPlayer: true,
+              ),
+            ],
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(boss)),
           weeklyBossTopCompletionsProvider.overrideWith(
@@ -194,21 +205,23 @@ void main() {
     expect(find.text('RANK'), findsOneWidget);
     expect(find.text('TEMPORADA'), findsWidgets);
     expect(find.text('LEGADO'), findsWidgets);
-    expect(find.text('EXAME EM CURSO'), findsOneWidget);
-    expect(find.text('CONFIANCA COMPETITIVA'), findsOneWidget);
+    expect(find.text('PROVA EM CURSO'), findsOneWidget);
+    expect(find.text('CONFIANCA DA CONTA'), findsOneWidget);
     expect(find.text('SUBIR PARA B'), findsOneWidget);
-    expect(find.text('DIAS PARA B'), findsOneWidget);
+    expect(find.text('DIAS PARA LIBERAR'), findsOneWidget);
     expect(find.text('LEVEL OK'), findsOneWidget);
     expect(find.text('Primeiro clear: Mateus abriu a arena.'), findsOneWidget);
 
     await tester.tap(find.text('TEMPORADA'));
     await tester.pumpAndSettle();
 
-    expect(find.text('PLACAR SAZONAL'), findsOneWidget);
+    expect(find.text('PLACAR DA TEMPORADA'), findsOneWidget);
+    expect(find.text('RIVALIDADE'), findsOneWidget);
+    expect(find.text('Voce abriu a disputa'), findsOneWidget);
     expect(find.textContaining('2/3 semanas seguras'), findsOneWidget);
     expect(find.text('Pacote de Manutencao'), findsOneWidget);
     expect(find.text('RESGATAR TEMPORADA'), findsOneWidget);
-    expect(find.text('Mateus'), findsOneWidget);
+    expect(find.text('VOCE'), findsOneWidget);
 
     await tester.tap(find.text('LEGADO'));
     await tester.pumpAndSettle();
@@ -241,6 +254,9 @@ void main() {
           ),
           currentCompetitiveIntegrityProvider.overrideWith(
             (ref) => Stream.value(null),
+          ),
+          seasonBracketLeaderboardProvider.overrideWith(
+            (ref) async => const <RankSeasonLeaderboardEntry>[],
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
@@ -288,6 +304,9 @@ void main() {
           ),
           currentCompetitiveIntegrityProvider.overrideWith(
             (ref) => Stream.value(null),
+          ),
+          seasonBracketLeaderboardProvider.overrideWith(
+            (ref) async => const <RankSeasonLeaderboardEntry>[],
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(
@@ -348,6 +367,9 @@ void main() {
           ),
           currentCompetitiveIntegrityProvider.overrideWith(
             (ref) => Stream.value(null),
+          ),
+          seasonBracketLeaderboardProvider.overrideWith(
+            (ref) async => const <RankSeasonLeaderboardEntry>[],
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
           weeklyBossTopCompletionsProvider.overrideWith(

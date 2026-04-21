@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\domain\rank_season_leaderboard.dart
 feature: profile
 symbol_count: 2
-import_count: 6
+import_count: 7
 ---
 # lib\features\profile\domain\rank_season_leaderboard.dart
 
 ## Summary
 
 - feature: profile
-- imports: 6
+- imports: 7
 - symbols: 2
 
 ## Symbols
@@ -21,6 +21,7 @@ import_count: 6
 ## Imports
 
 - lib/features/profile/domain/player_model.dart
+- lib/features/profile/domain/competitive_integrity.dart
 - lib/features/profile/domain/rank_progression.dart
 - lib/features/profile/domain/rank_season.dart
 - lib/features/profile/domain/weekly_boss.dart

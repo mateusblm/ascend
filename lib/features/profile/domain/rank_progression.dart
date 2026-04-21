@@ -227,8 +227,16 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final peakRank = _higherRank(previousPeakRank, seedRank);
   final baseRule = rankRuleFor(seedRank);
   final boss = weeklyBossForRank(seedRank);
-  final bossCompleted = boss.isCompleted(player, competitiveOnly: true);
-  final activeDays = boss.progressFor(player, competitiveOnly: true);
+  final bossCompleted = boss.isCompleted(
+    player,
+    competitiveOnly: true,
+    now: currentDate,
+  );
+  final activeDays = boss.progressFor(
+    player,
+    competitiveOnly: true,
+    now: currentDate,
+  );
   final maintenanceMet =
       activeDays >= baseRule.requiredActiveDays &&
       (!baseRule.requiresBossClear || bossCompleted);
@@ -260,17 +268,24 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
   final currentBossCompleted = currentBoss.isCompleted(
     player,
     competitiveOnly: true,
+    now: currentDate,
   );
   final currentActiveDays = currentBoss.progressFor(
     player,
     competitiveOnly: true,
+    now: currentDate,
   );
   final currentMaintenanceMet =
       currentActiveDays >= currentRule.requiredActiveDays &&
       (!currentRule.requiresBossClear || currentBossCompleted);
   final nextBoss = nextRank == null ? null : weeklyBossForRank(nextRank);
   final nextBossCompleted =
-      nextBoss?.isCompleted(player, competitiveOnly: true) ?? false;
+      nextBoss?.isCompleted(
+        player,
+        competitiveOnly: true,
+        now: currentDate,
+      ) ??
+      false;
   final targetRequiredLevel = nextRule?.minimumLevel ?? player.level;
   final targetLevelGateMet =
       nextRule == null ? true : player.level >= nextRule.minimumLevel;

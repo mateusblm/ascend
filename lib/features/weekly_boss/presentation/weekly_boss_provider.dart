@@ -1,3 +1,5 @@
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
@@ -7,7 +9,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final weeklyBossRepositoryProvider = Provider<WeeklyBossRepository>((ref) {
-  return WeeklyBossRepository(FirebaseFirestore.instance);
+  return WeeklyBossRepository(
+    FirebaseFirestore.instance,
+    analytics: ref.read(analyticsProvider),
+    crashReporter: ref.read(crashReportingProvider),
+  );
 });
 
 final remoteWeeklyBossProvider = StreamProvider.autoDispose<RemoteWeeklyBoss?>((ref) {

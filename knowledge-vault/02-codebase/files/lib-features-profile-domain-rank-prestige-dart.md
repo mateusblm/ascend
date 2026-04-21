@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\domain\rank_prestige.dart
 feature: profile
 symbol_count: 1
-import_count: 1
+import_count: 2
 ---
 # lib\features\profile\domain\rank_prestige.dart
 
 ## Summary
 
 - feature: profile
-- imports: 1
+- imports: 2
 - symbols: 1
 
 ## Symbols
@@ -20,3 +20,4 @@ import_count: 1
 ## Imports
 
 - lib/features/profile/domain/rank_progression.dart
+- lib/features/profile/domain/competitive_integrity.dart

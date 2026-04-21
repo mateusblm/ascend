@@ -5,6 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
+  test('starterQuestsForFocus returns a mixed starter kit', () {
+    final kit = starterQuestsForFocus(AwakeningPath.study);
+
+    expect(kit, hasLength(3));
+    expect(kit.where((quest) => quest.isCompetitive), hasLength(2));
+    expect(kit.where((quest) => !quest.isCompetitive), hasLength(1));
+    expect(kit.last.title, 'Organizar material de estudo');
+  });
+
   group('Daily reset flow', () {
     test('isDailyResetDue returns true only when calendar day changes', () {
       final now = DateTime(2026, 4, 19, 8, 0);

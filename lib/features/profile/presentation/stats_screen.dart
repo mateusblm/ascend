@@ -1,3 +1,4 @@
+import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
@@ -62,51 +63,59 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(
-                context,
-                player,
-                authState,
-                rankSnapshot,
-                promotionExam,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              RevealBlock(
+                child: _buildHeader(
+                  context,
+                  player,
+                  authState,
+                  rankSnapshot,
+                  promotionExam,
+                ),
               ),
               const SizedBox(height: 14),
-              _buildSectionTabs(),
+              RevealBlock(
+                delay: const Duration(milliseconds: 80),
+                child: _buildSectionTabs(),
+              ),
               const SizedBox(height: 14),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: switch (_currentSection) {
-                  _StatsSection.overview => _buildOverviewSection(
-                    player,
-                    attrs,
-                    rankSnapshot,
-                    weeklyBoss,
-                    weeklyBossProgress,
-                    weeklyBossClaimed,
-                    remoteWeeklyBoss,
-                  ),
-                  _StatsSection.attributes => _buildAttributesSection(
-                    context,
-                    player,
-                    attrs,
-                  ),
-                  _StatsSection.week => _buildWeeklySection(
-                    player,
-                    insights,
-                    weeklyBoss,
-                    weeklyBossProgress,
-                    weeklyBossClaimed,
-                    rankHistory,
-                  ),
-                  _StatsSection.plan => _buildPlanSection(
-                    player,
-                    insights,
-                    weeklyBoss,
-                    rankSnapshot,
-                  ),
-                },
+              RevealBlock(
+                delay: const Duration(milliseconds: 140),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: switch (_currentSection) {
+                    _StatsSection.overview => _buildOverviewSection(
+                      player,
+                      attrs,
+                      rankSnapshot,
+                      weeklyBoss,
+                      weeklyBossProgress,
+                      weeklyBossClaimed,
+                      remoteWeeklyBoss,
+                    ),
+                    _StatsSection.attributes => _buildAttributesSection(
+                      context,
+                      player,
+                      attrs,
+                    ),
+                    _StatsSection.week => _buildWeeklySection(
+                      player,
+                      insights,
+                      weeklyBoss,
+                      weeklyBossProgress,
+                      weeklyBossClaimed,
+                      rankHistory,
+                    ),
+                    _StatsSection.plan => _buildPlanSection(
+                      player,
+                      insights,
+                      weeklyBoss,
+                      rankSnapshot,
+                    ),
+                  },
+                ),
               ),
             ],
           ),
@@ -151,9 +160,18 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               InfoTooltipIcon(
                 title: 'Como ler esta tela',
                 message:
-                    'Use esta area para acompanhar numeros e tendencia. Rank mostra decisao e pressao da semana. Aqui ficam os detalhes do seu progresso.',
+                    'Aqui voce acompanha seu progresso, sua semana e o que vale ajustar. A tela de Rank cuida da parte competitiva.',
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Uma leitura mais analitica do seu progresso, da sua semana e dos ajustes que valem agora.',
+            style: TextStyle(
+              color: Colors.white60,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -265,14 +283,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               text: switch (promotionExam.status) {
                 PromotionExamStatus.inProgress =>
                   promotionExam.mode == PromotionExamMode.reconquest
-                      ? 'Reconquista em curso: meta de ${promotionExam.targetActiveDays} dias ativos.'
-                      : 'Meta: ${promotionExam.targetActiveDays} dias ativos.',
+                      ? 'Reconquista em andamento: meta de ${promotionExam.targetActiveDays} dias ativos.'
+                      : 'Prova em andamento: meta de ${promotionExam.targetActiveDays} dias ativos.',
                 PromotionExamStatus.passed =>
                   promotionExam.mode == PromotionExamMode.reconquest
                       ? 'Reconquista pronta para confirmar.'
                       : 'Promocao pronta para confirmar.',
                 PromotionExamStatus.failed =>
-                  'Exame expirado ou nao sustentado.',
+                  'A prova expirou ou nao foi sustentada.',
                 PromotionExamStatus.promoted => promotionExam.mode == PromotionExamMode.reconquest
                     ? 'Reconquista ja registrada.'
                     : 'Promocao ja registrada.',
@@ -348,7 +366,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Seu progresso geral de XP e atributos.',
+                'Seu progresso geral de level e atributos.',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12.5,
@@ -648,7 +666,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'ULTIMAS SEMANAS',
+                'HISTORICO RECENTE',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -701,7 +719,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'PLANO DA SEMANA',
+                      'PROXIMA SEMANA',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,

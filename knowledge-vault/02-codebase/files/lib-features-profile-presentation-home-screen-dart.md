@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\presentation\home_screen.dart
 feature: profile
 symbol_count: 1
-import_count: 20
+import_count: 24
 ---
 # lib\features\profile\presentation\home_screen.dart
 
 ## Summary
 
 - feature: profile
-- imports: 20
+- imports: 24
 - symbols: 1
 
 ## Symbols
@@ -19,15 +19,19 @@ import_count: 20
 
 ## Imports
 
+- lib/core/widgets/reveal_block.dart
 - lib/core/theme/app_colors.dart
 - lib/features/auth/domain/auth_state.dart
 - lib/features/auth/presentation/auth_controller.dart
 - lib/features/profile/domain/achievement_modal.dart
+- lib/features/profile/domain/first_week_journey.dart
 - lib/features/profile/domain/player_model.dart
-- lib/features/profile/domain/competitive_integrity.dart
+- lib/features/profile/domain/progress_payoff.dart
 - lib/features/profile/domain/rank_prestige.dart
 - lib/features/profile/domain/rank_progression.dart
+- lib/features/profile/domain/rank_rivalry.dart
 - lib/features/profile/domain/rank_season.dart
+- lib/features/profile/domain/rank_season_leaderboard.dart
 - lib/features/profile/domain/season_profile_snapshot.dart
 - lib/features/profile/domain/weekly_boss.dart
 - lib/features/profile/presentation/focus_selection_sheet.dart

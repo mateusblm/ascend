@@ -1,3 +1,4 @@
+import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
@@ -5,6 +6,7 @@ import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_arena.dart';
 import 'package:ascend/features/profile/domain/rank_prestige.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/rank_rivalry.dart';
 import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_legacy_reward.dart';
@@ -44,13 +46,16 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final seasonLegacyHistory =
         ref.watch(seasonLegacyHistoryProvider).valueOrNull ??
         const <SeasonLegacyReward>[];
+    final bracketLeaderboard =
+        ref.watch(seasonBracketLeaderboardProvider).valueOrNull ??
+        const <RankSeasonLeaderboardEntry>[];
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final topCompletions =
         ref.watch(weeklyBossTopCompletionsProvider).valueOrNull ??
         const <WeeklyBossCompletion>[];
 
     final season = buildCurrentSeasonSummary(history);
-    final prestige = buildRankPrestigeSummary(history);
+    final prestige = buildRankPrestigeSummary(history, integrity: integrity);
     final arena = buildRankArenaSummary(
       player: player,
       boss: remoteWeeklyBoss.valueOrNull,
@@ -62,46 +67,56 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       activeBoss: remoteWeeklyBoss.valueOrNull,
       topCompletions: topCompletions,
       snapshot: snapshot,
+      integrity: integrity,
+      globalLeaderboard: bracketLeaderboard,
     );
+    final rivalry = buildRankRivalrySummary(bracketLeaderboard);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHero(player, snapshot),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              RevealBlock(child: _buildHero(player, snapshot)),
               const SizedBox(height: 14),
-              _buildSectionTabs(),
+              RevealBlock(
+                delay: const Duration(milliseconds: 80),
+                child: _buildSectionTabs(),
+              ),
               const SizedBox(height: 14),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: switch (_currentSection) {
-                  _RankSection.now => _buildNowSection(
-                  context,
-                  player,
-                  snapshot,
-                  exam,
-                  arena,
-                  prestige,
-                  integrity,
-                ),
-                  _RankSection.season => _buildSeasonSection(
+              RevealBlock(
+                delay: const Duration(milliseconds: 140),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: switch (_currentSection) {
+                    _RankSection.now => _buildNowSection(
                     context,
                     player,
-                    season,
-                    leaderboard,
-                    currentSeasonReward,
-                  ),
-                  _RankSection.legacy => _buildLegacySection(
                     snapshot,
-                    history,
-                    seasonProfile,
-                    seasonLegacyHistory,
+                    exam,
+                    arena,
+                    prestige,
+                    integrity,
                   ),
-                },
+                    _RankSection.season => _buildSeasonSection(
+                      context,
+                      player,
+                      season,
+                      leaderboard,
+                      currentSeasonReward,
+                      rivalry,
+                    ),
+                    _RankSection.legacy => _buildLegacySection(
+                      snapshot,
+                      history,
+                      seasonProfile,
+                      seasonLegacyHistory,
+                    ),
+                  },
+                ),
               ),
             ],
           ),
@@ -141,9 +156,18 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               const InfoTooltipIcon(
                 title: 'Como ler esta tela',
                 message:
-                    'A area Agora mostra o que esta valendo nesta semana. Temporada resume seu momento no mes. Legado guarda o que voce ja conquistou.',
+                    'Agora mostra o que precisa ser feito nesta semana. Temporada resume seu momento atual. Legado guarda o que voce ja conquistou.',
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Veja seu posto atual, o que falta para manter e o que abre a proxima subida.',
+            style: TextStyle(
+              color: Colors.white60,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -173,7 +197,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'SEU POSTO AGORA',
+                            'SEU RANK AGORA',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.white54,
@@ -251,7 +275,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Seu level ${player.level} ja permite tentar ate o rank $eligibleRank.',
+                  'Seu level ${player.level} ja permite buscar ate o rank $eligibleRank.',
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 11.5,
@@ -354,20 +378,20 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           _InfoBanner(
             title: _statusHeadline(snapshot?.status ?? RankMaintenanceStatus.secure),
             body: remainingCurrentDays == 0
-                ? 'Seu posto desta semana esta protegido por atividade competitiva validada.'
-                : 'Faltam $remainingCurrentDays dia(s) competitivos validados para manter o rank $currentRank.',
+                ? 'Seu rank desta semana esta protegido por atividade competitiva validada.'
+                : 'Faltam $remainingCurrentDays dia(s) competitivos validados para segurar o rank $currentRank.',
             accent: _statusColor(snapshot?.status ?? RankMaintenanceStatus.secure),
           ),
           const SizedBox(height: 12),
           _SplitMetricRow(
               left: _MetricCard(
-                label: 'MANTER $currentRank',
+                label: 'SEGURAR $currentRank',
                 value:
                     '${snapshot?.activeDays ?? 0}/${currentRule.requiredActiveDays} dias validos',
                 accent: AppColors.neonBlue,
               ),
             right: _MetricCard(
-              label: 'BOSS DESTE RANK',
+              label: 'DESAFIO DO RANK',
               value: currentRule.requiresBossClear
                   ? ((snapshot?.bossCompleted ?? false) ? 'OK' : 'PENDENTE')
                   : 'NAO EXIGIDO',
@@ -406,8 +430,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             Text(
               targetLevelGateMet
                   ? mode == RankAdvancementMode.reconquest
-                      ? 'Seu level ja permite voltar para $nextRank. Agora so faltam os requisitos da semana.'
-                      : 'Seu level ja permite tentar $nextRank. Agora so faltam os requisitos da semana.'
+                      ? 'Seu level ja permite voltar para $nextRank. Agora falta fechar a semana.'
+                      : 'Seu level ja permite tentar $nextRank. Agora falta fechar a semana.'
                   : 'O rank $nextRank abre a partir do level $targetLevel.',
               style: const TextStyle(
                 color: Colors.white70,
@@ -418,14 +442,14 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             const SizedBox(height: 12),
             _SplitMetricRow(
               left: _MetricCard(
-                label: 'DIAS PARA $nextRank',
+                label: 'DIAS PARA LIBERAR',
                 value: '$nextActiveDays/${nextRule.requiredActiveDays} dias validos',
                 accent: nextActiveDays >= nextRule.requiredActiveDays
                     ? Colors.greenAccent
                     : AppColors.neonBlue,
               ),
               right: _MetricCard(
-                label: 'BOSS DO $nextRank',
+                label: 'DESAFIO DO $nextRank',
                 value: nextRule.requiresBossClear
                     ? (nextBossDone ? 'OK' : 'PENDENTE')
                     : 'NAO EXIGIDO',
@@ -489,17 +513,17 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final title = switch (exam?.status) {
       PromotionExamStatus.inProgress => examMode == PromotionExamMode.reconquest
           ? 'RECONQUISTA EM CURSO'
-          : 'EXAME EM CURSO',
+          : 'PROVA EM CURSO',
       PromotionExamStatus.passed => examMode == PromotionExamMode.reconquest
           ? 'RECONQUISTA PRONTA'
           : 'PROMOCAO PRONTA',
-      PromotionExamStatus.failed => 'EXAME FALHOU',
+      PromotionExamStatus.failed => 'PROVA NAO CONCLUIDA',
       PromotionExamStatus.promoted => 'RANK ATUALIZADO',
       null => snapshot?.promotionReady == true
           ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
                 ? 'RECONQUISTA DISPONIVEL'
-                : 'EXAME DISPONIVEL')
-          : 'EXAME DE RANK',
+                : 'PROVA DISPONIVEL')
+          : 'PROVA DE RANK',
     };
     final body = switch (exam?.status) {
       PromotionExamStatus.inProgress => examMode == PromotionExamMode.reconquest
@@ -513,7 +537,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       null => snapshot?.promotionReady == true
           ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
                 ? 'Seu historico ja provou esse posto. Falta so passar na prova de retorno.'
-                : 'Voce bateu os requisitos do proximo rank. Falta so passar na prova formal.')
+                : 'Voce ja cumpriu os requisitos. Falta so passar na prova final.')
           : 'Quando sua semana liberar uma prova, ela aparece aqui.',
     };
 
@@ -522,7 +546,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'PROVA DE RANK',
+            'PROXIMA ETAPA',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white54,
@@ -696,12 +720,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           _SplitMetricRow(
             left: _MetricCard(
               label: 'SEMANAS SEGURAS',
-              value: '${prestige.maintenanceRate}%',
+              value: '${prestige.effectiveMaintenanceRate}%',
               accent: Colors.greenAccent,
             ),
             right: _MetricCard(
-              label: 'SEQUENCIA',
-              value: '${prestige.secureStreak} semana(s)',
+              label: 'LEITURA',
+              value: prestige.integrityBandLabel,
               accent: AppColors.neonBlue,
             ),
           ),
@@ -716,6 +740,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     RankSeasonSummary season,
     RankSeasonLeaderboardSummary leaderboard,
     SeasonRewardSnapshot? currentSeasonReward,
+    RankRivalrySummary rivalry,
   ) {
     return Column(
       key: const ValueKey('rank-season'),
@@ -726,6 +751,10 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         _buildSeasonRewardCard(context, season, currentSeasonReward),
         const SizedBox(height: 12),
         _buildSeasonLeaderboardCard(leaderboard),
+        if (rivalry.isActive) ...[
+          const SizedBox(height: 12),
+          _buildRivalryPanel(rivalry),
+        ],
       ],
     );
   }
@@ -892,7 +921,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'PLACAR SAZONAL',
+            'PLACAR DA TEMPORADA',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white54,
@@ -909,12 +938,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           const SizedBox(height: 12),
           _SplitMetricRow(
             left: _MetricCard(
-              label: 'BANDA',
+              label: 'FAIXA',
               value: leaderboard.scoreBandLabel,
               accent: scoreColor,
             ),
             right: _MetricCard(
-              label: 'SCORE',
+              label: 'PONTOS',
               value: '${leaderboard.seasonScore}',
               accent: AppColors.neonBlue,
             ),
@@ -1006,6 +1035,44 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRivalryPanel(RankRivalrySummary rivalry) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'RIVALIDADE',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white54,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoBanner(
+            title: rivalry.headline,
+            body: rivalry.body,
+            accent: Colors.amberAccent,
+          ),
+          const SizedBox(height: 12),
+          _SplitMetricRow(
+            left: _MetricCard(
+              label: 'QUEM ESTA NA SUA FRENTE',
+              value: rivalry.chaseLabel,
+              accent: Colors.amberAccent,
+            ),
+            right: _MetricCard(
+              label: 'QUEM ESTA PERTO',
+              value: rivalry.pressureLabel,
+              accent: Colors.orangeAccent,
+            ),
+          ),
         ],
       ),
     );
@@ -1272,7 +1339,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'CONFIANCA COMPETITIVA',
+            'CONFIANCA DA CONTA',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white54,
@@ -1369,22 +1436,22 @@ class _RankScreenState extends ConsumerState<RankScreen> {
   String _integrityHeadline(CompetitiveIntegritySnapshot integrity) {
     return switch (integrity.trustBand) {
       CompetitiveTrustBand.high => 'Trilha muito confiavel',
-      CompetitiveTrustBand.stable => 'Trilha estavel',
-      CompetitiveTrustBand.attention => 'Consistencia em observacao',
-      CompetitiveTrustBand.restricted => 'Posicao competitiva fragil',
+      CompetitiveTrustBand.stable => 'Conta estavel',
+      CompetitiveTrustBand.attention => 'Conta em observacao',
+      CompetitiveTrustBand.restricted => 'Conta fragil no momento',
     };
   }
 
   String _integrityBody(CompetitiveIntegritySnapshot integrity) {
     return switch (integrity.trustBand) {
       CompetitiveTrustBand.high =>
-        'Seu ritmo validado esta forte. Continue fechando quests competitivas para sustentar esse momento.',
+        'Seu ritmo recente esta muito confiavel. Continue fechando quests competitivas para manter isso.',
       CompetitiveTrustBand.stable =>
-        'Sua trilha esta saudavel. Mais dias competitivos validados mantem sua forca no ranking.',
+        'Sua conta esta estavel. Mais dias competitivos ajudam a manter sua posicao forte.',
       CompetitiveTrustBand.attention =>
-        'Seu progresso recente ainda precisa de mais consistencia validada para ganhar peso competitivo.',
+        'Seu progresso recente ainda precisa de mais constancia para deixar sua conta mais firme no competitivo.',
       CompetitiveTrustBand.restricted =>
-        'Seu ranking precisa de mais provas de consistencia. Priorize quests competitivas confirmadas nesta semana.',
+        'Sua conta ainda precisa de mais constancia. Priorize quests competitivas confirmadas nesta semana.',
     };
   }
 

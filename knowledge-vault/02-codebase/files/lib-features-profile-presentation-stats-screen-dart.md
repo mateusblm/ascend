@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\profile\presentation\stats_screen.dart
 feature: profile
 symbol_count: 8
-import_count: 17
+import_count: 18
 ---
 # lib\features\profile\presentation\stats_screen.dart
 
 ## Summary
 
 - feature: profile
-- imports: 17
+- imports: 18
 - symbols: 8
 
 ## Symbols
@@ -26,6 +26,7 @@ import_count: 17
 
 ## Imports
 
+- lib/core/widgets/reveal_block.dart
 - lib/core/theme/app_colors.dart
 - lib/features/auth/domain/auth_state.dart
 - lib/features/auth/presentation/auth_controller.dart

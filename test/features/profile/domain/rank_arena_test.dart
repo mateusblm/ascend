@@ -50,7 +50,7 @@ void main() {
 
       expect(summary.hasActiveBoss, isTrue);
       expect(summary.urgencyLabel, 'JANELA FINAL');
-      expect(summary.stateLabel, 'PRIMEIROS HUNTERS');
+      expect(summary.stateLabel, 'PRIMEIROS CLEARS');
       expect(summary.completedCount, 4);
       expect(summary.leaderHeadline, contains('MATEUS'));
     });

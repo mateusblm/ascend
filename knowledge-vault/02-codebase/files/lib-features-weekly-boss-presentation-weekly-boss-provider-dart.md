@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\weekly_boss\presentation\weekly_boss_provider.dart
 feature: weekly_boss
 symbol_count: 3
-import_count: 7
+import_count: 9
 ---
 # lib\features\weekly_boss\presentation\weekly_boss_provider.dart
 
 ## Summary
 
 - feature: weekly_boss
-- imports: 7
+- imports: 9
 - symbols: 3
 
 ## Symbols
@@ -21,6 +21,8 @@ import_count: 7
 
 ## Imports
 
+- lib/core/analytics/analytics_service.dart
+- lib/core/crash/crash_reporting_service.dart
 - lib/features/profile/presentation/rank_progression_provider.dart
 - lib/features/weekly_boss/data/weekly_boss_repository.dart
 - lib/features/weekly_boss/domain/remote_weekly_boss.dart

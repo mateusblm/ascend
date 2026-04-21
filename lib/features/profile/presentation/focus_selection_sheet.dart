@@ -1,6 +1,8 @@
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,8 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final preview = starterQuestsForFocus(_selectedFocus);
+
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -34,18 +38,23 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ALTERAR FOCO',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
+          const RevealBlock(
+            child: Text(
+              'ALTERAR FOCO',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+              ),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Isso muda apenas a sua direcao principal. As quests atuais continuam como estao.',
-            style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.5),
+          const RevealBlock(
+            delay: Duration(milliseconds: 70),
+            child: Text(
+              'Isso muda seu foco principal daqui para frente. O que ja esta na sua lista continua do jeito que esta.',
+              style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.5),
+            ),
           ),
           const SizedBox(height: 20),
           ...AwakeningPath.values.map((focus) {
@@ -108,6 +117,48 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
               ),
             );
           }),
+          const SizedBox(height: 8),
+          RevealBlock(
+            delay: const Duration(milliseconds: 120),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.neonBlue.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.neonBlue.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SE O FOCO FOR ${_selectedFocus.label}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...preview.take(2).map(
+                    (quest) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        '- ${quest.title}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -119,7 +170,7 @@ class _FocusSelectionSheetState extends ConsumerState<FocusSelectionSheet> {
               ),
               onPressed: _applyFocusChange,
               child: const Text(
-                'CONFIRMAR FOCO',
+                'USAR ESSE FOCO',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,

@@ -255,10 +255,10 @@ CompetitiveTrustBand _trustBandFor(int score) {
 
 String _summaryForBand(CompetitiveTrustBand band) {
   return switch (band) {
-    CompetitiveTrustBand.high => 'Integridade alta',
-    CompetitiveTrustBand.stable => 'Integridade estavel',
-    CompetitiveTrustBand.attention => 'Integridade em atencao',
-    CompetitiveTrustBand.restricted => 'Integridade restrita',
+    CompetitiveTrustBand.high => 'Conta muito confiavel',
+    CompetitiveTrustBand.stable => 'Conta estavel',
+    CompetitiveTrustBand.attention => 'Conta em observacao',
+    CompetitiveTrustBand.restricted => 'Conta com pouca forca no momento',
   };
 }
 
@@ -280,13 +280,13 @@ String _detailForSnapshot({
 
   return switch (trustBand) {
     CompetitiveTrustBand.high =>
-      '$base $volume Sua trilha competitiva esta muito consistente. $risk',
+      '$base $volume Seu ritmo recente esta muito confiavel. $risk',
     CompetitiveTrustBand.stable =>
-      '$base $volume Sua trilha competitiva segue confiavel. $risk',
+      '$base $volume Seu ritmo recente segue confiavel. $risk',
     CompetitiveTrustBand.attention =>
-      '$base $volume O sistema esta pedindo mais consistencia validada para sustentar o standing. $risk',
+      '$base $volume Falta um pouco mais de constancia para sua conta ficar mais firme no competitivo. $risk',
     CompetitiveTrustBand.restricted =>
-      '$base $volume O peso competitivo desta conta precisa de mais consistencia validada antes de ganhar forca total. $risk',
+      '$base $volume Sua conta ainda precisa de mais sinais consistentes nesta semana para ganhar forca no competitivo. $risk',
   };
 }
 

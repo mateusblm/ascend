@@ -2,16 +2,16 @@
 type: code-file
 path: lib\features\profile\presentation\rank_progression_provider.dart
 feature: profile
-symbol_count: 11
-import_count: 12
+symbol_count: 12
+import_count: 15
 ---
 # lib\features\profile\presentation\rank_progression_provider.dart
 
 ## Summary
 
 - feature: profile
-- imports: 12
-- symbols: 11
+- imports: 15
+- symbols: 12
 
 ## Symbols
 
@@ -23,16 +23,20 @@ import_count: 12
 - rankProgressionHistoryProvider
 - rankProgressionRepositoryProvider
 - rankProgressionSnapshotProvider
+- seasonBracketLeaderboardProvider
 - seasonLegacyHistoryProvider
 - seasonProfileProvider
 - seasonRewardHistoryProvider
 
 ## Imports
 
+- lib/core/analytics/analytics_service.dart
+- lib/core/crash/crash_reporting_service.dart
 - lib/features/profile/data/rank_progression_repository.dart
 - lib/features/profile/domain/competitive_integrity.dart
 - lib/features/profile/domain/promotion_exam.dart
 - lib/features/profile/domain/rank_progression.dart
+- lib/features/profile/domain/rank_season_leaderboard.dart
 - lib/features/profile/domain/season_legacy_reward.dart
 - lib/features/profile/domain/season_profile_snapshot.dart
 - lib/features/profile/domain/season_reward_snapshot.dart

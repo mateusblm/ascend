@@ -1,4 +1,5 @@
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
@@ -71,13 +72,86 @@ void main() {
         snapshot: history.last,
       );
 
-      expect(summary.divisionLabel, contains('BRACKET C'));
-      expect(summary.boardStatusLabel, contains('PLACAR ATIVO'));
+      expect(summary.divisionLabel, contains('RANK C'));
+      expect(summary.boardStatusLabel, contains('DISPUTA ABERTA'));
       expect(summary.playerStandingLabel, 'LIDER DO RANK');
       expect(summary.clearRateLabel, '30% do rank concluiu');
       expect(summary.seasonScore, greaterThan(0));
       expect(summary.podium, isNotEmpty);
       expect(summary.podium.first.isPlayer, isTrue);
+    });
+
+    test('uses global leaderboard and soft integrity review labels', () {
+      final player = Player(
+        name: 'Mateus',
+        level: 8,
+        xp: 40,
+        maxXp: 100,
+        attributes: PlayerAttributes(),
+        lastResetDate: DateTime(2026, 4, 18),
+        hasCompletedOnboarding: true,
+      );
+      final season = buildCurrentSeasonSummary(
+        [
+          _snapshot(
+            weekKey: '2026W0414',
+            currentRank: 'C',
+            activeDays: 6,
+            requiredActiveDays: 5,
+            status: RankMaintenanceStatus.promotionReady,
+            eventType: CompetitiveRankEventType.perfectWeek,
+            updatedAt: DateTime(2026, 4, 14),
+          ),
+        ],
+        now: DateTime(2026, 4, 18),
+      );
+      final integrity = CompetitiveIntegritySnapshot(
+        weekKey: '2026W0414',
+        trustScore: 58,
+        trustBand: CompetitiveTrustBand.attention,
+        weeklyActiveDays: 5,
+        weeklyCompetitiveDays: 2,
+        personalQuestCompletionsToday: 3,
+        competitiveQuestCompletionsToday: 1,
+        personalXpToday: 36,
+        competitiveXpToday: 30,
+        suspiciousPatternCount: 2,
+        summary: 'atencao',
+        detail: 'atencao',
+        syncSchemaVersion: 1,
+        syncSource: 'client',
+        updatedAt: DateTime(2026, 4, 18),
+      );
+      final global = [
+        const RankSeasonLeaderboardEntry(
+          position: 1,
+          displayName: 'VOCE',
+          detail: 'ELITE | 14 pts',
+          isPlayer: true,
+        ),
+      ];
+
+      final summary = buildRankSeasonLeaderboardSummary(
+        player: player,
+        season: season,
+        activeBoss: null,
+        topCompletions: const [],
+        snapshot: _snapshot(
+          weekKey: '2026W0414',
+          currentRank: 'C',
+          activeDays: 6,
+          requiredActiveDays: 5,
+          status: RankMaintenanceStatus.promotionReady,
+          eventType: CompetitiveRankEventType.perfectWeek,
+          updatedAt: DateTime(2026, 4, 14),
+        ),
+        integrity: integrity,
+        globalLeaderboard: global,
+      );
+
+      expect(summary.boardStatusLabel, contains('DISPUTA DO GRUPO'));
+      expect(summary.playerStandingLabel, contains('EM OBSERVACAO'));
+      expect(summary.podium.first.displayName, 'VOCE');
     });
   });
 }

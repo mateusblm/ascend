@@ -1,15 +1,93 @@
+import 'dart:async';
+
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
+final competitiveQuestAuthorityRepositoryProvider =
+    Provider<CompetitiveQuestAuthorityRepository>((ref) {
+      return CompetitiveQuestAuthorityRepository(
+        functions: FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+        crashReporter: ref.read(crashReportingProvider),
+      );
+    });
+
 final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
-  return QuestNotifier(ref, ref.watch(isarProvider));
+  return QuestNotifier(
+    ref,
+    ref.watch(isarProvider),
+    analytics: ref.read(analyticsProvider),
+    competitiveAuthority: ref.read(competitiveQuestAuthorityRepositoryProvider),
+  );
 });
+
+List<Quest> starterQuestsForFocus(AwakeningPath focus) {
+  final competitiveTemplates = templatesForFocus(focus)
+      .take(2)
+      .map((template) => template.toQuest())
+      .toList();
+
+  final personalQuest = switch (focus) {
+    AwakeningPath.discipline => _buildStarterPersonalQuest(
+        id: 'discipline-personal',
+        title: 'Arrumar a cama ao acordar',
+        rewardAttribute: AttributeType.vitality,
+        xpReward: personalQuestDefaultXp,
+      ),
+    AwakeningPath.study => _buildStarterPersonalQuest(
+        id: 'study-personal',
+        title: 'Organizar material de estudo',
+        rewardAttribute: AttributeType.intelligence,
+        xpReward: personalQuestDefaultXp,
+      ),
+    AwakeningPath.training => _buildStarterPersonalQuest(
+        id: 'training-personal',
+        title: 'Separar roupa e agua para o treino',
+        rewardAttribute: AttributeType.vitality,
+        xpReward: personalQuestDefaultXp,
+      ),
+    AwakeningPath.health => _buildStarterPersonalQuest(
+        id: 'health-personal',
+        title: 'Bater a meta de agua do dia',
+        rewardAttribute: AttributeType.vitality,
+        xpReward: personalQuestDefaultXp,
+      ),
+    AwakeningPath.productivity => _buildStarterPersonalQuest(
+        id: 'productivity-personal',
+        title: 'Definir a tarefa critica do dia',
+        rewardAttribute: AttributeType.agility,
+        xpReward: personalQuestDefaultXp,
+      ),
+  };
+
+  return [...competitiveTemplates, personalQuest];
+}
+
+Quest _buildStarterPersonalQuest({
+  required String id,
+  required String title,
+  required AttributeType rewardAttribute,
+  required int xpReward,
+}) {
+  return Quest(
+    id: id,
+    title: title,
+    rewardAttribute: rewardAttribute,
+    xpReward: normalizePersonalQuestXp(xpReward),
+    category: QuestCategory.personal,
+    verificationMode: QuestVerificationMode.manual,
+    verificationStatus: QuestVerificationStatus.none,
+  );
+}
 
 bool isDailyResetDue({
   required DateTime lastReset,
@@ -30,12 +108,21 @@ enum QuestCompletionResult {
 }
 
 class QuestNotifier extends StateNotifier<List<Quest>> {
-  QuestNotifier(this.ref, this._isar) : super([]) {
+  QuestNotifier(
+    this.ref,
+    this._isar, {
+    AppAnalytics? analytics,
+    CompetitiveQuestAuthorityRepository? competitiveAuthority,
+  }) : _analytics = analytics ?? const NoopAppAnalytics(),
+       _competitiveAuthority = competitiveAuthority,
+       super([]) {
     _init();
   }
 
   final Ref ref;
   final Isar _isar;
+  final AppAnalytics _analytics;
+  final CompetitiveQuestAuthorityRepository? _competitiveAuthority;
 
   void _init() {
     final savedQuests = _isar.quests.where().findAllSync();
@@ -82,74 +169,27 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   void _seedInitialQuests(AwakeningPath focus) {
-    final initialQuests = _starterQuestsFor(focus);
+    final initialQuests = starterQuestsForFocus(focus);
 
     _isar.writeTxnSync(() => _isar.quests.putAllSync(initialQuests));
     state = initialQuests;
   }
 
-  List<Quest> _starterQuestsFor(AwakeningPath focus) {
-    final competitiveTemplates = templatesForFocus(focus)
-        .take(2)
-        .map((template) => template.toQuest())
-        .toList();
-
-    final personalQuest = switch (focus) {
-      AwakeningPath.discipline => _buildPersonalQuest(
-          id: 'discipline-personal',
-          title: 'Arrumar a cama ao acordar',
-          rewardAttribute: AttributeType.vitality,
-          xpReward: personalQuestDefaultXp,
-        ),
-      AwakeningPath.study => _buildPersonalQuest(
-          id: 'study-personal',
-          title: 'Organizar material de estudo',
-          rewardAttribute: AttributeType.intelligence,
-          xpReward: personalQuestDefaultXp,
-        ),
-      AwakeningPath.training => _buildPersonalQuest(
-          id: 'training-personal',
-          title: 'Separar roupa e agua para o treino',
-          rewardAttribute: AttributeType.vitality,
-          xpReward: personalQuestDefaultXp,
-        ),
-      AwakeningPath.health => _buildPersonalQuest(
-          id: 'health-personal',
-          title: 'Bater a meta de agua do dia',
-          rewardAttribute: AttributeType.vitality,
-          xpReward: personalQuestDefaultXp,
-        ),
-      AwakeningPath.productivity => _buildPersonalQuest(
-          id: 'productivity-personal',
-          title: 'Definir a tarefa critica do dia',
-          rewardAttribute: AttributeType.agility,
-          xpReward: personalQuestDefaultXp,
-        ),
-    };
-
-    return [...competitiveTemplates, personalQuest];
-  }
-
-  Quest _buildPersonalQuest({
-    required String id,
-    required String title,
-    required AttributeType rewardAttribute,
-    required int xpReward,
-  }) {
-    return Quest(
-      id: id,
-      title: title,
-      rewardAttribute: rewardAttribute,
-      xpReward: normalizePersonalQuestXp(xpReward),
-      category: QuestCategory.personal,
-      verificationMode: QuestVerificationMode.manual,
-      verificationStatus: QuestVerificationStatus.none,
-    );
-  }
-
   void applyStarterKit(AwakeningPath focus) {
     if (state.isNotEmpty) return;
+    final starterKit = starterQuestsForFocus(focus);
     _seedInitialQuests(focus);
+    final competitiveCount =
+        starterKit.where((quest) => quest.isCompetitive).length;
+    final personalCount = starterKit.length - competitiveCount;
+    unawaited(
+      _analytics.logStarterKitApplied(
+        focus: focus.name,
+        totalCount: starterKit.length,
+        competitiveCount: competitiveCount,
+        personalCount: personalCount,
+      ),
+    );
   }
 
   void toggleQuest(String id, {void Function(int level)? onLevelUp}) {
@@ -192,6 +232,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     });
 
     state = [...state, newQuest];
+    unawaited(
+      _analytics.logQuestCreated(
+        category: newQuest.category.name,
+        verificationMode: newQuest.verificationMode.name,
+        xpReward: newQuest.xpReward,
+      ),
+    );
   }
 
   bool addCompetitiveTemplate(CompetitiveQuestTemplate template) {
@@ -201,7 +248,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           !quest.isCompleted &&
           quest.templateType == template.templateType,
     );
-    if (alreadyExists) return false;
+    if (alreadyExists) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'duplicate_template',
+          verificationMode: template.verificationMode.name,
+          templateType: template.templateType.name,
+        ),
+      );
+      return false;
+    }
 
     final newQuest = template.toQuest();
     _isar.writeTxnSync(() {
@@ -209,33 +265,77 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     });
 
     state = [...state, newQuest];
+    unawaited(
+      _analytics.logQuestCreated(
+        category: newQuest.category.name,
+        verificationMode: newQuest.verificationMode.name,
+        xpReward: newQuest.xpReward,
+        templateType: newQuest.templateType.name,
+      ),
+    );
     return true;
   }
 
-  QuestCompletionResult startCompetitiveQuest(String id) {
+  Future<QuestCompletionResult> startCompetitiveQuest(String id) async {
     final quest = _findQuest(id);
     if (quest == null) return QuestCompletionResult.notFound;
     if (!quest.isCompetitive || quest.isCompleted) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'invalid_start_state',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
       return QuestCompletionResult.invalidFlow;
     }
-    if (!quest.requiresTimer) return QuestCompletionResult.invalidFlow;
+    if (!quest.requiresTimer) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'timer_not_required',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
+      return QuestCompletionResult.invalidFlow;
+    }
+
+    DateTime startedAt = DateTime.now();
+    if (_competitiveAuthority != null) {
+      final session = await _competitiveAuthority.startQuestSession(quest: quest);
+      startedAt = session.startedAt;
+    }
 
     final updatedQuest = quest.copyWith(
       verificationStatus: QuestVerificationStatus.inProgress,
-      verificationStartedAt: DateTime.now(),
+      verificationStartedAt: startedAt,
     );
     _persistQuestUpdate(updatedQuest);
+    unawaited(
+      _analytics.logCompetitiveQuestStarted(
+        verificationMode: updatedQuest.verificationMode.name,
+        targetDurationMinutes: updatedQuest.targetDurationMinutes,
+        templateType: updatedQuest.templateType.name,
+      ),
+    );
     return QuestCompletionResult.success;
   }
 
-  QuestCompletionResult completeCompetitiveQuest(
+  Future<QuestCompletionResult> completeCompetitiveQuest(
     String id, {
     String? reflectionAnswer,
     void Function(int level)? onLevelUp,
-  }) {
+  }) async {
     final quest = _findQuest(id);
     if (quest == null) return QuestCompletionResult.notFound;
     if (!quest.isCompetitive || quest.isCompleted) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'invalid_completion_state',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
       return QuestCompletionResult.invalidFlow;
     }
 
@@ -243,6 +343,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     if (quest.requiresTimer) {
       if (quest.verificationStartedAt == null ||
           quest.verificationStatus != QuestVerificationStatus.inProgress) {
+        unawaited(
+          _analytics.logCompetitiveQuestBlocked(
+            reason: 'timer_not_started',
+            verificationMode: quest.verificationMode.name,
+            templateType: quest.templateType.name,
+          ),
+        );
         return QuestCompletionResult.invalidFlow;
       }
 
@@ -250,20 +357,43 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           .difference(quest.verificationStartedAt!)
           .inMinutes;
       if (elapsedMinutes < quest.targetDurationMinutes) {
+        unawaited(
+          _analytics.logCompetitiveQuestBlocked(
+            reason: 'timer_too_short',
+            verificationMode: quest.verificationMode.name,
+            templateType: quest.templateType.name,
+          ),
+        );
         return QuestCompletionResult.timerStillRunning;
       }
     }
 
     if (quest.requiresReflection &&
         (reflectionAnswer == null || reflectionAnswer.trim().isEmpty)) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'missing_reflection',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
       return QuestCompletionResult.missingReflection;
+    }
+
+    DateTime completedAt = now;
+    if (_competitiveAuthority != null) {
+      final verification = await _competitiveAuthority.verifyQuestCompletion(
+        quest: quest,
+        reflectionAnswer: reflectionAnswer?.trim(),
+      );
+      completedAt = verification.completedAt;
     }
 
     final updatedQuest = quest.copyWith(
       isCompleted: true,
       verificationStatus: QuestVerificationStatus.verified,
-      completedAt: now,
-      verifiedAt: now,
+      completedAt: completedAt,
+      verifiedAt: completedAt,
       reflectionAnswer: reflectionAnswer?.trim(),
     );
     _applyCompletion(updatedQuest, onLevelUp: onLevelUp);
@@ -301,6 +431,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     });
 
     state = [...state, ...newQuests];
+    unawaited(_analytics.logSuggestedWeekAdded(addedCount: newQuests.length));
     return newQuests.length;
   }
 
@@ -357,6 +488,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           completedAt: questWithSnapshot.completedAt,
           countsForCompetitive: questWithSnapshot.countsTowardCompetitive,
         );
+    unawaited(
+      _analytics.logQuestCompleted(
+        category: questWithSnapshot.category.name,
+        verificationMode: questWithSnapshot.verificationMode.name,
+        xpReward: questWithSnapshot.xpReward,
+        countsTowardRank: questWithSnapshot.countsTowardCompetitive,
+        levelAfter: ref.read(playerProvider).level,
+        templateType: questWithSnapshot.templateType.name,
+      ),
+    );
   }
 
   void _undoCompletion(Quest quest) {

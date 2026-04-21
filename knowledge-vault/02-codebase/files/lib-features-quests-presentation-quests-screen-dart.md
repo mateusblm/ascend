@@ -3,14 +3,14 @@ type: code-file
 path: lib\features\quests\presentation\quests_screen.dart
 feature: quests
 symbol_count: 1
-import_count: 13
+import_count: 15
 ---
 # lib\features\quests\presentation\quests_screen.dart
 
 ## Summary
 
 - feature: quests
-- imports: 13
+- imports: 15
 - symbols: 1
 
 ## Symbols
@@ -19,7 +19,9 @@ import_count: 13
 
 ## Imports
 
+- lib/core/widgets/reveal_block.dart
 - lib/core/theme/app_colors.dart
+- lib/features/profile/domain/first_week_journey.dart
 - lib/features/profile/domain/weekly_boss.dart
 - lib/features/profile/domain/weekly_insights.dart
 - lib/features/profile/presentation/player_controller.dart

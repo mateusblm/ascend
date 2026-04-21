@@ -19,9 +19,13 @@ class WeeklyBossDefinition {
 }
 
 extension WeeklyBossDefinitionX on WeeklyBossDefinition {
-  int progressFor(Player player, {bool competitiveOnly = false}) {
-    final now = DateTime.now();
-    final weekStart = weekStartFor(now);
+  int progressFor(
+    Player player, {
+    bool competitiveOnly = false,
+    DateTime? now,
+  }) {
+    final referenceDate = now ?? DateTime.now();
+    final weekStart = weekStartFor(referenceDate);
     final weekEnd = weekStart.add(const Duration(days: 7));
 
     final sourceHistory = competitiveOnly
@@ -46,14 +50,22 @@ extension WeeklyBossDefinitionX on WeeklyBossDefinition {
     return activeDates.where((date) => !date.isBefore(weekStart) && date.isBefore(weekEnd)).length;
   }
 
-  bool isCompleted(Player player, {bool competitiveOnly = false}) =>
-      progressFor(player, competitiveOnly: competitiveOnly) >= targetActiveDays;
+  bool isCompleted(
+    Player player, {
+    bool competitiveOnly = false,
+    DateTime? now,
+  }) => progressFor(
+        player,
+        competitiveOnly: competitiveOnly,
+        now: now,
+      ) >=
+      targetActiveDays;
 
-  bool isClaimedThisWeek(Player player) {
+  bool isClaimedThisWeek(Player player, {DateTime? now}) {
     final claimedAt = player.weeklyBossLastClaimedAt;
     if (claimedAt == null) return false;
 
-    return weekStartFor(claimedAt) == weekStartFor(DateTime.now());
+    return weekStartFor(claimedAt) == weekStartFor(now ?? DateTime.now());
   }
 }
 

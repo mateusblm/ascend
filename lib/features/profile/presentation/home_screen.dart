@@ -1,11 +1,16 @@
+import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
+import 'package:ascend/features/profile/domain/first_week_journey.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/progress_payoff.dart';
 import 'package:ascend/features/profile/domain/rank_prestige.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
+import 'package:ascend/features/profile/domain/rank_rivalry.dart';
 import 'package:ascend/features/profile/domain/rank_season.dart';
+import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
@@ -29,12 +34,28 @@ class HomeScreen extends ConsumerWidget {
     final rankHistory =
         ref.watch(rankProgressionHistoryProvider).valueOrNull ??
         const <CompetitiveRankSnapshot>[];
-    final prestige = buildRankPrestigeSummary(rankHistory);
+    final integrity = ref.watch(currentCompetitiveIntegrityProvider).valueOrNull;
+    final prestige = buildRankPrestigeSummary(rankHistory, integrity: integrity);
     final season = buildCurrentSeasonSummary(rankHistory);
     final seasonProfile = ref.watch(seasonProfileProvider).valueOrNull;
+    final seasonReward = ref.watch(currentSeasonRewardProvider).valueOrNull;
+    final bracketLeaderboard =
+        ref.watch(seasonBracketLeaderboardProvider).valueOrNull ??
+        const <RankSeasonLeaderboardEntry>[];
     final authState = ref.watch(authProvider);
     final remoteWeeklyBoss = ref.watch(remoteWeeklyBossProvider);
     final topCompletions = ref.watch(weeklyBossTopCompletionsProvider);
+    final firstWeekJourney = buildFirstWeekJourney(
+      player: player,
+      snapshot: rankSnapshot,
+    );
+    final progressPayoff = buildProgressPayoff(
+      player: player,
+      snapshot: rankSnapshot,
+      seasonReward: seasonReward,
+      seasonProfile: seasonProfile,
+    );
+    final rivalry = buildRankRivalrySummary(bracketLeaderboard);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -43,74 +64,92 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(
-              player.name,
-              player.level,
-              competitiveRank,
-              _resolveDisplayTitle(player, seasonProfile),
-              seasonProfile,
+            RevealBlock(
+              child: _buildHeader(
+                player.name,
+                player.level,
+                competitiveRank,
+                _resolveDisplayTitle(player, seasonProfile),
+                seasonProfile,
+              ),
             ),
             const SizedBox(height: 40),
-            _buildStatusCard(
+            RevealBlock(
+              delay: const Duration(milliseconds: 90),
+              child: _buildStatusCard(
+                child: Column(
+                  children: [
+                    _buildFocusBanner(context, player.primaryFocus),
+                    const SizedBox(height: 20),
+                    _buildStatBar(
+                      'XP',
+                      player.xp / player.maxXp,
+                      AppColors.neonBlue,
+                      '${player.xp} / ${player.maxXp}',
+                    ),
+                    const SizedBox(height: 20),
+                    _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
+                    const SizedBox(height: 24),
+                    _buildCompetitivePulse(rankSnapshot, prestige, season),
+                    const SizedBox(height: 20),
+                    if (firstWeekJourney.isActive) ...[
+                      _buildFirstWeekCard(firstWeekJourney),
+                      const SizedBox(height: 20),
+                    ],
+                    _buildProgressPayoffCard(progressPayoff),
+                    const SizedBox(height: 20),
+                    if (rivalry.isActive) ...[
+                      _buildRivalryCard(rivalry),
+                      const SizedBox(height: 20),
+                    ],
+                    _buildStreakPanel(player),
+                    const SizedBox(height: 20),
+                    _buildWeeklyBossPanel(
+                      context,
+                      ref,
+                      player,
+                      authState,
+                      remoteWeeklyBoss,
+                      topCompletions,
+                      competitiveRank,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            RevealBlock(
+              delay: const Duration(milliseconds: 180),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFocusBanner(context, player.primaryFocus),
-                  const SizedBox(height: 20),
-                  _buildStatBar(
-                    'XP',
-                    player.xp / player.maxXp,
-                    AppColors.neonBlue,
-                    '${player.xp} / ${player.maxXp}',
+                  _buildSectionHeading(
+                    'ATRIBUTOS',
+                    'Sua base permanente de crescimento.',
                   ),
-                  const SizedBox(height: 20),
-                  _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
-                  const SizedBox(height: 24),
-                  _buildCompetitivePulse(rankSnapshot, prestige, season),
-                  const SizedBox(height: 20),
-                  _buildStreakPanel(player),
-                  const SizedBox(height: 20),
-                  _buildWeeklyBossPanel(
-                    context,
-                    ref,
-                    player,
-                    authState,
-                    remoteWeeklyBoss,
-                    topCompletions,
-                    competitiveRank,
+                  const SizedBox(height: 10),
+                  _buildAttributeRow(
+                    'FORCA',
+                    player.attributes.strength.toString(),
+                    Icons.fitness_center,
+                  ),
+                  _buildAttributeRow(
+                    'INTELIGENCIA',
+                    player.attributes.intelligence.toString(),
+                    Icons.psychology,
+                  ),
+                  _buildAttributeRow(
+                    'VITALIDADE',
+                    player.attributes.vitality.toString(),
+                    Icons.favorite,
+                  ),
+                  _buildAttributeRow(
+                    'AGILIDADE',
+                    player.attributes.agility.toString(),
+                    Icons.speed,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'ATRIBUTOS',
-              style: TextStyle(
-                fontSize: 18,
-                letterSpacing: 3,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Divider(color: AppColors.neonBlue, thickness: 0.5),
-            const SizedBox(height: 10),
-            _buildAttributeRow(
-              'FORCA',
-              player.attributes.strength.toString(),
-              Icons.fitness_center,
-            ),
-            _buildAttributeRow(
-              'INTELIGENCIA',
-              player.attributes.intelligence.toString(),
-              Icons.psychology,
-            ),
-            _buildAttributeRow(
-              'VITALIDADE',
-              player.attributes.vitality.toString(),
-              Icons.favorite,
-            ),
-            _buildAttributeRow(
-              'AGILIDADE',
-              player.attributes.agility.toString(),
-              Icons.speed,
             ),
             const SizedBox(height: 50),
             Center(
@@ -142,7 +181,7 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-              'PLAYER: $name | $title',
+          'JOGADOR: $name | $title',
           style: const TextStyle(
             fontSize: 12,
             color: AppColors.neonBlue,
@@ -171,6 +210,15 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 4),
+        const Text(
+          'Veja rapido como voce esta, o que falta e qual e o desafio da vez.',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: Colors.white60,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -239,6 +287,33 @@ class HomeScreen extends ConsumerWidget {
         border: Border.all(color: Colors.white10),
       ),
       child: child,
+    );
+  }
+
+  Widget _buildSectionHeading(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            letterSpacing: 3,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: Colors.white60,
+            fontSize: 12.5,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Divider(color: AppColors.neonBlue, thickness: 0.5),
+      ],
     );
   }
 
@@ -466,6 +541,232 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildFirstWeekCard(FirstWeekJourneySummary summary) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.neonBlue.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'PRIMEIRA SEMANA',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.neonBlue,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+              Text(
+                summary.progressLabel,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.headline,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.body,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...summary.steps.map(
+            (step) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    step.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 16,
+                    color: step.isDone ? Colors.greenAccent : Colors.white38,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      step.label,
+                      style: TextStyle(
+                        color: step.isDone ? Colors.white : Colors.white70,
+                        fontSize: 11.5,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: summary.progress,
+              minHeight: 7,
+              backgroundColor: Colors.white10,
+              color: AppColors.neonBlue,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            summary.nextAction,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11.5,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressPayoffCard(ProgressPayoffSummary summary) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PROXIMO GANHO',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white54,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.headline,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.body,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildMiniMetric(
+            icon: Icons.trending_up,
+            label: 'LEVEL',
+            value: summary.levelLabel,
+            accentColor: Colors.greenAccent,
+          ),
+          const SizedBox(height: 10),
+          _buildMiniMetric(
+            icon: Icons.military_tech,
+            label: 'RANK',
+            value: summary.rankLabel,
+            accentColor: AppColors.neonBlue,
+          ),
+          const SizedBox(height: 10),
+          _buildMiniMetric(
+            icon: Icons.workspace_premium,
+            label: 'TEMPORADA',
+            value: summary.seasonLabel,
+            accentColor: Colors.amberAccent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRivalryCard(RankRivalrySummary summary) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amberAccent.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'DISPUTA DA SEMANA',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.amberAccent,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.headline,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.body,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildMiniMetric(
+            icon: Icons.north,
+            label: 'QUEM ESTA NA SUA FRENTE',
+            value: summary.chaseLabel,
+            accentColor: Colors.amberAccent,
+          ),
+          const SizedBox(height: 10),
+          _buildMiniMetric(
+            icon: Icons.warning_amber_rounded,
+            label: 'QUEM ESTA PERTO',
+            value: summary.pressureLabel,
+            accentColor: Colors.orangeAccent,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCompetitivePulse(
     CompetitiveRankSnapshot? snapshot,
     RankPrestigeSummary prestige,
@@ -481,12 +782,12 @@ class HomeScreen extends ConsumerWidget {
     };
 
     final headline = switch (snapshot?.eventType) {
-      CompetitiveRankEventType.promotionConfirmed => 'PROMOCAO REGISTRADA',
-      CompetitiveRankEventType.promotionUnlocked => 'EXAME DISPONIVEL',
-      CompetitiveRankEventType.reconquestUnlocked => 'RECONQUISTA ABERTA',
+      CompetitiveRankEventType.promotionConfirmed => 'RANK CONFIRMADO',
+      CompetitiveRankEventType.promotionUnlocked => 'PROVA LIBERADA',
+      CompetitiveRankEventType.reconquestUnlocked => 'RETOMADA LIBERADA',
       CompetitiveRankEventType.demotionApplied => 'QUEDA DE RANK',
       CompetitiveRankEventType.perfectWeek => 'SEMANA FORTE',
-      CompetitiveRankEventType.warning => 'ATENCAO NO RANK',
+      CompetitiveRankEventType.warning => 'ATENCAO NESTA SEMANA',
       _ => 'SEU MOMENTO',
     };
 
@@ -535,7 +836,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Temporada ${season.seasonLabel} | consistencia ${prestige.maintenanceRate}% | pico ${season.peakRank}',
+            'Temporada ${season.seasonLabel} | constancia ${prestige.effectiveMaintenanceRate}% | melhor rank ${season.peakRank}',
             style: const TextStyle(
               color: Colors.white60,
               fontSize: 11,
@@ -662,7 +963,7 @@ class HomeScreen extends ConsumerWidget {
           if (remoteBoss != null) ...[
             const SizedBox(height: 8),
             Text(
-              'NO SERVIDOR: ${remoteBoss.completedCount} concluidos',
+              'EVENTO ONLINE: ${remoteBoss.completedCount} concluidos',
               style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 11,
@@ -672,7 +973,7 @@ class HomeScreen extends ConsumerWidget {
           ] else if (remoteWeeklyBoss.isLoading) ...[
             const SizedBox(height: 8),
             const Text(
-              'NO SERVIDOR: conectando...',
+              'EVENTO ONLINE: conectando...',
               style: TextStyle(
                 color: Colors.white38,
                 fontSize: 11,
@@ -682,7 +983,7 @@ class HomeScreen extends ConsumerWidget {
           ] else if (remoteWeeklyBoss.hasError) ...[
             const SizedBox(height: 8),
             Text(
-              'NO SERVIDOR: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
+              'EVENTO ONLINE: erro ao consultar evento (${_shortError(remoteWeeklyBoss.error)})',
               style: const TextStyle(
                 color: Colors.redAccent,
                 fontSize: 11,
@@ -756,7 +1057,7 @@ class HomeScreen extends ConsumerWidget {
             const Divider(color: Colors.white10, height: 1),
             const SizedBox(height: 12),
             const Text(
-              'QUEM JA PASSOU',
+              'QUEM JA CONCLUIU',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.white38,

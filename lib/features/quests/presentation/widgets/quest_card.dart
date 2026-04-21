@@ -142,9 +142,9 @@ class QuestCard extends StatelessWidget {
     return switch (quest.verificationMode) {
       QuestVerificationMode.manual => 'CHECK',
       QuestVerificationMode.timer =>
-        '${quest.targetDurationMinutes} MIN NO APP',
+        '${quest.targetDurationMinutes} MIN',
       QuestVerificationMode.timerWithReflection =>
-        '${quest.targetDurationMinutes} MIN + REFLEXAO',
+        '${quest.targetDurationMinutes} MIN + RESPOSTA',
     };
   }
 }

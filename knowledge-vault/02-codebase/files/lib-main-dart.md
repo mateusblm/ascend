@@ -3,14 +3,14 @@ type: code-file
 path: lib\main.dart
 feature: core
 symbol_count: 1
-import_count: 14
+import_count: 18
 ---
 # lib\main.dart
 
 ## Summary
 
 - feature: core
-- imports: 14
+- imports: 18
 - symbols: 1
 
 ## Symbols
@@ -19,6 +19,10 @@ import_count: 14
 
 ## Imports
 
+- dart:async
+- dart:ui
+- lib/core/analytics/analytics_service.dart
+- lib/core/crash/crash_reporting_service.dart
 - lib/core/database/isar_provider.dart
 - lib/core/theme/app_colors.dart
 - lib/features/auth/domain/auth_state.dart

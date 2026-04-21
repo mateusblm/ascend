@@ -1,4 +1,5 @@
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
@@ -51,9 +52,11 @@ RankSeasonLeaderboardSummary buildRankSeasonLeaderboardSummary({
   required RemoteWeeklyBoss? activeBoss,
   required List<WeeklyBossCompletion> topCompletions,
   CompetitiveRankSnapshot? snapshot,
+  CompetitiveIntegritySnapshot? integrity,
+  List<RankSeasonLeaderboardEntry> globalLeaderboard = const [],
 }) {
   final currentRank = snapshot?.currentRank ?? playerRankForLevel(player.level);
-  final divisionLabel = '${season.seasonLabel} | BRACKET $currentRank';
+  final divisionLabel = '${season.seasonLabel} | RANK $currentRank';
   final normalizedPlayerName = _normalizeName(player.name);
   final topEntries = topCompletions
       .take(3)
@@ -73,26 +76,34 @@ RankSeasonLeaderboardSummary buildRankSeasonLeaderboardSummary({
         );
       })
       .toList(growable: false);
+  final leaders = globalLeaderboard.isNotEmpty ? globalLeaderboard : topEntries;
   final score = _seasonScoreFor(season);
   final band = _bandForScore(score);
-  final playerPlacement = podiumPlacementForPlayer(
-    playerName: player.name,
-    topCompletions: topCompletions,
-  );
+  final playerPlacement = globalLeaderboard.isNotEmpty
+      ? _playerPlacementFromGlobal(globalLeaderboard)
+      : podiumPlacementForPlayer(
+          playerName: player.name,
+          topCompletions: topCompletions,
+        );
   final clearRateLabel = _clearRateLabel(activeBoss);
   final boardStatusLabel = _boardStatusLabel(
     activeBoss: activeBoss,
     clearRateLabel: clearRateLabel,
+    hasGlobalLeaderboard: globalLeaderboard.isNotEmpty,
   );
   final playerStandingLabel = switch (playerPlacement) {
     1 => 'LIDER DO RANK',
     2 => 'TOP 2 DA ARENA',
     3 => 'TOP 3 DA ARENA',
-    _ when score >= 16 => 'ELITE DO BRACKET',
+    _ when score >= 16 => 'ELITE DO GRUPO',
     _ when score >= 10 => 'NA ZONA DE PRESTIGIO',
     _ when score >= 6 => 'NA DISPUTA',
-    _ => 'FORA DO CORTE',
+    _ => 'GANHANDO TERRENO',
   };
+  final adjustedStandingLabel = _adjustStandingForIntegrity(
+    playerStandingLabel,
+    integrity,
+  );
   final momentumLabel = switch (season.rewardStatusLabel) {
     'GARANTIDA' => 'Temporada sob controle total',
     'RECOMPENSA AVANCADA' => 'Falta pouco para fechar em elite',
@@ -101,22 +112,26 @@ RankSeasonLeaderboardSummary buildRankSeasonLeaderboardSummary({
     'INSTAVEL' => 'A temporada entrou em recuperacao',
     _ => 'Sem ritmo competitivo suficiente',
   };
+  final adjustedMomentumLabel = _adjustMomentumForIntegrity(
+    momentumLabel,
+    integrity,
+  );
 
   return RankSeasonLeaderboardSummary(
     divisionLabel: divisionLabel,
     boardStatusLabel: boardStatusLabel,
-    playerStandingLabel: playerStandingLabel,
-    momentumLabel: momentumLabel,
+    playerStandingLabel: adjustedStandingLabel,
+    momentumLabel: adjustedMomentumLabel,
     clearRateLabel: clearRateLabel,
     seasonScore: score,
     scoreBandLabel: band.label,
     nextThresholdLabel: _nextThresholdLabel(score),
     spotlightLabel: _spotlightLabel(
       activeBoss: activeBoss,
-      podium: topEntries,
+      podium: leaders,
       playerPlacement: playerPlacement,
     ),
-    podium: topEntries,
+    podium: leaders,
   );
 }
 
@@ -165,7 +180,7 @@ String _nextThresholdLabel(int score) {
   if (score >= 6) {
     return 'Mais ${10 - score} ponto(s) para entrar em ELITE.';
   }
-  return 'Mais ${6 - score} ponto(s) para sair da zona de RECUPERACAO.';
+  return 'Mais ${6 - score} ponto(s) para entrar de vez na disputa.';
 }
 
 String _clearRateLabel(RemoteWeeklyBoss? activeBoss) {
@@ -181,14 +196,44 @@ String _clearRateLabel(RemoteWeeklyBoss? activeBoss) {
 String _boardStatusLabel({
   required RemoteWeeklyBoss? activeBoss,
   required String clearRateLabel,
+  required bool hasGlobalLeaderboard,
 }) {
+  if (hasGlobalLeaderboard) {
+    return 'DISPUTA DO GRUPO | $clearRateLabel';
+  }
   if (activeBoss == null) {
-    return 'PLACAR EM ESPERA';
+    return 'GRUPO AGUARDANDO';
   }
   if (activeBoss.completedCount == 0) {
-    return 'ARENA SEM QUEBRA';
+    return 'NINGUEM ABRIU A ARENA';
   }
-  return 'PLACAR ATIVO | $clearRateLabel';
+  return 'DISPUTA ABERTA | $clearRateLabel';
+}
+
+String _adjustStandingForIntegrity(
+  String baseLabel,
+  CompetitiveIntegritySnapshot? integrity,
+) {
+  if (integrity == null) return baseLabel;
+  return switch (integrity.trustBand) {
+    CompetitiveTrustBand.high || CompetitiveTrustBand.stable => baseLabel,
+    CompetitiveTrustBand.attention => '$baseLabel | EM OBSERVACAO',
+    CompetitiveTrustBand.restricted => '$baseLabel | EM CHECAGEM',
+  };
+}
+
+String _adjustMomentumForIntegrity(
+  String baseLabel,
+  CompetitiveIntegritySnapshot? integrity,
+) {
+  if (integrity == null) return baseLabel;
+  return switch (integrity.trustBand) {
+    CompetitiveTrustBand.high || CompetitiveTrustBand.stable => baseLabel,
+    CompetitiveTrustBand.attention =>
+      '$baseLabel. Mais constancia validada ajuda a segurar esse lugar.',
+    CompetitiveTrustBand.restricted =>
+      '$baseLabel. Sua temporada ainda precisa de mais sinais confiaveis para ganhar forca total.',
+  };
 }
 
 String _spotlightLabel({
@@ -200,12 +245,19 @@ String _spotlightLabel({
     return 'Seu clear esta no podio da arena atual.';
   }
   if (activeBoss == null) {
-    return 'Sem boss ativo. O placar sazonal volta com a proxima rotacao.';
+    return 'Sem boss ativo. A disputa volta na proxima rotacao.';
   }
   if (podium.isEmpty) {
-    return 'Nenhum clear registrado ainda. A primeira ruptura define o ritmo do bracket.';
+    return 'Ninguem concluiu ainda. O primeiro clear vai puxar o ritmo do grupo.';
   }
   return 'O podio da arena ja abriu. Entre agora para nao deixar o rank escapar.';
+}
+
+int? _playerPlacementFromGlobal(List<RankSeasonLeaderboardEntry> entries) {
+  for (final entry in entries) {
+    if (entry.isPlayer) return entry.position;
+  }
+  return null;
 }
 
 String _normalizeName(String value) => value.trim().toLowerCase();

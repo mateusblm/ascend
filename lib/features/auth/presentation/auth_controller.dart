@@ -1,70 +1,112 @@
 import 'dart:async';
 
+import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../domain/auth_state.dart';
 
 final authProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
-  return AuthController();
+  return AuthController(
+    ref.read(analyticsProvider),
+    ref.read(crashReportingProvider),
+  );
 });
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController() : super(AuthInitial()) {
-    // Hidrata imediatamente com o usuário já logado (evita frame de AuthInitial)
+  AuthController([
+    AppAnalytics? analytics,
+    AppCrashReporter? crashReporter,
+  ]) : _analytics = analytics ?? const NoopAppAnalytics(),
+       _crashReporter = crashReporter ?? const NoopAppCrashReporter(),
+      super(AuthInitial()) {
     final user = _auth.currentUser;
     if (user != null) {
-      state = AuthSuccess(
-        uid: user.uid,
-        displayName: user.displayName ?? 'Jogador',
-        photoUrl: user.photoURL ?? '',
-      );
+      state = _successStateFor(user);
+      _lastTrackedUid = user.uid;
+      unawaited(_analytics.setUserId(user.uid));
+      unawaited(_crashReporter.setUserId(user.uid));
+      unawaited(_analytics.logAuthLoginSucceeded(restoredSession: true));
     }
 
-    // Mantém o estado sincronizado com mudanças de sessão do Firebase
     _subscription = _auth.authStateChanges().listen((user) {
       if (user == null) {
+        if (_lastTrackedUid != null) {
+          unawaited(_analytics.logAuthSignedOut());
+          unawaited(_analytics.setUserId(null));
+          unawaited(_crashReporter.setUserId(null));
+        }
+        _lastTrackedUid = null;
+        _loginFlowInProgress = false;
         state = AuthInitial();
-      } else {
-        state = AuthSuccess(
-          uid: user.uid,
-          displayName: user.displayName ?? 'Jogador',
-          photoUrl: user.photoURL ?? '',
-        );
+        return;
       }
+
+      state = _successStateFor(user);
+      if (_lastTrackedUid != user.uid) {
+        unawaited(_analytics.setUserId(user.uid));
+        unawaited(_crashReporter.setUserId(user.uid));
+        unawaited(
+          _analytics.logAuthLoginSucceeded(
+            restoredSession: !_loginFlowInProgress,
+          ),
+        );
+        _lastTrackedUid = user.uid;
+      }
+      _loginFlowInProgress = false;
     });
   }
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final AppAnalytics _analytics;
+  final AppCrashReporter _crashReporter;
   late final StreamSubscription<User?> _subscription;
+
+  String? _lastTrackedUid;
+  bool _loginFlowInProgress = false;
 
   Future<void> signInWithGoogle() async {
     state = AuthLoading();
+    _loginFlowInProgress = true;
+    await _analytics.logAuthLoginStarted();
+
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        state = AuthInitial(); // Usuário cancelou
+        _loginFlowInProgress = false;
+        await _analytics.logAuthLoginCancelled();
+        state = AuthInitial();
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       await _auth.signInWithCredential(credential);
-      // O listener de authStateChanges() cuidará de atualizar o estado
     } catch (e) {
-      state = AuthFailure("Falha na Sincronização: $e");
+      _loginFlowInProgress = false;
+      await _analytics.logAuthLoginFailed(reason: e.runtimeType.toString());
+      state = AuthFailure('Falha ao entrar: $e');
     }
   }
 
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
-    // O listener de authStateChanges() cuidará de resetar para AuthInitial
+  }
+
+  AuthSuccess _successStateFor(User user) {
+    return AuthSuccess(
+      uid: user.uid,
+      displayName: user.displayName ?? 'Jogador',
+      photoUrl: user.photoURL ?? '',
+    );
   }
 
   @override

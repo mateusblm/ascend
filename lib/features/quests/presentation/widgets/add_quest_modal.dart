@@ -50,7 +50,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Quests competitivas contam para rank e boss. Quests pessoais ajudam no seu progresso geral com XP mais leve.',
+            'Quests de rank ajudam no seu posto. Quests pessoais ajudam no level e no ritmo do dia a dia.',
             style: TextStyle(
               fontSize: 12,
               color: Colors.white60,
@@ -108,7 +108,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Voce ja tem uma quest competitiva desse tipo em aberto.',
+                          'Voce ja tem uma quest parecida em aberto.',
                         ),
                       ),
                     );
@@ -154,7 +154,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Quest pessoal: XP leve para progresso geral. O competitivo rende mais.',
+          'Essa quest ajuda no seu progresso geral, mas nao conta para subir no rank.',
           style: TextStyle(fontSize: 11.5, color: Colors.white54, height: 1.4),
         ),
         DropdownButton<AttributeType>(
@@ -181,7 +181,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'ESCOLHA UM MODELO OFICIAL',
+          'ESCOLHA UM MODELO',
           style: TextStyle(fontSize: 12, color: Colors.white38),
         ),
         const SizedBox(height: 12),

@@ -106,6 +106,24 @@ Current competitive additions to protect:
 27. personal-only activity must not unlock promotion or weekly boss completion
 28. competitive integrity scoring should react to suspicious personal-only bursts without blocking honest competitive activity
 29. home and rank should render integrity state without breaking their primary CTA flows
+30. first-week journey summary should stay coherent for newly onboarded players
+31. progress payoff summary should stay readable as level, rank, and season state changes
+32. promotion authority should keep backend-first behavior without breaking fallback
+33. prestige summary should react softly to low competitive integrity
+34. season leaderboard summary should support backend-fed bracket standings
+35. boss claim should not silently fall back to client-side writes in the competitive path
+36. Home and Rank should surface bracket rivalry copy without breaking primary progression CTAs
+37. analytics should stay behind one app-level wrapper instead of leaking Firebase calls across features
+38. auth, onboarding, quests, weekly boss, and promotion flows should keep their event hooks close to the product action they represent
+39. crash reporting should stay behind one app-level wrapper instead of wiring Crashlytics directly across features
+40. app bootstrap should capture framework, async, and provider-layer failures without breaking startup
+41. recoverable remote failures should be visible through non-fatal reporting on the critical competitive and weekly boss paths
+42. competitive quest validation friction should remain measurable through product events instead of only UI copy
+43. competitive quest authority should protect:
+    - server-side session start
+    - server-side completion grant
+    - duplicate grant prevention
+    - sync behavior when authoritative grants exist
 
 ## AI Test Rules
 

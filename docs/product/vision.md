@@ -109,7 +109,15 @@ Paid tier:
   - not every quest should count equally toward rank or seasonal competition
   - low-friction personal tracking should remain easy
   - competitive progression should prefer verified effort over self-reported spam
+  - competitive quest timers and approvals should prefer a backend session/grant model over client-only verification when possible
 - Separate global progress from competitive proof:
   - personal quests may grow the character level
   - rank promotion, weekly bosses, and seasonal standing must come from competitive quests that were actually verified
   - personal quests should grant lighter XP than competitive quests, so the free-form loop stays useful without becoming the main progression exploit
+  - competitive quest completions should create authoritative reward grants so rank pressure does not depend only on local quest flags
+- Keep the early game guided:
+  - the first week should give the player a short path before the deeper systems demand interpretation
+  - Home and Quests should make the next useful action obvious
+- Make progress pay off visibly:
+  - the player should understand what the next level, next rank, or current season can unlock
+  - payoff copy should stay user-facing, not engine-facing

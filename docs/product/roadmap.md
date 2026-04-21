@@ -151,3 +151,70 @@ Current anti-abuse layer now includes:
 - level/rank trust split
 - lighter XP lane for personal quests
 - silent competitive trust score with suspicious-pattern tracking
+
+Current onboarding/product polish direction:
+
+- onboarding now needs to explain the first week through action, not theory
+- the first session should show:
+  - chosen focus
+  - starter kit preview
+  - what affects level
+  - what affects rank
+- the first week should feel guided before the app asks the user to understand deeper systems
+- after onboarding, Home and Quests should keep that guidance alive through:
+  - a compact first-week loop
+  - a visible next-payoff summary
+  - one obvious next action
+
+Current backend-authoritative follow-up:
+
+- promotion exam start should prefer a callable backend path
+- promotion confirmation should prefer a callable backend path
+- critical competitive collections should behave as backend-written read models
+- client fallback should shrink in the competitive layer instead of remaining the default
+- weekly boss remote claim should stay backend-only
+- seasonal bracket leaderboard should move toward backend-fed standings instead of only local boss podium reads
+- competitive snapshot sync should be computed from raw source payloads on the backend
+- competitive integrity sync should be computed from raw source payloads on the backend
+
+Current competitive trust direction:
+
+- trust score now starts to matter softly:
+  - prestige can be downgraded by weak integrity
+  - seasonal standing can be flagged as under review
+- hard restrictions should come later, after calibration against real player behavior
+
+Queued after the current backend-hardening phase:
+
+- surface global bracket rivalry more aggressively in Home and Rank
+- calibrate when trust score only signals versus when it actually limits standing or rewards
+- add a more ceremonial season closeout and reward reveal
+- deepen the daily return loop now that first-week guidance is in place
+
+Recent follow-through:
+
+- Home and Rank now expose a compact rivalry layer from the global bracket leaderboard
+- the product is starting to talk in terms of chase and pressure, not only placement and score
+- first-production telemetry now exists for the main funnel:
+  - auth entry
+  - onboarding completion
+  - starter kit application
+  - quest creation, start, and completion
+  - weekly boss claim
+  - promotion start and confirmation
+  - season reward claim
+- crash reporting is now part of the production baseline:
+  - Flutter framework errors
+  - async zone errors
+  - Riverpod provider failures
+  - signed-in user context attached through auth state
+- the first-week funnel is now explicitly documented in:
+  - `docs/product/first-week-funnel.md`
+- Firebase operational reading now has its own guide in:
+  - `docs/product/firebase-operations-dashboard.md`
+- release discipline now has its own guide in:
+  - `docs/product/release-checklist.md`
+- competitive quest authority now has a more serious production boundary:
+  - session start is registered in backend
+  - completion creates an authoritative competitive grant in backend
+  - sync paths can prefer server grant history over client-reported competitive dates

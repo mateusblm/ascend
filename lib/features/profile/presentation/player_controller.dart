@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -23,13 +27,19 @@ final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
           attributes: PlayerAttributes(),
           lastResetDate: DateTime.now(),
         ),
+    analytics: ref.read(analyticsProvider),
   );
 });
 
 class PlayerNotifier extends StateNotifier<Player> {
-  PlayerNotifier(this._isar, super.state);
+  PlayerNotifier(
+    this._isar,
+    super.state, {
+    AppAnalytics? analytics,
+  }) : _analytics = analytics ?? const NoopAppAnalytics();
 
   final Isar _isar;
+  final AppAnalytics _analytics;
 
   void _saveToDb() {
     _isar.writeTxnSync(() {
@@ -231,17 +241,37 @@ class PlayerNotifier extends StateNotifier<Player> {
   }
 
   void completeOnboarding(AwakeningPath focus) {
+    final starterKit = starterQuestsForFocus(focus);
+    final competitiveCount =
+        starterKit.where((quest) => quest.isCompetitive).length;
+    final personalCount = starterKit.length - competitiveCount;
+
     state = state.copyWith(
       primaryFocus: focus,
       hasCompletedOnboarding: true,
     );
 
     _saveToDb();
+    unawaited(
+      _analytics.logOnboardingCompleted(
+        focus: focus.name,
+        starterKitSize: starterKit.length,
+        competitiveQuestCount: competitiveCount,
+        personalQuestCount: personalCount,
+      ),
+    );
   }
 
   void updatePrimaryFocus(AwakeningPath focus) {
+    final previousFocus = state.primaryFocus;
     state = state.copyWith(primaryFocus: focus);
     _saveToDb();
+    unawaited(
+      _analytics.logFocusChanged(
+        from: previousFocus.name,
+        to: focus.name,
+      ),
+    );
   }
 
   bool claimWeeklyBossReward(

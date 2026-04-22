@@ -102,6 +102,7 @@ class QuestSyncRepository {
   }) async {
     final callable = _functions.httpsCallable('syncQuestInventoryFromSource');
     try {
+      await _sessionRepository.registerActiveSession();
       await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'source': <String, dynamic>{
@@ -123,6 +124,7 @@ class QuestSyncRepository {
   }) async {
     final callable = _functions.httpsCallable('completePersonalQuest');
     try {
+      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'questId': quest.id,
@@ -149,6 +151,7 @@ class QuestSyncRepository {
   }) async {
     final callable = _functions.httpsCallable('revokePersonalQuestCompletion');
     try {
+      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'questId': quest.id,

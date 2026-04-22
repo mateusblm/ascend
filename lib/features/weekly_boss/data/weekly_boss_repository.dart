@@ -95,6 +95,7 @@ class WeeklyBossRepository {
   }) async {
     try {
       final callable = _functions.httpsCallable('claimWeeklyBoss');
+      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'bossId': bossId,

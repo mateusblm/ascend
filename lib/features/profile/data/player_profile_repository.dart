@@ -110,6 +110,7 @@ class PlayerProfileRepository {
   }) async {
     final callable = _functions.httpsCallable('syncPlayerProfileFromSource');
     try {
+      await _sessionRepository.registerActiveSession();
       await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'source': _profileSourceFor(player, quests: quests),
@@ -132,6 +133,7 @@ class PlayerProfileRepository {
   }) async {
     final callable = _functions.httpsCallable('updateProfileSettings');
     try {
+      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'name': name.trim().isEmpty ? fallbackName : name.trim(),
@@ -167,6 +169,7 @@ class PlayerProfileRepository {
   }) async {
     final callable = _functions.httpsCallable('allocateAttributePoint');
     try {
+      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
         'deviceSessionId': await _sessionRepository.deviceSessionId(),
         'attribute': attribute.name,

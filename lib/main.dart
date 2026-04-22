@@ -18,61 +18,60 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  final crashReporter = buildAppCrashReporter();
-  await crashReporter.initialize();
+void main() {
+  AppCrashReporter crashReporter = const NoopAppCrashReporter();
 
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [PlayerSchema, QuestSchema],
-    directory: dir.path,
-  );
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+    crashReporter = buildAppCrashReporter();
+    await crashReporter.initialize();
 
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    unawaited(crashReporter.recordFlutterFatal(details));
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    unawaited(
-      crashReporter.recordError(
-        error,
-        stack,
-        reason: 'platform_dispatcher',
-        fatal: true,
-      ),
+    final dir = await getApplicationDocumentsDirectory();
+    final isar = await Isar.open(
+      [PlayerSchema, QuestSchema],
+      directory: dir.path,
     );
-    return true;
-  };
 
-  runZonedGuarded(
-    () {
-      runApp(
-        ProviderScope(
-          overrides: [
-            isarProvider.overrideWithValue(isar),
-            crashReportingProvider.overrideWithValue(crashReporter),
-          ],
-          observers: [
-            CrashReportingObserver(crashReporter),
-          ],
-          child: const AscendApp(),
-        ),
-      );
-    },
-    (error, stack) {
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      unawaited(crashReporter.recordFlutterFatal(details));
+    };
+
+    PlatformDispatcher.instance.onError = (error, stack) {
       unawaited(
         crashReporter.recordError(
           error,
           stack,
-          reason: 'run_zoned_guarded',
+          reason: 'platform_dispatcher',
           fatal: true,
         ),
       );
-    },
-  );
+      return true;
+    };
+
+    runApp(
+      ProviderScope(
+        overrides: [
+          isarProvider.overrideWithValue(isar),
+          crashReportingProvider.overrideWithValue(crashReporter),
+        ],
+        observers: [
+          CrashReportingObserver(crashReporter),
+        ],
+        child: const AscendApp(),
+      ),
+    );
+  }, (error, stack) {
+    unawaited(
+      crashReporter.recordError(
+        error,
+        stack,
+        reason: 'run_zoned_guarded',
+        fatal: true,
+      ),
+    );
+  });
 }
 
 class AscendApp extends ConsumerWidget {

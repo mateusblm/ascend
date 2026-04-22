@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 admin.initializeApp();
@@ -1788,17 +1789,6 @@ export function resolveCompetitiveQuestSessionStart(args: {
 
   if (grant) {
     throw new HttpsError('failed-precondition', 'Essa quest ja foi validada.');
-  }
-
-  if (
-    session?.startedAt instanceof admin.firestore.Timestamp &&
-    session.status !== 'verified'
-  ) {
-    return {
-      status: 'already_started' as const,
-      startedAt: session.startedAt.toDate().toISOString(),
-      sessionWrite: null,
-    };
   }
 
   return {
@@ -3616,7 +3606,9 @@ export const startCompetitiveQuestSession = onCall(
     const db = admin.firestore();
     const now = admin.firestore.Timestamp.now();
     await assertActiveSession(db, uid, session.deviceSessionId);
-    const dayKey = competitiveQuestAttemptDayKey({quest, now});
+    // Start must always scope to "today". A stale local verificationStartedAt from the
+    // client should never resurrect an old competitive attempt.
+    const dayKey = normalizedDateKey(now);
     const sessionRef = db
       .collection('users')
       .doc(uid)
@@ -4395,19 +4387,29 @@ export const getSeasonBracketLeaderboard = onCall(
 
     const entries = snapshot.docs
       .map((doc) => {
-        const data = validateSeasonRewardPayload(doc.data());
-        if (data == null) return null;
-        const uid = doc.ref.parent.parent?.id ?? '';
-        const shortId = uid ? uid.slice(0, 4).toUpperCase() : '----';
-        return {
-          uid,
-          displayName: uid === request.auth?.uid ? 'VOCE' : `HUNTER-${shortId}`,
-          detail: `${data.playerStandingLabel} | ${data.seasonScore} pts`,
-          score: data.seasonScore,
-          secureWeeks: data.secureWeeks,
-          updatedAt: data.updatedAt.toMillis(),
-          isPlayer: uid === request.auth?.uid,
-        };
+        try {
+          const data = validateSeasonRewardPayload(doc.data());
+          if (data == null) return null;
+          const uid = doc.ref.parent.parent?.id ?? '';
+          const shortId = uid ? uid.slice(0, 4).toUpperCase() : '----';
+          return {
+            uid,
+            displayName: uid === request.auth?.uid ? 'VOCE' : `HUNTER-${shortId}`,
+            detail: `${data.playerStandingLabel} | ${data.seasonScore} pts`,
+            score: data.seasonScore,
+            secureWeeks: data.secureWeeks,
+            updatedAt: data.updatedAt.toMillis(),
+            isPlayer: uid === request.auth?.uid,
+          };
+        } catch (error) {
+          logger.warn('Skipping malformed season reward leaderboard entry', {
+            seasonKey,
+            rankBracket,
+            path: doc.ref.path,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => {

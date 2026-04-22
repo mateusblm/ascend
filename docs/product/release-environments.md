@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define how Ascend should identify Android builds and how Firebase should be targeted before public distribution.
+Define how Ascend should identify mobile builds and how Firebase should be targeted before public distribution.
 
 ## Current Policy
 
@@ -22,6 +22,18 @@ Inside that project, Android identities are now separated by flavor:
   - Firebase Android app id: `1:331143433117:android:097ed08659aeb9f3ed3d74`
 
 The legacy package `com.example.ascend` should now be treated as old local/dev identity, not as the long-term release identity.
+
+For iOS, the current production identity is:
+
+- bundle id: `com.ascend.mobile`
+- Firebase iOS app id: `1:331143433117:ios:65993f0a204bbbaded3d74`
+
+An iOS staging Firebase app also exists for future use:
+
+- bundle id: `com.ascend.mobile.staging`
+- Firebase iOS app id: `1:331143433117:ios:cd028de6003f9e65ed3d74`
+
+The iOS repo wiring is currently production-only. There is no separate staging target/scheme yet.
 
 ## Current Release Signing State
 
@@ -43,6 +55,8 @@ The current production Firebase Android app now has the generated release finger
 - staging should be installable alongside production
 - Firebase should know which Android app is hitting the backend
 - Google Sign-In should have explicit Android app registrations per flavor
+- iOS should stop shipping with the placeholder `com.example.ascend` bundle id
+- iOS production should carry a real Firebase app registration and `GoogleService-Info.plist`
 
 ## Build Commands
 
@@ -61,6 +75,9 @@ flutter build apk --debug --flavor production
 
 # Build release APKs
 flutter build apk --release --flavor production
+
+# Build iOS release
+flutter build ios --release
 ```
 
 ## Current Constraints
@@ -68,12 +85,14 @@ flutter build apk --release --flavor production
 - the current Firebase project is shared by staging and production for now
 - before public store launch, decide whether production should stay in this Firebase project or move to a dedicated production project
 - before public store launch, register the real release SHA certificates for the production Android app if the keystore changes again
+- iOS still depends on Xcode signing/provisioning being configured on the Mac that performs the archive
 
 ## Required Next Steps Before Store Submission
 
 1. decide whether Firebase remains shared or splits into dedicated `staging` and `prod` projects
 2. verify install, update, login, and Google Sign-In on real staging and production builds
-3. move the keystore backup and password escrow to the final operational owner before store submission
+3. configure iOS signing/provisioning in Xcode for `com.ascend.mobile`
+4. move the keystore backup and password escrow to the final operational owner before store submission
 
 ## Operational Requirement
 

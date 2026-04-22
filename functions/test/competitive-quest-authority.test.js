@@ -45,6 +45,26 @@ test('starts a competitive quest session and prepares the session write', () => 
   assert.equal(result.sessionWrite.startedAt.toMillis(), now.toMillis());
 });
 
+test('restarts an existing in-progress session with the current timestamp', () => {
+  const now = timestamp('2026-04-21T18:00:00.000Z');
+
+  const result = resolveCompetitiveQuestSessionStart({
+    quest: buildQuest(),
+    session: {
+      startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+      status: 'inProgress',
+    },
+    grant: null,
+    now,
+  });
+
+  assert.equal(result.status, 'started');
+  assert.equal(result.startedAt, '2026-04-21T18:00:00.000Z');
+  assert.ok(result.sessionWrite);
+  assert.equal(result.sessionWrite.startedAt.toMillis(), now.toMillis());
+  assert.equal(result.sessionWrite.status, 'inProgress');
+});
+
 test('rejects competitive quest completion before the minimum duration', () => {
   const now = timestamp('2026-04-21T15:10:00.000Z');
 

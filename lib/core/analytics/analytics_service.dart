@@ -433,8 +433,12 @@ class FirebaseAppAnalytics extends AppAnalytics {
     final cleanParams = <String, Object>{};
     for (final entry in params.entries) {
       final value = entry.value;
-      if (value is String || value is num || value is bool) {
-        cleanParams[entry.key] = value as Object;
+      if (value is String) {
+        cleanParams[entry.key] = value;
+      } else if (value is num) {
+        cleanParams[entry.key] = value;
+      } else if (value is bool) {
+        cleanParams[entry.key] = value ? 1 : 0;
       }
     }
     await _analytics.logEvent(name: name, parameters: cleanParams);

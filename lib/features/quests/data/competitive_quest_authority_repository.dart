@@ -64,8 +64,9 @@ class CompetitiveQuestAuthorityRepository {
   }) async {
     try {
       final callable = _functions.httpsCallable('startCompetitiveQuestSession');
+      await _sessionRepository.registerActiveSession();
       final response = await callable
-          .call(await _questPayload(quest))
+          .call(await _questPayload(quest, includeVerificationStartedAt: false))
           .timeout(_rpcTimeout);
       final data = response.data;
       if (data is! Map) {
@@ -105,9 +106,10 @@ class CompetitiveQuestAuthorityRepository {
       final callable = _functions.httpsCallable(
         'verifyCompetitiveQuestCompletion',
       );
+      await _sessionRepository.registerActiveSession();
       final response = await callable
           .call(<String, dynamic>{
-            ...await _questPayload(quest),
+            ...await _questPayload(quest, includeVerificationStartedAt: true),
             if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,
           })
           .timeout(_rpcTimeout);
@@ -154,7 +156,10 @@ class CompetitiveQuestAuthorityRepository {
     }
   }
 
-  Future<Map<String, dynamic>> _questPayload(Quest quest) async {
+  Future<Map<String, dynamic>> _questPayload(
+    Quest quest, {
+    required bool includeVerificationStartedAt,
+  }) async {
     return <String, dynamic>{
       'deviceSessionId': await _sessionRepository.deviceSessionId(),
       'deviceLabel': defaultTargetPlatform.name,
@@ -165,7 +170,7 @@ class CompetitiveQuestAuthorityRepository {
       'targetDurationMinutes': quest.targetDurationMinutes,
       'xpReward': quest.xpReward,
       'rewardAttribute': quest.rewardAttribute.name,
-      if (quest.verificationStartedAt != null)
+      if (includeVerificationStartedAt && quest.verificationStartedAt != null)
         'verificationStartedAt': quest.verificationStartedAt!.toIso8601String(),
     };
   }

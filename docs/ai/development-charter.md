@@ -22,6 +22,8 @@ AI must not:
 - rewrite architecture during unrelated feature work
 - introduce new dependencies without justification
 - change generated files manually unless the workflow explicitly requires it
+- duplicate the same product information across multiple tabs without a clear surface-specific reason
+- solve every new UI block with the same card pattern if that reduces hierarchy and screen identity
 
 ## Source of Truth
 
@@ -49,6 +51,7 @@ Until the app clears its production-readiness gap, AI should prefer:
 - hardening critical flows
 - clarifying release/deployment setup
 - improving trust surfaces such as account, privacy, and support
+- clarifying screen ownership so each tab has a distinct job
 
 AI should avoid prioritizing broad new feature surface over:
 - release identity
@@ -78,6 +81,10 @@ AI should avoid prioritizing broad new feature surface over:
 ### UI Stability
 - Do not introduce nested scrolling, rebuild-heavy charts, or expensive animations without reason.
 - Prefer straightforward widget trees over clever abstractions.
+- Avoid informational redundancy across `HOJE`, `QUESTS`, `RANK`, `ANALISE`, and `CONTA`.
+- Before adding a new block, confirm which surface should own that concept.
+- If the same metric appears in multiple tabs, the presentation and purpose must be intentionally different.
+- Avoid making every screen feel like repeated stacks of identical panels with different copy.
 
 ## Performance Rules
 

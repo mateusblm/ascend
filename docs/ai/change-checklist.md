@@ -34,6 +34,9 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/release-checklist.md`
   - `docs/product/firebase-operations-dashboard.md`
   - `docs/product/roadmap.md`
+- If changing major UI surfaces, check whether the work also needs updates to:
+  - `docs/product/ui-information-architecture.md`
+  - `docs/ai/architecture-map.md`
 
 ## Before Finishing
 
@@ -44,6 +47,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/ai/testing-strategy.md`
   - `docs/product/vision.md`
   - `docs/product/roadmap.md`
+- Check whether the change increases information redundancy across tabs or repeats the same panel pattern without a clear reason.
 - Check whether tests should be added or updated.
 - Note any validation step that could not be run.
 - If the work affects production readiness, state:

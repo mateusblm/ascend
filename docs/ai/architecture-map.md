@@ -93,6 +93,15 @@ lib/
   - `Temporada`: trilha mensal, recompensa e placar sazonal
   - `Legado`: pico, titulo sazonal ativo, arquivo de temporadas e historico recente
 - the stats screen is now positioned as a supporting analytics view instead of the primary place to explain rank rules
+- UI surface ownership should now follow the product map in `docs/product/ui-information-architecture.md`:
+  - `HOJE`: snapshot, momentum, build identity
+  - `QUESTS`: execution
+  - `RANK`: competitive systems
+  - `ANALISE`: cadence, review, planning, build management
+  - `CONTA`: identity and trust controls
+- repeated metrics across screens should be treated carefully:
+  - reuse is allowed only when the meaning changes by surface
+  - simple duplication of the same block in different tabs is a product smell
 - account and identity management now have their own dedicated screen:
   - `account_screen.dart`
   - it is entered from `Stats`, but it is not a bottom-navigation destination

@@ -12,7 +12,6 @@ import 'package:ascend/features/profile/presentation/info_tooltip.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
-import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,14 +88,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   child: switch (_currentSection) {
                     _StatsSection.overview => _buildOverviewSection(
                       player,
-                      attrs,
                       rankSnapshot,
-                      weeklyBoss,
-                      weeklyBossProgress,
-                      weeklyBossClaimed,
-                      remoteWeeklyBoss,
+                      insights,
                     ),
-                    _StatsSection.attributes => _buildAttributesSection(
+                    _StatsSection.build => _buildAttributesSection(
                       context,
                       player,
                       attrs,
@@ -146,7 +141,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'STATS',
+                  'ANALISE',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
@@ -197,7 +192,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Uma leitura mais analitica do seu progresso, da sua semana e dos ajustes que valem agora.',
+            'Leitura de cadencia, planejamento da semana e gestao do seu build sem repetir a parte competitiva.',
             style: TextStyle(
               color: Colors.white60,
               fontSize: 12.5,
@@ -361,31 +356,34 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
   Widget _buildOverviewSection(
     Player player,
-    PlayerAttributes attrs,
     CompetitiveRankSnapshot? rankSnapshot,
-    WeeklyBossDefinition? weeklyBoss,
-    int weeklyBossProgress,
-    bool weeklyBossClaimed,
-    AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
+    WeeklyInsightsBundle insights,
   ) {
-    final weeklyBossProgressPct =
-        weeklyBoss == null || weeklyBoss.targetActiveDays == 0
-        ? 0.0
-        : (weeklyBossProgress / weeklyBoss.targetActiveDays).clamp(0.0, 1.0);
-    final rankProgress = player.maxXp == 0
+    final levelProgress = player.maxXp == 0
         ? 0.0
         : (player.xp / player.maxXp).clamp(0.0, 1.0);
+    final weeklyProgress = (insights.discipline.currentWeekActiveDays / 7)
+        .clamp(0.0, 1.0);
+    final reviewAccent = switch (insights.review.status) {
+      WeeklyReviewStatus.rising => Colors.greenAccent,
+      WeeklyReviewStatus.stable => AppColors.neonBlue,
+      WeeklyReviewStatus.risk => Colors.orangeAccent,
+      WeeklyReviewStatus.critical => Colors.redAccent,
+    };
+    final currentRank =
+        rankSnapshot?.currentRank ?? playerRankForLevel(player.level);
 
     return Column(
       key: const ValueKey('overview'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Panel(
+        _AccentPanel(
+          accent: AppColors.neonBlue,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'PROGRESSO',
+                'RITMO ATUAL',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -394,37 +392,46 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              LinearPercentIndicator(
-                padding: EdgeInsets.zero,
-                lineHeight: 10,
-                percent: rankProgress,
-                barRadius: const Radius.circular(999),
-                backgroundColor: Colors.white10,
-                progressColor: AppColors.neonBlue,
-              ),
-              const SizedBox(height: 10),
               Text(
-                'Seu progresso geral de level e atributos.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 12.5,
+                insights.review.summary,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
+              Text(
+                insights.review.detail,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      label: 'FORCA',
-                      value: attrs.strength.toString(),
-                      accent: Colors.amberAccent,
+                      label: 'SCORE',
+                      value: '${insights.discipline.score}%',
+                      accent: reviewAccent,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _MetricCard(
-                      label: 'INTELIGENCIA',
-                      value: attrs.intelligence.toString(),
+                      label: 'GRAU',
+                      value: insights.discipline.grade,
+                      accent: reviewAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'RANK',
+                      value: currentRank,
                       accent: AppColors.neonBlue,
                     ),
                   ),
@@ -435,31 +442,44 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      label: 'VITALIDADE',
-                      value: attrs.vitality.toString(),
+                      label: 'SEMANA',
+                      value:
+                          '${insights.discipline.currentWeekActiveDays}/7 dias',
                       accent: Colors.greenAccent,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _MetricCard(
-                      label: 'AGILIDADE',
-                      value: attrs.agility.toString(),
-                      accent: Colors.purpleAccent,
+                      label: 'DELTA',
+                      value:
+                          '${insights.discipline.deltaFromPreviousWeek >= 0 ? '+' : ''}${insights.discipline.deltaFromPreviousWeek}',
+                      accent: insights.discipline.deltaFromPreviousWeek >= 0
+                          ? Colors.amberAccent
+                          : Colors.redAccent,
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 14),
+              _buildOverviewBar(
+                label: 'CADENCIA DA SEMANA',
+                trailing:
+                    '${insights.discipline.currentWeekActiveDays}/7 dias ativos',
+                percent: weeklyProgress,
+                color: reviewAccent,
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        _Panel(
+        _ContrastPanel(
+          accent: Colors.amberAccent,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'DESAFIO DA SEMANA',
+                'LEITURA DE PROGRESSO',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -469,16 +489,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                weeklyBoss?.title ?? 'Sem boss remoto ativo',
+                'Seu build cresce melhor quando a semana segura o ritmo.',
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                weeklyBoss?.description ??
-                    'A arena ainda nao abriu para o seu rank.',
+                insights.review.recommendation,
                 style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 12.5,
@@ -486,33 +506,51 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              LinearPercentIndicator(
-                padding: EdgeInsets.zero,
-                lineHeight: 10,
-                percent: weeklyBossProgressPct,
-                barRadius: const Radius.circular(999),
-                backgroundColor: Colors.white10,
-                progressColor: Colors.amberAccent,
+              _buildOverviewBar(
+                label: 'PROGRESSO DE LEVEL',
+                trailing: '${player.xp}/${player.maxXp} XP',
+                percent: levelProgress,
+                color: AppColors.neonBlue,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'STREAK',
+                      value: '${player.currentStreak} dias',
+                      accent: Colors.orangeAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'MELHOR',
+                      value: '${player.bestStreak} dias',
+                      accent: Colors.purpleAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'PONTOS',
+                      value: '${player.statPoints}',
+                      accent: player.statPoints > 0
+                          ? Colors.amberAccent
+                          : Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
-                weeklyBoss == null
-                    ? 'Sem recompensa carregada no momento.'
-                    : weeklyBossClaimed
-                    ? 'Recompensa da semana ja coletada.'
-                    : '$weeklyBossProgress/${weeklyBoss.targetActiveDays} dias ativos para liberar ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} ponto(s).',
+                'Atributos e distribuicao de pontos ficam na aba BUILD. Boss semanal e corrida competitiva ficam em RANK.',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12.5,
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 10),
-              if (remoteWeeklyBoss.isLoading)
-                const Text(
-                  'Carregando arena remota...',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                ),
             ],
           ),
         ),
@@ -829,6 +867,50 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       ],
     );
   }
+
+  Widget _buildOverviewBar({
+    required String label,
+    required String trailing,
+    required double percent,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.white54,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+            Text(
+              trailing,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearPercentIndicator(
+          padding: EdgeInsets.zero,
+          lineHeight: 9,
+          percent: percent,
+          barRadius: const Radius.circular(999),
+          backgroundColor: Colors.white10,
+          progressColor: color,
+        ),
+      ],
+    );
+  }
 }
 
 class _Panel extends StatelessWidget {
@@ -845,6 +927,62 @@ class _Panel extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _AccentPanel extends StatelessWidget {
+  const _AccentPanel({required this.child, required this.accent});
+
+  final Widget child;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.12),
+            Colors.white.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ContrastPanel extends StatelessWidget {
+  const _ContrastPanel({required this.child, required this.accent});
+
+  final Widget child;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
       ),
       child: child,
     );
@@ -1114,7 +1252,7 @@ class _AttributeRow extends StatelessWidget {
 
 enum _StatsSection {
   overview('GERAL'),
-  attributes('ATRIBUTOS'),
+  build('BUILD'),
   week('SEMANA'),
   plan('PLANO');
 

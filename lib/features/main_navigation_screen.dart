@@ -111,7 +111,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person_outline),
                     activeIcon: Icon(Icons.person),
-                    label: 'STATUS',
+                    label: 'HOJE',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bolt_outlined),
@@ -126,7 +126,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
                   BottomNavigationBarItem(
                     icon: Icon(Icons.analytics_outlined),
                     activeIcon: Icon(Icons.analytics),
-                    label: 'STATS',
+                    label: 'ANALISE',
                   ),
                 ],
               ),

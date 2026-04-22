@@ -114,53 +114,74 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Ajuste semanal',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.white38,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Plano',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (authState is AuthSuccess) ...[
-                TextButton.icon(
-                  onPressed: () => _openAccountScreen(context),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ajuste semanal',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white38,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                      ),
                     ),
-                  ),
-                  icon: const Icon(
-                    Icons.manage_accounts_rounded,
-                    size: 16,
-                    color: AppColors.neonBlue,
-                  ),
-                  label: const Text(
-                    'CONTA',
-                    style: TextStyle(
-                      color: AppColors.neonBlue,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                    SizedBox(height: 6),
+                    Text(
+                      'Plano',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-              ],
-              InfoTooltipIcon(
-                title: 'Como ler esta tela',
-                message:
-                    'Aqui voce acompanha seu progresso, sua semana e o que vale ajustar. A tela de Rank cuida da parte competitiva.',
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (authState is AuthSuccess) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => _openAccountScreen(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.neonBlue,
+                        side: BorderSide(
+                          color: AppColors.neonBlue.withValues(alpha: 0.35),
+                        ),
+                        backgroundColor: AppColors.neonBlue.withValues(
+                          alpha: 0.06,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      icon: const Icon(Icons.manage_accounts_rounded, size: 16),
+                      label: const Text(
+                        'CONTA',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  const InfoTooltipIcon(
+                    title: 'Como ler esta tela',
+                    message:
+                        'Aqui voce acompanha seu progresso, sua semana e o que vale ajustar. A tela de Rank cuida da parte competitiva.',
+                  ),
+                ],
               ),
             ],
           ),
@@ -176,10 +197,17 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.neonBlue.withValues(alpha: 0.10),
+                  Colors.white.withValues(alpha: 0.03),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
                 color: AppColors.neonBlue.withValues(alpha: 0.12),
               ),
@@ -234,44 +262,24 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'XP',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.white38,
-                        letterSpacing: 1.1,
+                Expanded(
+                  child: Column(
+                    children: [
+                      _MetricCard(
+                        label: 'XP',
+                        value: '${player.xp}/${player.maxXp}',
+                        accent: AppColors.neonBlue,
                       ),
-                    ),
-                    Text(
-                      '${player.xp}/${player.maxXp}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'PONTOS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.white38,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    Text(
-                      '${player.statPoints}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: player.statPoints > 0
+                      const SizedBox(height: 10),
+                      _MetricCard(
+                        label: 'PONTOS',
+                        value: '${player.statPoints}',
+                        accent: player.statPoints > 0
                             ? Colors.amberAccent
                             : Colors.white70,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1052,11 +1060,25 @@ class _Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: child,
     );
@@ -1073,7 +1095,7 @@ class _AccentPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1083,7 +1105,7 @@ class _AccentPanel extends StatelessWidget {
             Colors.white.withValues(alpha: 0.03),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: child,
@@ -1101,10 +1123,18 @@ class _ContrastPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.10),
+            Colors.black.withValues(alpha: 0.16),
+            Colors.white.withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accent.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
@@ -1296,10 +1326,10 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Column(
@@ -1317,7 +1347,7 @@ class _MetricCard extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 15.5,
               fontWeight: FontWeight.w800,
               color: accent,
             ),

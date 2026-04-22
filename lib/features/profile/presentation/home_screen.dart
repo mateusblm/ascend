@@ -67,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 60),
+        padding: const EdgeInsets.fromLTRB(25, 60, 25, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -80,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
                 seasonProfile,
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
             RevealBlock(
               delay: const Duration(milliseconds: 90),
               child: _buildStatusCard(
@@ -114,7 +114,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             RevealBlock(
               delay: const Duration(milliseconds: 180),
               child: Column(
@@ -134,7 +134,7 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 50),
+            const SizedBox(height: 42),
             Center(
               child: Text(
                 '"O MEDO NAO E UM OBSTACULO, E UMA FERRAMENTA."',
@@ -505,8 +505,15 @@ class HomeScreen extends ConsumerWidget {
             Colors.white.withValues(alpha: 0.02),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: child,
     );
@@ -518,7 +525,7 @@ class HomeScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
@@ -529,8 +536,11 @@ class HomeScreen extends ConsumerWidget {
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 8),
-        const Divider(color: AppColors.neonBlue, thickness: 0.5),
+        const SizedBox(height: 10),
+        Divider(
+          color: AppColors.neonBlue.withValues(alpha: 0.45),
+          thickness: 0.6,
+        ),
       ],
     );
   }
@@ -1360,14 +1370,20 @@ class HomeScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Abrir detalhes',
-            style: TextStyle(fontSize: 11, color: Colors.white38),
+        const Text(
+          'Diretorio vivo',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white70,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 4),
+        const Text(
+          'Abra camadas especificas da sua base sem transformar a tela em dashboard longa.',
+          style: TextStyle(fontSize: 11.5, color: Colors.white54, height: 1.4),
+        ),
+        const SizedBox(height: 12),
         if (firstWeekJourney.isActive) ...[
           _BaseDetailEntry(
             title: 'Campanha Inicial',

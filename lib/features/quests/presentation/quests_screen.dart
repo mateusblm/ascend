@@ -45,6 +45,7 @@ class QuestsScreen extends ConsumerWidget {
       weeklyBossProgress: weeklyBoss?.progressFor(player) ?? 0,
       weeklyBossClaimed: weeklyBoss?.isClaimedThisWeek(player) ?? false,
     );
+    final weeklyBossProgress = weeklyBoss?.progressFor(player) ?? 0;
     final suggestions =
         buildWeeklyQuestSuggestions(player, insights, weeklyBoss: weeklyBoss)
             .where(
@@ -79,6 +80,15 @@ class QuestsScreen extends ConsumerWidget {
     final personalCompletedCount = quests
         .where((q) => !q.isCompetitive && q.isCompleted)
         .length;
+    final completedCount = completedQuests.length;
+    final totalActiveCount =
+        competitiveQuests.length + personalActiveQuests.length;
+    final heroSummary = firstWeekJourney.isActive
+        ? firstWeekJourney.nextAction
+        : insights.review.summary;
+    final heroDetail = weeklyBoss == null
+        ? 'Base ativa e arena pronta para abrir quando surgir boss remoto.'
+        : 'Boss semanal em $weeklyBossProgress/${weeklyBoss.targetActiveDays}. Mantenha ritmo para sustentar rank e progresso.';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -89,31 +99,17 @@ class QuestsScreen extends ConsumerWidget {
             slivers: [
               SliverToBoxAdapter(
                 child: RevealBlock(
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 30),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'QUESTS',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Execute sua rotacao do dia, fortaleça sua base e mantenha a arena ativa.',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: Colors.white60,
-                            height: 1.4,
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        Divider(color: AppColors.neonBlue, thickness: 1),
-                      ],
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 22),
+                    child: _buildHero(
+                      playerName: player.name,
+                      activeCount: totalActiveCount,
+                      competitiveCount: competitiveQuests.length,
+                      personalCount: personalActiveQuests.length,
+                      completedCount: completedCount,
+                      summary: heroSummary,
+                      detail: heroDetail,
+                      weeklyBossTitle: weeklyBoss?.title,
                     ),
                   ),
                 ),
@@ -149,15 +145,12 @@ class QuestsScreen extends ConsumerWidget {
               if (competitiveQuests.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 10),
-                    child: Text(
-                      'MISSOES DE ARENA',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.neonBlue,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    padding: const EdgeInsets.only(top: 6, bottom: 12),
+                    child: _buildSectionHeader(
+                      title: 'Missoes de Arena',
+                      subtitle:
+                          'Rotacao competitiva pronta para contar no rank desta semana.',
+                      accent: AppColors.neonBlue,
                     ),
                   ),
                 ),
@@ -172,17 +165,14 @@ class QuestsScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: _buildSuggestionsPanel(context, ref, suggestions),
                 ),
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 10),
-                  child: Text(
-                    'ROTINA BASE',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.greenAccent,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  padding: const EdgeInsets.only(top: 6, bottom: 12),
+                  child: _buildSectionHeader(
+                    title: 'Rotina Base',
+                    subtitle:
+                        'Quests pessoais mantem level, streak e margem para arena.',
+                    accent: Colors.greenAccent,
                   ),
                 ),
               ),
@@ -198,17 +188,14 @@ class QuestsScreen extends ConsumerWidget {
                   'Nenhuma quest pessoal ativa. Toque em + para criar uma ou use as sugestoes abaixo.',
                 ),
               if (completedQuests.isNotEmpty) ...[
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 30, bottom: 10),
-                    child: Text(
-                      'CONCLUIDAS',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white38,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    padding: const EdgeInsets.only(top: 26, bottom: 12),
+                    child: _buildSectionHeader(
+                      title: 'Concluidas',
+                      subtitle:
+                          'Leitura do que ja foi fechado hoje para nao perder ritmo.',
+                      accent: Colors.white70,
                     ),
                   ),
                 ),
@@ -222,14 +209,294 @@ class QuestsScreen extends ConsumerWidget {
                   }, childCount: completedQuests.length),
                 ),
               ],
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddQuestModal(context),
-        backgroundColor: AppColors.neonBlue,
-        child: const Icon(Icons.add, color: Colors.black),
+      floatingActionButton: _buildCreateQuestButton(context),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _buildHero({
+    required String playerName,
+    required int activeCount,
+    required int competitiveCount,
+    required int personalCount,
+    required int completedCount,
+    required String summary,
+    required String detail,
+    required String? weeklyBossTitle,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.neonBlue.withValues(alpha: 0.14),
+            Colors.greenAccent.withValues(alpha: 0.08),
+            Colors.white.withValues(alpha: 0.03),
+          ],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Comando diario',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.neonBlue,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Quests',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      playerName,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white60,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildHeroPill(
+                weeklyBossTitle ?? 'BASE EM ROTA',
+                AppColors.neonBlue,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            summary,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            detail,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Colors.white60,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 420;
+                final tiles = [
+                  _QuestSummaryTile(
+                    label: 'ATIVAS',
+                    value: '$activeCount',
+                    accent: Colors.white,
+                  ),
+                  _QuestSummaryTile(
+                    label: 'ARENA',
+                    value: '$competitiveCount',
+                    accent: AppColors.neonBlue,
+                  ),
+                  _QuestSummaryTile(
+                    label: 'BASE',
+                    value: '$personalCount',
+                    accent: Colors.greenAccent,
+                  ),
+                  _QuestSummaryTile(
+                    label: 'FEITAS',
+                    value: '$completedCount',
+                    accent: Colors.amberAccent,
+                  ),
+                ];
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Painel de execucao',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white38,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (isCompact)
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: tiles
+                            .map(
+                              (tile) => SizedBox(
+                                width: (constraints.maxWidth - 10) / 2,
+                                child: tile,
+                              ),
+                            )
+                            .toList(),
+                      )
+                    else
+                      Row(
+                        children: [
+                          for (
+                            var index = 0;
+                            index < tiles.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(width: 10),
+                            Expanded(child: tiles[index]),
+                          ],
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroPill(String label, Color color) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 132),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.24)),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 10.5,
+            color: color,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+    required Color accent,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 15,
+            color: accent,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 11.5,
+            color: Colors.white54,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCreateQuestButton(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: () => _openAddQuestModal(context),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      extendedPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+      label: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.neonBlue.withValues(alpha: 0.95),
+              Colors.cyanAccent.withValues(alpha: 0.82),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.neonBlue.withValues(alpha: 0.26),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_rounded, color: Colors.black, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Nova Quest',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -241,18 +508,19 @@ class QuestsScreen extends ConsumerWidget {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.neonBlue.withValues(alpha: 0.10),
-            Colors.greenAccent.withValues(alpha: 0.05),
+            AppColors.neonBlue.withValues(alpha: 0.12),
+            Colors.greenAccent.withValues(alpha: 0.07),
+            Colors.white.withValues(alpha: 0.02),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +537,7 @@ class QuestsScreen extends ConsumerWidget {
           const Text(
             'Arena empurra sua disputa. Base sustenta level, streak e consistencia.',
             style: TextStyle(
-              color: Colors.white70,
+              color: Colors.white60,
               fontSize: 12.5,
               height: 1.45,
             ),
@@ -310,10 +578,10 @@ class QuestsScreen extends ConsumerWidget {
   Widget _buildFirstWeekPanel(FirstWeekJourneySummary summary) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white10),
       ),
       child: Column(
@@ -389,10 +657,10 @@ class QuestsScreen extends ConsumerWidget {
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.neonBlue.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
       ),
       child: Column(
@@ -930,17 +1198,22 @@ class QuestsScreen extends ConsumerWidget {
 
   Widget _buildEmptyState(String text) {
     return SliverToBoxAdapter(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white38,
-              fontSize: 12.5,
-              height: 1.45,
-            ),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 4, bottom: 8),
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 12.5,
+            height: 1.45,
           ),
         ),
       ),
@@ -1036,7 +1309,7 @@ class _QuestSummaryTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Column(

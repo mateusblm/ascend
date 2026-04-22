@@ -202,17 +202,27 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('RANK'), findsOneWidget);
-    expect(find.text('TEMPORADA'), findsWidgets);
-    expect(find.text('LEGADO'), findsWidgets);
-    expect(find.text('PROVA EM CURSO'), findsOneWidget);
+    expect(find.text('Arena'), findsOneWidget);
+    expect(find.text('PRESSAO ATUAL'), findsOneWidget);
+    expect(find.text('CORRIDA SAZONAL'), findsOneWidget);
+    expect(find.text('LEGADO'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
+    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pressao Atual'), findsOneWidget);
     expect(find.text('CONFIANCA DA CONTA'), findsOneWidget);
     expect(find.text('SUBIR PARA B'), findsOneWidget);
     expect(find.text('DIAS PARA LIBERAR'), findsOneWidget);
     expect(find.text('LEVEL OK'), findsOneWidget);
     expect(find.text('Primeiro clear: Mateus abriu a arena.'), findsOneWidget);
 
-    await tester.tap(find.text('TEMPORADA'));
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('CORRIDA SAZONAL'));
+    await tester.tap(find.text('CORRIDA SAZONAL'));
     await tester.pumpAndSettle();
 
     expect(find.text('PLACAR DA TEMPORADA'), findsOneWidget);
@@ -223,7 +233,11 @@ void main() {
     expect(find.text('RESGATAR TEMPORADA'), findsOneWidget);
     expect(find.text('VOCE'), findsOneWidget);
 
-    await tester.tap(find.text('LEGADO'));
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('LEGADO').first);
+    await tester.tap(find.text('LEGADO').first);
     await tester.pumpAndSettle();
 
     expect(find.text('LEGADO ATIVO'), findsOneWidget);
@@ -268,7 +282,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('PRESSAO ATUAL'), findsOneWidget);
     expect(find.text('Nenhum boss ativo para este rank.'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
+    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.pumpAndSettle();
+
     expect(find.text('SEM EVENTO'), findsOneWidget);
   });
 
@@ -316,6 +336,10 @@ void main() {
         child: const MaterialApp(home: RankScreen()),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
+    await tester.tap(find.text('PRESSAO ATUAL'));
     await tester.pumpAndSettle();
 
     expect(find.text('INICIAR EXAME'), findsOneWidget);
@@ -379,6 +403,10 @@ void main() {
         child: const MaterialApp(home: RankScreen()),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
+    await tester.tap(find.text('PRESSAO ATUAL'));
     await tester.pumpAndSettle();
 
     expect(find.text('PROMOVER RANK'), findsOneWidget);

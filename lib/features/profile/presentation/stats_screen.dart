@@ -109,23 +109,23 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ? 0.0
         : (player.xp / player.maxXp).clamp(0.0, 1.0);
 
-    return _Panel(
+    return _ContrastPanel(
+      accent: AppColors.neonBlue,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'PLANO',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Ajuste semanal',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white38,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Plano',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Row(
@@ -135,12 +135,11 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 TextButton.icon(
                   onPressed: () => _openAccountScreen(context),
                   style: TextButton.styleFrom(
-                    minimumSize: Size.zero,
+                    minimumSize: const Size(0, 44),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 12,
+                      vertical: 10,
                     ),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(
                     Icons.manage_accounts_rounded,
@@ -151,9 +150,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                     'CONTA',
                     style: TextStyle(
                       color: AppColors.neonBlue,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -168,7 +166,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Leitura da semana, ajustes do build e proximo passo pratico sem repetir a parte da arena.',
+            'Leitura da semana, ajustes de build e proximo passo sem repetir o peso da arena.',
             style: TextStyle(
               color: Colors.white60,
               fontSize: 12.5,
@@ -341,11 +339,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'LEITURA RAPIDA',
+                'Leitura rapida',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
-                  letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -400,7 +397,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'VISAO GERAL',
+          title: 'Visao geral',
           summary: insights.review.detail,
           supporting:
               'Ritmo da conta, progresso geral de level, streak e leitura consolidada da semana.',
@@ -433,7 +430,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'SEMANA',
+          title: 'Semana',
           summary: insights.review.summary,
           supporting:
               'Historico recente, qualidade da semana e o que esta acontecendo com sua cadencia.',
@@ -456,7 +453,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'PROXIMO PASSO',
+          title: 'Proximo passo',
           summary: insights.nextWeekPlan.headline,
           supporting:
               'Plano pratico da proxima semana para recuperar, estabilizar ou empurrar sua evolucao.',
@@ -522,11 +519,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'RITMO ATUAL',
+                'Ritmo atual',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
-                  letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -618,11 +614,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'LEITURA DE PROGRESSO',
+                'Leitura de progresso',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
-                  letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -683,7 +678,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Atributos e distribuicao de pontos ficam na aba BUILD. Boss semanal e corrida competitiva ficam em RANK.',
+                'Atributos e distribuicao de pontos ficam em Build. Boss semanal e corrida competitiva ficam em Arena.',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12.5,
@@ -714,11 +709,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'ATRIBUTOS',
+                      'Atributos',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
-                        letterSpacing: 1.2,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -806,11 +800,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'SEMANA',
+                      'Semana',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
-                        letterSpacing: 1.2,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -881,11 +874,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'HISTORICO RECENTE',
+                'Historico recente',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
-                  letterSpacing: 1.2,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -934,11 +926,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'PROXIMA SEMANA',
+                      'Proxima semana',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
-                        letterSpacing: 1.2,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1202,7 +1193,8 @@ class _SectionEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(minHeight: 96),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: accent.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(18),
@@ -1219,10 +1211,9 @@ class _SectionEntryCard extends StatelessWidget {
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             color: accent,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1242,7 +1233,6 @@ class _SectionEntryCard extends StatelessWidget {
                               fontSize: 10,
                               color: Colors.white70,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
                             ),
                           ),
                         ),
@@ -1252,7 +1242,7 @@ class _SectionEntryCard extends StatelessWidget {
                     Text(
                       summary,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.4,
                       ),
@@ -1262,7 +1252,7 @@ class _SectionEntryCard extends StatelessWidget {
                       supporting,
                       style: const TextStyle(
                         color: Colors.white60,
-                        fontSize: 11.8,
+                        fontSize: 12.3,
                         height: 1.45,
                       ),
                     ),
@@ -1270,7 +1260,20 @@ class _SectionEntryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
             ],
           ),
         ),

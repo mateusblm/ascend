@@ -33,36 +33,66 @@ class DetailShellScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_rounded),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                      ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Detalhe',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white38,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    subtitle!,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12.5,
-                      height: 1.45,
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Text(
+                      subtitle!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.45,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                 ] else
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                 child,
               ],
             ),

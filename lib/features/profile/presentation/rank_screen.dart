@@ -1826,7 +1826,8 @@ class _SectionEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(minHeight: 96),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: accent.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(18),
@@ -1843,10 +1844,9 @@ class _SectionEntryCard extends StatelessWidget {
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             color: accent,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1866,7 +1866,6 @@ class _SectionEntryCard extends StatelessWidget {
                               fontSize: 10,
                               color: Colors.white70,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
                             ),
                           ),
                         ),
@@ -1876,7 +1875,7 @@ class _SectionEntryCard extends StatelessWidget {
                     Text(
                       summary,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.4,
                       ),
@@ -1886,7 +1885,7 @@ class _SectionEntryCard extends StatelessWidget {
                       supporting,
                       style: const TextStyle(
                         color: Colors.white60,
-                        fontSize: 11.8,
+                        fontSize: 12.3,
                         height: 1.45,
                       ),
                     ),
@@ -1894,7 +1893,20 @@ class _SectionEntryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
             ],
           ),
         ),

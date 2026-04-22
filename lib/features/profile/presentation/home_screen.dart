@@ -94,8 +94,6 @@ class HomeScreen extends ConsumerWidget {
                       AppColors.neonBlue,
                       '${player.xp} / ${player.maxXp}',
                     ),
-                    const SizedBox(height: 20),
-                    _buildStatBar('HP', 1.0, Colors.redAccent, '100%'),
                     const SizedBox(height: 24),
                     _buildCompetitivePulse(rankSnapshot, prestige, season),
                     const SizedBox(height: 20),
@@ -123,8 +121,8 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSectionHeading(
-                    'ATRIBUTOS',
-                    'Sua base permanente de crescimento.',
+                    'Build',
+                    'Leitura viva dos seus atributos e da sua linha de crescimento.',
                   ),
                   const SizedBox(height: 14),
                   _buildStatusCard(
@@ -165,12 +163,26 @@ class HomeScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'JOGADOR: $name | $title',
-          style: const TextStyle(
-            fontSize: 12,
+        const Text(
+          'Base',
+          style: TextStyle(
+            fontSize: 11,
             color: AppColors.neonBlue,
-            letterSpacing: 1.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          name,
+          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.white70,
+            height: 1.35,
           ),
         ),
         if (seasonProfile != null) ...[
@@ -194,9 +206,9 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ],
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         const Text(
-          'Veja rapido como voce esta, o que falta e qual e o desafio da vez.',
+          'Sua ficha viva: progresso, foco e as aberturas que mais importam agora.',
           style: TextStyle(fontSize: 12.5, color: Colors.white60, height: 1.4),
         ),
         const SizedBox(height: 14),
@@ -204,7 +216,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'RANK: $rank',
+              rank,
               style: TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -250,10 +262,9 @@ class HomeScreen extends ConsumerWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 10.5,
           color: color,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
         ),
       ),
     );
@@ -263,8 +274,16 @@ class HomeScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(15),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.greenAccent.withValues(alpha: 0.05),
+            AppColors.neonBlue.withValues(alpha: 0.04),
+            Colors.white.withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white10),
       ),
       child: child,
@@ -277,11 +296,7 @@ class HomeScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            letterSpacing: 3,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
@@ -315,30 +330,24 @@ class HomeScreen extends ConsumerWidget {
               const Expanded(
                 child: Text(
                   'FOCO ATUAL',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.white38,
-                    letterSpacing: 1.2,
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.white38),
                 ),
               ),
               TextButton(
                 onPressed: () => _openFocusSelectionSheet(context, focus),
                 style: TextButton.styleFrom(
-                  minimumSize: Size.zero,
+                  minimumSize: const Size(0, 44),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 10,
                   ),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text(
-                  'ALTERAR',
+                  'Mudar',
                   style: TextStyle(
                     color: AppColors.neonBlue,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -351,7 +360,6 @@ class HomeScreen extends ConsumerWidget {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.neonBlue,
-              letterSpacing: 1.5,
             ),
           ),
         ],
@@ -529,12 +537,11 @@ class HomeScreen extends ConsumerWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'PRIMEIRA SEMANA',
+                  'Campanha inicial',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.neonBlue,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
                   ),
                 ),
               ),
@@ -631,12 +638,11 @@ class HomeScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'PROXIMO GANHO',
+            'Proximo ganho',
             style: TextStyle(
               fontSize: 12,
               color: Colors.white54,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 8),
@@ -696,12 +702,11 @@ class HomeScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'DISPUTA DA SEMANA',
+            'Disputa da semana',
             style: TextStyle(
               fontSize: 12,
               color: Colors.amberAccent,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 8),
@@ -915,12 +920,8 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'DESAFIO DA SEMANA',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white38,
-                    letterSpacing: 1.2,
-                  ),
+                  'Evento da semana',
+                  style: TextStyle(fontSize: 12, color: Colors.white38),
                 ),
               ),
               Text(
@@ -1032,12 +1033,8 @@ class HomeScreen extends ConsumerWidget {
             const Divider(color: Colors.white10, height: 1),
             const SizedBox(height: 12),
             const Text(
-              'QUEM JA CONCLUIU',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.white38,
-                letterSpacing: 1.1,
-              ),
+              'Quem ja concluiu',
+              style: TextStyle(fontSize: 11, color: Colors.white38),
             ),
             const SizedBox(height: 10),
             ..._buildTopCompletions(topCompletions),
@@ -1144,12 +1141,8 @@ class HomeScreen extends ConsumerWidget {
         const Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'ABRIR DETALHES',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.white38,
-              letterSpacing: 1.1,
-            ),
+            'Abrir detalhes',
+            style: TextStyle(fontSize: 11, color: Colors.white38),
           ),
         ),
         const SizedBox(height: 10),
@@ -1315,21 +1308,16 @@ class HomeScreen extends ConsumerWidget {
           children: [
             const Expanded(
               child: Text(
-                'LEITURA DE BUILD',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white38,
-                  letterSpacing: 1.2,
-                ),
+                'Leitura de build',
+                style: TextStyle(fontSize: 11, color: Colors.white38),
               ),
             ),
             Text(
-              'ESCALA $scaleMax',
+              'Escala $scaleMax',
               style: const TextStyle(
                 fontSize: 10,
                 color: AppColors.neonBlue,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
               ),
             ),
           ],
@@ -1337,11 +1325,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 10),
         Text(
           summary.archetype,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(
@@ -1412,7 +1396,6 @@ class HomeScreen extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 6),
@@ -1466,11 +1449,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Text(
             summary.archetype,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
@@ -1498,7 +1477,7 @@ class HomeScreen extends ConsumerWidget {
               child: _buildAttributeDetailsBlock(items, summary, scaleMax),
             ),
             icon: const Icon(Icons.chevron_right_rounded),
-            label: const Text('ABRIR BUILD'),
+            label: const Text('Abrir build'),
           ),
         ],
       ),
@@ -1580,7 +1559,7 @@ class HomeScreen extends ConsumerWidget {
     final unlocked = systemAchievements
         .where((achievement) => achievement.requirement(player))
         .toList();
-    return unlocked.isNotEmpty ? unlocked.last.title : 'ASPIRANTE';
+    return unlocked.isNotEmpty ? unlocked.last.title : 'Aspirante';
   }
 
   String _shortError(Object? error) {
@@ -1614,7 +1593,7 @@ class HomeScreen extends ConsumerWidget {
 
     if (isBalanced) {
       return _AttributeBuildSummary(
-        archetype: 'BUILD EQUILIBRADO',
+        archetype: 'Build equilibrado',
         focusLine: 'Sem ponto fraco gritante.',
         primaryLabel: primary.key,
         secondaryLabel: secondary.key,
@@ -1624,11 +1603,11 @@ class HomeScreen extends ConsumerWidget {
     }
 
     final archetype = switch (primary.key) {
-      'FORCA' => 'BRUTALISTA',
-      'INTELIGENCIA' => 'ESTRATEGA',
-      'VITALIDADE' => 'TANQUE',
-      'AGILIDADE' => 'VELOZ',
-      _ => 'HUNTER',
+      'FORCA' => 'Brutalista',
+      'INTELIGENCIA' => 'Estratega',
+      'VITALIDADE' => 'Tanque',
+      'AGILIDADE' => 'Veloz',
+      _ => 'Hunter',
     };
 
     return _AttributeBuildSummary(
@@ -1698,7 +1677,8 @@ class _BaseDetailEntry extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          constraints: const BoxConstraints(minHeight: 84),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: accent.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
@@ -1713,10 +1693,9 @@ class _BaseDetailEntry extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         color: accent,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1724,7 +1703,7 @@ class _BaseDetailEntry extends StatelessWidget {
                       summary,
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         height: 1.4,
                       ),
                     ),
@@ -1732,7 +1711,20 @@ class _BaseDetailEntry extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.chevron_right_rounded, color: accent, size: 26),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: accent,
+                  size: 22,
+                ),
+              ),
             ],
           ),
         ),

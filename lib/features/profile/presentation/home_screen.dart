@@ -99,26 +99,18 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     _buildCompetitivePulse(rankSnapshot, prestige, season),
                     const SizedBox(height: 20),
-                    if (firstWeekJourney.isActive) ...[
-                      _buildFirstWeekCard(firstWeekJourney),
-                      const SizedBox(height: 20),
-                    ],
                     _buildProgressPayoffCard(progressPayoff),
                     const SizedBox(height: 20),
-                    if (rivalry.isActive) ...[
-                      _buildRivalryCard(rivalry),
-                      const SizedBox(height: 20),
-                    ],
-                    _buildStreakPanel(player),
-                    const SizedBox(height: 20),
-                    _buildWeeklyBossPanel(
+                    _buildBaseDetailDirectory(
                       context,
-                      ref,
                       player,
+                      firstWeekJourney,
+                      rivalry,
                       authState,
                       remoteWeeklyBoss,
                       topCompletions,
                       competitiveRank,
+                      ref,
                     ),
                   ],
                 ),
@@ -136,7 +128,10 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 14),
                   _buildStatusCard(
-                    child: _buildAttributeRadarPanel(player.attributes),
+                    child: _buildAttributeRadarPanel(
+                      context,
+                      player.attributes,
+                    ),
                   ),
                 ],
               ),
@@ -1130,7 +1125,111 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAttributeRadarPanel(PlayerAttributes attrs) {
+  Widget _buildBaseDetailDirectory(
+    BuildContext context,
+    Player player,
+    FirstWeekJourneySummary firstWeekJourney,
+    RankRivalrySummary rivalry,
+    AuthState authState,
+    AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
+    AsyncValue<List<WeeklyBossCompletion>> topCompletions,
+    String competitiveRank,
+    WidgetRef ref,
+  ) {
+    final remoteBoss = remoteWeeklyBoss.valueOrNull;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'ABRIR DETALHES',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white38,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (firstWeekJourney.isActive) ...[
+          _BaseDetailEntry(
+            title: 'Campanha Inicial',
+            summary: firstWeekJourney.nextAction,
+            accent: AppColors.neonBlue,
+            onTap: () => _openBaseDetailSheet(
+              context,
+              title: 'Campanha Inicial',
+              child: _buildFirstWeekCard(firstWeekJourney),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        _BaseDetailEntry(
+          title: 'Ritmo e Streak',
+          summary:
+              '${player.currentStreak} dias agora | melhor ${player.bestStreak} dias',
+          accent: Colors.orangeAccent,
+          onTap: () => _openBaseDetailSheet(
+            context,
+            title: 'Ritmo e Streak',
+            child: _buildStatusCard(child: _buildStreakPanel(player)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (rivalry.isActive) ...[
+          _BaseDetailEntry(
+            title: 'Disputa da Arena',
+            summary: rivalry.headline,
+            accent: Colors.amberAccent,
+            onTap: () => _openBaseDetailSheet(
+              context,
+              title: 'Disputa da Arena',
+              child: _buildRivalryCard(rivalry),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        _BaseDetailEntry(
+          title: 'Evento da Semana',
+          summary: remoteBoss?.title ?? 'Nenhum boss remoto ativo agora.',
+          accent: Colors.redAccent,
+          onTap: () => _openBaseDetailSheet(
+            context,
+            title: 'Evento da Semana',
+            child: _buildWeeklyBossPanel(
+              context,
+              ref,
+              player,
+              authState,
+              remoteWeeklyBoss,
+              topCompletions,
+              competitiveRank,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openBaseDetailSheet(
+    BuildContext context, {
+    required String title,
+    required Widget child,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _BaseDetailSheet(title: title, child: child),
+    );
+  }
+
+  Widget _buildAttributeRadarPanel(
+    BuildContext context,
+    PlayerAttributes attrs,
+  ) {
     final summary = _buildAttributeBuildSummary(attrs);
     final scaleMax = _attributeScaleMax(attrs);
     final items = <_AttributeVisualSpec>[
@@ -1171,19 +1270,24 @@ class HomeScreen extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 640;
-        final chart = Expanded(
-          flex: isWide ? 11 : 0,
-          child: _buildAttributeChartBlock(items, scaleMax, summary),
-        );
-        final details = Expanded(
-          flex: 10,
-          child: _buildAttributeDetailsBlock(items, summary, scaleMax),
+        final summaryCard = _buildAttributeSummaryCard(
+          context,
+          items,
+          summary,
+          scaleMax,
         );
 
         if (isWide) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [chart, const SizedBox(width: 18), details],
+            children: [
+              Expanded(
+                flex: 11,
+                child: _buildAttributeChartBlock(items, scaleMax, summary),
+              ),
+              const SizedBox(width: 18),
+              Expanded(flex: 10, child: summaryCard),
+            ],
           );
         }
 
@@ -1192,7 +1296,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             _buildAttributeChartBlock(items, scaleMax, summary),
             const SizedBox(height: 18),
-            _buildAttributeDetailsBlock(items, summary, scaleMax),
+            summaryCard,
           ],
         );
       },
@@ -1340,6 +1444,64 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAttributeSummaryCard(
+    BuildContext context,
+    List<_AttributeVisualSpec> items,
+    _AttributeBuildSummary summary,
+    int scaleMax,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary.archetype,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.summary,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Dominante: ${summary.primaryLabel} | apoio: ${summary.secondaryLabel} | leitura relativa ate $scaleMax',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 10.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: () => _openBaseDetailSheet(
+              context,
+              title: 'Build',
+              child: _buildAttributeDetailsBlock(items, summary, scaleMax),
+            ),
+            icon: const Icon(Icons.chevron_right_rounded),
+            label: const Text('ABRIR BUILD'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1512,6 +1674,141 @@ class _AttributeBuildSummary {
   final String primaryLabel;
   final String secondaryLabel;
   final String summary;
+}
+
+class _BaseDetailEntry extends StatelessWidget {
+  const _BaseDetailEntry({
+    required this.title,
+    required this.summary,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String title;
+  final String summary;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: accent,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      summary,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.chevron_right_rounded, color: accent, size: 26),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BaseDetailSheet extends StatelessWidget {
+  const _BaseDetailSheet({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.76,
+      minChildSize: 0.55,
+      maxChildSize: 0.94,
+      expand: false,
+      builder: (context, controller) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 10, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: controller,
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+                  child: child,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _AttributeRadarLabel extends StatelessWidget {

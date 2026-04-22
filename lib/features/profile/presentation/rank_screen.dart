@@ -1,4 +1,5 @@
 import 'package:ascend/core/widgets/reveal_block.dart';
+import 'package:ascend/core/widgets/detail_shell_screen.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
@@ -30,8 +31,6 @@ class RankScreen extends ConsumerStatefulWidget {
 }
 
 class _RankScreenState extends ConsumerState<RankScreen> {
-  _RankSection _currentSection = _RankSection.now;
-
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
@@ -40,8 +39,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ref.watch(rankProgressionHistoryProvider).valueOrNull ??
         const <CompetitiveRankSnapshot>[];
     final exam = ref.watch(promotionExamProvider).valueOrNull;
-    final currentSeasonReward = ref.watch(currentSeasonRewardProvider).valueOrNull;
-    final integrity = ref.watch(currentCompetitiveIntegrityProvider).valueOrNull;
+    final currentSeasonReward = ref
+        .watch(currentSeasonRewardProvider)
+        .valueOrNull;
+    final integrity = ref
+        .watch(currentCompetitiveIntegrityProvider)
+        .valueOrNull;
     final seasonProfile = ref.watch(seasonProfileProvider).valueOrNull;
     final seasonLegacyHistory =
         ref.watch(seasonLegacyHistoryProvider).valueOrNull ??
@@ -77,45 +80,28 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               RevealBlock(child: _buildHero(player, snapshot)),
               const SizedBox(height: 14),
               RevealBlock(
                 delay: const Duration(milliseconds: 80),
-                child: _buildSectionTabs(),
-              ),
-              const SizedBox(height: 14),
-              RevealBlock(
-                delay: const Duration(milliseconds: 140),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: switch (_currentSection) {
-                    _RankSection.now => _buildNowSection(
-                    context,
-                    player,
-                    snapshot,
-                    exam,
-                    arena,
-                    prestige,
-                    integrity,
-                  ),
-                    _RankSection.season => _buildSeasonSection(
-                      context,
-                      player,
-                      season,
-                      leaderboard,
-                      currentSeasonReward,
-                      rivalry,
-                    ),
-                    _RankSection.legacy => _buildLegacySection(
-                      snapshot,
-                      history,
-                      seasonProfile,
-                      seasonLegacyHistory,
-                    ),
-                  },
+                child: _buildArenaHub(
+                  context,
+                  player,
+                  snapshot,
+                  exam,
+                  arena,
+                  prestige,
+                  integrity,
+                  season,
+                  leaderboard,
+                  currentSeasonReward,
+                  rivalry,
+                  history,
+                  seasonProfile,
+                  seasonLegacyHistory,
                 ),
               ),
             ],
@@ -290,20 +276,161 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     );
   }
 
-  Widget _buildSectionTabs() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final section in _RankSection.values) ...[
-            _SectionChip(
-              label: section.label,
-              selected: section == _currentSection,
-              onTap: () => setState(() => _currentSection = section),
+  Widget _buildArenaHub(
+    BuildContext context,
+    Player player,
+    CompetitiveRankSnapshot? snapshot,
+    PromotionExam? exam,
+    RankArenaSummary arena,
+    RankPrestigeSummary prestige,
+    CompetitiveIntegritySnapshot? integrity,
+    RankSeasonSummary season,
+    RankSeasonLeaderboardSummary leaderboard,
+    SeasonRewardSnapshot? currentSeasonReward,
+    RankRivalrySummary rivalry,
+    List<CompetitiveRankSnapshot> history,
+    SeasonProfileSnapshot? seasonProfile,
+    List<SeasonLegacyReward> seasonLegacyHistory,
+  ) {
+    final currentRank =
+        snapshot?.currentRank ?? playerRankForLevel(player.level);
+    final status = snapshot?.status ?? RankMaintenanceStatus.secure;
+    final accent = _statusColor(status);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MAPA DA ARENA',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white54,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'POSTO',
+                      value: currentRank,
+                      accent: accent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'TEMPORADA',
+                      value: season.rewardStatusLabel,
+                      accent: AppColors.neonBlue,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'PRESTIGIO',
+                      value: prestige.prestigeLabel,
+                      accent: Colors.amberAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'AGORA',
+          summary: snapshot?.summary ?? arena.leaderHeadline,
+          supporting:
+              'Manutencao do posto, prova ativa e evento competitivo da semana.',
+          badge: _statusLabel(status),
+          accent: accent,
+          onTap: () => _openRankDetail(
+            context,
+            title: 'Agora',
+            subtitle:
+                'Manutencao do posto, promocao ou reconquista e evento competitivo da semana.',
+            child: _buildNowSection(
+              context,
+              player,
+              snapshot,
+              exam,
+              arena,
+              prestige,
+              integrity,
             ),
-            const SizedBox(width: 8),
-          ],
-        ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'TEMPORADA',
+          summary:
+              '${leaderboard.playerStandingLabel} | ${season.rewardStatusLabel}',
+          supporting:
+              'Pontuacao sazonal, recompensa do ciclo e disputa do grupo atual.',
+          badge: season.rewardTierLabel,
+          accent: AppColors.neonBlue,
+          onTap: () => _openRankDetail(
+            context,
+            title: 'Temporada',
+            subtitle:
+                'Corrida sazonal, recompensa do ciclo e situacao atual do seu grupo.',
+            child: _buildSeasonSection(
+              context,
+              player,
+              season,
+              leaderboard,
+              currentSeasonReward,
+              rivalry,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'LEGADO',
+          summary:
+              seasonProfile?.activeTitleLabel ??
+              'Pico atual: ${snapshot?.peakRank ?? currentRank}',
+          supporting:
+              'Arquivo competitivo, recompensas permanentes e historico ja consolidado.',
+          badge: season.peakRank == '-'
+              ? (snapshot?.peakRank ?? currentRank)
+              : season.peakRank,
+          accent: Colors.amberAccent,
+          onTap: () => _openRankDetail(
+            context,
+            title: 'Legado',
+            subtitle:
+                'Titulos, picos, recompensas permanentes e trilha historica da conta.',
+            child: _buildLegacySection(
+              snapshot,
+              history,
+              seasonProfile,
+              seasonLegacyHistory,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openRankDetail(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            DetailShellScreen(title: title, subtitle: subtitle, child: child),
       ),
     );
   }
@@ -342,9 +469,13 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final currentRule = rankRuleFor(currentRank);
     final nextRank = snapshot?.promotionTargetRank ?? rankAfter(currentRank);
     final nextRule = nextRank == null ? null : rankRuleFor(nextRank);
-    final currentProgress = snapshot == null || currentRule.requiredActiveDays == 0
+    final currentProgress =
+        snapshot == null || currentRule.requiredActiveDays == 0
         ? 0.0
-        : (snapshot.activeDays / currentRule.requiredActiveDays).clamp(0.0, 1.0);
+        : (snapshot.activeDays / currentRule.requiredActiveDays).clamp(
+            0.0,
+            1.0,
+          );
     final remainingCurrentDays = snapshot == null
         ? currentRule.requiredActiveDays
         : (currentRule.requiredActiveDays - snapshot.activeDays).clamp(
@@ -352,12 +483,14 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             currentRule.requiredActiveDays,
           );
     final nextBoss = nextRank == null ? null : weeklyBossForRank(nextRank);
-    final nextActiveDays = nextBoss?.progressFor(player) ?? snapshot?.activeDays ?? 0;
+    final nextActiveDays =
+        nextBoss?.progressFor(player) ?? snapshot?.activeDays ?? 0;
     final nextBossDone = nextBoss?.isCompleted(player) ?? false;
     final nextProgress = nextRule == null || nextRule.requiredActiveDays == 0
         ? 0.0
         : (nextActiveDays / nextRule.requiredActiveDays).clamp(0.0, 1.0);
-    final targetLevel = snapshot?.targetRequiredLevel ?? nextRule?.minimumLevel ?? player.level;
+    final targetLevel =
+        snapshot?.targetRequiredLevel ?? nextRule?.minimumLevel ?? player.level;
     final targetLevelGateMet = snapshot?.targetLevelGateMet ?? true;
     final mode = snapshot?.advancementMode;
 
@@ -376,20 +509,24 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           ),
           const SizedBox(height: 12),
           _InfoBanner(
-            title: _statusHeadline(snapshot?.status ?? RankMaintenanceStatus.secure),
+            title: _statusHeadline(
+              snapshot?.status ?? RankMaintenanceStatus.secure,
+            ),
             body: remainingCurrentDays == 0
                 ? 'Seu rank desta semana esta protegido por atividade competitiva validada.'
                 : 'Faltam $remainingCurrentDays dia(s) competitivos validados para segurar o rank $currentRank.',
-            accent: _statusColor(snapshot?.status ?? RankMaintenanceStatus.secure),
+            accent: _statusColor(
+              snapshot?.status ?? RankMaintenanceStatus.secure,
+            ),
           ),
           const SizedBox(height: 12),
           _SplitMetricRow(
-              left: _MetricCard(
-                label: 'SEGURAR $currentRank',
-                value:
-                    '${snapshot?.activeDays ?? 0}/${currentRule.requiredActiveDays} dias validos',
-                accent: AppColors.neonBlue,
-              ),
+            left: _MetricCard(
+              label: 'SEGURAR $currentRank',
+              value:
+                  '${snapshot?.activeDays ?? 0}/${currentRule.requiredActiveDays} dias validos',
+              accent: AppColors.neonBlue,
+            ),
             right: _MetricCard(
               label: 'DESAFIO DO RANK',
               value: currentRule.requiresBossClear
@@ -407,7 +544,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             percent: currentProgress,
             barRadius: const Radius.circular(999),
             backgroundColor: Colors.white10,
-            progressColor: _statusColor(snapshot?.status ?? RankMaintenanceStatus.secure),
+            progressColor: _statusColor(
+              snapshot?.status ?? RankMaintenanceStatus.secure,
+            ),
           ),
           if (nextRank != null && nextRule != null) ...[
             const SizedBox(height: 16),
@@ -430,8 +569,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             Text(
               targetLevelGateMet
                   ? mode == RankAdvancementMode.reconquest
-                      ? 'Seu level ja permite voltar para $nextRank. Agora falta fechar a semana.'
-                      : 'Seu level ja permite tentar $nextRank. Agora falta fechar a semana.'
+                        ? 'Seu level ja permite voltar para $nextRank. Agora falta fechar a semana.'
+                        : 'Seu level ja permite tentar $nextRank. Agora falta fechar a semana.'
                   : 'O rank $nextRank abre a partir do level $targetLevel.',
               style: const TextStyle(
                 color: Colors.white70,
@@ -443,7 +582,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             _SplitMetricRow(
               left: _MetricCard(
                 label: 'DIAS PARA LIBERAR',
-                value: '$nextActiveDays/${nextRule.requiredActiveDays} dias validos',
+                value:
+                    '$nextActiveDays/${nextRule.requiredActiveDays} dias validos',
                 accent: nextActiveDays >= nextRule.requiredActiveDays
                     ? Colors.greenAccent
                     : AppColors.neonBlue,
@@ -499,7 +639,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     CompetitiveRankSnapshot? snapshot,
     PromotionExam? exam,
   ) {
-    final examMode = exam?.mode ??
+    final examMode =
+        exam?.mode ??
         (snapshot?.advancementMode == RankAdvancementMode.reconquest
             ? PromotionExamMode.reconquest
             : PromotionExamMode.ascension);
@@ -511,34 +652,42 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       _ => AppColors.neonBlue,
     };
     final title = switch (exam?.status) {
-      PromotionExamStatus.inProgress => examMode == PromotionExamMode.reconquest
-          ? 'RECONQUISTA EM CURSO'
-          : 'PROVA EM CURSO',
-      PromotionExamStatus.passed => examMode == PromotionExamMode.reconquest
-          ? 'RECONQUISTA PRONTA'
-          : 'PROMOCAO PRONTA',
+      PromotionExamStatus.inProgress =>
+        examMode == PromotionExamMode.reconquest
+            ? 'RECONQUISTA EM CURSO'
+            : 'PROVA EM CURSO',
+      PromotionExamStatus.passed =>
+        examMode == PromotionExamMode.reconquest
+            ? 'RECONQUISTA PRONTA'
+            : 'PROMOCAO PRONTA',
       PromotionExamStatus.failed => 'PROVA NAO CONCLUIDA',
       PromotionExamStatus.promoted => 'RANK ATUALIZADO',
-      null => snapshot?.promotionReady == true
-          ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
-                ? 'RECONQUISTA DISPONIVEL'
-                : 'PROVA DISPONIVEL')
-          : 'PROVA DE RANK',
+      null =>
+        snapshot?.promotionReady == true
+            ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
+                  ? 'RECONQUISTA DISPONIVEL'
+                  : 'PROVA DISPONIVEL')
+            : 'PROVA DE RANK',
     };
     final body = switch (exam?.status) {
-      PromotionExamStatus.inProgress => examMode == PromotionExamMode.reconquest
-          ? 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para voltar ao seu pico.'
-          : 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para subir.',
-      PromotionExamStatus.passed => examMode == PromotionExamMode.reconquest
-          ? 'A prova foi vencida. Agora voce pode recuperar seu rank.'
-          : 'A prova foi vencida. Agora voce pode confirmar a subida.',
-      PromotionExamStatus.failed => 'A prova expirou ou nao foi sustentada a tempo.',
-      PromotionExamStatus.promoted => 'A ultima prova ja foi convertida em rank.',
-      null => snapshot?.promotionReady == true
-          ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
-                ? 'Seu historico ja provou esse posto. Falta so passar na prova de retorno.'
-                : 'Voce ja cumpriu os requisitos. Falta so passar na prova final.')
-          : 'Quando sua semana liberar uma prova, ela aparece aqui.',
+      PromotionExamStatus.inProgress =>
+        examMode == PromotionExamMode.reconquest
+            ? 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para voltar ao seu pico.'
+            : 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para subir.',
+      PromotionExamStatus.passed =>
+        examMode == PromotionExamMode.reconquest
+            ? 'A prova foi vencida. Agora voce pode recuperar seu rank.'
+            : 'A prova foi vencida. Agora voce pode confirmar a subida.',
+      PromotionExamStatus.failed =>
+        'A prova expirou ou nao foi sustentada a tempo.',
+      PromotionExamStatus.promoted =>
+        'A ultima prova ja foi convertida em rank.',
+      null =>
+        snapshot?.promotionReady == true
+            ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
+                  ? 'Seu historico ja provou esse posto. Falta so passar na prova de retorno.'
+                  : 'Voce ja cumpriu os requisitos. Falta so passar na prova final.')
+            : 'Quando sua semana liberar uma prova, ela aparece aqui.',
     };
 
     return _Panel(
@@ -578,7 +727,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             children: [
               if (snapshot?.promotionReady == true && exam == null)
                 _ActionButton(
-                  label: snapshot?.advancementMode == RankAdvancementMode.reconquest
+                  label:
+                      snapshot?.advancementMode ==
+                          RankAdvancementMode.reconquest
                       ? 'INICIAR RECONQUISTA'
                       : 'INICIAR EXAME',
                   accent: AppColors.neonBlue,
@@ -598,7 +749,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                     );
                   },
                 ),
-              if (exam?.status == PromotionExamStatus.passed && snapshot != null)
+              if (exam?.status == PromotionExamStatus.passed &&
+                  snapshot != null)
                 _ActionButton(
                   label: exam?.mode == PromotionExamMode.reconquest
                       ? 'RECONQUISTAR RANK'
@@ -1002,7 +1154,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                         child: Text(
                           '#${entry.position}',
                           style: TextStyle(
-                            color: entry.isPlayer ? scoreColor : AppColors.neonBlue,
+                            color: entry.isPlayer
+                                ? scoreColor
+                                : AppColors.neonBlue,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -1172,70 +1326,72 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               ),
             )
           else
-            ...rewards.take(4).map(
-              (reward) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.amberAccent.withValues(alpha: 0.18),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            ...rewards
+                .take(4)
+                .map(
+                  (reward) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.amberAccent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              reward.seasonLabel,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  reward.seasonLabel,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
+                              _StatusPill(
+                                label: reward.rewardBadgeLabel,
+                                color: Colors.amberAccent,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            reward.rewardTitleLabel,
+                            style: const TextStyle(
+                              color: AppColors.neonBlue,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          _StatusPill(
-                            label: reward.rewardBadgeLabel,
-                            color: Colors.amberAccent,
+                          const SizedBox(height: 6),
+                          Text(
+                            reward.rewardBonusLabel,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11.5,
+                              height: 1.45,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Resgatado em ${_formatShortDate(reward.claimedAt)}',
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 10.5,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        reward.rewardTitleLabel,
-                        style: const TextStyle(
-                          color: AppColors.neonBlue,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        reward.rewardBonusLabel,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11.5,
-                          height: 1.45,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Resgatado em ${_formatShortDate(reward.claimedAt)}',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10.5,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
         ],
       ),
     );
@@ -1266,61 +1422,65 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               ),
             )
           else
-            ...history.take(5).map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _statusColor(entry.status).withValues(alpha: 0.18),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            ...history
+                .take(5)
+                .map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _statusColor(
+                            entry.status,
+                          ).withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _StatusPill(
-                            label: entry.weekKey,
-                            color: AppColors.neonBlue,
+                          Row(
+                            children: [
+                              _StatusPill(
+                                label: entry.weekKey,
+                                color: AppColors.neonBlue,
+                              ),
+                              const Spacer(),
+                              Text(
+                                _historyEventLabel(entry),
+                                style: TextStyle(
+                                  color: _statusColor(entry.status),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
                           ),
-                          const Spacer(),
+                          const SizedBox(height: 8),
                           Text(
-                            _historyEventLabel(entry),
-                            style: TextStyle(
-                              color: _statusColor(entry.status),
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8,
+                            'Rank ${entry.currentRank}',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            entry.summary,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11.5,
+                              height: 1.45,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Rank ${entry.currentRank}',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.summary,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11.5,
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
         ],
       ),
     );
@@ -1493,16 +1653,6 @@ class _RankScreenState extends ConsumerState<RankScreen> {
   }
 }
 
-enum _RankSection {
-  now('AGORA'),
-  season('TEMPORADA'),
-  legacy('LEGADO');
-
-  const _RankSection(this.label);
-
-  final String label;
-}
-
 class _Panel extends StatelessWidget {
   const _Panel({required this.child});
 
@@ -1635,78 +1785,102 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _SectionChip extends StatelessWidget {
-  const _SectionChip({
-    required this.label,
-    required this.selected,
+class _SectionEntryCard extends StatelessWidget {
+  const _SectionEntryCard({
+    required this.title,
+    required this.summary,
+    required this.supporting,
+    required this.badge,
+    required this.accent,
     required this.onTap,
   });
 
-  final String label;
-  final bool selected;
+  final String title;
+  final String summary;
+  final String supporting;
+  final String badge;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? AppColors.neonBlue : Colors.white10;
-    final backgroundColor = selected
-        ? AppColors.neonBlue.withValues(alpha: 0.18)
-        : Colors.white.withValues(alpha: 0.04);
-    final foregroundColor = selected ? AppColors.neonBlue : Colors.white70;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: AppColors.neonBlue.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  spreadRadius: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: accent,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      summary,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      supporting,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11.8,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                 ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 18 : 14,
-              vertical: 10,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (selected) ...[
-                  Icon(
-                    Icons.check,
-                    size: 14,
-                    color: foregroundColor,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  label,
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: TextStyle(
-                    color: foregroundColor,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+            ],
           ),
         ),
       ),

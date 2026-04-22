@@ -1,4 +1,5 @@
 import 'package:ascend/core/widgets/reveal_block.dart';
+import 'package:ascend/core/widgets/detail_shell_screen.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
@@ -25,8 +26,6 @@ class StatsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
-  _StatsSection _currentSection = _StatsSection.overview;
-
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
@@ -78,39 +77,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               const SizedBox(height: 14),
               RevealBlock(
                 delay: const Duration(milliseconds: 80),
-                child: _buildSectionTabs(),
-              ),
-              const SizedBox(height: 14),
-              RevealBlock(
-                delay: const Duration(milliseconds: 140),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: switch (_currentSection) {
-                    _StatsSection.overview => _buildOverviewSection(
-                      player,
-                      rankSnapshot,
-                      insights,
-                    ),
-                    _StatsSection.build => _buildAttributesSection(
-                      context,
-                      player,
-                      attrs,
-                    ),
-                    _StatsSection.week => _buildWeeklySection(
-                      player,
-                      insights,
-                      weeklyBoss,
-                      weeklyBossProgress,
-                      weeklyBossClaimed,
-                      rankHistory,
-                    ),
-                    _StatsSection.plan => _buildPlanSection(
-                      player,
-                      insights,
-                      weeklyBoss,
-                      rankSnapshot,
-                    ),
-                  },
+                child: _buildPlanHub(
+                  context,
+                  player,
+                  attrs,
+                  insights,
+                  weeklyBoss,
+                  weeklyBossProgress,
+                  weeklyBossClaimed,
+                  rankHistory,
+                  rankSnapshot,
                 ),
               ),
             ],
@@ -336,20 +312,183 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     ).push(MaterialPageRoute(builder: (_) => const AccountScreen()));
   }
 
-  Widget _buildSectionTabs() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final section in _StatsSection.values) ...[
-            _SectionChip(
-              label: section.label,
-              selected: section == _currentSection,
-              onTap: () => setState(() => _currentSection = section),
+  Widget _buildPlanHub(
+    BuildContext context,
+    Player player,
+    PlayerAttributes attrs,
+    WeeklyInsightsBundle insights,
+    WeeklyBossDefinition? weeklyBoss,
+    int weeklyBossProgress,
+    bool weeklyBossClaimed,
+    List<CompetitiveRankSnapshot> rankHistory,
+    CompetitiveRankSnapshot? rankSnapshot,
+  ) {
+    final currentRank =
+        rankSnapshot?.currentRank ?? playerRankForLevel(player.level);
+    final reviewAccent = switch (insights.review.status) {
+      WeeklyReviewStatus.rising => Colors.greenAccent,
+      WeeklyReviewStatus.stable => AppColors.neonBlue,
+      WeeklyReviewStatus.risk => Colors.orangeAccent,
+      WeeklyReviewStatus.critical => Colors.redAccent,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _AccentPanel(
+          accent: reviewAccent,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'LEITURA RAPIDA',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white54,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                insights.review.summary,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                insights.review.recommendation,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'SCORE',
+                      value: '${insights.discipline.score}%',
+                      accent: reviewAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'GRAU',
+                      value: insights.discipline.grade,
+                      accent: reviewAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetricCard(
+                      label: 'RANK',
+                      value: currentRank,
+                      accent: AppColors.neonBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'VISAO GERAL',
+          summary: insights.review.detail,
+          supporting:
+              'Ritmo da conta, progresso geral de level, streak e leitura consolidada da semana.',
+          badge: insights.review.badge,
+          accent: reviewAccent,
+          onTap: () => _openPlanDetail(
+            context,
+            title: 'Visao Geral',
+            subtitle:
+                'Resumo do seu ritmo atual, da progressao geral e do estado da semana.',
+            child: _buildOverviewSection(player, rankSnapshot, insights),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'BUILD',
+          summary:
+              'Forca ${attrs.strength} | Inteligencia ${attrs.intelligence} | Vitalidade ${attrs.vitality} | Agilidade ${attrs.agility}',
+          supporting:
+              'Distribuicao de atributos e uso dos pontos livres, sem misturar isso com a arena.',
+          badge: player.statPoints > 0 ? '${player.statPoints} PTS' : 'SEM PTS',
+          accent: Colors.amberAccent,
+          onTap: () => _openPlanDetail(
+            context,
+            title: 'Build',
+            subtitle:
+                'Gestao dos atributos, pontos livres e linha de crescimento atual.',
+            child: _buildAttributesSection(context, player, attrs),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'SEMANA',
+          summary: insights.review.summary,
+          supporting:
+              'Historico recente, qualidade da semana e o que esta acontecendo com sua cadencia.',
+          badge: '${insights.discipline.currentWeekActiveDays}/7',
+          accent: Colors.greenAccent,
+          onTap: () => _openPlanDetail(
+            context,
+            title: 'Semana',
+            subtitle:
+                'Leitura semanal, historico recente e o peso disso na sua consistencia.',
+            child: _buildWeeklySection(
+              player,
+              insights,
+              weeklyBoss,
+              weeklyBossProgress,
+              weeklyBossClaimed,
+              rankHistory,
             ),
-            const SizedBox(width: 8),
-          ],
-        ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SectionEntryCard(
+          title: 'PROXIMO PASSO',
+          summary: insights.nextWeekPlan.headline,
+          supporting:
+              'Plano pratico da proxima semana para recuperar, estabilizar ou empurrar sua evolucao.',
+          badge: insights.nextWeekPlan.difficultyLabel,
+          accent: AppColors.neonBlue,
+          onTap: () => _openPlanDetail(
+            context,
+            title: 'Proximo Passo',
+            subtitle:
+                'Plano da proxima semana com prioridades curtas e regra operacional.',
+            child: _buildPlanSection(
+              player,
+              insights,
+              weeklyBoss,
+              rankSnapshot,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openPlanDetail(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            DetailShellScreen(title: title, subtitle: subtitle, child: child),
       ),
     );
   }
@@ -1037,74 +1176,102 @@ class _MiniNote extends StatelessWidget {
   }
 }
 
-class _SectionChip extends StatelessWidget {
-  const _SectionChip({
-    required this.label,
-    required this.selected,
+class _SectionEntryCard extends StatelessWidget {
+  const _SectionEntryCard({
+    required this.title,
+    required this.summary,
+    required this.supporting,
+    required this.badge,
+    required this.accent,
     required this.onTap,
   });
 
-  final String label;
-  final bool selected;
+  final String title;
+  final String summary;
+  final String supporting;
+  final String badge;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? AppColors.neonBlue : Colors.white10;
-    final backgroundColor = selected
-        ? AppColors.neonBlue.withValues(alpha: 0.18)
-        : Colors.white.withValues(alpha: 0.04);
-    final foregroundColor = selected ? AppColors.neonBlue : Colors.white70;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: AppColors.neonBlue.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  spreadRadius: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: accent,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      summary,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      supporting,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11.8,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                 ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 18 : 14,
-              vertical: 10,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (selected) ...[
-                  Icon(Icons.check, size: 14, color: foregroundColor),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  label,
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: TextStyle(
-                    color: foregroundColor,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.chevron_right_rounded, color: accent, size: 28),
+            ],
           ),
         ),
       ),
@@ -1248,15 +1415,4 @@ class _AttributeRow extends StatelessWidget {
       ),
     );
   }
-}
-
-enum _StatsSection {
-  overview('GERAL'),
-  build('BUILD'),
-  week('SEMANA'),
-  plan('PLANO');
-
-  const _StatsSection(this.label);
-
-  final String label;
 }

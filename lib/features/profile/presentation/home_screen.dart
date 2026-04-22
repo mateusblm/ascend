@@ -1230,6 +1230,24 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        Text(
+          summary.archetype,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          summary.focusLine,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.white60,
+            height: 1.35,
+          ),
+        ),
         const SizedBox(height: 12),
         AspectRatio(
           aspectRatio: 1,
@@ -1245,7 +1263,7 @@ class HomeScreen extends ConsumerWidget {
                   progress: progress,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -1255,43 +1273,6 @@ class HomeScreen extends ConsumerWidget {
                           index: items.indexOf(item),
                           total: items.length,
                         ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                summary.archetype,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                summary.focusLine,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white60,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1547,13 +1528,13 @@ class _AttributeRadarLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final angle = (-math.pi / 2) + ((2 * math.pi) / total) * index;
-    final dx = math.cos(angle) * 0.42;
-    final dy = math.sin(angle) * 0.42;
+    final dx = math.cos(angle) * 0.82;
+    final dy = math.sin(angle) * 0.82;
 
     return Align(
       alignment: Alignment(dx, dy),
       child: Transform.translate(
-        offset: Offset(dx * 12, dy * 12),
+        offset: Offset(dx * 10, dy * 10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(

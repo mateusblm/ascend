@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
@@ -34,8 +36,13 @@ class HomeScreen extends ConsumerWidget {
     final rankHistory =
         ref.watch(rankProgressionHistoryProvider).valueOrNull ??
         const <CompetitiveRankSnapshot>[];
-    final integrity = ref.watch(currentCompetitiveIntegrityProvider).valueOrNull;
-    final prestige = buildRankPrestigeSummary(rankHistory, integrity: integrity);
+    final integrity = ref
+        .watch(currentCompetitiveIntegrityProvider)
+        .valueOrNull;
+    final prestige = buildRankPrestigeSummary(
+      rankHistory,
+      integrity: integrity,
+    );
     final season = buildCurrentSeasonSummary(rankHistory);
     final seasonProfile = ref.watch(seasonProfileProvider).valueOrNull;
     final seasonReward = ref.watch(currentSeasonRewardProvider).valueOrNull;
@@ -127,26 +134,9 @@ class HomeScreen extends ConsumerWidget {
                     'ATRIBUTOS',
                     'Sua base permanente de crescimento.',
                   ),
-                  const SizedBox(height: 10),
-                  _buildAttributeRow(
-                    'FORCA',
-                    player.attributes.strength.toString(),
-                    Icons.fitness_center,
-                  ),
-                  _buildAttributeRow(
-                    'INTELIGENCIA',
-                    player.attributes.intelligence.toString(),
-                    Icons.psychology,
-                  ),
-                  _buildAttributeRow(
-                    'VITALIDADE',
-                    player.attributes.vitality.toString(),
-                    Icons.favorite,
-                  ),
-                  _buildAttributeRow(
-                    'AGILIDADE',
-                    player.attributes.agility.toString(),
-                    Icons.speed,
+                  const SizedBox(height: 14),
+                  _buildStatusCard(
+                    child: _buildAttributeRadarPanel(player.attributes),
                   ),
                 ],
               ),
@@ -212,11 +202,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: 4),
         const Text(
           'Veja rapido como voce esta, o que falta e qual e o desafio da vez.',
-          style: TextStyle(
-            fontSize: 12.5,
-            color: Colors.white60,
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 12.5, color: Colors.white60, height: 1.4),
         ),
         const SizedBox(height: 14),
         Row(
@@ -592,7 +578,9 @@ class HomeScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   Icon(
-                    step.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                    step.isDone
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
                     size: 16,
                     color: step.isDone ? Colors.greenAccent : Colors.white38,
                   ),
@@ -905,7 +893,8 @@ class HomeScreen extends ConsumerWidget {
             rewardStatPoints: remoteBoss.rewardStatPoints,
           );
     final hasActiveRemoteBoss = weeklyBoss != null;
-    final progress = weeklyBoss?.progressFor(player, competitiveOnly: true) ?? 0;
+    final progress =
+        weeklyBoss?.progressFor(player, competitiveOnly: true) ?? 0;
     final isClaimed = weeklyBoss?.isClaimedThisWeek(player) ?? false;
     final isCompleted =
         weeklyBoss?.isCompleted(player, competitiveOnly: true) ?? false;
@@ -1012,7 +1001,7 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                  'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos | conta so com dias competitivos validados',
+                    'RECOMPENSA: ${weeklyBoss.rewardXp} XP + ${weeklyBoss.rewardStatPoints} pontos | conta so com dias competitivos validados',
                     style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 11,
@@ -1141,29 +1130,292 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAttributeRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
+  Widget _buildAttributeRadarPanel(PlayerAttributes attrs) {
+    final summary = _buildAttributeBuildSummary(attrs);
+    final scaleMax = _attributeScaleMax(attrs);
+    final items = <_AttributeVisualSpec>[
+      _AttributeVisualSpec(
+        label: 'FORCA',
+        shortLabel: 'STR',
+        value: attrs.strength,
+        icon: Icons.fitness_center,
+        color: Colors.redAccent,
+        description: 'Pressao fisica e presenca em tarefas duras.',
+      ),
+      _AttributeVisualSpec(
+        label: 'INTELIGENCIA',
+        shortLabel: 'INT',
+        value: attrs.intelligence,
+        icon: Icons.psychology,
+        color: Colors.cyanAccent,
+        description: 'Clareza, estudo e leitura de situacao.',
+      ),
+      _AttributeVisualSpec(
+        label: 'VITALIDADE',
+        shortLabel: 'VIT',
+        value: attrs.vitality,
+        icon: Icons.favorite,
+        color: Colors.greenAccent,
+        description: 'Energia, constancia e margem de recuperacao.',
+      ),
+      _AttributeVisualSpec(
+        label: 'AGILIDADE',
+        shortLabel: 'AGI',
+        value: attrs.agility,
+        icon: Icons.speed,
+        color: Colors.amberAccent,
+        description: 'Velocidade de resposta e execucao.',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 640;
+        final chart = Expanded(
+          flex: isWide ? 11 : 0,
+          child: _buildAttributeChartBlock(items, scaleMax, summary),
+        );
+        final details = Expanded(
+          flex: 10,
+          child: _buildAttributeDetailsBlock(items, summary, scaleMax),
+        );
+
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [chart, const SizedBox(width: 18), details],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildAttributeChartBlock(items, scaleMax, summary),
+            const SizedBox(height: 18),
+            _buildAttributeDetailsBlock(items, summary, scaleMax),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAttributeChartBlock(
+    List<_AttributeVisualSpec> items,
+    int scaleMax,
+    _AttributeBuildSummary summary,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'LEITURA DE BUILD',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white38,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            Text(
+              'ESCALA $scaleMax',
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.neonBlue,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        AspectRatio(
+          aspectRatio: 1,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 650),
+            curve: Curves.easeOutCubic,
+            builder: (context, progress, child) {
+              return CustomPaint(
+                painter: _AttributeRadarPainter(
+                  items: items,
+                  scaleMax: scaleMax,
+                  progress: progress,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      for (final item in items)
+                        _AttributeRadarLabel(
+                          spec: item,
+                          index: items.indexOf(item),
+                          total: items.length,
+                        ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                summary.archetype,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                summary.focusLine,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white60,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttributeDetailsBlock(
+    List<_AttributeVisualSpec> items,
+    _AttributeBuildSummary summary,
+    int scaleMax,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.02),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                summary.archetype,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                summary.summary,
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 11.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Dominante: ${summary.primaryLabel} | apoio: ${summary.secondaryLabel} | leitura relativa ate $scaleMax',
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10.5,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildAttributeInsightCard(item, scaleMax),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttributeInsightCard(_AttributeVisualSpec item, int scaleMax) {
+    final progress = (item.value / scaleMax).clamp(0.0, 1.0);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: item.color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: item.color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: AppColors.neonBlue.withValues(alpha: 0.5),
+          Row(
+            children: [
+              Icon(item.icon, size: 18, color: item.color),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.9,
+                  ),
+                ),
+              ),
+              Text(
+                item.value.toString(),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: item.color,
+                  fontFamily: 'Courier',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 15),
+          const SizedBox(height: 6),
           Text(
-            label,
-            style: const TextStyle(color: Colors.white70, letterSpacing: 1),
-          ),
-          const Spacer(),
-          Text(
-            value,
+            item.description,
             style: const TextStyle(
-              color: AppColors.neonBlue,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              fontFamily: 'Courier',
+              color: Colors.white60,
+              fontSize: 11,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: Colors.white10,
+              color: item.color,
             ),
           ),
         ],
@@ -1192,5 +1444,268 @@ class HomeScreen extends ConsumerWidget {
     if (error == null) return 'desconhecido';
     final text = error.toString().replaceAll('\n', ' ');
     return text.length > 48 ? '${text.substring(0, 48)}...' : text;
+  }
+
+  int _attributeScaleMax(PlayerAttributes attrs) {
+    final maxValue = [
+      attrs.strength,
+      attrs.intelligence,
+      attrs.vitality,
+      attrs.agility,
+    ].reduce(math.max);
+    return math.max(20, ((maxValue + 4) ~/ 5) * 5);
+  }
+
+  _AttributeBuildSummary _buildAttributeBuildSummary(PlayerAttributes attrs) {
+    final entries = <MapEntry<String, int>>[
+      MapEntry('FORCA', attrs.strength),
+      MapEntry('INTELIGENCIA', attrs.intelligence),
+      MapEntry('VITALIDADE', attrs.vitality),
+      MapEntry('AGILIDADE', attrs.agility),
+    ]..sort((a, b) => b.value.compareTo(a.value));
+
+    final primary = entries[0];
+    final secondary = entries[1];
+    final spread = primary.value - entries.last.value;
+    final isBalanced = spread <= 2;
+
+    if (isBalanced) {
+      return _AttributeBuildSummary(
+        archetype: 'BUILD EQUILIBRADO',
+        focusLine: 'Sem ponto fraco gritante.',
+        primaryLabel: primary.key,
+        secondaryLabel: secondary.key,
+        summary:
+            'Seu perfil esta distribuido. Isso passa leitura de consistencia, adaptacao e margem para varias linhas de quest sem depender de um unico atributo.',
+      );
+    }
+
+    final archetype = switch (primary.key) {
+      'FORCA' => 'BRUTALISTA',
+      'INTELIGENCIA' => 'ESTRATEGA',
+      'VITALIDADE' => 'TANQUE',
+      'AGILIDADE' => 'VELOZ',
+      _ => 'HUNTER',
+    };
+
+    return _AttributeBuildSummary(
+      archetype: archetype,
+      focusLine: '${primary.key} puxa sua leitura atual.',
+      primaryLabel: primary.key,
+      secondaryLabel: secondary.key,
+      summary:
+          '${primary.key} lidera sua build agora, com ${secondary.key} como apoio. O grafico mostra uma identidade mais marcada e menos neutra no jeito como voce progride.',
+    );
+  }
+}
+
+class _AttributeVisualSpec {
+  const _AttributeVisualSpec({
+    required this.label,
+    required this.shortLabel,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.description,
+  });
+
+  final String label;
+  final String shortLabel;
+  final int value;
+  final IconData icon;
+  final Color color;
+  final String description;
+}
+
+class _AttributeBuildSummary {
+  const _AttributeBuildSummary({
+    required this.archetype,
+    required this.focusLine,
+    required this.primaryLabel,
+    required this.secondaryLabel,
+    required this.summary,
+  });
+
+  final String archetype;
+  final String focusLine;
+  final String primaryLabel;
+  final String secondaryLabel;
+  final String summary;
+}
+
+class _AttributeRadarLabel extends StatelessWidget {
+  const _AttributeRadarLabel({
+    required this.spec,
+    required this.index,
+    required this.total,
+  });
+
+  final _AttributeVisualSpec spec;
+  final int index;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final angle = (-math.pi / 2) + ((2 * math.pi) / total) * index;
+    final dx = math.cos(angle) * 0.42;
+    final dy = math.sin(angle) * 0.42;
+
+    return Align(
+      alignment: Alignment(dx, dy),
+      child: Transform.translate(
+        offset: Offset(dx * 12, dy * 12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.34),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: spec.color.withValues(alpha: 0.26)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(spec.icon, size: 14, color: spec.color),
+              const SizedBox(width: 6),
+              Text(
+                spec.shortLabel,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: spec.color,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AttributeRadarPainter extends CustomPainter {
+  const _AttributeRadarPainter({
+    required this.items,
+    required this.scaleMax,
+    required this.progress,
+  });
+
+  final List<_AttributeVisualSpec> items;
+  final int scaleMax;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.34;
+
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final axisPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..strokeWidth = 1;
+
+    for (var ring = 1; ring <= 5; ring++) {
+      final ringRadius = radius * (ring / 5);
+      final path = Path();
+      for (var i = 0; i < items.length; i++) {
+        final point = _pointForIndex(
+          index: i,
+          total: items.length,
+          center: center,
+          radius: ringRadius,
+        );
+        if (i == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
+    }
+
+    for (var i = 0; i < items.length; i++) {
+      final point = _pointForIndex(
+        index: i,
+        total: items.length,
+        center: center,
+        radius: radius,
+      );
+      canvas.drawLine(center, point, axisPaint);
+    }
+
+    final dataPath = Path();
+    for (var i = 0; i < items.length; i++) {
+      final normalized = (items[i].value / scaleMax).clamp(0.18, 1.0);
+      final point = _pointForIndex(
+        index: i,
+        total: items.length,
+        center: center,
+        radius: radius * normalized * progress,
+      );
+      if (i == 0) {
+        dataPath.moveTo(point.dx, point.dy);
+      } else {
+        dataPath.lineTo(point.dx, point.dy);
+      }
+    }
+    dataPath.close();
+
+    final fillPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.neonBlue.withValues(alpha: 0.34),
+          Colors.cyanAccent.withValues(alpha: 0.18),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = AppColors.neonBlue.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(dataPath, fillPaint);
+    canvas.drawPath(dataPath, strokePaint);
+
+    for (var i = 0; i < items.length; i++) {
+      final normalized = (items[i].value / scaleMax).clamp(0.18, 1.0);
+      final point = _pointForIndex(
+        index: i,
+        total: items.length,
+        center: center,
+        radius: radius * normalized * progress,
+      );
+      canvas.drawCircle(point, 5, Paint()..color = items[i].color);
+      canvas.drawCircle(
+        point,
+        9,
+        Paint()
+          ..color = items[i].color.withValues(alpha: 0.16)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  Offset _pointForIndex({
+    required int index,
+    required int total,
+    required Offset center,
+    required double radius,
+  }) {
+    final angle = (-math.pi / 2) + ((2 * math.pi) / total) * index;
+    return Offset(
+      center.dx + math.cos(angle) * radius,
+      center.dy + math.sin(angle) * radius,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _AttributeRadarPainter oldDelegate) {
+    return oldDelegate.items != items ||
+        oldDelegate.scaleMax != scaleMax ||
+        oldDelegate.progress != progress;
   }
 }

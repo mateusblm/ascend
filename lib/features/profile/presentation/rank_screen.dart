@@ -145,7 +145,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  'RANK',
+                  'ARENA',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,

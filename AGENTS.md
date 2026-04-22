@@ -10,6 +10,8 @@ Additional source-of-truth documents:
 - `docs/product/vision.md`
 - `docs/product/roadmap.md`
 - `docs/product/progression-architecture.md`
+- `docs/product/ux-positioning.md`
+- `docs/product/ui-information-architecture.md`
 - `docs/ai/development-charter.md`
 - `docs/ai/architecture-map.md`
 - `docs/ai/change-checklist.md`
@@ -105,6 +107,8 @@ Controllers use Riverpod providers. The main examples are:
 - Treat progression logic, persistence, and auth as sensitive areas.
 - Keep reward-bearing and trust-bearing business rules out of the frontend whenever possible.
 - Prefer backend-authored facts, aggregates, and read-models over client-owned progression snapshots.
+- Do not let the app drift into generic to-do list UX when changing navigation or major screens.
+- Prefer progressive disclosure and clear hierarchy over long, repetitive dashboard scrolls.
 - Update the docs above when architecture or product behavior changes.
 - Do not manually edit generated Isar files.
 - Use the AI docs to avoid repeating repo-wide context in every session.

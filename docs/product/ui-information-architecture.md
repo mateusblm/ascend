@@ -4,9 +4,23 @@
 
 Define what each main surface in Ascend should own so the same information does not get repeated across multiple tabs.
 
+This document is downstream from `docs/product/ux-positioning.md`.
+
 ## Main Navigation Roles
 
-### `HOJE`
+## Final Navigation Labels
+
+The intended player-facing labels are:
+- `Base`
+- `Quests`
+- `Arena`
+- `Plano`
+
+These labels follow two goals:
+- concise, scan-friendly top-level navigation
+- language that frames Ascend as progression software instead of a generic to-do list
+
+### `BASE`
 
 This is the emotional and operational snapshot of the account right now.
 
@@ -16,11 +30,24 @@ It should prioritize:
 - focus and build identity
 - immediate weekly signal
 - one-screen clarity
+- access to deeper build detail through tap
 
 It should avoid:
 - deep competitive explanation
 - long historical summaries
-- repeating the full analytical view from `ANALISE`
+- repeating the full planning view from `PLANO`
+
+Always visible:
+- player identity
+- XP and momentum
+- build radar
+- short weekly signal
+
+Tap to open:
+- detailed attributes
+- streak breakdown
+- activity history
+- advanced build interpretation
 
 ### `QUESTS`
 
@@ -33,10 +60,21 @@ It should prioritize:
 - completion flow
 
 It should avoid:
-- re-explaining account progress already visible in `HOJE`
-- deep rank analysis already owned by `RANK`
+- re-explaining account progress already visible in `BASE`
+- deep arena analysis already owned by `ARENA`
 
-### `RANK`
+Always visible:
+- actionable quest lists
+- recommended next actions
+- immediate state of each quest
+
+Tap to open:
+- quest detail
+- edit or advanced quest controls
+- reflection detail
+- full reward breakdown
+
+### `ARENA`
 
 This is the competitive command center.
 
@@ -51,7 +89,19 @@ It should avoid:
 - generic profile summaries
 - repeated player-build explanation unless it directly changes rank eligibility
 
-### `ANALISE`
+Always visible:
+- current arena status
+- maintenance pressure
+- promotion or reconquest state
+- current weekly competitive event
+
+Tap to open:
+- full leaderboard
+- season reward breakdown
+- legacy archive
+- integrity detail
+
+### `PLANO`
 
 This is the reflective and planning surface.
 
@@ -62,9 +112,21 @@ It should prioritize:
 - actionable build management
 
 It should avoid:
-- reprinting the same weekly boss block from `RANK`
-- reprinting the same build visualization from `HOJE`
+- reprinting the same weekly boss block from `ARENA`
+- reprinting the same build visualization from `BASE`
 - acting like a second home screen
+
+Always visible:
+- weekly read
+- score and grade
+- current recommendation
+- next-step planning
+
+Tap to open:
+- historical trend
+- deeper build allocation detail
+- longer coaching or explanation
+- past week breakdown
 
 ### `CONTA`
 
@@ -84,19 +146,19 @@ It should avoid:
 ## Duplication Rules
 
 - A metric can appear in more than one place only if the role is different.
-- `HOJE` may show a compact signal.
-- `ANALISE` may show interpretation and planning.
-- `RANK` may show the competitive consequence of the same metric.
+- `BASE` may show a compact signal.
+- `PLANO` may show interpretation and planning.
+- `ARENA` may show the competitive consequence of the same metric.
 - If two tabs show the same number in the same presentation style, that is usually a design mistake.
 
 ## Visual Differentiation Rules
 
 - Do not use the same `panel + title + body + bar` composition for every major block.
 - Each main surface should have a recognizable visual rhythm.
-- `HOJE` should feel punchy and identity-driven.
+- `BASE` should feel punchy and identity-driven.
 - `QUESTS` should feel action-driven.
-- `RANK` should feel high-pressure and competitive.
-- `ANALISE` should feel quieter and more diagnostic.
+- `ARENA` should feel high-pressure and competitive.
+- `PLANO` should feel quieter and more diagnostic.
 - `CONTA` should feel stable and trust-oriented.
 
 ## Practical Design Guardrails

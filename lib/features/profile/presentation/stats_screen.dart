@@ -141,7 +141,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'ANALISE',
+                  'PLANO',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
@@ -192,7 +192,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Leitura de cadencia, planejamento da semana e gestao do seu build sem repetir a parte competitiva.',
+            'Leitura da semana, ajustes do build e proximo passo pratico sem repetir a parte da arena.',
             style: TextStyle(
               color: Colors.white60,
               fontSize: 12.5,

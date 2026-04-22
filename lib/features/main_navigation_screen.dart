@@ -111,7 +111,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person_outline),
                     activeIcon: Icon(Icons.person),
-                    label: 'HOJE',
+                    label: 'BASE',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bolt_outlined),
@@ -121,12 +121,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
                   BottomNavigationBarItem(
                     icon: Icon(Icons.bar_chart_outlined),
                     activeIcon: Icon(Icons.bar_chart),
-                    label: 'RANK',
+                    label: 'ARENA',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.analytics_outlined),
                     activeIcon: Icon(Icons.analytics),
-                    label: 'ANALISE',
+                    label: 'PLANO',
                   ),
                 ],
               ),

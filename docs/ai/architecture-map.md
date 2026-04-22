@@ -93,15 +93,26 @@ lib/
   - `Temporada`: trilha mensal, recompensa e placar sazonal
   - `Legado`: pico, titulo sazonal ativo, arquivo de temporadas e historico recente
 - the stats screen is now positioned as a supporting analytics view instead of the primary place to explain rank rules
-- UI surface ownership should now follow the product map in `docs/product/ui-information-architecture.md`:
-  - `HOJE`: snapshot, momentum, build identity
-  - `QUESTS`: execution
-  - `RANK`: competitive systems
-  - `ANALISE`: cadence, review, planning, build management
-  - `CONTA`: identity and trust controls
+- UI surface ownership should now follow the product map in:
+  - `docs/product/ux-positioning.md`
+  - `docs/product/ui-information-architecture.md`
+  - intended labels:
+    - `BASE`: snapshot, momentum, build identity
+    - `QUESTS`: execution
+    - `ARENA`: competitive systems
+    - `PLANO`: cadence, review, planning, build management
+    - `CONTA`: identity and trust controls
+- the product direction is intentionally not "to-do list first":
+  - quests are input
+  - player state and progression are the center of the experience
+  - major UI decisions should reinforce build, momentum, rivalry, and payoff
 - repeated metrics across screens should be treated carefully:
   - reuse is allowed only when the meaning changes by surface
   - simple duplication of the same block in different tabs is a product smell
+- UI surfaces should prefer progressive disclosure:
+  - short strong summary on the top-level tab
+  - detail on tap through rows, sheets, or child screens
+  - avoid endless same-weight panel stacks as the default solution
 - account and identity management now have their own dedicated screen:
   - `account_screen.dart`
   - it is entered from `Stats`, but it is not a bottom-navigation destination

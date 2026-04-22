@@ -32,6 +32,8 @@ Before changing code, use these files as the primary guides:
 - `docs/product/vision.md`
 - `docs/product/roadmap.md`
 - `docs/product/progression-architecture.md`
+- `docs/product/ux-positioning.md`
+- `docs/product/ui-information-architecture.md`
 - `docs/ai/architecture-map.md`
 - `analysis_options.yaml`
 
@@ -82,6 +84,9 @@ AI should avoid prioritizing broad new feature surface over:
 - Do not introduce nested scrolling, rebuild-heavy charts, or expensive animations without reason.
 - Prefer straightforward widget trees over clever abstractions.
 - Avoid informational redundancy across `HOJE`, `QUESTS`, `RANK`, `ANALISE`, and `CONTA`.
+- Avoid making Ascend feel like a generic task manager when the request touches navigation or major UI.
+- Prefer player-state, momentum, rivalry, payoff, and progression framing over neutral productivity framing.
+- Use Apple-like principles of concise top-level labels and progressive disclosure, but do not mimic Apple visual style mechanically.
 - Before adding a new block, confirm which surface should own that concept.
 - If the same metric appears in multiple tabs, the presentation and purpose must be intentionally different.
 - Avoid making every screen feel like repeated stacks of identical panels with different copy.

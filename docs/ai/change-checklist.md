@@ -10,6 +10,9 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Read the relevant model, controller, and screen files.
 - Read `AGENTS.md` and any related file in `docs/ai/` or `docs/product/` if the change affects architecture or behavior.
 - For progression/account changes, read `docs/product/progression-architecture.md` before deciding where the rule should live.
+- For navigation, labels, or major UI hierarchy, read:
+  - `docs/product/ux-positioning.md`
+  - `docs/product/ui-information-architecture.md`
 - Identify whether the change touches a critical system:
   - progression logic
   - quest completion
@@ -35,6 +38,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/firebase-operations-dashboard.md`
   - `docs/product/roadmap.md`
 - If changing major UI surfaces, check whether the work also needs updates to:
+  - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
   - `docs/ai/architecture-map.md`
 
@@ -48,6 +52,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/vision.md`
   - `docs/product/roadmap.md`
 - Check whether the change increases information redundancy across tabs or repeats the same panel pattern without a clear reason.
+- Check whether the change makes the app feel more like a generic productivity tool instead of a progression product.
 - Check whether tests should be added or updated.
 - Note any validation step that could not be run.
 - If the work affects production readiness, state:

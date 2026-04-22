@@ -18,10 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final questLiveNowProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
   yield DateTime.now();
-  yield* Stream.periodic(
-    const Duration(seconds: 15),
-    (_) => DateTime.now(),
-  );
+  yield* Stream.periodic(const Duration(seconds: 15), (_) => DateTime.now());
 });
 
 class QuestsScreen extends ConsumerWidget {
@@ -77,7 +74,11 @@ class QuestsScreen extends ConsumerWidget {
       player: player,
       quests: quests,
     );
-    final liveNow = ref.watch(questLiveNowProvider).valueOrNull ?? DateTime.now();
+    final liveNow =
+        ref.watch(questLiveNowProvider).valueOrNull ?? DateTime.now();
+    final personalCompletedCount = quests
+        .where((q) => !q.isCompetitive && q.isCompleted)
+        .length;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -94,7 +95,7 @@ class QuestsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SUAS QUESTS',
+                          'QUESTS',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -103,7 +104,7 @@ class QuestsScreen extends ConsumerWidget {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'Monte sua rotina do dia, proteja seu rank e mantenha o ritmo da semana.',
+                          'Execute sua rotacao do dia, fortaleça sua base e mantenha a arena ativa.',
                           style: TextStyle(
                             fontSize: 12.5,
                             color: Colors.white60,
@@ -120,7 +121,11 @@ class QuestsScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: RevealBlock(
                   delay: const Duration(milliseconds: 70),
-                  child: _buildCompetitiveIntro(context),
+                  child: _buildQuestCommandDeck(
+                    competitiveCount: competitiveQuests.length,
+                    personalCount: personalActiveQuests.length,
+                    completedCount: personalCompletedCount,
+                  ),
                 ),
               ),
               if (firstWeekJourney.isActive)
@@ -146,10 +151,10 @@ class QuestsScreen extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8, bottom: 10),
                     child: Text(
-                      'QUESTS COMPETITIVAS',
+                      'MISSOES DE ARENA',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: AppColors.neonBlue,
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -170,11 +175,11 @@ class QuestsScreen extends ConsumerWidget {
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.only(top: 8, bottom: 10),
-                    child: Text(
-                      'QUESTS DO DIA A DIA',
+                  child: Text(
+                    'ROTINA BASE',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.white54,
+                      color: Colors.greenAccent,
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.bold,
                     ),
@@ -197,7 +202,7 @@ class QuestsScreen extends ConsumerWidget {
                   child: Padding(
                     padding: EdgeInsets.only(top: 30, bottom: 10),
                     child: Text(
-                      'FEITAS HOJE',
+                      'CONCLUIDAS',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white38,
@@ -229,34 +234,73 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCompetitiveIntro(BuildContext context) {
+  Widget _buildQuestCommandDeck({
+    required int competitiveCount,
+    required int personalCount,
+    required int completedCount,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.neonBlue.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.neonBlue.withValues(alpha: 0.10),
+            Colors.greenAccent.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'COMO FUNCIONA',
+          const Text(
+            'PAINEL DE EXECUCAO',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.3,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
-            'Quests de rank ajudam na sua subida e no desafio da semana. Quests pessoais ajudam no seu ritmo e no level.',
+          const SizedBox(height: 8),
+          const Text(
+            'Arena empurra sua disputa. Base sustenta level, streak e consistencia.',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 12.5,
               height: 1.45,
             ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _QuestSummaryTile(
+                  label: 'ARENA',
+                  value: '$competitiveCount',
+                  accent: AppColors.neonBlue,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _QuestSummaryTile(
+                  label: 'BASE',
+                  value: '$personalCount',
+                  accent: Colors.greenAccent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _QuestSummaryTile(
+                  label: 'FEITAS',
+                  value: '$completedCount',
+                  accent: Colors.amberAccent,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -279,7 +323,7 @@ class QuestsScreen extends ConsumerWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'KIT DA PRIMEIRA SEMANA',
+                  'ABERTURA DE CAMPANHA',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -313,7 +357,9 @@ class QuestsScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   Icon(
-                    step.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                    step.isDone
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
                     size: 16,
                     color: step.isDone ? Colors.greenAccent : Colors.white38,
                   ),
@@ -353,7 +399,7 @@ class QuestsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'COMECE POR AQUI',
+            'ABERTURA DE ARENA',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -363,7 +409,11 @@ class QuestsScreen extends ConsumerWidget {
           const SizedBox(height: 6),
           const Text(
             'Esses modelos ja entram prontos para contar no rank.',
-            style: TextStyle(color: Colors.white60, fontSize: 11.5, height: 1.4),
+            style: TextStyle(
+              color: Colors.white60,
+              fontSize: 11.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 12),
           ...templates.map(
@@ -565,13 +615,14 @@ class QuestsScreen extends ConsumerWidget {
     QuestCompletionResult result,
   ) {
     final message = switch (result) {
-      QuestCompletionResult.success => quest.verificationStatus ==
-              QuestVerificationStatus.inProgress
-          ? 'Quest concluida e registrada.'
-          : 'Sessao iniciada. Volte quando terminar.',
+      QuestCompletionResult.success =>
+        quest.verificationStatus == QuestVerificationStatus.inProgress
+            ? 'Quest concluida e registrada.'
+            : 'Sessao iniciada. Volte quando terminar.',
       QuestCompletionResult.notFound => 'Quest nao encontrada.',
       QuestCompletionResult.alreadyCompleted => 'Essa quest ja foi concluida.',
-        QuestCompletionResult.invalidFlow => 'Essa acao nao esta disponivel para essa quest agora.',
+      QuestCompletionResult.invalidFlow =>
+        'Essa acao nao esta disponivel para essa quest agora.',
       QuestCompletionResult.timerStillRunning =>
         'Ainda falta um pouco de tempo para essa sessao contar.',
       QuestCompletionResult.missingReflection =>
@@ -613,7 +664,9 @@ class QuestsScreen extends ConsumerWidget {
 
     if (quest.verificationStatus == QuestVerificationStatus.inProgress &&
         quest.verificationStartedAt != null) {
-      final elapsed = liveNow.difference(quest.verificationStartedAt!).inMinutes;
+      final elapsed = liveNow
+          .difference(quest.verificationStartedAt!)
+          .inMinutes;
       return 'Sessao em andamento ha ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min.';
     }
 
@@ -622,8 +675,7 @@ class QuestsScreen extends ConsumerWidget {
     }
 
     return switch (quest.verificationMode) {
-      QuestVerificationMode.manual =>
-        'Pronta para validar.',
+      QuestVerificationMode.manual => 'Pronta para validar.',
       QuestVerificationMode.timer =>
         'Inicie no app e feche ${quest.targetDurationMinutes} min para contar.',
       QuestVerificationMode.timerWithReflection =>
@@ -725,7 +777,7 @@ class QuestsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'SUGESTOES PESSOAIS',
+            'EMPURROES DE RITMO',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -786,7 +838,7 @@ class QuestsScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      _buildQuestChip('PESSOAL', Colors.white70),
+                      _buildQuestChip('BASE', Colors.greenAccent),
                       const Spacer(),
                       Text(
                         '+${suggestion.xpReward} XP',
@@ -825,7 +877,9 @@ class QuestsScreen extends ConsumerWidget {
                         foregroundColor: AppColors.neonBlue,
                       ),
                       onPressed: () {
-                        ref.read(questProvider.notifier).addPersonalQuest(
+                        ref
+                            .read(questProvider.notifier)
+                            .addPersonalQuest(
                               suggestion.title,
                               suggestion.rewardAttribute,
                               suggestion.xpReward,
@@ -961,6 +1015,53 @@ class QuestsScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _QuestSummaryTile extends StatelessWidget {
+  const _QuestSummaryTile({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

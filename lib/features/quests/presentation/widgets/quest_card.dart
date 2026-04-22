@@ -24,16 +24,25 @@ class QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = quest.isCompetitive ? AppColors.neonBlue : Colors.white70;
+    final accent = quest.isCompetitive
+        ? AppColors.neonBlue
+        : Colors.greenAccent;
+    final background = quest.isCompleted
+        ? Colors.green.withValues(alpha: 0.10)
+        : quest.isCompetitive
+        ? AppColors.neonBlue.withValues(alpha: 0.06)
+        : Colors.greenAccent.withValues(alpha: 0.05);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: quest.isCompleted
-            ? Colors.green.withValues(alpha: 0.10)
-            : AppColors.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [background, Colors.white.withValues(alpha: 0.02)],
+        ),
         border: Border.all(
           color: quest.isCompleted
               ? Colors.greenAccent
@@ -67,10 +76,10 @@ class QuestCard extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _QuestChip(
-                          label: quest.isCompetitive ? 'COMPETITIVA' : 'PESSOAL',
+                          label: quest.isCompetitive ? 'ARENA' : 'BASE',
                           color: quest.isCompetitive
                               ? AppColors.neonBlue
-                              : Colors.white70,
+                              : Colors.greenAccent,
                         ),
                         _QuestChip(
                           label: _verificationLabel(quest),
@@ -109,10 +118,11 @@ class QuestCard extends StatelessWidget {
                       ? Colors.greenAccent
                       : AppColors.neonBlue,
                   side: BorderSide(
-                    color: (quest.isCompleted
-                            ? Colors.greenAccent
-                            : AppColors.neonBlue)
-                        .withValues(alpha: 0.45),
+                    color:
+                        (quest.isCompleted
+                                ? Colors.greenAccent
+                                : AppColors.neonBlue)
+                            .withValues(alpha: 0.45),
                   ),
                 ),
                 child: Text(
@@ -121,7 +131,8 @@ class QuestCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              if (secondaryActionLabel != null && onSecondaryAction != null) ...[
+              if (secondaryActionLabel != null &&
+                  onSecondaryAction != null) ...[
                 const SizedBox(width: 10),
                 TextButton(
                   onPressed: onSecondaryAction,
@@ -141,8 +152,7 @@ class QuestCard extends StatelessWidget {
   String _verificationLabel(Quest quest) {
     return switch (quest.verificationMode) {
       QuestVerificationMode.manual => 'CHECK',
-      QuestVerificationMode.timer =>
-        '${quest.targetDurationMinutes} MIN',
+      QuestVerificationMode.timer => '${quest.targetDurationMinutes} MIN',
       QuestVerificationMode.timerWithReflection =>
         '${quest.targetDurationMinutes} MIN + RESPOSTA',
     };

@@ -300,12 +300,27 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Panel(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: 0.14),
+                Colors.redAccent.withValues(alpha: 0.05),
+                Colors.white.withValues(alpha: 0.02),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: accent.withValues(alpha: 0.20)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'MAPA DA ARENA',
+                'TABULEIRO DA SEMANA',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white54,
@@ -346,7 +361,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'AGORA',
+          title: 'PRESSAO ATUAL',
           summary: snapshot?.summary ?? arena.leaderHeadline,
           supporting:
               'Manutencao do posto, prova ativa e evento competitivo da semana.',
@@ -354,7 +369,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           accent: accent,
           onTap: () => _openRankDetail(
             context,
-            title: 'Agora',
+            title: 'Pressao Atual',
             subtitle:
                 'Manutencao do posto, promocao ou reconquista e evento competitivo da semana.',
             child: _buildNowSection(
@@ -370,7 +385,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'TEMPORADA',
+          title: 'CORRIDA SAZONAL',
           summary:
               '${leaderboard.playerStandingLabel} | ${season.rewardStatusLabel}',
           supporting:
@@ -379,7 +394,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           accent: AppColors.neonBlue,
           onTap: () => _openRankDetail(
             context,
-            title: 'Temporada',
+            title: 'Corrida Sazonal',
             subtitle:
                 'Corrida sazonal, recompensa do ciclo e situacao atual do seu grupo.',
             child: _buildSeasonSection(

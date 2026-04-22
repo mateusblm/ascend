@@ -160,94 +160,215 @@ class HomeScreen extends ConsumerWidget {
     String title,
     SeasonProfileSnapshot? seasonProfile,
   ) {
+    final headerAccent = seasonProfile == null
+        ? AppColors.neonBlue
+        : Colors.amberAccent;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Base',
-          style: TextStyle(
-            fontSize: 11,
-            color: AppColors.neonBlue,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          name,
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.white70,
-            height: 1.35,
-          ),
-        ),
-        if (seasonProfile != null) ...[
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildSeasonHeaderChip(
-                seasonProfile.activeBadgeLabel,
-                Colors.amberAccent,
-              ),
-              _buildSeasonHeaderChip(
-                seasonProfile.cosmeticAuraLabel,
-                AppColors.neonBlue,
-              ),
-              _buildSeasonHeaderChip(
-                seasonProfile.activeSeasonLabel,
-                Colors.white70,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                headerAccent.withValues(alpha: 0.12),
+                AppColors.neonBlue.withValues(alpha: 0.08),
+                Colors.white.withValues(alpha: 0.03),
+              ],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.30),
+                blurRadius: 28,
+                offset: const Offset(0, 18),
               ),
             ],
           ),
-        ],
-        const SizedBox(height: 8),
-        const Text(
-          'Sua ficha viva: progresso, foco e as aberturas que mais importam agora.',
-          style: TextStyle(fontSize: 12.5, color: Colors.white60, height: 1.4),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              rank,
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    color: AppColors.neonBlue.withValues(alpha: 0.8),
-                    blurRadius: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Base',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: headerAccent,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildHeaderPill(
+                    seasonProfile?.activeSeasonLabel ?? 'BASE ONLINE',
+                    headerAccent,
                   ),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Text(
-                  'LEVEL',
-                  style: TextStyle(fontSize: 10, color: Colors.white38),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
-                Text(
-                  level.toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sua ficha viva: progresso, foco e as aberturas que mais importam agora.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.white60,
+                  height: 1.4,
+                ),
+              ),
+              if (seasonProfile != null) ...[
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSeasonHeaderChip(
+                      seasonProfile.activeBadgeLabel,
+                      Colors.amberAccent,
+                    ),
+                    _buildSeasonHeaderChip(
+                      seasonProfile.cosmeticAuraLabel,
+                      AppColors.neonBlue,
+                    ),
+                    _buildSeasonHeaderChip(
+                      seasonProfile.activeSeasonLabel,
+                      Colors.white70,
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 360;
+
+                    if (isCompact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildRankSpotlight(rank),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildHeaderMetricCard(
+                                  label: 'LEVEL',
+                                  value: level.toString().padLeft(2, '0'),
+                                  accentColor: AppColors.neonBlue,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildHeaderMetricCard(
+                                  label: 'PRESENCA',
+                                  value:
+                                      seasonProfile?.activeBadgeLabel ??
+                                      'ATIVO',
+                                  accentColor: headerAccent,
+                                  compactValue: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 11, child: _buildRankSpotlight(rank)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 10,
+                          child: Column(
+                            children: [
+                              _buildHeaderMetricCard(
+                                label: 'LEVEL',
+                                value: level.toString().padLeft(2, '0'),
+                                accentColor: AppColors.neonBlue,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildHeaderMetricCard(
+                                label: 'PRESENCA',
+                                value:
+                                    seasonProfile?.activeBadgeLabel ?? 'ATIVO',
+                                accentColor: headerAccent,
+                                compactValue: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeaderPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.7,
+        ),
+      ),
     );
   }
 
@@ -266,6 +387,107 @@ class HomeScreen extends ConsumerWidget {
           color: color,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+
+  Widget _buildRankSpotlight(String rank) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.neonBlue.withValues(alpha: 0.16),
+            Colors.white.withValues(alpha: 0.03),
+          ],
+        ),
+        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'RANK ATUAL',
+            style: TextStyle(
+              fontSize: 10.5,
+              color: Colors.white38,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            rank,
+            style: TextStyle(
+              fontSize: 54,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 0.9,
+              shadows: [
+                Shadow(
+                  color: AppColors.neonBlue.withValues(alpha: 0.6),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Pronto para sustentar ritmo, foco e pressao da semana.',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: Colors.white60,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderMetricCard({
+    required String label,
+    required String value,
+    required Color accentColor,
+    bool compactValue = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white38,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: compactValue ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: compactValue ? 12.5 : 30,
+              color: accentColor,
+              fontWeight: FontWeight.w800,
+              height: compactValue ? 1.2 : 1,
+            ),
+          ),
+        ],
       ),
     );
   }

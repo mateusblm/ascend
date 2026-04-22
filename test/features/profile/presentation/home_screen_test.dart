@@ -105,18 +105,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('TESTER'), findsOneWidget);
+    expect(find.text('VIGIA DO CICLO'), findsOneWidget);
+    expect(find.text('SIGILO DE BRONZE'), findsAtLeastNWidgets(1));
     expect(find.text('SEU MOMENTO'), findsOneWidget);
-    expect(
-      find.textContaining('JOGADOR: TESTER | VIGIA DO CICLO'),
-      findsOneWidget,
-    );
-    expect(find.text('SIGILO DE BRONZE'), findsOneWidget);
-    expect(find.text('PROXIMO GANHO'), findsOneWidget);
-    expect(find.text('DISPUTA DA SEMANA'), findsOneWidget);
-    expect(find.text('Voce esta na frente'), findsOneWidget);
-    expect(find.text('EVENTO ONLINE: 3 concluidos'), findsOneWidget);
+    expect(find.text('Proximo ganho'), findsOneWidget);
+    expect(find.text('Disputa da Arena'), findsOneWidget);
+    expect(find.text('Evento da Semana'), findsOneWidget);
     expect(find.text('Primeira Ruptura'), findsOneWidget);
-    expect(find.text('QUEM JA CONCLUIU'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Evento da Semana'));
+    await tester.tap(find.text('Evento da Semana').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('EVENTO ONLINE: 3 concluidos'), findsOneWidget);
+    expect(find.text('Quem ja concluiu'), findsOneWidget);
     expect(find.text('Mateus'), findsOneWidget);
     expect(find.text('RESGATAR'), findsOneWidget);
   });
@@ -157,13 +160,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Nenhum desafio semanal ativo agora.'), findsOneWidget);
       expect(
         find.textContaining('Seu estado competitivo esta sincronizando'),
         findsOneWidget,
       );
-      expect(find.text('PRIMEIRA SEMANA'), findsOneWidget);
-      expect(find.text('PROXIMO GANHO'), findsOneWidget);
+      expect(find.text('Campanha Inicial'), findsOneWidget);
+      expect(find.text('Proximo ganho'), findsOneWidget);
+      expect(find.text('Nenhum boss remoto ativo agora.'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Evento da Semana'));
+      await tester.tap(find.text('Evento da Semana').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nenhum desafio semanal ativo agora.'), findsOneWidget);
     },
   );
 }

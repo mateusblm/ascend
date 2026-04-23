@@ -140,12 +140,17 @@ Follow-up:
 
 ### Phase 7 - Login and onboarding cleanup
 
-Status: `pending`
+Status: `completed`
 
-Scope:
-- shorten launch copy
-- teach the first useful action faster
-- keep onboarding contextual and lightweight
+Completed:
+- shortened the login surface so the main promise and the Google sign-in action are visible without a long explanatory stack
+- moved onboarding toward one clear first decision: choose a focus, preview the starter kit, and begin
+- kept onboarding contextual by replacing long setup explanation with a compact starter-kit preview and a persistent CTA
+- aligned login and onboarding surfaces with the calmer shared theme instead of the older glow-heavy style
+
+Follow-up:
+- test first-session conversion on smaller phones to confirm the sticky onboarding CTA never feels cramped
+- tune focus and starter-kit wording after real usage so the first week feels concrete without reading like setup text
 
 ## Continuation Protocol For AI
 

@@ -21,289 +21,152 @@ class _AwakeningOnboardingScreenState
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final starterKit = starterQuestsForFocus(_selectedFocus);
-    final competitiveCount = starterKit.where((quest) => quest.isCompetitive).length;
+    final competitiveCount = starterKit
+        .where((quest) => quest.isCompetitive)
+        .length;
     final personalCount = starterKit.length - competitiveCount;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const RevealBlock(child: _OnboardingHero()),
-              const SizedBox(height: 20),
-              RevealBlock(
-                delay: const Duration(milliseconds: 70),
-                child: _buildHowItWorksCard(competitiveCount, personalCount),
-              ),
-              const SizedBox(height: 18),
-              RevealBlock(
-                delay: const Duration(milliseconds: 130),
-                child: _buildFocusSection(),
-              ),
-              const SizedBox(height: 18),
-              RevealBlock(
-                delay: const Duration(milliseconds: 190),
-                child: _buildStarterKitSection(starterKit),
-              ),
-              const SizedBox(height: 18),
-              RevealBlock(
-                delay: const Duration(milliseconds: 250),
-                child: _buildNextStepCard(),
-              ),
-              const SizedBox(height: 24),
-              RevealBlock(
-                delay: const Duration(milliseconds: 300),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.neonBlue,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    onPressed: _completeOnboarding,
-                    child: const Text(
-                      'MONTAR MINHA PRIMEIRA SEMANA',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.background,
+              AppColors.backgroundElevated,
+              AppColors.background,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 150),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    RevealBlock(
+                      child: _OnboardingHero(
+                        focusLabel: _displayFocusLabel(_selectedFocus),
+                        competitiveCount: competitiveCount,
+                        personalCount: personalCount,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 18),
+                    RevealBlock(
+                      delay: const Duration(milliseconds: 80),
+                      child: _FocusSection(
+                        selectedFocus: _selectedFocus,
+                        onSelect: (focus) =>
+                            setState(() => _selectedFocus = focus),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    RevealBlock(
+                      delay: const Duration(milliseconds: 150),
+                      child: _StarterKitPanel(
+                        focusLabel: _displayFocusLabel(_selectedFocus),
+                        starterKit: starterKit,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    RevealBlock(
+                      delay: const Duration(milliseconds: 220),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceStrong.withValues(
+                            alpha: 0.76,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: AppColors.borderStrong),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Depois disso', style: textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Voce entra direto em Quests com seu kit pronto. Depois pode ajustar foco, criar quests novas e explorar o app com calma.',
+                              style: textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHowItWorksCard(int competitiveCount, int personalCount) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'COMO SUA SEMANA COMECA',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-              color: Colors.white70,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceStrong.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: AppColors.borderStrong),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.20),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Voce escolhe um foco e o app monta um comeco simples para te colocar em movimento sem pesar.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 12.5,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _StarterMetric(
-                  label: 'PARA O RANK',
-                  value: '$competitiveCount quest(s)',
-                  accent: AppColors.neonBlue,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _StarterMetric(
-                  label: 'PARA O LEVEL',
-                  value: '$personalCount quest(s)',
-                  accent: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFocusSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'ESCOLHA SEU FOCO',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: Colors.white70,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Isso define por onde sua primeira semana comeca. Depois voce pode mudar.',
-          style: TextStyle(
-            color: Colors.white60,
-            fontSize: 12.5,
-            height: 1.45,
-          ),
-        ),
-        const SizedBox(height: 14),
-        ...AwakeningPath.values.map((focus) {
-          final selected = focus == _selectedFocus;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => setState(() => _selectedFocus = focus),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.neonBlue.withValues(alpha: 0.12)
-                      : Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: selected ? AppColors.neonBlue : Colors.white10,
-                    width: selected ? 1.4 : 1,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            focus.label,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                              color: selected ? AppColors.neonBlue : Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            focus.description,
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 12.5,
-                              height: 1.45,
-                            ),
-                          ),
-                        ],
-                      ),
+                    _StarterMetric(
+                      label: 'Foco',
+                      value: _displayFocusLabel(_selectedFocus),
+                      accent: AppColors.planAccent,
                     ),
-                    const SizedBox(width: 12),
-                    Icon(
-                      selected
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      color: selected ? AppColors.neonBlue : Colors.white24,
+                    _StarterMetric(
+                      label: 'Arena',
+                      value: '$competitiveCount quest(s)',
+                      accent: AppColors.arenaAccent,
+                    ),
+                    _StarterMetric(
+                      label: 'Base',
+                      value: '$personalCount quest(s)',
+                      accent: AppColors.questAccent,
                     ),
                   ],
                 ),
-              ),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildStarterKitSection(List<Quest> starterKit) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.neonBlue.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'KIT INICIAL: ${_selectedFocus.label}',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _completeOnboarding,
+                    child: const Text('Montar minha primeira semana'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Voce pode trocar esse foco depois.',
+                  style: textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Voce vai comecar com um kit curto: duas quests para subir seu ritmo no rank e uma para fortalecer seu dia.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 12.5,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 14),
-          ...starterKit.map(
-            (quest) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _StarterQuestTile(quest: quest),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNextStepCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'O QUE ACONTECE DEPOIS',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-              color: Colors.white70,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            '1. Voce recebe seu kit inicial.',
-            style: TextStyle(color: Colors.white70, fontSize: 12.5),
-          ),
-          SizedBox(height: 6),
-          Text(
-            '2. As quests de rank comecam a abrir sua subida.',
-            style: TextStyle(color: Colors.white70, fontSize: 12.5),
-          ),
-          SizedBox(height: 6),
-          Text(
-            '3. As quests pessoais continuam fortalecendo seu level e seu ritmo da semana.',
-            style: TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.45),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -315,31 +178,224 @@ class _AwakeningOnboardingScreenState
 }
 
 class _OnboardingHero extends StatelessWidget {
-  const _OnboardingHero();
+  const _OnboardingHero({
+    required this.focusLabel,
+    required this.competitiveCount,
+    required this.personalCount,
+  });
+
+  final String focusLabel;
+  final int competitiveCount;
+  final int personalCount;
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.planAccent.withValues(alpha: 0.10),
+            AppColors.surface.withValues(alpha: 0.96),
+            AppColors.surfaceMuted.withValues(alpha: 0.98),
+          ],
+        ),
+        border: Border.all(color: AppColors.borderStrong),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Primeira semana',
+            style: textTheme.labelMedium?.copyWith(color: AppColors.planAccent),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Escolha o foco do seu inicio',
+            style: textTheme.headlineMedium?.copyWith(
+              fontSize: 30,
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Voce escolhe a direcao e o app monta um kit curto para ja entrar em movimento.',
+            style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _HeroPill(label: focusLabel, accent: AppColors.planAccent),
+              _HeroPill(
+                label: '$competitiveCount para Arena',
+                accent: AppColors.arenaAccent,
+              ),
+              _HeroPill(
+                label: '$personalCount para Base',
+                accent: AppColors.questAccent,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FocusSection extends StatelessWidget {
+  const _FocusSection({required this.selectedFocus, required this.onSelect});
+
+  final AwakeningPath selectedFocus;
+  final ValueChanged<AwakeningPath> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
+        Text('Escolha seu foco', style: textTheme.titleLarge),
+        const SizedBox(height: 6),
         Text(
-          'COMECO DA JORNADA',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 4,
-          ),
+          'Isso define o kit inicial. Depois voce pode ajustar com calma.',
+          style: textTheme.bodyMedium,
         ),
-        SizedBox(height: 10),
-        Text(
-          'Vamos montar sua primeira semana de um jeito simples: escolher foco, receber um kit inicial e comecar sem precisar entender tudo de uma vez.',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.white60,
-            height: 1.5,
-          ),
-        ),
+        const SizedBox(height: 14),
+        ...AwakeningPath.values.map((focus) {
+          final selected = focus == selectedFocus;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: () => onSelect(focus),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        selected
+                            ? AppColors.planAccent.withValues(alpha: 0.10)
+                            : AppColors.surface.withValues(alpha: 0.96),
+                        AppColors.surfaceStrong.withValues(alpha: 0.78),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.planAccent.withValues(alpha: 0.24)
+                          : AppColors.borderStrong,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _displayFocusLabel(focus),
+                              style: textTheme.titleMedium?.copyWith(
+                                color: selected
+                                    ? AppColors.planAccent
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              focus.description,
+                              style: textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        selected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: selected
+                            ? AppColors.planAccent
+                            : AppColors.textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
       ],
+    );
+  }
+}
+
+class _StarterKitPanel extends StatelessWidget {
+  const _StarterKitPanel({required this.focusLabel, required this.starterKit});
+
+  final String focusLabel;
+  final List<Quest> starterKit;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.questAccent.withValues(alpha: 0.08),
+            AppColors.surface.withValues(alpha: 0.96),
+            AppColors.surfaceStrong.withValues(alpha: 0.82),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.borderStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Seu kit inicial', style: textTheme.titleLarge),
+          const SizedBox(height: 6),
+          Text(
+            '$focusLabel entra com um kit curto: duas quests para abrir pressao competitiva e uma para sustentar a base.',
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          ...starterKit.map(
+            (quest) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _StarterQuestTile(quest: quest),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -360,28 +416,29 @@ class _StarterMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.20)),
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
             style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white54,
-              letterSpacing: 1.0,
+              fontSize: 10.5,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 15,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
-              color: accent,
             ),
           ),
         ],
@@ -397,7 +454,10 @@ class _StarterQuestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = quest.isCompetitive ? AppColors.neonBlue : Colors.white70;
+    final accent = quest.isCompetitive
+        ? AppColors.arenaAccent
+        : AppColors.questAccent;
+    final tag = quest.isCompetitive ? 'Arena' : 'Base';
     final verification = switch (quest.verificationMode) {
       QuestVerificationMode.manual => 'Livre',
       QuestVerificationMode.timer => '${quest.targetDurationMinutes} min',
@@ -406,11 +466,12 @@ class _StarterQuestTile extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.20)),
+        color: AppColors.surfaceStrong.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,33 +480,25 @@ class _StarterQuestTile extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _QuestPill(
-                label: quest.isCompetitive ? 'COMPETITIVA' : 'PESSOAL',
-                color: accent,
-              ),
-              _QuestPill(
-                label: verification,
-                color: Colors.amberAccent,
-              ),
+              _HeroPill(label: tag, accent: accent),
+              _HeroPill(label: verification, accent: AppColors.textSecondary),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             quest.title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 15,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            quest.isCompetitive
-                ? 'Ajuda no seu rank e no desafio da semana.'
-                : 'Ajuda no seu level e no ritmo do dia.',
+            '${quest.xpReward} XP • ${_attributeLabel(quest.rewardAttribute)}',
             style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
-              height: 1.4,
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -454,29 +507,43 @@ class _StarterQuestTile extends StatelessWidget {
   }
 }
 
-class _QuestPill extends StatelessWidget {
-  const _QuestPill({required this.label, required this.color});
+class _HeroPill extends StatelessWidget {
+  const _HeroPill({required this.label, required this.accent});
 
   final String label;
-  final Color color;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        color: AppColors.surfaceStrong.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: color,
-          fontSize: 10,
+          color: accent,
+          fontSize: 11.5,
           fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
+}
+
+String _displayFocusLabel(AwakeningPath focus) {
+  final raw = focus.label.toLowerCase();
+  return '${raw[0].toUpperCase()}${raw.substring(1)}';
+}
+
+String _attributeLabel(AttributeType attribute) {
+  return switch (attribute) {
+    AttributeType.strength => 'Forca',
+    AttributeType.intelligence => 'Inteligencia',
+    AttributeType.vitality => 'Vitalidade',
+    AttributeType.agility => 'Agilidade',
+  };
 }

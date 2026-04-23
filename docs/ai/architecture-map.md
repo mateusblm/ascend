@@ -143,6 +143,10 @@ lib/
     - player-name editing
     - focus-change entry
     - logout
+- first-session entry now follows the redesigned lighter surface pattern too:
+  - `login_screen.dart` should keep the sign-in promise short and the primary Google action obvious
+  - `awakening_onboarding_screen.dart` should center on one first useful action: choose a focus and start the first week
+  - `focus_selection_sheet.dart` should stay aligned with the same calmer visual system so post-onboarding focus changes do not feel like an older flow
 - the rank screen now reads from dedicated domain summaries:
   - `rank_progression.dart`
   - `promotion_exam.dart`

@@ -1365,7 +1365,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'A superficie principal fica curta. O resto da leitura abre por camada.',
+          'Abra os paines abaixo para ver rivalidade, evento da semana e leitura completa do momento.',
           style: TextStyle(
             fontSize: 12.5,
             color: AppColors.textSecondary,

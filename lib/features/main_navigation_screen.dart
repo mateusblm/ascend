@@ -30,28 +30,28 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
   Timer? _syncDebounce;
   static const _destinations = <_NavigationDestination>[
     _NavigationDestination(
-      label: 'BASE',
+      label: 'Base',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
       accent: AppColors.neonBlue,
     ),
     _NavigationDestination(
-      label: 'QUESTS',
+      label: 'Quests',
       icon: Icons.bolt_outlined,
       activeIcon: Icons.bolt_rounded,
-      accent: Colors.greenAccent,
+      accent: AppColors.questAccent,
     ),
     _NavigationDestination(
-      label: 'ARENA',
+      label: 'Arena',
       icon: Icons.bar_chart_outlined,
       activeIcon: Icons.bar_chart_rounded,
-      accent: Colors.amberAccent,
+      accent: AppColors.arenaAccent,
     ),
     _NavigationDestination(
-      label: 'PLANO',
+      label: 'Plano',
       icon: Icons.analytics_outlined,
       activeIcon: Icons.analytics_rounded,
-      accent: Colors.cyanAccent,
+      accent: AppColors.planAccent,
     ),
   ];
 
@@ -116,36 +116,22 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.background, Color(0xFF020406)],
+          colors: [
+            AppColors.background,
+            AppColors.backgroundElevated,
+            Color(0xFF050A0F),
+          ],
         ),
       ),
       child: Stack(
         children: [
           const Positioned(
-            top: -140,
-            left: -120,
+            top: -170,
+            left: -130,
             child: _AmbientGlow(
-              size: 320,
+              size: 360,
               color: AppColors.neonBlue,
-              opacity: 0.10,
-            ),
-          ),
-          const Positioned(
-            top: 140,
-            right: -130,
-            child: _AmbientGlow(
-              size: 280,
-              color: Colors.greenAccent,
-              opacity: 0.07,
-            ),
-          ),
-          const Positioned(
-            bottom: -140,
-            right: -80,
-            child: _AmbientGlow(
-              size: 280,
-              color: Colors.amberAccent,
-              opacity: 0.06,
+              opacity: 0.05,
             ),
           ),
           Scaffold(
@@ -225,28 +211,28 @@ class _FloatingBottomDock extends StatelessWidget {
       top: false,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withValues(alpha: 0.10),
-              Colors.white.withValues(alpha: 0.03),
-            ],
-          ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          borderRadius: BorderRadius.circular(28),
+          color: AppColors.surfaceStrong.withValues(alpha: 0.90),
+          border: Border.all(color: AppColors.borderStrong),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.32),
-              blurRadius: 28,
-              offset: const Offset(0, 18),
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 24,
+              offset: const Offset(0, 14),
             ),
           ],
         ),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            color: Colors.black.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: 0.03),
+                Colors.white.withValues(alpha: 0.01),
+              ],
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
@@ -293,20 +279,13 @@ class _DockItem extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           decoration: BoxDecoration(
+            color: selected
+                ? accent.withValues(alpha: 0.10)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(22),
-            gradient: selected
-                ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      accent.withValues(alpha: 0.22),
-                      accent.withValues(alpha: 0.10),
-                    ],
-                  )
-                : null,
             border: Border.all(
               color: selected
-                  ? accent.withValues(alpha: 0.26)
+                  ? accent.withValues(alpha: 0.18)
                   : Colors.transparent,
             ),
           ),
@@ -321,26 +300,17 @@ class _DockItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: selected
-                      ? accent.withValues(alpha: 0.16)
-                      : Colors.white.withValues(alpha: 0.04),
+                      ? AppColors.surfaceMuted
+                      : Colors.white.withValues(alpha: 0.03),
                   border: Border.all(
                     color: selected
-                        ? accent.withValues(alpha: 0.32)
-                        : Colors.white.withValues(alpha: 0.08),
+                        ? accent.withValues(alpha: 0.26)
+                        : AppColors.borderSubtle,
                   ),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.20),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Icon(
                   selected ? destination.activeIcon : destination.icon,
-                  color: selected ? Colors.white : Colors.white38,
+                  color: selected ? accent : AppColors.textMuted,
                   size: 20,
                 ),
               ),
@@ -353,8 +323,8 @@ class _DockItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                  letterSpacing: 1.0,
-                  color: selected ? Colors.white : Colors.white38,
+                  letterSpacing: 0.2,
+                  color: selected ? Colors.white : AppColors.textMuted,
                 ),
               ),
             ],

@@ -227,10 +227,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             style: textTheme.titleLarge?.copyWith(height: 1.2),
           ),
           const SizedBox(height: 8),
-          Text(
-            insights.review.detail,
-            style: textTheme.bodyMedium,
-          ),
+          Text(insights.review.detail, style: textTheme.bodyMedium),
           const SizedBox(height: 18),
           Wrap(
             spacing: 10,
@@ -316,7 +313,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 4),
         const Text(
-          'A leitura principal fica curta. Use essas entradas para abrir o restante do diagnostico.',
+          'Abra os detalhes para ver ritmo da conta, build e leitura completa da semana.',
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12.5,
@@ -328,7 +325,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           title: 'Visao geral',
           summary:
               'Ritmo da conta, streak, level e leitura consolidada da semana em um unico detalhe.',
-          supporting: 'Resumo amplo da conta sem repetir a tela principal.',
+          supporting: 'Panorama da conta e do ciclo atual.',
           badge: insights.review.badge,
           accent: AppColors.planAccent,
           onTap: () => _openPlanDetail(
@@ -399,7 +396,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       WeeklyReviewStatus.critical => AppColors.danger,
     };
     final delta = insights.discipline.deltaFromPreviousWeek;
-    final deltaLabel = delta == 0 ? 'sem mudanca' : '${delta > 0 ? '+' : ''}$delta';
+    final deltaLabel = delta == 0
+        ? 'sem mudanca'
+        : '${delta > 0 ? '+' : ''}$delta';
 
     return _AccentPanel(
       accent: reviewAccent,
@@ -418,10 +417,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   ),
                 ),
               ),
-              _InlineBadge(
-                label: insights.review.badge,
-                accent: reviewAccent,
-              ),
+              _InlineBadge(label: insights.review.badge, accent: reviewAccent),
             ],
           ),
           const SizedBox(height: 10),
@@ -473,7 +469,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           const SizedBox(height: 14),
           _buildOverviewBar(
             label: 'Cadencia da semana',
-            trailing: '${insights.discipline.currentWeekActiveDays}/7 dias ativos',
+            trailing:
+                '${insights.discipline.currentWeekActiveDays}/7 dias ativos',
             percent: weekProgress,
             color: reviewAccent,
           ),
@@ -558,35 +555,37 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          ...insights.nextWeekPlan.priorities.take(3).map(
-            (priority) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 16,
-                      color: AppColors.planAccent,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      priority,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12.5,
-                        height: 1.45,
+          ...insights.nextWeekPlan.priorities
+              .take(3)
+              .map(
+                (priority) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 16,
+                          color: AppColors.planAccent,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          priority,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 12.5,
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
           const SizedBox(height: 6),
           _MiniNote(
             title: 'Regra da semana',
@@ -602,11 +601,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 title: 'Proximo Passo',
                 subtitle:
                     'Plano da proxima semana com prioridades curtas e regra operacional.',
-                child: _buildPlanSection(
-                  insights,
-                  weeklyBoss,
-                  rankSnapshot,
-                ),
+                child: _buildPlanSection(insights, weeklyBoss, rankSnapshot),
               ),
               icon: const Icon(Icons.chevron_right_rounded),
               label: const Text('Abrir plano'),
@@ -1291,10 +1286,7 @@ class _ContrastPanel extends StatelessWidget {
 }
 
 class _InlineBadge extends StatelessWidget {
-  const _InlineBadge({
-    required this.label,
-    required this.accent,
-  });
+  const _InlineBadge({required this.label, required this.accent});
 
   final String label;
   final Color accent;
@@ -1513,10 +1505,7 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted,
-            ),
+            style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
           ),
           const SizedBox(height: 5),
           Text(

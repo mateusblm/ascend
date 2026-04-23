@@ -124,10 +124,17 @@ lib/
   - one weekly-read block
   - one next-step block
   - broader diagnostics and build management move into quieter detail entries
+- the `Arena` screen now also follows the redesign split more directly:
+  - one dominant competitive summary hero
+  - one short directory into `Agora`, `Temporada`, and `Legado`
+  - risk, weekly objective, and next gate should be readable before entering a detail view
 - the shared visual foundation now has an explicit implementation boundary:
   - `lib/core/theme/app_colors.dart`
   - `lib/core/theme/app_theme.dart`
   - feature screens should prefer these tokens over ad-hoc repeated color/style systems
+- cross-screen chrome should now follow the same calmer system:
+  - bottom navigation uses sentence-case labels and lighter active emphasis
+  - `DetailShellScreen` should match the same neutral surface and border treatment as the top-level tabs
 - account and identity management now have their own dedicated screen:
   - `account_screen.dart`
   - it is entered from `Stats`, but it is not a bottom-navigation destination

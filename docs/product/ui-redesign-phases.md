@@ -113,21 +113,30 @@ Follow-up:
 
 ### Phase 5 - Arena redesign
 
-Status: `pending`
+Status: `completed`
 
-Scope:
-- keep tension and consequence without returning to visual overload
-- sharpen the split between `Agora`, `Temporada`, and `Legado`
-- make risk, current objective, and next gate readable at a glance
+Completed:
+- rebuilt `Arena` around one dominant summary hero instead of stacking another same-weight status panel under it
+- clarified the split between `Agora`, `Temporada`, and `Legado` with simpler entry points and calmer card treatment
+- made current risk, weekly objective, and next gate readable in the hero before opening a detail screen
+- reduced accent overload in arena metrics and reusable cards so consequence still reads without glow-heavy chrome
+
+Follow-up:
+- test the new hero density on smaller phones when the current rank and gate copy both run long
+- tune the exact wording of the hero summary after live usage so it stays tense without sounding abstract
 
 ### Phase 6 - Navigation and cross-screen cleanup
 
-Status: `pending`
+Status: `completed`
 
-Scope:
-- simplify bottom navigation visual weight
-- reduce ambient glow competition
-- align detail screens with the new shared surface system
+Completed:
+- simplified the bottom navigation dock and moved it closer to the calmer shared surface system
+- reduced ambient glow competition in the navigation shell
+- rebuilt `DetailShellScreen` to match the lighter surface, border, and header pattern used by the redesigned top-level tabs
+
+Follow-up:
+- verify dock readability over extreme content contrast and keyboard transitions on smaller devices
+- continue removing any leftover meta or implementation-facing UI copy that slipped into production strings
 
 ### Phase 7 - Login and onboarding cleanup
 

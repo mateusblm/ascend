@@ -203,12 +203,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Arena'), findsOneWidget);
-    expect(find.text('PRESSAO ATUAL'), findsOneWidget);
-    expect(find.text('CORRIDA SAZONAL'), findsOneWidget);
-    expect(find.text('LEGADO'), findsOneWidget);
+    expect(find.text('Agora'), findsOneWidget);
+    expect(find.text('Temporada'), findsOneWidget);
+    expect(find.text('Legado'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
-    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.ensureVisible(find.text('Agora'));
+    await tester.tap(find.text('Agora'));
     await tester.pumpAndSettle();
 
     expect(find.text('Pressao Atual'), findsOneWidget);
@@ -221,8 +221,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('CORRIDA SAZONAL'));
-    await tester.tap(find.text('CORRIDA SAZONAL'));
+    await tester.ensureVisible(find.text('Temporada'));
+    await tester.tap(find.text('Temporada'));
     await tester.pumpAndSettle();
 
     expect(find.text('PLACAR DA TEMPORADA'), findsOneWidget);
@@ -236,8 +236,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('LEGADO').first);
-    await tester.tap(find.text('LEGADO').first);
+    await tester.ensureVisible(find.text('Legado').first);
+    await tester.tap(find.text('Legado').first);
     await tester.pumpAndSettle();
 
     expect(find.text('LEGADO ATIVO'), findsOneWidget);
@@ -282,11 +282,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('PRESSAO ATUAL'), findsOneWidget);
+    expect(find.text('Agora'), findsOneWidget);
     expect(find.text('Nenhum boss ativo para este rank.'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
-    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.ensureVisible(find.text('Agora'));
+    await tester.tap(find.text('Agora'));
     await tester.pumpAndSettle();
 
     expect(find.text('SEM EVENTO'), findsOneWidget);
@@ -338,8 +338,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
-    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.ensureVisible(find.text('Agora'));
+    await tester.tap(find.text('Agora'));
     await tester.pumpAndSettle();
 
     expect(find.text('INICIAR EXAME'), findsOneWidget);
@@ -405,8 +405,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('PRESSAO ATUAL'));
-    await tester.tap(find.text('PRESSAO ATUAL'));
+    await tester.ensureVisible(find.text('Agora'));
+    await tester.tap(find.text('Agora'));
     await tester.pumpAndSettle();
 
     expect(find.text('PROMOVER RANK'), findsOneWidget);

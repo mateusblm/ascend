@@ -112,6 +112,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
   }
 
   Widget _buildHero(Player player, CompetitiveRankSnapshot? snapshot) {
+    final textTheme = Theme.of(context).textTheme;
     final currentRank =
         snapshot?.currentRank ?? playerRankForLevel(player.level);
     final status = snapshot?.status ?? RankMaintenanceStatus.secure;
@@ -120,8 +121,34 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final nextRank = snapshot?.promotionTargetRank ?? rankAfter(currentRank);
     final eligibleRank =
         snapshot?.highestEligibleRank ?? playerRankForLevel(player.level);
+    final currentRule = rankRuleFor(currentRank);
+    final remainingCurrentDays = snapshot == null
+        ? currentRule.requiredActiveDays
+        : (currentRule.requiredActiveDays - snapshot.activeDays).clamp(
+            0,
+            currentRule.requiredActiveDays,
+          );
+    final nextRule = nextRank == null ? null : rankRuleFor(nextRank);
+    final targetLevel =
+        snapshot?.targetRequiredLevel ?? nextRule?.minimumLevel ?? player.level;
+    final targetLevelGateMet = snapshot?.targetLevelGateMet ?? true;
     final heroMessage =
         snapshot?.summary ?? 'Seu estado competitivo ainda esta sincronizando.';
+    final currentObjective = remainingCurrentDays == 0
+        ? 'Seu posto desta semana esta protegido.'
+        : 'Faltam $remainingCurrentDays dia(s) competitivos validados para segurar $currentRank.';
+    final bossRead = currentRule.requiresBossClear
+        ? ((snapshot?.bossCompleted ?? false)
+              ? 'Boss da semana confirmado.'
+              : 'Boss da semana ainda pendente.')
+        : 'Este posto nao exige boss semanal.';
+    final nextGate = nextRank == null
+        ? 'Voce ja esta no topo disponivel pelo seu level atual.'
+        : !targetLevelGateMet
+        ? 'O rank $nextRank abre a partir do level $targetLevel.'
+        : snapshot?.promotionReady == true
+        ? 'A prova para $nextRank ja pode ser iniciada.'
+        : 'O proximo gate esta em $nextRank.';
 
     return _Panel(
       child: Column(
@@ -130,25 +157,22 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Comando competitivo',
-                      style: TextStyle(
+                      'Competitivo',
+                      style: textTheme.labelMedium?.copyWith(
                         fontSize: 11,
-                        color: Colors.white38,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
+                        color: accent,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
                       'Arena',
-                      style: TextStyle(
+                      style: textTheme.headlineMedium?.copyWith(
                         fontSize: 30,
-                        fontWeight: FontWeight.w800,
                         height: 1,
                       ),
                     ),
@@ -162,16 +186,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Veja seu posto atual, o que falta para manter e o que abre a proxima subida.',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 12.5,
-              height: 1.4,
-            ),
+          const SizedBox(height: 10),
+          Text(
+            'Seu posto atual, o risco da semana e o proximo gate em um unico quadro.',
+            style: textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -180,13 +200,13 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  accent.withValues(alpha: 0.18),
-                  AppColors.neonBlue.withValues(alpha: 0.08),
-                  Colors.white.withValues(alpha: 0.02),
+                  accent.withValues(alpha: 0.14),
+                  AppColors.surfaceMuted.withValues(alpha: 0.94),
+                  AppColors.surface.withValues(alpha: 0.98),
                 ],
               ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: accent.withValues(alpha: 0.30)),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: accent.withValues(alpha: 0.22)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,15 +215,15 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
+                      flex: 4,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'SEU RANK AGORA',
-                            style: TextStyle(
+                          Text(
+                            'Rank atual',
+                            style: textTheme.labelMedium?.copyWith(
                               fontSize: 11,
-                              color: Colors.white54,
-                              letterSpacing: 1.1,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -213,12 +233,6 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                               fontSize: 58,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: accent.withValues(alpha: 0.65),
-                                  blurRadius: 20,
-                                ),
-                              ],
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -231,12 +245,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                                 color: accent,
                               ),
                               _StatusPill(
-                                label: 'PICO $peakRank',
-                                color: Colors.amberAccent,
+                                label: 'Pico $peakRank',
+                                color: AppColors.arenaAccent,
                               ),
                               if (nextRank != null)
                                 _StatusPill(
-                                  label: 'PROXIMO $nextRank',
+                                  label: 'Proximo $nextRank',
                                   color: AppColors.neonBlue,
                                 ),
                             ],
@@ -246,41 +260,62 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
+                      flex: 5,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _MetricCard(
-                            label: 'LEVEL',
-                            value: player.level.toString().padLeft(2, '0'),
-                            accent: AppColors.neonBlue,
+                          _HeroReadTile(
+                            label: 'Semana',
+                            value: currentObjective,
+                            accent: accent,
                           ),
                           const SizedBox(height: 10),
-                          _MetricCard(
-                            label: 'ALVO',
-                            value: nextRank ?? '--',
-                            accent: Colors.amberAccent,
+                          _HeroReadTile(
+                            label: 'Boss',
+                            value: bossRead,
+                            accent: AppColors.arenaAccent,
+                          ),
+                          const SizedBox(height: 10),
+                          _HeroReadTile(
+                            label: 'Proximo gate',
+                            value: nextGate,
+                            accent: targetLevelGateMet
+                                ? AppColors.neonBlue
+                                : Colors.orangeAccent,
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 Text(
                   heroMessage,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.45,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'Seu level ${player.level} ja permite buscar ate o rank $eligibleRank.',
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 11.5,
-                    height: 1.4,
-                  ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _MetricCard(
+                      label: 'Level',
+                      value: player.level.toString().padLeft(2, '0'),
+                      accent: AppColors.neonBlue,
+                    ),
+                    _MetricCard(
+                      label: 'Pico',
+                      value: peakRank,
+                      accent: AppColors.arenaAccent,
+                    ),
+                    _MetricCard(
+                      label: 'Liberado por',
+                      value: eligibleRank,
+                      accent: accent,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -310,75 +345,35 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         snapshot?.currentRank ?? playerRankForLevel(player.level);
     final status = snapshot?.status ?? RankMaintenanceStatus.secure;
     final accent = _statusColor(status);
+    final seasonSummary =
+        '${leaderboard.playerStandingLabel} • ${season.rewardStatusLabel}';
+    final legacySummary =
+        seasonProfile?.activeTitleLabel ??
+        'Pico atual: ${snapshot?.peakRank ?? currentRank}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                accent.withValues(alpha: 0.14),
-                Colors.redAccent.withValues(alpha: 0.05),
-                Colors.white.withValues(alpha: 0.02),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: accent.withValues(alpha: 0.20)),
+        const Text(
+          'Abrir detalhes',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'TABULEIRO DA SEMANA',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white54,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'POSTO',
-                      value: currentRank,
-                      accent: accent,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'TEMPORADA',
-                      value: season.rewardStatusLabel,
-                      accent: AppColors.neonBlue,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'PRESTIGIO',
-                      value: prestige.prestigeLabel,
-                      accent: Colors.amberAccent,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Agora mostra a pressao da semana. Temporada resume a corrida atual. Legado guarda o que ja ficou permanente.',
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'PRESSAO ATUAL',
+          title: 'Agora',
           summary: snapshot?.summary ?? arena.leaderHeadline,
-          supporting:
-              'Manutencao do posto, prova ativa e evento competitivo da semana.',
+          supporting: currentRank == season.peakRank
+              ? 'Seu posto da semana, a prova atual e o evento competitivo.'
+              : 'Seu posto da semana e o caminho para recuperar ou ampliar o pico.',
           badge: _statusLabel(status),
           accent: accent,
           onTap: () => _openRankDetail(
@@ -399,11 +394,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'CORRIDA SAZONAL',
-          summary:
-              '${leaderboard.playerStandingLabel} | ${season.rewardStatusLabel}',
-          supporting:
-              'Pontuacao sazonal, recompensa do ciclo e disputa do grupo atual.',
+          title: 'Temporada',
+          summary: seasonSummary,
+          supporting: 'Pontuacao sazonal, recompensa do ciclo e grupo atual.',
           badge: season.rewardTierLabel,
           accent: AppColors.neonBlue,
           onTap: () => _openRankDetail(
@@ -423,12 +416,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'LEGADO',
-          summary:
-              seasonProfile?.activeTitleLabel ??
-              'Pico atual: ${snapshot?.peakRank ?? currentRank}',
-          supporting:
-              'Arquivo competitivo, recompensas permanentes e historico ja consolidado.',
+          title: 'Legado',
+          summary: legacySummary,
+          supporting: 'Titulos, picos e recompensas permanentes da conta.',
           badge: season.peakRank == '-'
               ? (snapshot?.peakRank ?? currentRank)
               : season.peakRank,
@@ -1697,17 +1687,17 @@ class _Panel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.05),
-            Colors.white.withValues(alpha: 0.02),
+            AppColors.surface.withValues(alpha: 0.96),
+            AppColors.surfaceMuted.withValues(alpha: 0.98),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.borderStrong),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
+            color: Colors.black.withValues(alpha: 0.16),
             blurRadius: 18,
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -1733,9 +1723,9 @@ class _InfoBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        color: AppColors.surfaceStrong.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1746,14 +1736,13 @@ class _InfoBanner extends StatelessWidget {
               fontSize: 12,
               color: accent,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             body,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.textPrimary,
               fontSize: 12.5,
               height: 1.45,
             ),
@@ -1798,28 +1787,90 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
+        color: AppColors.surfaceStrong.withValues(alpha: 0.58),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.9),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroReadTile extends StatelessWidget {
+  const _HeroReadTile({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceStrong.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white54,
-              letterSpacing: 1.0,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: accent,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w800,
-              color: accent,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textPrimary,
+              height: 1.45,
             ),
           ),
         ],
@@ -1857,9 +1908,16 @@ class _SectionEntryCard extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 96),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.06),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: 0.08),
+                AppColors.surfaceStrong.withValues(alpha: 0.68),
+              ],
+            ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: accent.withValues(alpha: 0.18)),
+            border: Border.all(color: accent.withValues(alpha: 0.14)),
           ),
           child: Row(
             children: [
@@ -1872,7 +1930,7 @@ class _SectionEntryCard extends StatelessWidget {
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 16,
                             color: accent,
                             fontWeight: FontWeight.w800,
                           ),
@@ -1892,7 +1950,7 @@ class _SectionEntryCard extends StatelessWidget {
                             badge,
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.white70,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -1912,7 +1970,7 @@ class _SectionEntryCard extends StatelessWidget {
                     Text(
                       supporting,
                       style: const TextStyle(
-                        color: Colors.white60,
+                        color: AppColors.textSecondary,
                         fontSize: 12.3,
                         height: 1.45,
                       ),
@@ -1925,9 +1983,9 @@ class _SectionEntryCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.16),
+                  color: AppColors.surfaceMuted,
                   shape: BoxShape.circle,
-                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                  border: Border.all(color: accent.withValues(alpha: 0.14)),
                 ),
                 child: Icon(
                   Icons.chevron_right_rounded,
@@ -1954,9 +2012,9 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
+        color: AppColors.surfaceStrong.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Text(
         label,
@@ -1964,7 +2022,6 @@ class _StatusPill extends StatelessWidget {
           fontSize: 10.5,
           color: color,
           fontWeight: FontWeight.bold,
-          letterSpacing: 0.8,
         ),
       ),
     );

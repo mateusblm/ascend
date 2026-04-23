@@ -173,7 +173,7 @@ class HomeScreen extends ConsumerWidget {
     required int maxXp,
     required int currentStreak,
     String? seasonLabel,
-  ) {
+  }) {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
@@ -235,17 +235,11 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              _buildHeaderPill(
-                seasonLabel ?? 'Base ativa',
-                AppColors.neonBlue,
-              ),
+              _buildHeaderPill(seasonLabel ?? 'Base ativa', AppColors.neonBlue),
             ],
           ),
           const SizedBox(height: 18),
-          Text(
-            summary,
-            style: textTheme.titleLarge?.copyWith(height: 1.2),
-          ),
+          Text(summary, style: textTheme.titleLarge?.copyWith(height: 1.2)),
           const SizedBox(height: 8),
           Text(detail, style: textTheme.bodyMedium),
           const SizedBox(height: 18),
@@ -1418,7 +1412,8 @@ class HomeScreen extends ConsumerWidget {
         _BaseDetailEntry(
           title: 'Pulso competitivo',
           summary:
-              rankSnapshot?.summary ?? 'Seu estado competitivo ainda esta sincronizando.',
+              rankSnapshot?.summary ??
+              'Seu estado competitivo ainda esta sincronizando.',
           accent: pulseAccent,
           onTap: () => _openBaseDetailSheet(
             context,

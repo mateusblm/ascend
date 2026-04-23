@@ -59,10 +59,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           const SizedBox(height: 16),
           const Text(
             'Nova quest',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -81,9 +78,8 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
               _ModeChip(
                 label: 'Pessoal',
                 selected: _selectedCategory == QuestCategory.personal,
-                onTap: () => setState(
-                  () => _selectedCategory = QuestCategory.personal,
-                ),
+                onTap: () =>
+                    setState(() => _selectedCategory = QuestCategory.personal),
               ),
               _ModeChip(
                 label: 'Competitiva',
@@ -106,7 +102,9 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
               onPressed: () {
                 if (_selectedCategory == QuestCategory.personal) {
                   if (_controller.text.trim().isEmpty) return;
-                  ref.read(questProvider.notifier).addPersonalQuest(
+                  ref
+                      .read(questProvider.notifier)
+                      .addPersonalQuest(
                         _controller.text.trim(),
                         _selectedAttribute,
                         personalQuestDefaultXp,
@@ -173,7 +171,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<AttributeType>(
-          value: _selectedAttribute,
+          initialValue: _selectedAttribute,
           dropdownColor: AppColors.backgroundElevated,
           items: AttributeType.values.map((attr) {
             return DropdownMenuItem(
@@ -182,9 +180,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
             );
           }).toList(),
           onChanged: (val) => setState(() => _selectedAttribute = val!),
-          decoration: const InputDecoration(
-            labelText: 'Atributo',
-          ),
+          decoration: const InputDecoration(labelText: 'Atributo'),
         ),
       ],
     );
@@ -330,10 +326,7 @@ class _ModeChip extends StatelessWidget {
               ],
               Text(
                 label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -344,10 +337,7 @@ class _ModeChip extends StatelessWidget {
 }
 
 class _TemplateChip extends StatelessWidget {
-  const _TemplateChip({
-    required this.label,
-    required this.color,
-  });
+  const _TemplateChip({required this.label, required this.color});
 
   final String label;
   final Color color;

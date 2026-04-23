@@ -24,26 +24,34 @@ class QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryAccent = quest.isCompetitive
+        ? AppColors.arenaAccent
+        : AppColors.questAccent;
     final accent = quest.isCompleted
-        ? AppColors.questAccent
-        : quest.isCompetitive
-        ? AppColors.neonBlue
-        : AppColors.questAccent;
-    final badgeColor = quest.isCompetitive
-        ? AppColors.neonBlue
-        : AppColors.questAccent;
+        ? Color.lerp(categoryAccent, Colors.white, 0.12) ?? categoryAccent
+        : categoryAccent;
+    final surfaceColor = quest.isCompleted
+        ? AppColors.surfaceMuted
+        : AppColors.surface;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: quest.isCompleted
-              ? AppColors.questAccent.withValues(alpha: 0.24)
-              : AppColors.borderSubtle,
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
+          top: BorderSide(
+            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+          ),
+          right: BorderSide(
+            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+          ),
+          bottom: BorderSide(
+            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -69,21 +77,22 @@ class QuestCard extends StatelessWidget {
                       children: [
                         _QuestChip(
                           label: quest.isCompetitive ? 'Arena' : 'Base',
-                          color: badgeColor,
+                          color: accent,
                         ),
                         _QuestChip(
                           label: _verificationLabel(quest),
-                          color: AppColors.arenaAccent,
+                          color: AppColors.textSecondary,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
                       quest.title,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w700,
                         height: 1.25,
+                        color: AppColors.textPrimary,
                         decoration: quest.isCompleted
                             ? TextDecoration.lineThrough
                             : null,
@@ -95,7 +104,8 @@ class QuestCard extends StatelessWidget {
               const SizedBox(width: 12),
               _RewardPill(
                 xpReward: quest.xpReward,
-                attribute: quest.rewardAttribute.name.toUpperCase(),
+                attribute: _attributeLabel(quest.rewardAttribute),
+                accent: accent,
               ),
             ],
           ),
@@ -130,7 +140,8 @@ class QuestCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (secondaryActionLabel != null && onSecondaryAction != null) ...[
+              if (secondaryActionLabel != null &&
+                  onSecondaryAction != null) ...[
                 const SizedBox(width: 10),
                 TextButton(
                   onPressed: onSecondaryAction,
@@ -152,13 +163,19 @@ class QuestCard extends StatelessWidget {
         '${quest.targetDurationMinutes} min + resposta',
     };
   }
+
+  String _attributeLabel(AttributeType attribute) {
+    return switch (attribute) {
+      AttributeType.strength => 'Força',
+      AttributeType.intelligence => 'Inteligência',
+      AttributeType.vitality => 'Vitalidade',
+      AttributeType.agility => 'Agilidade',
+    };
+  }
 }
 
 class _QuestChip extends StatelessWidget {
-  const _QuestChip({
-    required this.label,
-    required this.color,
-  });
+  const _QuestChip({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -188,42 +205,36 @@ class _RewardPill extends StatelessWidget {
   const _RewardPill({
     required this.xpReward,
     required this.attribute,
+    required this.accent,
   });
 
   final int xpReward;
   final String attribute;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            '+$xpReward XP',
-            style: const TextStyle(
-              color: AppColors.questAccent,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          '+$xpReward XP',
+          style: TextStyle(
+            color: accent,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 4),
-          Text(
-            attribute,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-            ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          attribute,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

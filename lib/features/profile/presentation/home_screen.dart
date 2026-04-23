@@ -252,35 +252,38 @@ class HomeScreen extends ConsumerWidget {
               SizedBox(
                 width: 138,
                 child: _buildHeaderMetricCard(
-                  label: 'LEVEL',
+                  label: 'Level',
                   value: level.toString().padLeft(2, '0'),
                   accentColor: AppColors.neonBlue,
+                  subtitle: 'próx.: ${math.max(maxXp - xp, 0)} XP',
                 ),
               ),
               SizedBox(
                 width: 138,
                 child: _buildHeaderMetricCard(
-                  label: 'RANK',
+                  label: 'Rank',
                   value: rank,
                   accentColor: AppColors.arenaAccent,
+                  subtitle: 'posto atual',
                 ),
               ),
               SizedBox(
                 width: 138,
                 child: _buildHeaderMetricCard(
-                  label: 'STREAK',
-                  value: '$currentStreak dias',
+                  label: 'Streak',
+                  value: '$currentStreak',
                   accentColor: Colors.orangeAccent,
-                  compactValue: true,
+                  subtitle: 'dias seguidos',
                 ),
               ),
               SizedBox(
                 width: 138,
                 child: _buildHeaderMetricCard(
-                  label: 'FOCO',
+                  label: 'Foco',
                   value: focus.label,
                   accentColor: AppColors.questAccent,
                   compactValue: true,
+                  subtitle: 'ativo',
                 ),
               ),
             ],
@@ -384,7 +387,7 @@ class HomeScreen extends ConsumerWidget {
               border: Border.all(color: AppColors.borderSubtle),
             ),
             child: Text(
-              'Proximo ganho: ${progressPayoff.levelLabel}',
+              'Próximo ganho: ${progressPayoff.levelLabel}',
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 12.5,
@@ -453,6 +456,7 @@ class HomeScreen extends ConsumerWidget {
     required String value,
     required Color accentColor,
     bool compactValue = false,
+    String? subtitle,
   }) {
     return Container(
       width: double.infinity,
@@ -460,18 +464,18 @@ class HomeScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textMuted,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: AppColors.textSecondary,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+              letterSpacing: compactValue ? 0.1 : 0.2,
             ),
           ),
           const SizedBox(height: 8),
@@ -486,6 +490,19 @@ class HomeScreen extends ConsumerWidget {
               height: compactValue ? 1.2 : 1,
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -672,6 +689,8 @@ class HomeScreen extends ConsumerWidget {
     Color color,
     String trailing,
   ) {
+    final clampedProgress = progress.clamp(0.0, 1.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -684,19 +703,106 @@ class HomeScreen extends ConsumerWidget {
             ),
             Text(
               trailing,
-              style: const TextStyle(fontSize: 10, color: Colors.white38),
+              style: const TextStyle(
+                fontSize: 10.5,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress.clamp(0.0, 1.0),
-            backgroundColor: Colors.white10,
-            color: color,
-            minHeight: 6,
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final trackWidth = constraints.maxWidth;
+            final markerOffset = clampedProgress == 0
+                ? 0.0
+                : (trackWidth * clampedProgress - 7).clamp(
+                    0.0,
+                    trackWidth - 14,
+                  );
+
+            return SizedBox(
+              height: 14,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    top: 3,
+                    bottom: 4,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  if (clampedProgress > 0)
+                    Positioned(
+                      left: 0,
+                      top: 2,
+                      child: Container(
+                        width: math.max(trackWidth * clampedProgress, 16),
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.34),
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.34),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (clampedProgress > 0)
+                    Positioned(
+                      left: 0,
+                      top: 3,
+                      child: Container(
+                        width: math.max(trackWidth * clampedProgress, 12),
+                        height: 7,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              color,
+                              Color.lerp(color, Colors.white, 0.22) ?? color,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  if (clampedProgress > 0)
+                    Positioned(
+                      left: markerOffset,
+                      top: -1,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color.lerp(color, Colors.white, 0.14),
+                          border: Border.all(
+                            color: AppColors.surfaceStrong,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.32),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
@@ -843,7 +949,7 @@ class HomeScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Proximo ganho',
+            'Próximo ganho',
             style: TextStyle(
               fontSize: 12,
               color: Colors.white54,
@@ -1399,12 +1505,12 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _BaseDetailEntry(
-          title: 'Proximo ganho',
+          title: 'Próximo ganho',
           summary: progressPayoff.headline,
           accent: AppColors.questAccent,
           onTap: () => _openBaseDetailSheet(
             context,
-            title: 'Proximo ganho',
+            title: 'Próximo ganho',
             child: _buildProgressPayoffCard(progressPayoff),
           ),
         ),

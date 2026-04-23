@@ -110,11 +110,11 @@ void main() {
     expect(find.text('ABR 2026'), findsOneWidget);
     expect(find.text('Momento atual'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Proximo ganho'),
+      find.text('Próximo ganho'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Proximo ganho'), findsOneWidget);
+    expect(find.text('Próximo ganho'), findsOneWidget);
     expect(find.text('Disputa da Arena'), findsOneWidget);
     expect(find.text('Evento da Semana'), findsOneWidget);
     expect(find.text('Primeira Ruptura'), findsOneWidget);
@@ -157,11 +157,11 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
-        find.text('Proximo ganho'),
+        find.text('Próximo ganho'),
         250,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Proximo ganho'), findsOneWidget);
+      expect(find.text('Próximo ganho'), findsOneWidget);
       expect(find.text('Pulso competitivo'), findsOneWidget);
       expect(find.text('Nenhum boss remoto ativo agora.'), findsOneWidget);
     },

@@ -158,7 +158,7 @@ class QuestsScreen extends ConsumerWidget {
                       title: 'Arena',
                       subtitle:
                           'Quests verificadas que contam para manutencao, boss e rank.',
-                      accent: AppColors.neonBlue,
+                      accent: AppColors.arenaAccent,
                     ),
                   ),
                 ),
@@ -276,7 +276,7 @@ class QuestsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Execucao',
+                      'Execução',
                       style: textTheme.labelMedium?.copyWith(
                         color: AppColors.neonBlue,
                       ),
@@ -317,10 +317,7 @@ class QuestsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            detail,
-            style: textTheme.bodyMedium,
-          ),
+          Text(detail, style: textTheme.bodyMedium),
           const SizedBox(height: 18),
           Wrap(
             spacing: 10,
@@ -334,7 +331,7 @@ class QuestsScreen extends ConsumerWidget {
               _QuestSummaryTile(
                 label: 'Arena',
                 value: '$competitiveCount',
-                accent: AppColors.neonBlue,
+                accent: AppColors.arenaAccent,
               ),
               _QuestSummaryTile(
                 label: 'Base',
@@ -383,10 +380,14 @@ class QuestsScreen extends ConsumerWidget {
     required int completedCount,
   }) {
     final headline = switch ((competitiveCount, personalCount)) {
-      (0, 0) => 'A semana esta vazia. Abra uma quest para colocar o ciclo em movimento.',
-      (0, _) => 'Falta pressao de arena. Abra uma quest competitiva para nao deixar o rank parado.',
-      (_, 0) => 'Sua base esta curta. Adicione uma quest pessoal para sustentar consistencia.',
-      _ => 'A mistura entre arena e base esta montada. Agora o foco e fechar o que ja esta aberto.',
+      (0, 0) =>
+        'A semana esta vazia. Abra uma quest para colocar o ciclo em movimento.',
+      (0, _) =>
+        'Falta pressao de arena. Abra uma quest competitiva para nao deixar o rank parado.',
+      (_, 0) =>
+        'Sua base esta curta. Adicione uma quest pessoal para sustentar consistencia.',
+      _ =>
+        'A mistura entre arena e base esta montada. Agora o foco e fechar o que ja esta aberto.',
     };
 
     return _SectionPanel(
@@ -418,7 +419,7 @@ class QuestsScreen extends ConsumerWidget {
                 child: _QuestSummaryTile(
                   label: 'Arena abertas',
                   value: '$competitiveCount',
-                  accent: AppColors.neonBlue,
+                  accent: AppColors.arenaAccent,
                   compact: true,
                 ),
               ),
@@ -458,10 +459,7 @@ class QuestsScreen extends ConsumerWidget {
               const Expanded(
                 child: Text(
                   'Primeira semana',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
               _StatusBadge(
@@ -501,9 +499,7 @@ class QuestsScreen extends ConsumerWidget {
                       ),
                     ),
                     child: Icon(
-                      step.isDone
-                          ? Icons.check_rounded
-                          : Icons.circle_outlined,
+                      step.isDone ? Icons.check_rounded : Icons.circle_outlined,
                       size: 14,
                       color: step.isDone
                           ? AppColors.questAccent
@@ -547,10 +543,7 @@ class QuestsScreen extends ConsumerWidget {
         children: [
           const Text(
             'Abrir quest de arena',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -790,7 +783,7 @@ class QuestsScreen extends ConsumerWidget {
     if (quest.requiresReflection) {
       reflectionAnswer = await _openReflectionPrompt(
         context,
-        quest.reflectionPrompt ?? 'O que voce fez nesta quest?',
+        quest.reflectionPrompt ?? 'O que você fez nesta quest?',
       );
       if (reflectionAnswer == null) return;
     }
@@ -818,14 +811,14 @@ class QuestsScreen extends ConsumerWidget {
     final message = switch (result) {
       QuestCompletionResult.success =>
         quest.verificationStatus == QuestVerificationStatus.inProgress
-            ? 'Quest concluida e registrada.'
-            : 'Sessao iniciada. Volte quando terminar.',
-      QuestCompletionResult.notFound => 'Quest nao encontrada.',
-      QuestCompletionResult.alreadyCompleted => 'Essa quest ja foi concluida.',
+            ? 'Quest concluída e registrada.'
+            : 'Sessão iniciada. Volte quando terminar.',
+      QuestCompletionResult.notFound => 'Quest não encontrada.',
+      QuestCompletionResult.alreadyCompleted => 'Essa quest já foi concluída.',
       QuestCompletionResult.invalidFlow =>
-        'Essa acao nao esta disponivel para essa quest agora.',
+        'Essa ação não está disponível para essa quest agora.',
       QuestCompletionResult.timerStillRunning =>
-        'Ainda falta um pouco de tempo para essa sessao contar.',
+        'Ainda falta um pouco de tempo para essa sessão contar.',
       QuestCompletionResult.missingReflection =>
         'Escreva uma resposta curta para concluir essa quest.',
     };
@@ -841,7 +834,7 @@ class QuestsScreen extends ConsumerWidget {
       ..showSnackBar(
         const SnackBar(
           content: Text(
-            'Nao foi possivel validar essa quest agora. Tente novamente em instantes.',
+            'Não foi possível validar essa quest agora. Tente novamente em instantes.',
           ),
         ),
       );
@@ -860,7 +853,7 @@ class QuestsScreen extends ConsumerWidget {
 
   String _helperTextForQuest(Quest quest, DateTime liveNow) {
     if (!quest.isCompetitive) {
-      return 'Quest pessoal: ajuda no progresso geral, mas nao entra no rank.';
+      return 'Quest pessoal: ajuda no progresso geral, mas não entra no rank.';
     }
 
     if (quest.verificationStatus == QuestVerificationStatus.inProgress &&
@@ -868,11 +861,11 @@ class QuestsScreen extends ConsumerWidget {
       final elapsed = liveNow
           .difference(quest.verificationStartedAt!)
           .inMinutes;
-      return 'Sessao em andamento ha ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min.';
+      return 'Sessão em andamento há ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min.';
     }
 
     if (quest.isCompleted) {
-      return 'Quest validada. Este dia ja conta para rank e desafio da semana.';
+      return 'Quest validada. Este dia já conta para rank e desafio da semana.';
     }
 
     return switch (quest.verificationMode) {
@@ -921,10 +914,7 @@ class QuestsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 const Text(
                   'Finalizar quest',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -974,10 +964,7 @@ class QuestsScreen extends ConsumerWidget {
         children: [
           const Text(
             'Sugestoes da semana',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -1202,10 +1189,7 @@ class QuestsScreen extends ConsumerWidget {
 }
 
 class _SectionPanel extends StatelessWidget {
-  const _SectionPanel({
-    required this.child,
-    required this.accent,
-  });
+  const _SectionPanel({required this.child, required this.accent});
 
   final Widget child;
   final Color accent;
@@ -1219,10 +1203,7 @@ class _SectionPanel extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.06),
-            AppColors.surface,
-          ],
+          colors: [accent.withValues(alpha: 0.06), AppColors.surface],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.borderSubtle),
@@ -1240,10 +1221,7 @@ class _SectionPanel extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.label,
-    required this.accent,
-  });
+  const _StatusBadge({required this.label, required this.accent});
 
   final String label;
   final Color accent;

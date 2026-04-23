@@ -133,22 +133,37 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         snapshot?.targetRequiredLevel ?? nextRule?.minimumLevel ?? player.level;
     final targetLevelGateMet = snapshot?.targetLevelGateMet ?? true;
     final heroMessage =
-        snapshot?.summary ?? 'Seu estado competitivo ainda esta sincronizando.';
+        snapshot?.summary ?? 'Seu estado competitivo ainda está sincronizando.';
+    final currentActiveDays = snapshot?.activeDays ?? 0;
+    final nextActiveDays = nextRule == null
+        ? currentActiveDays
+        : currentActiveDays.clamp(0, nextRule.requiredActiveDays);
+    final nextProgress = nextRule == null || nextRule.requiredActiveDays == 0
+        ? 1.0
+        : (nextActiveDays / nextRule.requiredActiveDays).clamp(0.0, 1.0);
     final currentObjective = remainingCurrentDays == 0
-        ? 'Seu posto desta semana esta protegido.'
+        ? 'Seu posto desta semana está protegido.'
         : 'Faltam $remainingCurrentDays dia(s) competitivos validados para segurar $currentRank.';
     final bossRead = currentRule.requiresBossClear
         ? ((snapshot?.bossCompleted ?? false)
               ? 'Boss da semana confirmado.'
               : 'Boss da semana ainda pendente.')
-        : 'Este posto nao exige boss semanal.';
+        : 'Este posto não exige boss semanal.';
     final nextGate = nextRank == null
-        ? 'Voce ja esta no topo disponivel pelo seu level atual.'
+        ? 'Você já está no topo disponível pelo seu level atual.'
         : !targetLevelGateMet
         ? 'O rank $nextRank abre a partir do level $targetLevel.'
         : snapshot?.promotionReady == true
-        ? 'A prova para $nextRank ja pode ser iniciada.'
-        : 'O proximo gate esta em $nextRank.';
+        ? 'A prova para $nextRank já pode ser iniciada.'
+        : 'O próximo gate está em $nextRank.';
+    final progressRead = nextRank == null
+        ? 'Topo competitivo já liberado no seu level atual.'
+        : !targetLevelGateMet
+        ? 'Level $targetLevel necessário para abrir o rank $nextRank.'
+        : '$nextActiveDays/${nextRule!.requiredActiveDays} dias validados para chegar em $nextRank.';
+    final maintenancePill = remainingCurrentDays == 0
+        ? 'Posto seguro'
+        : '$remainingCurrentDays dia(s) para segurar';
 
     return _Panel(
       child: Column(
@@ -182,13 +197,13 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               const InfoTooltipIcon(
                 title: 'Como ler esta tela',
                 message:
-                    'Agora mostra o que precisa ser feito nesta semana. Temporada resume seu momento atual. Legado guarda o que voce ja conquistou.',
+                    'Agora mostra o que precisa ser feito nesta semana. Temporada resume seu momento atual. Legado guarda o que você já conquistou.',
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            'Seu posto atual, o risco da semana e o proximo gate em um unico quadro.',
+            'Seu posto atual, o risco da semana e o próximo gate em um único quadro.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 18),
@@ -214,28 +229,103 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Container(
+                      width: 92,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceStrong.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.24),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Rank',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: AppColors.arenaAccent.withValues(
+                                  alpha: 0.38,
+                                ),
+                                width: 1.4,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              currentRank,
+                              style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.arenaAccent,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            peakRank == currentRank
+                                ? 'No pico'
+                                : 'Pico $peakRank',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
                     Expanded(
-                      flex: 4,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rank atual',
-                            style: textTheme.labelMedium?.copyWith(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
+                            'Rank $currentRank',
+                            style: textTheme.titleLarge?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
-                            currentRank,
-                            style: TextStyle(
-                              fontSize: 58,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                            'Pico histórico: $peakRank',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
+                          _RankProgressRead(
+                            label: nextRank == null
+                                ? 'Faixa máxima liberada'
+                                : 'Rumo ao rank $nextRank',
+                            detail: progressRead,
+                            progress: nextProgress,
+                            accent: targetLevelGateMet
+                                ? AppColors.neonBlue
+                                : Colors.orangeAccent,
+                            trailing: nextRank == null
+                                ? 'Topo'
+                                : '$nextActiveDays/${nextRule!.requiredActiveDays}',
+                          ),
+                          const SizedBox(height: 14),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -245,43 +335,26 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                                 color: accent,
                               ),
                               _StatusPill(
-                                label: 'Pico $peakRank',
-                                color: AppColors.arenaAccent,
+                                label: maintenancePill,
+                                color: accent,
                               ),
+                              if (currentRule.requiresBossClear)
+                                _StatusPill(
+                                  label: (snapshot?.bossCompleted ?? false)
+                                      ? 'Boss OK'
+                                      : 'Boss pendente',
+                                  color: (snapshot?.bossCompleted ?? false)
+                                      ? AppColors.arenaAccent
+                                      : Colors.orangeAccent,
+                                ),
                               if (nextRank != null)
                                 _StatusPill(
-                                  label: 'Proximo $nextRank',
-                                  color: AppColors.neonBlue,
+                                  label: 'Próximo $nextRank',
+                                  color: targetLevelGateMet
+                                      ? AppColors.neonBlue
+                                      : Colors.orangeAccent,
                                 ),
                             ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 5,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _HeroReadTile(
-                            label: 'Semana',
-                            value: currentObjective,
-                            accent: accent,
-                          ),
-                          const SizedBox(height: 10),
-                          _HeroReadTile(
-                            label: 'Boss',
-                            value: bossRead,
-                            accent: AppColors.arenaAccent,
-                          ),
-                          const SizedBox(height: 10),
-                          _HeroReadTile(
-                            label: 'Proximo gate',
-                            value: nextGate,
-                            accent: targetLevelGateMet
-                                ? AppColors.neonBlue
-                                : Colors.orangeAccent,
                           ),
                         ],
                       ),
@@ -294,6 +367,26 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                   style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.textPrimary,
                   ),
+                ),
+                const SizedBox(height: 16),
+                _HeroReadTile(
+                  label: 'Semana',
+                  value: currentObjective,
+                  accent: accent,
+                ),
+                const SizedBox(height: 10),
+                _HeroReadTile(
+                  label: 'Boss',
+                  value: bossRead,
+                  accent: AppColors.arenaAccent,
+                ),
+                const SizedBox(height: 10),
+                _HeroReadTile(
+                  label: 'Próximo gate',
+                  value: nextGate,
+                  accent: targetLevelGateMet
+                      ? AppColors.neonBlue
+                      : Colors.orangeAccent,
                 ),
                 const SizedBox(height: 14),
                 Wrap(
@@ -311,7 +404,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                       accent: AppColors.arenaAccent,
                     ),
                     _MetricCard(
-                      label: 'Liberado por',
+                      label: 'Liberado até',
                       value: eligibleRank,
                       accent: accent,
                     ),
@@ -1824,6 +1917,83 @@ class _MetricCard extends StatelessWidget {
               fontSize: 15.5,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankProgressRead extends StatelessWidget {
+  const _RankProgressRead({
+    required this.label,
+    required this.detail,
+    required this.progress,
+    required this.accent,
+    required this.trailing,
+  });
+
+  final String label;
+  final String detail;
+  final double progress;
+  final Color accent;
+  final String trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final clampedProgress = progress.clamp(0.0, 1.0);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceStrong.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                trailing,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: clampedProgress,
+              minHeight: 6,
+              backgroundColor: Colors.white10,
+              color: accent,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            detail,
+            style: const TextStyle(
+              fontSize: 12.3,
+              color: AppColors.textSecondary,
+              height: 1.45,
             ),
           ),
         ],

@@ -96,6 +96,7 @@ lib/
 - UI surface ownership should now follow the product map in:
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
+  - `docs/product/ui-redesign-phases.md`
   - intended labels:
     - `BASE`: snapshot, momentum, build identity
     - `QUESTS`: execution
@@ -113,6 +114,20 @@ lib/
   - short strong summary on the top-level tab
   - detail on tap through rows, sheets, or child screens
   - avoid endless same-weight panel stacks as the default solution
+- the `Base` screen now follows that rule more explicitly:
+  - one identity/progression hero
+  - one compact momentum block
+  - one build preview
+  - secondary reads such as streak, payoff, pulse, rivalry, and weekly event move into detail-sheet entries
+- the `Plano` screen now also follows a clearer surface split:
+  - one short planning header
+  - one weekly-read block
+  - one next-step block
+  - broader diagnostics and build management move into quieter detail entries
+- the shared visual foundation now has an explicit implementation boundary:
+  - `lib/core/theme/app_colors.dart`
+  - `lib/core/theme/app_theme.dart`
+  - feature screens should prefer these tokens over ad-hoc repeated color/style systems
 - account and identity management now have their own dedicated screen:
   - `account_screen.dart`
   - it is entered from `Stats`, but it is not a bottom-navigation destination

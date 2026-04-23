@@ -24,31 +24,34 @@ class QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = quest.isCompetitive
-        ? AppColors.neonBlue
-        : Colors.greenAccent;
-    final background = quest.isCompleted
-        ? Colors.green.withValues(alpha: 0.10)
+    final accent = quest.isCompleted
+        ? AppColors.questAccent
         : quest.isCompetitive
-        ? AppColors.neonBlue.withValues(alpha: 0.06)
-        : Colors.greenAccent.withValues(alpha: 0.05);
+        ? AppColors.neonBlue
+        : AppColors.questAccent;
+    final badgeColor = quest.isCompetitive
+        ? AppColors.neonBlue
+        : AppColors.questAccent;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [background, Colors.white.withValues(alpha: 0.02)],
-        ),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: quest.isCompleted
-              ? Colors.greenAccent
-              : accent.withValues(alpha: 0.45),
+              ? AppColors.questAccent.withValues(alpha: 0.24)
+              : AppColors.borderSubtle,
         ),
-        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,40 +63,39 @@ class QuestCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      quest.title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        decoration: quest.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         _QuestChip(
-                          label: quest.isCompetitive ? 'ARENA' : 'BASE',
-                          color: quest.isCompetitive
-                              ? AppColors.neonBlue
-                              : Colors.greenAccent,
+                          label: quest.isCompetitive ? 'Arena' : 'Base',
+                          color: badgeColor,
                         ),
                         _QuestChip(
                           label: _verificationLabel(quest),
-                          color: Colors.amberAccent,
-                        ),
-                        _QuestChip(
-                          label:
-                              '+${quest.xpReward} XP | ${quest.rewardAttribute.name.toUpperCase()}',
-                          color: Colors.greenAccent,
+                          color: AppColors.arenaAccent,
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      quest.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                        decoration: quest.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 12),
+              _RewardPill(
+                xpReward: quest.xpReward,
+                attribute: quest.rewardAttribute.name.toUpperCase(),
               ),
             ],
           ),
@@ -102,44 +104,37 @@ class QuestCard extends StatelessWidget {
             Text(
               helperText!,
               style: const TextStyle(
-                fontSize: 11.5,
-                color: Colors.white60,
-                height: 1.4,
+                fontSize: 12.5,
+                color: AppColors.textSecondary,
+                height: 1.45,
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
-              OutlinedButton(
-                onPressed: primaryActionEnabled ? onPrimaryAction : null,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: quest.isCompleted
-                      ? Colors.greenAccent
-                      : AppColors.neonBlue,
-                  side: BorderSide(
-                    color:
-                        (quest.isCompleted
-                                ? Colors.greenAccent
-                                : AppColors.neonBlue)
-                            .withValues(alpha: 0.45),
+              Expanded(
+                child: FilledButton.tonal(
+                  onPressed: primaryActionEnabled ? onPrimaryAction : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accent.withValues(alpha: 0.16),
+                    foregroundColor: accent,
+                    disabledBackgroundColor: Colors.white.withValues(
+                      alpha: 0.05,
+                    ),
+                    disabledForegroundColor: Colors.white38,
+                  ),
+                  child: Text(
+                    primaryActionLabel ??
+                        (quest.isCompleted ? 'Concluida' : 'Marcar'),
                   ),
                 ),
-                child: Text(
-                  primaryActionLabel ??
-                      (quest.isCompleted ? 'CONCLUIDA' : 'MARCAR'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
               ),
-              if (secondaryActionLabel != null &&
-                  onSecondaryAction != null) ...[
+              if (secondaryActionLabel != null && onSecondaryAction != null) ...[
                 const SizedBox(width: 10),
                 TextButton(
                   onPressed: onSecondaryAction,
-                  child: Text(
-                    secondaryActionLabel!,
-                    style: const TextStyle(color: Colors.white60),
-                  ),
+                  child: Text(secondaryActionLabel!),
                 ),
               ],
             ],
@@ -151,16 +146,19 @@ class QuestCard extends StatelessWidget {
 
   String _verificationLabel(Quest quest) {
     return switch (quest.verificationMode) {
-      QuestVerificationMode.manual => 'CHECK',
-      QuestVerificationMode.timer => '${quest.targetDurationMinutes} MIN',
+      QuestVerificationMode.manual => 'Check simples',
+      QuestVerificationMode.timer => '${quest.targetDurationMinutes} min',
       QuestVerificationMode.timerWithReflection =>
-        '${quest.targetDurationMinutes} MIN + RESPOSTA',
+        '${quest.targetDurationMinutes} min + resposta',
     };
   }
 }
 
 class _QuestChip extends StatelessWidget {
-  const _QuestChip({required this.label, required this.color});
+  const _QuestChip({
+    required this.label,
+    required this.color,
+  });
 
   final String label;
   final Color color;
@@ -168,20 +166,63 @@ class _QuestChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 10.5,
           color: color,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
         ),
+      ),
+    );
+  }
+}
+
+class _RewardPill extends StatelessWidget {
+  const _RewardPill({
+    required this.xpReward,
+    required this.attribute,
+  });
+
+  final int xpReward;
+  final String attribute;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '+$xpReward XP',
+            style: const TextStyle(
+              color: AppColors.questAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            attribute,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

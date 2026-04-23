@@ -13,6 +13,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - For navigation, labels, or major UI hierarchy, read:
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
+  - `docs/product/ui-redesign-phases.md`
 - Identify whether the change touches a critical system:
   - progression logic
   - quest completion
@@ -40,6 +41,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - If changing major UI surfaces, check whether the work also needs updates to:
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
+  - `docs/product/ui-redesign-phases.md`
   - `docs/ai/architecture-map.md`
 
 ## Before Finishing

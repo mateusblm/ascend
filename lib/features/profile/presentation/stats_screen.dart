@@ -56,39 +56,84 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       weeklyBossProgress: weeklyBossProgress,
       weeklyBossClaimed: weeklyBossClaimed,
     );
+    final weekProgress = (insights.discipline.currentWeekActiveDays / 7).clamp(
+      0.0,
+      1.0,
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RevealBlock(
-                child: _buildHeader(
-                  context,
-                  player,
-                  authState,
-                  rankSnapshot,
-                  promotionExam,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 16),
+                    child: _buildHeader(
+                      context,
+                      player,
+                      authState,
+                      insights,
+                      promotionExam,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
-              RevealBlock(
-                delay: const Duration(milliseconds: 80),
-                child: _buildPlanHub(
-                  context,
-                  player,
-                  attrs,
-                  insights,
-                  weeklyBoss,
-                  weeklyBossProgress,
-                  weeklyBossClaimed,
-                  rankHistory,
-                  rankSnapshot,
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 70),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildWeeklyReadPanel(
+                      context,
+                      player,
+                      insights,
+                      weekProgress,
+                      weeklyBoss,
+                      weeklyBossProgress,
+                      weeklyBossClaimed,
+                      rankHistory,
+                    ),
+                  ),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 130),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildNextStepPanel(
+                      context,
+                      insights,
+                      weeklyBoss,
+                      rankSnapshot,
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 190),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildPlanHub(
+                      context,
+                      player,
+                      attrs,
+                      insights,
+                      weeklyBoss,
+                      weeklyBossProgress,
+                      weeklyBossClaimed,
+                      rankHistory,
+                      rankSnapshot,
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
         ),
@@ -100,43 +145,50 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     BuildContext context,
     Player player,
     AuthState authState,
-    CompetitiveRankSnapshot? rankSnapshot,
+    WeeklyInsightsBundle insights,
     PromotionExam? promotionExam,
   ) {
-    final currentRank =
-        rankSnapshot?.currentRank ?? playerRankForLevel(player.level);
-    final progress = player.maxXp == 0
-        ? 0.0
-        : (player.xp / player.maxXp).clamp(0.0, 1.0);
+    final textTheme = Theme.of(context).textTheme;
+    final statusAccent = switch (insights.review.status) {
+      WeeklyReviewStatus.rising => AppColors.questAccent,
+      WeeklyReviewStatus.stable => AppColors.planAccent,
+      WeeklyReviewStatus.risk => AppColors.arenaAccent,
+      WeeklyReviewStatus.critical => AppColors.danger,
+    };
 
     return _ContrastPanel(
-      accent: AppColors.neonBlue,
+      accent: AppColors.planAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ajuste semanal',
-                      style: TextStyle(
+                      'Plano',
+                      style: textTheme.labelMedium?.copyWith(
                         fontSize: 11,
-                        color: Colors.white38,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
+                        color: AppColors.planAccent,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      'Plano',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
+                      'Leitura semanal e proximo passo',
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontSize: 28,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      player.name,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -149,25 +201,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   if (authState is AuthSuccess) ...[
                     OutlinedButton.icon(
                       onPressed: () => _openAccountScreen(context),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.neonBlue,
-                        side: BorderSide(
-                          color: AppColors.neonBlue.withValues(alpha: 0.35),
-                        ),
-                        backgroundColor: AppColors.neonBlue.withValues(
-                          alpha: 0.06,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
                       icon: const Icon(Icons.manage_accounts_rounded, size: 16),
                       label: const Text(
-                        'CONTA',
+                        'Conta',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -186,125 +222,63 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Leitura da semana, ajustes de build e proximo passo sem repetir o peso da arena.',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 12.5,
-              height: 1.4,
-            ),
+          Text(
+            insights.review.summary,
+            style: textTheme.titleLarge?.copyWith(height: 1.2),
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.neonBlue.withValues(alpha: 0.10),
-                  Colors.white.withValues(alpha: 0.03),
-                ],
+          const SizedBox(height: 8),
+          Text(
+            insights.review.detail,
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _MetricCard(
+                label: 'Score',
+                value: '${insights.discipline.score}%',
+                accent: statusAccent,
               ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: AppColors.neonBlue.withValues(alpha: 0.12),
+              _MetricCard(
+                label: 'Grau',
+                value: insights.discipline.grade,
+                accent: statusAccent,
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.neonBlue.withValues(alpha: 0.12),
-                    border: Border.all(
-                      color: AppColors.neonBlue.withValues(alpha: 0.30),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.neonBlue,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        player.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rank $currentRank | Lv ${player.level}',
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      LinearPercentIndicator(
-                        padding: EdgeInsets.zero,
-                        lineHeight: 8,
-                        percent: progress,
-                        barRadius: const Radius.circular(999),
-                        backgroundColor: Colors.white10,
-                        progressColor: AppColors.neonBlue,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    children: [
-                      _MetricCard(
-                        label: 'XP',
-                        value: '${player.xp}/${player.maxXp}',
-                        accent: AppColors.neonBlue,
-                      ),
-                      const SizedBox(height: 10),
-                      _MetricCard(
-                        label: 'PONTOS',
-                        value: '${player.statPoints}',
-                        accent: player.statPoints > 0
-                            ? Colors.amberAccent
-                            : Colors.white70,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              _MetricCard(
+                label: 'Semana',
+                value: '${insights.discipline.currentWeekActiveDays}/7',
+                accent: AppColors.questAccent,
+              ),
+              _MetricCard(
+                label: 'Foco',
+                value: player.primaryFocus.label,
+                accent: AppColors.planAccent,
+              ),
+            ],
           ),
           if (promotionExam != null) ...[
             const SizedBox(height: 12),
             _MiniNote(
-              title: 'Exame',
+              title: 'Arena em paralelo',
               text: switch (promotionExam.status) {
                 PromotionExamStatus.inProgress =>
                   promotionExam.mode == PromotionExamMode.reconquest
-                      ? 'Reconquista em andamento: meta de ${promotionExam.targetActiveDays} dias ativos.'
-                      : 'Prova em andamento: meta de ${promotionExam.targetActiveDays} dias ativos.',
+                      ? 'Existe uma reconquista em andamento com meta de ${promotionExam.targetActiveDays} dias ativos. O detalhe competitivo fica em Arena.'
+                      : 'Existe uma prova em andamento com meta de ${promotionExam.targetActiveDays} dias ativos. O detalhe competitivo fica em Arena.',
                 PromotionExamStatus.passed =>
                   promotionExam.mode == PromotionExamMode.reconquest
-                      ? 'Reconquista pronta para confirmar.'
-                      : 'Promocao pronta para confirmar.',
+                      ? 'A reconquista esta pronta para confirmar. O fechamento competitivo continua em Arena.'
+                      : 'A promocao esta pronta para confirmar. O fechamento competitivo continua em Arena.',
                 PromotionExamStatus.failed =>
-                  'A prova expirou ou nao foi sustentada.',
+                  'A prova expirou ou nao foi sustentada. Use esta tela para reorganizar a semana antes de voltar a Arena.',
                 PromotionExamStatus.promoted =>
                   promotionExam.mode == PromotionExamMode.reconquest
-                      ? 'Reconquista ja registrada.'
-                      : 'Promocao ja registrada.',
+                      ? 'A reconquista ja foi registrada.'
+                      : 'A promocao ja foi registrada.',
               },
-              accent: AppColors.neonBlue,
+              accent: AppColors.textMuted,
             ),
           ],
         ],
@@ -329,88 +303,34 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     List<CompetitiveRankSnapshot> rankHistory,
     CompetitiveRankSnapshot? rankSnapshot,
   ) {
-    final currentRank =
-        rankSnapshot?.currentRank ?? playerRankForLevel(player.level);
-    final reviewAccent = switch (insights.review.status) {
-      WeeklyReviewStatus.rising => Colors.greenAccent,
-      WeeklyReviewStatus.stable => AppColors.neonBlue,
-      WeeklyReviewStatus.risk => Colors.orangeAccent,
-      WeeklyReviewStatus.critical => Colors.redAccent,
-    };
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _AccentPanel(
-          accent: reviewAccent,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Leitura rapida',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white54,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                insights.review.summary,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                insights.review.recommendation,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12.5,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'SCORE',
-                      value: '${insights.discipline.score}%',
-                      accent: reviewAccent,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'GRAU',
-                      value: insights.discipline.grade,
-                      accent: reviewAccent,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'RANK',
-                      value: currentRank,
-                      accent: AppColors.neonBlue,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        const Text(
+          'Abrir detalhes',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'A leitura principal fica curta. Use essas entradas para abrir o restante do diagnostico.',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12.5,
+            height: 1.45,
           ),
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
           title: 'Visao geral',
-          summary: insights.review.detail,
-          supporting:
-              'Ritmo da conta, progresso geral de level, streak e leitura consolidada da semana.',
+          summary:
+              'Ritmo da conta, streak, level e leitura consolidada da semana em um unico detalhe.',
+          supporting: 'Resumo amplo da conta sem repetir a tela principal.',
           badge: insights.review.badge,
-          accent: reviewAccent,
+          accent: AppColors.planAccent,
           onTap: () => _openPlanDetail(
             context,
             title: 'Visao Geral',
@@ -421,11 +341,10 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'BUILD',
+          title: 'Build',
           summary:
-              'Forca ${attrs.strength} | Inteligencia ${attrs.intelligence} | Vitalidade ${attrs.vitality} | Agilidade ${attrs.agility}',
-          supporting:
-              'Distribuicao de atributos e uso dos pontos livres, sem misturar isso com a arena.',
+              'For ${attrs.strength} | Int ${attrs.intelligence} | Vit ${attrs.vitality} | Agi ${attrs.agility}',
+          supporting: 'Ajuste de atributos e pontos livres.',
           badge: player.statPoints > 0 ? '${player.statPoints} PTS' : 'SEM PTS',
           accent: Colors.amberAccent,
           onTap: () => _openPlanDetail(
@@ -438,12 +357,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
-          title: 'Semana',
-          summary: insights.review.summary,
-          supporting:
-              'Historico recente, qualidade da semana e o que esta acontecendo com sua cadencia.',
+          title: 'Semana detalhada',
+          summary:
+              'Historico recente, leitura completa da cadencia e comparacao com a semana anterior.',
+          supporting: 'Abre a leitura completa da semana e do historico.',
           badge: '${insights.discipline.currentWeekActiveDays}/7',
-          accent: Colors.greenAccent,
+          accent: AppColors.questAccent,
           onTap: () => _openPlanDetail(
             context,
             title: 'Semana',
@@ -459,28 +378,242 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        _SectionEntryCard(
-          title: 'Proximo passo',
-          summary: insights.nextWeekPlan.headline,
-          supporting:
-              'Plano pratico da proxima semana para recuperar, estabilizar ou empurrar sua evolucao.',
-          badge: insights.nextWeekPlan.difficultyLabel,
-          accent: AppColors.neonBlue,
-          onTap: () => _openPlanDetail(
-            context,
-            title: 'Proximo Passo',
-            subtitle:
-                'Plano da proxima semana com prioridades curtas e regra operacional.',
-            child: _buildPlanSection(
-              player,
-              insights,
-              weeklyBoss,
-              rankSnapshot,
+      ],
+    );
+  }
+
+  Widget _buildWeeklyReadPanel(
+    BuildContext context,
+    Player player,
+    WeeklyInsightsBundle insights,
+    double weekProgress,
+    WeeklyBossDefinition? weeklyBoss,
+    int weeklyBossProgress,
+    bool weeklyBossClaimed,
+    List<CompetitiveRankSnapshot> rankHistory,
+  ) {
+    final reviewAccent = switch (insights.review.status) {
+      WeeklyReviewStatus.rising => AppColors.questAccent,
+      WeeklyReviewStatus.stable => AppColors.planAccent,
+      WeeklyReviewStatus.risk => AppColors.arenaAccent,
+      WeeklyReviewStatus.critical => AppColors.danger,
+    };
+    final delta = insights.discipline.deltaFromPreviousWeek;
+    final deltaLabel = delta == 0 ? 'sem mudanca' : '${delta > 0 ? '+' : ''}$delta';
+
+    return _AccentPanel(
+      accent: reviewAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Leitura da semana',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _InlineBadge(
+                label: insights.review.badge,
+                accent: reviewAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            insights.review.summary,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Text(
+            insights.review.recommendation,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _MetricCard(
+                  label: 'Score',
+                  value: '${insights.discipline.score}%',
+                  accent: reviewAccent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MetricCard(
+                  label: 'Grau',
+                  value: insights.discipline.grade,
+                  accent: reviewAccent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MetricCard(
+                  label: 'Delta',
+                  value: deltaLabel,
+                  accent: delta >= 0 ? AppColors.planAccent : AppColors.danger,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _buildOverviewBar(
+            label: 'Cadencia da semana',
+            trailing: '${insights.discipline.currentWeekActiveDays}/7 dias ativos',
+            percent: weekProgress,
+            color: reviewAccent,
+          ),
+          const SizedBox(height: 12),
+          _MiniNote(
+            title: 'Comparacao',
+            text:
+                'Semana passada: ${insights.discipline.previousWeekActiveDays}/7 dias ativos. Historico recente: ${rankHistory.isEmpty ? 'ainda sem semanas registradas.' : '${rankHistory.take(2).length} leitura(s) pronta(s) para abrir no detalhe.'}',
+            accent: AppColors.textMuted,
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () => _openPlanDetail(
+                context,
+                title: 'Semana',
+                subtitle:
+                    'Leitura semanal, historico recente e o peso disso na sua consistencia.',
+                child: _buildWeeklySection(
+                  player,
+                  insights,
+                  weeklyBoss,
+                  weeklyBossProgress,
+                  weeklyBossClaimed,
+                  rankHistory,
+                ),
+              ),
+              icon: const Icon(Icons.chevron_right_rounded),
+              label: const Text('Abrir semana'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextStepPanel(
+    BuildContext context,
+    WeeklyInsightsBundle insights,
+    WeeklyBossDefinition? weeklyBoss,
+    CompetitiveRankSnapshot? rankSnapshot,
+  ) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Proximo passo',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _InlineBadge(
+                label: insights.nextWeekPlan.difficultyLabel,
+                accent: AppColors.planAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            insights.nextWeekPlan.headline,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            insights.nextWeekPlan.summary,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...insights.nextWeekPlan.priorities.take(3).map(
+            (priority) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 16,
+                      color: AppColors.planAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      priority,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12.5,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          _MiniNote(
+            title: 'Regra da semana',
+            text: insights.nextWeekPlan.rule,
+            accent: AppColors.planAccent,
+          ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () => _openPlanDetail(
+                context,
+                title: 'Proximo Passo',
+                subtitle:
+                    'Plano da proxima semana com prioridades curtas e regra operacional.',
+                child: _buildPlanSection(
+                  insights,
+                  weeklyBoss,
+                  rankSnapshot,
+                ),
+              ),
+              icon: const Icon(Icons.chevron_right_rounded),
+              label: const Text('Abrir plano'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -917,7 +1050,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
   }
 
   Widget _buildPlanSection(
-    Player player,
     WeeklyInsightsBundle insights,
     WeeklyBossDefinition? weeklyBoss,
     CompetitiveRankSnapshot? rankSnapshot,
@@ -1066,16 +1198,17 @@ class _Panel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.05),
-            Colors.white.withValues(alpha: 0.02),
+            AppColors.surfaceMuted,
+            AppColors.surface,
+            AppColors.surfaceStrong.withValues(alpha: 0.86),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: AppColors.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
-            blurRadius: 18,
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 16,
             offset: const Offset(0, 10),
           ),
         ],
@@ -1101,12 +1234,20 @@ class _AccentPanel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withValues(alpha: 0.12),
-            Colors.white.withValues(alpha: 0.03),
+            accent.withValues(alpha: 0.08),
+            AppColors.surface,
+            AppColors.surfaceMuted,
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: child,
     );
@@ -1129,22 +1270,52 @@ class _ContrastPanel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withValues(alpha: 0.10),
-            Colors.black.withValues(alpha: 0.16),
-            Colors.white.withValues(alpha: 0.02),
+            accent.withValues(alpha: 0.08),
+            AppColors.surface,
+            AppColors.surfaceMuted,
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: accent.withValues(alpha: 0.16)),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _InlineBadge extends StatelessWidget {
+  const _InlineBadge({
+    required this.label,
+    required this.accent,
+  });
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: accent,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
@@ -1179,14 +1350,13 @@ class _MiniNote extends StatelessWidget {
               fontSize: 11,
               color: accent,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             text,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.textSecondary,
               fontSize: 12.3,
               height: 1.45,
             ),
@@ -1223,12 +1393,12 @@ class _SectionEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 96),
-          padding: const EdgeInsets.all(18),
+          constraints: const BoxConstraints(minHeight: 84),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.06),
+            color: AppColors.surfaceMuted,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: accent.withValues(alpha: 0.18)),
+            border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Row(
             children: [
@@ -1253,15 +1423,17 @@ class _SectionEntryCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.16),
+                            color: accent.withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white10),
+                            border: Border.all(
+                              color: accent.withValues(alpha: 0.18),
+                            ),
                           ),
                           child: Text(
                             badge,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
-                              color: Colors.white70,
+                              color: accent,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -1272,20 +1444,23 @@ class _SectionEntryCard extends StatelessWidget {
                     Text(
                       summary,
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      supporting,
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 12.3,
-                        height: 1.45,
+                    if (supporting.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        supporting,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.3,
+                          height: 1.45,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -1294,14 +1469,14 @@ class _SectionEntryCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.16),
+                  color: accent.withValues(alpha: 0.10),
                   shape: BoxShape.circle,
-                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                  border: Border.all(color: accent.withValues(alpha: 0.18)),
                 ),
                 child: Icon(
                   Icons.chevron_right_rounded,
                   color: accent,
-                  size: 24,
+                  size: 22,
                 ),
               ),
             ],
@@ -1326,6 +1501,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(minWidth: 108),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
@@ -1339,15 +1515,14 @@ class _MetricCard extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 10,
-              color: Colors.white54,
-              letterSpacing: 1.0,
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 5),
           Text(
             value,
             style: TextStyle(
-              fontSize: 15.5,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
               color: accent,
             ),

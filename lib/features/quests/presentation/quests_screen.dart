@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/profile/domain/first_week_journey.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
@@ -15,6 +15,7 @@ import 'package:ascend/features/quests/presentation/widgets/quest_card.dart';
 import 'package:ascend/features/weekly_boss/presentation/weekly_boss_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final questLiveNowProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
   yield DateTime.now();
@@ -77,9 +78,6 @@ class QuestsScreen extends ConsumerWidget {
     );
     final liveNow =
         ref.watch(questLiveNowProvider).valueOrNull ?? DateTime.now();
-    final personalCompletedCount = quests
-        .where((q) => !q.isCompetitive && q.isCompleted)
-        .length;
     final completedCount = completedQuests.length;
     final totalActiveCount =
         competitiveQuests.length + personalActiveQuests.length;
@@ -87,8 +85,8 @@ class QuestsScreen extends ConsumerWidget {
         ? firstWeekJourney.nextAction
         : insights.review.summary;
     final heroDetail = weeklyBoss == null
-        ? 'Base ativa e arena pronta para abrir quando surgir boss remoto.'
-        : 'Boss semanal em $weeklyBossProgress/${weeklyBoss.targetActiveDays}. Mantenha ritmo para sustentar rank e progresso.';
+        ? 'Base ativa. Abra ou conclua quests para manter o ritmo da semana.'
+        : 'Boss semanal em $weeklyBossProgress/${weeklyBoss.targetActiveDays}. Feche quests de arena para sustentar o rank.';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -100,8 +98,9 @@ class QuestsScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: RevealBlock(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 22),
+                    padding: const EdgeInsets.only(top: 20, bottom: 16),
                     child: _buildHero(
+                      context,
                       playerName: player.name,
                       activeCount: totalActiveCount,
                       competitiveCount: competitiveQuests.length,
@@ -117,39 +116,48 @@ class QuestsScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: RevealBlock(
                   delay: const Duration(milliseconds: 70),
-                  child: _buildQuestCommandDeck(
-                    competitiveCount: competitiveQuests.length,
-                    personalCount: personalActiveQuests.length,
-                    completedCount: personalCompletedCount,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildQuestCommandDeck(
+                      competitiveCount: competitiveQuests.length,
+                      personalCount: personalActiveQuests.length,
+                      completedCount: completedCount,
+                    ),
                   ),
                 ),
               ),
               if (firstWeekJourney.isActive)
                 SliverToBoxAdapter(
                   child: RevealBlock(
-                    delay: const Duration(milliseconds: 100),
-                    child: _buildFirstWeekPanel(firstWeekJourney),
+                    delay: const Duration(milliseconds: 110),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildFirstWeekPanel(firstWeekJourney),
+                    ),
                   ),
                 ),
               if (officialTemplates.isNotEmpty)
                 SliverToBoxAdapter(
                   child: RevealBlock(
-                    delay: const Duration(milliseconds: 130),
-                    child: _buildCompetitiveTemplatesPanel(
-                      context,
-                      ref,
-                      officialTemplates,
+                    delay: const Duration(milliseconds: 140),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: _buildCompetitiveTemplatesPanel(
+                        context,
+                        ref,
+                        officialTemplates,
+                      ),
                     ),
                   ),
                 ),
               if (competitiveQuests.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: _buildSectionHeader(
-                      title: 'Missoes de Arena',
+                      title: 'Arena',
                       subtitle:
-                          'Rotacao competitiva pronta para contar no rank desta semana.',
+                          'Quests verificadas que contam para manutencao, boss e rank.',
                       accent: AppColors.neonBlue,
                     ),
                   ),
@@ -163,16 +171,19 @@ class QuestsScreen extends ConsumerWidget {
                 ),
               if (suggestions.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: _buildSuggestionsPanel(context, ref, suggestions),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: _buildSuggestionsPanel(context, ref, suggestions),
+                  ),
                 ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 6, bottom: 12),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: _buildSectionHeader(
-                    title: 'Rotina Base',
+                    title: 'Base',
                     subtitle:
-                        'Quests pessoais mantem level, streak e margem para arena.',
-                    accent: Colors.greenAccent,
+                        'Quests pessoais mantem level, streak e regularidade.',
+                    accent: AppColors.questAccent,
                   ),
                 ),
               ),
@@ -185,16 +196,15 @@ class QuestsScreen extends ConsumerWidget {
                 )
               else
                 _buildEmptyState(
-                  'Nenhuma quest pessoal ativa. Toque em + para criar uma ou use as sugestoes abaixo.',
+                  'Nenhuma quest pessoal ativa. Toque em Nova quest ou use as sugestoes da semana.',
                 ),
               if (completedQuests.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 26, bottom: 12),
+                    padding: const EdgeInsets.only(top: 14, bottom: 12),
                     child: _buildSectionHeader(
                       title: 'Concluidas',
-                      subtitle:
-                          'Leitura do que ja foi fechado hoje para nao perder ritmo.',
+                      subtitle: 'Registro rapido do que ja foi fechado hoje.',
                       accent: Colors.white70,
                     ),
                   ),
@@ -203,7 +213,7 @@ class QuestsScreen extends ConsumerWidget {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final quest = completedQuests[index];
                     return Opacity(
-                      opacity: 0.75,
+                      opacity: 0.82,
                       child: _buildQuestItem(context, ref, quest, liveNow),
                     );
                   }, childCount: completedQuests.length),
@@ -219,7 +229,8 @@ class QuestsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHero({
+  Widget _buildHero(
+    BuildContext context, {
     required String playerName,
     required int activeCount,
     required int competitiveCount,
@@ -229,26 +240,28 @@ class QuestsScreen extends ConsumerWidget {
     required String detail,
     required String? weeklyBossTitle,
   }) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             AppColors.neonBlue.withValues(alpha: 0.14),
-            Colors.greenAccent.withValues(alpha: 0.08),
-            Colors.white.withValues(alpha: 0.03),
+            AppColors.surface.withValues(alpha: 0.96),
+            AppColors.surfaceMuted.withValues(alpha: 0.98),
           ],
         ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(color: AppColors.borderStrong),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 22,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
@@ -262,138 +275,78 @@ class QuestsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Comando diario',
-                      style: TextStyle(
-                        fontSize: 11,
+                    Text(
+                      'Execucao',
+                      style: textTheme.labelMedium?.copyWith(
                         color: AppColors.neonBlue,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
+                    const SizedBox(height: 8),
+                    Text(
                       'Quests',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
+                      style: GoogleFonts.sora(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.0,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       playerName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white60,
-                        fontWeight: FontWeight.w700,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
               _buildHeroPill(
-                weeklyBossTitle ?? 'BASE EM ROTA',
+                weeklyBossTitle ?? 'Semana ativa',
                 AppColors.neonBlue,
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Text(
             summary,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              height: 1.35,
+            style: textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             detail,
-            style: const TextStyle(
-              fontSize: 12.5,
-              color: Colors.white60,
-              height: 1.45,
-            ),
+            style: textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.22),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isCompact = constraints.maxWidth < 420;
-                final tiles = [
-                  _QuestSummaryTile(
-                    label: 'ATIVAS',
-                    value: '$activeCount',
-                    accent: Colors.white,
-                  ),
-                  _QuestSummaryTile(
-                    label: 'ARENA',
-                    value: '$competitiveCount',
-                    accent: AppColors.neonBlue,
-                  ),
-                  _QuestSummaryTile(
-                    label: 'BASE',
-                    value: '$personalCount',
-                    accent: Colors.greenAccent,
-                  ),
-                  _QuestSummaryTile(
-                    label: 'FEITAS',
-                    value: '$completedCount',
-                    accent: Colors.amberAccent,
-                  ),
-                ];
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Painel de execucao',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white38,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (isCompact)
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: tiles
-                            .map(
-                              (tile) => SizedBox(
-                                width: (constraints.maxWidth - 10) / 2,
-                                child: tile,
-                              ),
-                            )
-                            .toList(),
-                      )
-                    else
-                      Row(
-                        children: [
-                          for (
-                            var index = 0;
-                            index < tiles.length;
-                            index++
-                          ) ...[
-                            if (index > 0) const SizedBox(width: 10),
-                            Expanded(child: tiles[index]),
-                          ],
-                        ],
-                      ),
-                  ],
-                );
-              },
-            ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _QuestSummaryTile(
+                label: 'Ativas',
+                value: '$activeCount',
+                accent: Colors.white,
+              ),
+              _QuestSummaryTile(
+                label: 'Arena',
+                value: '$competitiveCount',
+                accent: AppColors.neonBlue,
+              ),
+              _QuestSummaryTile(
+                label: 'Base',
+                value: '$personalCount',
+                accent: AppColors.questAccent,
+              ),
+              _QuestSummaryTile(
+                label: 'Feitas',
+                value: '$completedCount',
+                accent: AppColors.arenaAccent,
+              ),
+            ],
           ),
         ],
       ),
@@ -402,99 +355,22 @@ class QuestsScreen extends ConsumerWidget {
 
   Widget _buildHeroPill(String label, Color color) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 132),
+      constraints: const BoxConstraints(maxWidth: 148),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withValues(alpha: 0.24)),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
         ),
         child: Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 10.5,
+            fontSize: 11,
             color: color,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required String subtitle,
-    required Color accent,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            color: accent,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 11.5,
-            color: Colors.white54,
-            height: 1.4,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCreateQuestButton(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: () => _openAddQuestModal(context),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      extendedPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-      label: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.neonBlue.withValues(alpha: 0.95),
-              Colors.cyanAccent.withValues(alpha: 0.82),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neonBlue.withValues(alpha: 0.26),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_rounded, color: Colors.black, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'Nova Quest',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -506,40 +382,33 @@ class QuestsScreen extends ConsumerWidget {
     required int personalCount,
     required int completedCount,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.neonBlue.withValues(alpha: 0.12),
-            Colors.greenAccent.withValues(alpha: 0.07),
-            Colors.white.withValues(alpha: 0.02),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.20)),
-      ),
+    final headline = switch ((competitiveCount, personalCount)) {
+      (0, 0) => 'A semana esta vazia. Abra uma quest para colocar o ciclo em movimento.',
+      (0, _) => 'Falta pressao de arena. Abra uma quest competitiva para nao deixar o rank parado.',
+      (_, 0) => 'Sua base esta curta. Adicione uma quest pessoal para sustentar consistencia.',
+      _ => 'A mistura entre arena e base esta montada. Agora o foco e fechar o que ja esta aberto.',
+    };
+
+    return _SectionPanel(
+      accent: AppColors.planAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'PAINEL DE EXECUCAO',
+          Text(
+            'Prioridade da semana',
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.3,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Arena empurra sua disputa. Base sustenta level, streak e consistencia.',
-            style: TextStyle(
-              color: Colors.white60,
-              fontSize: 12.5,
-              height: 1.45,
+          Text(
+            headline,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
             ),
           ),
           const SizedBox(height: 14),
@@ -547,25 +416,28 @@ class QuestsScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _QuestSummaryTile(
-                  label: 'ARENA',
+                  label: 'Arena abertas',
                   value: '$competitiveCount',
                   accent: AppColors.neonBlue,
+                  compact: true,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _QuestSummaryTile(
-                  label: 'BASE',
+                  label: 'Base abertas',
                   value: '$personalCount',
-                  accent: Colors.greenAccent,
+                  accent: AppColors.questAccent,
+                  compact: true,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _QuestSummaryTile(
-                  label: 'FEITAS',
+                  label: 'Ja fechadas',
                   value: '$completedCount',
-                  accent: Colors.amberAccent,
+                  accent: AppColors.arenaAccent,
+                  compact: true,
                 ),
               ),
             ],
@@ -576,14 +448,8 @@ class QuestsScreen extends ConsumerWidget {
   }
 
   Widget _buildFirstWeekPanel(FirstWeekJourneySummary summary) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
-      ),
+    return _SectionPanel(
+      accent: AppColors.planAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -591,21 +457,16 @@ class QuestsScreen extends ConsumerWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'ABERTURA DE CAMPANHA',
+                  'Primeira semana',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.3,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              Text(
-                summary.progressLabel,
-                style: const TextStyle(
-                  color: AppColors.neonBlue,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
+              _StatusBadge(
+                label: summary.progressLabel,
+                accent: AppColors.planAccent,
               ),
             ],
           ),
@@ -613,31 +474,55 @@ class QuestsScreen extends ConsumerWidget {
           Text(
             summary.nextAction,
             style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12.5,
+              color: AppColors.textSecondary,
+              fontSize: 13,
               height: 1.45,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ...summary.steps.map(
             (step) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    step.isDone
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    size: 16,
-                    color: step.isDone ? Colors.greenAccent : Colors.white38,
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: step.isDone
+                          ? AppColors.questAccent.withValues(alpha: 0.16)
+                          : Colors.white.withValues(alpha: 0.04),
+                      border: Border.all(
+                        color: step.isDone
+                            ? AppColors.questAccent.withValues(alpha: 0.24)
+                            : AppColors.borderStrong,
+                      ),
+                    ),
+                    child: Icon(
+                      step.isDone
+                          ? Icons.check_rounded
+                          : Icons.circle_outlined,
+                      size: 14,
+                      color: step.isDone
+                          ? AppColors.questAccent
+                          : AppColors.textMuted,
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      step.label,
-                      style: TextStyle(
-                        color: step.isDone ? Colors.white : Colors.white70,
-                        fontSize: 11.5,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        step.label,
+                        style: TextStyle(
+                          color: step.isDone
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
                       ),
                     ),
                   ),
@@ -655,43 +540,36 @@ class QuestsScreen extends ConsumerWidget {
     WidgetRef ref,
     List<CompetitiveQuestTemplate> templates,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.neonBlue.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.25)),
-      ),
+    return _SectionPanel(
+      accent: AppColors.neonBlue,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'ABERTURA DE ARENA',
+            'Abrir quest de arena',
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.3,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Esses modelos ja entram prontos para contar no rank.',
+            'Modelos oficiais prontos para validacao competitiva.',
             style: TextStyle(
-              color: Colors.white60,
-              fontSize: 11.5,
-              height: 1.4,
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ...templates.map(
             (template) => Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white10),
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,20 +577,20 @@ class QuestsScreen extends ConsumerWidget {
                   Text(
                     template.title,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     template.description,
                     style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                      height: 1.4,
+                      color: AppColors.textSecondary,
+                      fontSize: 12.5,
+                      height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -723,16 +601,18 @@ class QuestsScreen extends ConsumerWidget {
                       ),
                       _buildQuestChip(
                         '+${template.xpReward} XP',
-                        Colors.greenAccent,
+                        AppColors.questAccent,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.neonBlue),
+                    child: FilledButton.tonal(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.neonBlue.withValues(
+                          alpha: 0.16,
+                        ),
                         foregroundColor: AppColors.neonBlue,
                       ),
                       onPressed: () {
@@ -751,10 +631,7 @@ class QuestsScreen extends ConsumerWidget {
                             ),
                           );
                       },
-                      child: const Text(
-                        'ADICIONAR',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: const Text('Adicionar'),
                     ),
                   ),
                 ],
@@ -763,6 +640,51 @@ class QuestsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+    required Color accent,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 4,
+          height: 42,
+          decoration: BoxDecoration(
+            color: accent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -787,10 +709,10 @@ class QuestsScreen extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.danger.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(22),
         ),
-        child: const Icon(Icons.delete_sweep, color: Colors.redAccent),
+        child: const Icon(Icons.delete_sweep_rounded, color: AppColors.danger),
       ),
       child: QuestCard(
         quest: quest,
@@ -811,9 +733,20 @@ class QuestsScreen extends ConsumerWidget {
               }
             : null,
         secondaryActionLabel: quest.isCompleted && !quest.isCompetitive
-            ? 'DESFAZER'
+            ? 'Desfazer'
             : null,
       ),
+    );
+  }
+
+  Widget _buildCreateQuestButton(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: () => _openAddQuestModal(context),
+      backgroundColor: AppColors.neonBlue,
+      foregroundColor: Colors.black,
+      elevation: 0,
+      icon: const Icon(Icons.add_rounded),
+      label: const Text('Nova quest'),
     );
   }
 
@@ -916,18 +849,18 @@ class QuestsScreen extends ConsumerWidget {
 
   String _primaryLabelForQuest(Quest quest) {
     if (!quest.isCompetitive) {
-      return quest.isCompleted ? 'CONCLUIDA' : 'MARCAR COMO FEITA';
+      return quest.isCompleted ? 'Concluida' : 'Marcar como feita';
     }
-    if (quest.isCompleted) return 'VALIDADA';
+    if (quest.isCompleted) return 'Validada';
     if (quest.verificationStatus == QuestVerificationStatus.inProgress) {
-      return quest.requiresReflection ? 'FINALIZAR E RESPONDER' : 'FINALIZAR';
+      return quest.requiresReflection ? 'Finalizar e responder' : 'Finalizar';
     }
-    return 'INICIAR';
+    return 'Iniciar';
   }
 
   String _helperTextForQuest(Quest quest, DateTime liveNow) {
     if (!quest.isCompetitive) {
-      return 'Quest pessoal: ajuda no seu progresso geral, mas nao entra no rank.';
+      return 'Quest pessoal: ajuda no progresso geral, mas nao entra no rank.';
     }
 
     if (quest.verificationStatus == QuestVerificationStatus.inProgress &&
@@ -961,67 +894,68 @@ class QuestsScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
+        return Padding(
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'FINALIZAR QUEST',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                prompt,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12.5,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Escreva uma resposta curta',
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.neonBlue,
-                  ),
-                  onPressed: () {
-                    if (controller.text.trim().isEmpty) return;
-                    Navigator.of(context).pop(controller.text.trim());
-                  },
-                  child: const Text(
-                    'FINALIZAR QUEST',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            decoration: const BoxDecoration(
+              color: AppColors.backgroundElevated,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Finalizar quest',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  prompt,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Escreva uma resposta curta',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      if (controller.text.trim().isEmpty) return;
+                      Navigator.of(context).pop(controller.text.trim());
+                    },
+                    child: const Text('Finalizar quest'),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1033,38 +967,34 @@ class QuestsScreen extends ConsumerWidget {
     WidgetRef ref,
     List<QuestSuggestion> suggestions,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.neonBlue.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.3)),
-      ),
+    return _SectionPanel(
+      accent: AppColors.questAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'EMPURROES DE RITMO',
+            'Sugestoes da semana',
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Essas sugestoes ajudam no seu ritmo e rendem um pouco de XP.',
-            style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
+            'Quests simples para ganhar ritmo e preencher sua base.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
+            child: FilledButton.tonal(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.neonBlue,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                backgroundColor: AppColors.questAccent.withValues(alpha: 0.16),
+                foregroundColor: AppColors.questAccent,
               ),
               onPressed: () {
                 final addedCount = ref
@@ -1082,38 +1012,32 @@ class QuestsScreen extends ConsumerWidget {
                   ),
                 );
               },
-              child: Text(
-                'MONTAR SEMANA (${suggestions.length})',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
+              child: Text('Adicionar ${suggestions.length} sugestoes'),
             ),
           ),
           const SizedBox(height: 14),
           ...suggestions.map(
             (suggestion) => Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white10),
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.borderSubtle),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      _buildQuestChip('BASE', Colors.greenAccent),
+                      _buildQuestChip('Base', AppColors.questAccent),
                       const Spacer(),
                       Text(
                         '+${suggestion.xpReward} XP',
                         style: const TextStyle(
-                          color: AppColors.neonBlue,
+                          color: AppColors.questAccent,
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -1122,8 +1046,8 @@ class QuestsScreen extends ConsumerWidget {
                   Text(
                     suggestion.title,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                       height: 1.3,
                     ),
                   ),
@@ -1131,19 +1055,15 @@ class QuestsScreen extends ConsumerWidget {
                   Text(
                     suggestion.reason,
                     style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                      height: 1.4,
+                      color: AppColors.textSecondary,
+                      fontSize: 12.5,
+                      height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Align(
                     alignment: Alignment.centerRight,
                     child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.neonBlue),
-                        foregroundColor: AppColors.neonBlue,
-                      ),
                       onPressed: () {
                         ref
                             .read(questProvider.notifier)
@@ -1162,10 +1082,7 @@ class QuestsScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                      child: const Text(
-                        'ADICIONAR',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: const Text('Adicionar'),
                     ),
                   ),
                 ],
@@ -1179,17 +1096,17 @@ class QuestsScreen extends ConsumerWidget {
 
   Widget _buildQuestChip(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: 10.5,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -1198,21 +1115,14 @@ class QuestsScreen extends ConsumerWidget {
 
   Widget _buildEmptyState(String text) {
     return SliverToBoxAdapter(
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(top: 4, bottom: 8),
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white10),
-        ),
+      child: _SectionPanel(
+        accent: AppColors.borderStrong,
         child: Text(
           text,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12.5,
+            color: AppColors.textSecondary,
+            fontSize: 13,
             height: 1.45,
           ),
         ),
@@ -1257,31 +1167,30 @@ class QuestsScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'SUBIU DE NIVEL',
-                  style: TextStyle(
+                Text(
+                  'Subiu de nivel',
+                  style: GoogleFonts.sora(
                     color: AppColors.neonBlue,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 8,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w700,
                     decoration: TextDecoration.none,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'NIVEL $level',
+                  'Nivel $level',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                     decoration: TextDecoration.none,
                   ),
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 28),
                 const Icon(
-                  Icons.keyboard_double_arrow_up,
+                  Icons.keyboard_double_arrow_up_rounded,
                   color: AppColors.neonBlue,
-                  size: 80,
+                  size: 72,
                 ),
               ],
             ),
@@ -1292,25 +1201,99 @@ class QuestsScreen extends ConsumerWidget {
   }
 }
 
-class _QuestSummaryTile extends StatelessWidget {
-  const _QuestSummaryTile({
-    required this.label,
-    required this.value,
+class _SectionPanel extends StatelessWidget {
+  const _SectionPanel({
+    required this.child,
     required this.accent,
   });
 
-  final String label;
-  final String value;
+  final Widget child;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.06),
+            AppColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.label,
+    required this.accent,
+  });
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: accent,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestSummaryTile extends StatelessWidget {
+  const _QuestSummaryTile({
+    required this.label,
+    required this.value,
+    required this.accent,
+    this.compact = false,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(minWidth: compact ? 0 : 104),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 12 : 14,
+        vertical: compact ? 12 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1318,18 +1301,18 @@ class _QuestSummaryTile extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: compact ? 10.5 : 11,
               color: accent,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+            style: TextStyle(
+              fontSize: compact ? 20 : 24,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
               height: 1,
             ),
           ),

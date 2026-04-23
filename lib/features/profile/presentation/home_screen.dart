@@ -63,46 +63,84 @@ class HomeScreen extends ConsumerWidget {
       seasonProfile: seasonProfile,
     );
     final rivalry = buildRankRivalrySummary(bracketLeaderboard);
+    final heroSummary = firstWeekJourney.isActive
+        ? firstWeekJourney.headline
+        : progressPayoff.headline;
+    final heroDetail = firstWeekJourney.isActive
+        ? firstWeekJourney.nextAction
+        : rankSnapshot?.summary ?? progressPayoff.body;
+    final xpProgress = player.maxXp == 0
+        ? 0.0
+        : (player.xp / player.maxXp).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(25, 60, 25, 120),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RevealBlock(
-              child: _buildHeader(
-                player.name,
-                player.level,
-                competitiveRank,
-                _resolveDisplayTitle(player, seasonProfile),
-                seasonProfile,
-              ),
-            ),
-            const SizedBox(height: 30),
-            RevealBlock(
-              delay: const Duration(milliseconds: 90),
-              child: _buildStatusCard(
-                child: Column(
-                  children: [
-                    _buildFocusBanner(context, player.primaryFocus),
-                    const SizedBox(height: 20),
-                    _buildStatBar(
-                      'XP',
-                      player.xp / player.maxXp,
-                      AppColors.neonBlue,
-                      '${player.xp} / ${player.maxXp}',
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 16),
+                    child: _buildHeader(
+                      context,
+                      name: player.name,
+                      level: player.level,
+                      rank: competitiveRank,
+                      title: _resolveDisplayTitle(player, seasonProfile),
+                      focus: player.primaryFocus,
+                      summary: heroSummary,
+                      detail: heroDetail,
+                      xpProgress: xpProgress,
+                      xp: player.xp,
+                      maxXp: player.maxXp,
+                      currentStreak: player.currentStreak,
+                      seasonLabel: seasonProfile?.activeSeasonLabel,
                     ),
-                    const SizedBox(height: 24),
-                    _buildCompetitivePulse(rankSnapshot, prestige, season),
-                    const SizedBox(height: 20),
-                    _buildProgressPayoffCard(progressPayoff),
-                    const SizedBox(height: 20),
-                    _buildBaseDetailDirectory(
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 70),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildSnapshotPanel(
+                      context,
+                      player: player,
+                      firstWeekJourney: firstWeekJourney,
+                      progressPayoff: progressPayoff,
+                      rankSnapshot: rankSnapshot,
+                      prestige: prestige,
+                      season: season,
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 130),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildBuildPanel(context, player.attributes),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 190),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildBaseDetailDirectory(
                       context,
                       player,
                       firstWeekJourney,
+                      progressPayoff,
+                      rankSnapshot,
+                      prestige,
+                      season,
                       rivalry,
                       authState,
                       remoteWeeklyBoss,
@@ -110,245 +148,288 @@ class HomeScreen extends ConsumerWidget {
                       competitiveRank,
                       ref,
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-            RevealBlock(
-              delay: const Duration(milliseconds: 180),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeading(
-                    'Build',
-                    'Leitura viva dos seus atributos e da sua linha de crescimento.',
-                  ),
-                  const SizedBox(height: 14),
-                  _buildStatusCard(
-                    child: _buildAttributeRadarPanel(
-                      context,
-                      player.attributes,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 42),
-            Center(
-              child: Text(
-                '"O MEDO NAO E UM OBSTACULO, E UMA FERRAMENTA."',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white10,
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ),
-          ],
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader(
-    String name,
-    int level,
-    String rank,
-    String title,
-    SeasonProfileSnapshot? seasonProfile,
+    BuildContext context, {
+    required String name,
+    required int level,
+    required String rank,
+    required String title,
+    required AwakeningPath focus,
+    required String summary,
+    required String detail,
+    required double xpProgress,
+    required int xp,
+    required int maxXp,
+    required int currentStreak,
+    String? seasonLabel,
   ) {
-    final headerAccent = seasonProfile == null
-        ? AppColors.neonBlue
-        : Colors.amberAccent;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                headerAccent.withValues(alpha: 0.12),
-                AppColors.neonBlue.withValues(alpha: 0.08),
-                Colors.white.withValues(alpha: 0.03),
-              ],
-            ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.30),
-                blurRadius: 28,
-                offset: const Offset(0, 18),
-              ),
-            ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.neonBlue.withValues(alpha: 0.14),
+            AppColors.surface.withValues(alpha: 0.96),
+            AppColors.surfaceMuted.withValues(alpha: 0.98),
+          ],
+        ),
+        border: Border.all(color: AppColors.borderStrong),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
           ),
-          child: Column(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Base',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: headerAccent,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _buildHeaderPill(
-                    seasonProfile?.activeSeasonLabel ?? 'BASE ONLINE',
-                    headerAccent,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sua ficha viva: progresso, foco e as aberturas que mais importam agora.',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.white60,
-                  height: 1.4,
-                ),
-              ),
-              if (seasonProfile != null) ...[
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSeasonHeaderChip(
-                      seasonProfile.activeBadgeLabel,
-                      Colors.amberAccent,
+                    Text(
+                      'Base',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: AppColors.neonBlue,
+                      ),
                     ),
-                    _buildSeasonHeaderChip(
-                      seasonProfile.cosmeticAuraLabel,
-                      AppColors.neonBlue,
+                    const SizedBox(height: 8),
+                    Text(
+                      name,
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontSize: 28,
+                        height: 1.0,
+                      ),
                     ),
-                    _buildSeasonHeaderChip(
-                      seasonProfile.activeSeasonLabel,
-                      Colors.white70,
+                    const SizedBox(height: 6),
+                    Text(
+                      title,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
-              ],
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
-                  ),
+              ),
+              const SizedBox(width: 12),
+              _buildHeaderPill(
+                seasonLabel ?? 'Base ativa',
+                AppColors.neonBlue,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            summary,
+            style: textTheme.titleLarge?.copyWith(height: 1.2),
+          ),
+          const SizedBox(height: 8),
+          Text(detail, style: textTheme.bodyMedium),
+          const SizedBox(height: 18),
+          _buildStatBar('XP', xpProgress, AppColors.neonBlue, '$xp / $maxXp'),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              SizedBox(
+                width: 138,
+                child: _buildHeaderMetricCard(
+                  label: 'LEVEL',
+                  value: level.toString().padLeft(2, '0'),
+                  accentColor: AppColors.neonBlue,
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isCompact = constraints.maxWidth < 360;
-
-                    if (isCompact) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildRankSpotlight(rank),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildHeaderMetricCard(
-                                  label: 'LEVEL',
-                                  value: level.toString().padLeft(2, '0'),
-                                  accentColor: AppColors.neonBlue,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildHeaderMetricCard(
-                                  label: 'PRESENCA',
-                                  value:
-                                      seasonProfile?.activeBadgeLabel ??
-                                      'ATIVO',
-                                  accentColor: headerAccent,
-                                  compactValue: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    }
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 11, child: _buildRankSpotlight(rank)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 10,
-                          child: Column(
-                            children: [
-                              _buildHeaderMetricCard(
-                                label: 'LEVEL',
-                                value: level.toString().padLeft(2, '0'),
-                                accentColor: AppColors.neonBlue,
-                              ),
-                              const SizedBox(height: 10),
-                              _buildHeaderMetricCard(
-                                label: 'PRESENCA',
-                                value:
-                                    seasonProfile?.activeBadgeLabel ?? 'ATIVO',
-                                accentColor: headerAccent,
-                                compactValue: true,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+              ),
+              SizedBox(
+                width: 138,
+                child: _buildHeaderMetricCard(
+                  label: 'RANK',
+                  value: rank,
+                  accentColor: AppColors.arenaAccent,
+                ),
+              ),
+              SizedBox(
+                width: 138,
+                child: _buildHeaderMetricCard(
+                  label: 'STREAK',
+                  value: '$currentStreak dias',
+                  accentColor: Colors.orangeAccent,
+                  compactValue: true,
+                ),
+              ),
+              SizedBox(
+                width: 138,
+                child: _buildHeaderMetricCard(
+                  label: 'FOCO',
+                  value: focus.label,
+                  accentColor: AppColors.questAccent,
+                  compactValue: true,
                 ),
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSnapshotPanel(
+    BuildContext context, {
+    required Player player,
+    required FirstWeekJourneySummary firstWeekJourney,
+    required ProgressPayoffSummary progressPayoff,
+    required CompetitiveRankSnapshot? rankSnapshot,
+    required RankPrestigeSummary prestige,
+    required RankSeasonSummary season,
+  }) {
+    final topLabel = firstWeekJourney.isActive
+        ? firstWeekJourney.progressLabel
+        : season.resetLabel;
+    final headline = firstWeekJourney.isActive
+        ? firstWeekJourney.nextAction
+        : rankSnapshot?.summary ?? progressPayoff.headline;
+    final body = firstWeekJourney.isActive
+        ? firstWeekJourney.body
+        : 'Constancia efetiva ${prestige.effectiveMaintenanceRate}% nesta temporada. ${progressPayoff.rankLabel}';
+
+    return _buildStatusCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Momento atual',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _buildHeaderPill(topLabel, AppColors.planAccent),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            headline,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildFocusBanner(context, player.primaryFocus),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniMetric(
+                  icon: Icons.local_fire_department,
+                  label: 'STREAK',
+                  value: '${player.currentStreak} dias',
+                  accentColor: Colors.orangeAccent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMiniMetric(
+                  icon: Icons.auto_awesome,
+                  label: 'PONTOS LIVRES',
+                  value: player.statPoints > 0
+                      ? '${player.statPoints} disponiveis'
+                      : 'Sem pontos livres',
+                  accentColor: player.statPoints > 0
+                      ? Colors.amberAccent
+                      : AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.borderSubtle),
+            ),
+            child: Text(
+              'Proximo ganho: ${progressPayoff.levelLabel}',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuildPanel(BuildContext context, PlayerAttributes attrs) {
+    return _buildStatusCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Build atual',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Radar compacto da sua build agora. O resto da leitura fica dentro do detalhe.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _buildAttributeRadarPanel(context, attrs),
+        ],
+      ),
     );
   }
 
@@ -362,89 +443,13 @@ class HomeScreen extends ConsumerWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 10.5,
-          color: color,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.7,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeasonHeaderChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
-      ),
-      child: Text(
-        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 10.5,
           color: color,
           fontWeight: FontWeight.w700,
         ),
-      ),
-    );
-  }
-
-  Widget _buildRankSpotlight(String rank) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.neonBlue.withValues(alpha: 0.16),
-            Colors.white.withValues(alpha: 0.03),
-          ],
-        ),
-        border: Border.all(color: AppColors.neonBlue.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'RANK ATUAL',
-            style: TextStyle(
-              fontSize: 10.5,
-              color: Colors.white38,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            rank,
-            style: TextStyle(
-              fontSize: 54,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 0.9,
-              shadows: [
-                Shadow(
-                  color: AppColors.neonBlue.withValues(alpha: 0.6),
-                  blurRadius: 24,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Pronto para sustentar ritmo, foco e pressao da semana.',
-            style: TextStyle(
-              fontSize: 11.5,
-              color: Colors.white60,
-              height: 1.45,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -459,9 +464,9 @@ class HomeScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Colors.black.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,9 +475,9 @@ class HomeScreen extends ConsumerWidget {
             label,
             style: const TextStyle(
               fontSize: 10,
-              color: Colors.white38,
+              color: AppColors.textMuted,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+              letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 8),
@@ -481,7 +486,7 @@ class HomeScreen extends ConsumerWidget {
             maxLines: compactValue ? 2 : 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: compactValue ? 12.5 : 30,
+              fontSize: compactValue ? 13 : 26,
               color: accentColor,
               fontWeight: FontWeight.w800,
               height: compactValue ? 1.2 : 1,
@@ -500,48 +505,22 @@ class HomeScreen extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.greenAccent.withValues(alpha: 0.05),
-            AppColors.neonBlue.withValues(alpha: 0.04),
-            Colors.white.withValues(alpha: 0.02),
+            AppColors.surfaceMuted,
+            AppColors.surface,
+            AppColors.surfaceStrong.withValues(alpha: 0.88),
           ],
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 18,
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 16,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: child,
-    );
-  }
-
-  Widget _buildSectionHeading(String title, String subtitle) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            color: Colors.white60,
-            fontSize: 12.5,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Divider(
-          color: AppColors.neonBlue.withValues(alpha: 0.45),
-          thickness: 0.6,
-        ),
-      ],
     );
   }
 
@@ -1358,6 +1337,10 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     Player player,
     FirstWeekJourneySummary firstWeekJourney,
+    ProgressPayoffSummary progressPayoff,
+    CompetitiveRankSnapshot? rankSnapshot,
+    RankPrestigeSummary prestige,
+    RankSeasonSummary season,
     RankRivalrySummary rivalry,
     AuthState authState,
     AsyncValue<RemoteWeeklyBoss?> remoteWeeklyBoss,
@@ -1366,22 +1349,34 @@ class HomeScreen extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final remoteBoss = remoteWeeklyBoss.valueOrNull;
+    final pulseAccent = switch (rankSnapshot?.status) {
+      RankMaintenanceStatus.secure => Colors.greenAccent,
+      RankMaintenanceStatus.warning => Colors.orangeAccent,
+      RankMaintenanceStatus.critical => Colors.redAccent,
+      RankMaintenanceStatus.promotionReady => AppColors.neonBlue,
+      RankMaintenanceStatus.demoted => Colors.redAccent,
+      null => AppColors.planAccent,
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Diretorio vivo',
+          'Abrir detalhes',
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.white70,
+            fontSize: 13,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 4),
         const Text(
-          'Abra camadas especificas da sua base sem transformar a tela em dashboard longa.',
-          style: TextStyle(fontSize: 11.5, color: Colors.white54, height: 1.4),
+          'A superficie principal fica curta. O resto da leitura abre por camada.',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppColors.textSecondary,
+            height: 1.45,
+          ),
         ),
         const SizedBox(height: 12),
         if (firstWeekJourney.isActive) ...[
@@ -1406,6 +1401,29 @@ class HomeScreen extends ConsumerWidget {
             context,
             title: 'Ritmo e Streak',
             child: _buildStatusCard(child: _buildStreakPanel(player)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _BaseDetailEntry(
+          title: 'Proximo ganho',
+          summary: progressPayoff.headline,
+          accent: AppColors.questAccent,
+          onTap: () => _openBaseDetailSheet(
+            context,
+            title: 'Proximo ganho',
+            child: _buildProgressPayoffCard(progressPayoff),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _BaseDetailEntry(
+          title: 'Pulso competitivo',
+          summary:
+              rankSnapshot?.summary ?? 'Seu estado competitivo ainda esta sincronizando.',
+          accent: pulseAccent,
+          onTap: () => _openBaseDetailSheet(
+            context,
+            title: 'Pulso competitivo',
+            child: _buildCompetitivePulse(rankSnapshot, prestige, season),
           ),
         ),
         const SizedBox(height: 10),

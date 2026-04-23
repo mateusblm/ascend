@@ -20,6 +20,12 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
   CompetitiveQuestTemplate? _selectedTemplate;
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
     final templates = templatesForFocus(player.primaryFocus);
@@ -27,33 +33,43 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        top: 20,
         left: 20,
         right: 20,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: AppColors.backgroundElevated,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           const Text(
-            'NOVA QUEST',
+            'Nova quest',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Quests de rank ajudam no seu posto. Quests pessoais ajudam no level e no ritmo do dia a dia.',
+            'Escolha entre uma quest pessoal para manter o ritmo ou um modelo de arena para progresso competitivo.',
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.white60,
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
               height: 1.45,
             ),
           ),
@@ -63,14 +79,14 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
             runSpacing: 10,
             children: [
               _ModeChip(
-                label: 'PESSOAL',
+                label: 'Pessoal',
                 selected: _selectedCategory == QuestCategory.personal,
                 onTap: () => setState(
                   () => _selectedCategory = QuestCategory.personal,
                 ),
               ),
               _ModeChip(
-                label: 'COMPETITIVA',
+                label: 'Competitiva',
                 selected: _selectedCategory == QuestCategory.competitive,
                 onTap: () => setState(
                   () => _selectedCategory = QuestCategory.competitive,
@@ -86,10 +102,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.neonBlue,
-              ),
+            child: FilledButton(
               onPressed: () {
                 if (_selectedCategory == QuestCategory.personal) {
                   if (_controller.text.trim().isEmpty) return;
@@ -119,12 +132,8 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
               },
               child: Text(
                 _selectedCategory == QuestCategory.personal
-                    ? 'CRIAR QUEST PESSOAL'
-                    : 'ADICIONAR QUEST COMPETITIVA',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+                    ? 'Criar quest pessoal'
+                    : 'Adicionar quest competitiva',
               ),
             ),
           ),
@@ -141,36 +150,41 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           controller: _controller,
           decoration: const InputDecoration(
             labelText: 'Nome da quest',
-            labelStyle: TextStyle(color: Colors.white38),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.neonBlue),
-            ),
+            hintText: 'Ex.: treino de 30 minutos',
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         const Text(
-          'ATRIBUTO DE RECOMPENSA',
-          style: TextStyle(fontSize: 12, color: Colors.white38),
+          'Atributo de recompensa',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
-          'Essa quest ajuda no seu progresso geral, mas nao conta para subir no rank.',
-          style: TextStyle(fontSize: 11.5, color: Colors.white54, height: 1.4),
+          'Quests pessoais mantem o level e a consistencia, sem contar para o rank.',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppColors.textSecondary,
+            height: 1.45,
+          ),
         ),
-        DropdownButton<AttributeType>(
+        const SizedBox(height: 12),
+        DropdownButtonFormField<AttributeType>(
           value: _selectedAttribute,
-          isExpanded: true,
-          dropdownColor: AppColors.background,
+          dropdownColor: AppColors.backgroundElevated,
           items: AttributeType.values.map((attr) {
             return DropdownMenuItem(
               value: attr,
-              child: Text(
-                attr.name.toUpperCase(),
-                style: const TextStyle(color: AppColors.neonBlue),
-              ),
+              child: Text(attr.name.toUpperCase()),
             );
           }).toList(),
           onChanged: (val) => setState(() => _selectedAttribute = val!),
+          decoration: const InputDecoration(
+            labelText: 'Atributo',
+          ),
         ),
       ],
     );
@@ -181,27 +195,31 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'ESCOLHA UM MODELO',
-          style: TextStyle(fontSize: 12, color: Colors.white38),
+          'Modelos de arena',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 12),
         ...templates.map(
           (template) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(18),
               onTap: () => setState(() => _selectedTemplate = template),
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: _selectedTemplate == template
-                      ? AppColors.neonBlue.withValues(alpha: 0.10)
-                      : Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(14),
+                      ? AppColors.neonBlue.withValues(alpha: 0.12)
+                      : AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: _selectedTemplate == template
-                        ? AppColors.neonBlue
-                        : Colors.white10,
+                        ? AppColors.neonBlue.withValues(alpha: 0.30)
+                        : AppColors.borderSubtle,
                   ),
                 ),
                 child: Column(
@@ -213,21 +231,21 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                           child: Text(
                             template.title,
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                               color: _selectedTemplate == template
                                   ? AppColors.neonBlue
-                                  : Colors.white,
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),
                         Icon(
                           _selectedTemplate == template
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_off,
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_off_rounded,
                           color: _selectedTemplate == template
                               ? AppColors.neonBlue
-                              : Colors.white24,
+                              : AppColors.textMuted,
                         ),
                       ],
                     ),
@@ -235,12 +253,12 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                     Text(
                       template.description,
                       style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 11.5,
-                        height: 1.4,
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                        height: 1.45,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -250,9 +268,8 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                           color: AppColors.neonBlue,
                         ),
                         _TemplateChip(
-                          label:
-                              '+${template.xpReward} XP | ${template.rewardAttribute.name.toUpperCase()}',
-                          color: Colors.greenAccent,
+                          label: '+${template.xpReward} XP',
+                          color: AppColors.questAccent,
                         ),
                       ],
                     ),
@@ -280,65 +297,45 @@ class _ModeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? AppColors.neonBlue : Colors.white10;
-    final backgroundColor = selected
-        ? AppColors.neonBlue.withValues(alpha: 0.18)
-        : Colors.white.withValues(alpha: 0.04);
-    final foregroundColor = selected ? AppColors.neonBlue : Colors.white70;
+    final color = selected ? AppColors.neonBlue : AppColors.textSecondary;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: backgroundColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: AppColors.neonBlue.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 18 : 14,
-              vertical: 10,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.neonBlue.withValues(alpha: 0.14)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? AppColors.neonBlue.withValues(alpha: 0.24)
+                  : AppColors.borderSubtle,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (selected) ...[
-                  Icon(
-                    Icons.check,
-                    size: 14,
-                    color: foregroundColor,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  label,
-                  softWrap: false,
-                  overflow: TextOverflow.visible,
-                  style: TextStyle(
-                    color: foregroundColor,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    fontSize: 12.5,
-                  ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                const Icon(
+                  Icons.check_rounded,
+                  size: 16,
+                  color: AppColors.neonBlue,
                 ),
+                const SizedBox(width: 6),
               ],
-            ),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -347,7 +344,10 @@ class _ModeChip extends StatelessWidget {
 }
 
 class _TemplateChip extends StatelessWidget {
-  const _TemplateChip({required this.label, required this.color});
+  const _TemplateChip({
+    required this.label,
+    required this.color,
+  });
 
   final String label;
   final Color color;
@@ -355,17 +355,17 @@ class _TemplateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: 10.5,
           fontWeight: FontWeight.w700,
         ),
       ),

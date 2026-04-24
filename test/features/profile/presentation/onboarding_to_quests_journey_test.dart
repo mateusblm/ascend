@@ -78,6 +78,7 @@ void main() {
     expect(container.read(playerProvider).hasCompletedOnboarding, isTrue);
     expect(container.read(playerProvider).primaryFocus, AwakeningPath.health);
     expect(find.byKey(const ValueKey('quests-screen')), findsOneWidget);
+    expect(find.byKey(const ValueKey('quests-return-loop')), findsOneWidget);
 
     final starterKit = container.read(questProvider);
     expect(starterKit, hasLength(3));
@@ -97,6 +98,8 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(personalPrimaryAction);
+    await _pumpFrame(tester);
     expect(personalPrimaryAction, findsOneWidget);
     expect(
       tester.widget<FilledButton>(personalPrimaryAction).onPressed,

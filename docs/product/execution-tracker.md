@@ -11,10 +11,10 @@ Update this file:
 
 ## Current State
 
-- Current date baseline: `2026-04-23`
+- Current date baseline: `2026-04-24`
 - Active plan: `docs/product/project-plan.md`
 - Active requirements baseline: `docs/product/requirements-baseline.md`
-- Active phase: `Phase 2 - Core loops and retention`
+- Active phase: `Phase 3 - Product reliability and release readiness`
 - Previous phase status: `Phase 1 advanced with accepted operational debt`
 - Active backlog: `docs/product/phase-backlog.md`
 - Active smoke log: `docs/product/phase1-smoke-log.md`
@@ -25,8 +25,8 @@ Update this file:
 | --- | --- | --- | --- |
 | Phase 0 - Baseline and control plane | `completed` | project needs operational discipline | requirements, plan, gates, and tracker are published |
 | Phase 1 - Core authority and trust | `completed_with_accepted_debt` | Phase 0 completed | authority, sync, rules, and trust baseline are reliable |
-| Phase 2 - Core loops and retention | `in_progress` | Phase 1 complete or explicitly advanced with tracked debt | personal and competitive loops are clear and protected |
-| Phase 3 - Product reliability and release readiness | `planned` | Phase 2 complete | release candidate can be validated and distributed safely |
+| Phase 2 - Core loops and retention | `completed_with_accepted_debt` | Phase 1 complete or explicitly advanced with tracked debt | personal and competitive loops are clear and protected |
+| Phase 3 - Product reliability and release readiness | `in_progress` | Phase 2 complete | release candidate can be validated and distributed safely |
 | Phase 4 - Differentiation and guided growth | `planned` | Phase 3 complete | deeper guidance and payoff improve retention without weakening trust |
 
 ## Completion Log
@@ -93,7 +93,7 @@ Planned completion note:
 
 ### Phase 2 - Core loops and retention
 
-Status: `in_progress`
+Status: `completed_with_accepted_debt`
 
 Activation note recorded on: `2026-04-23`
 
@@ -121,6 +121,7 @@ Implemented and evidenced:
 - `Quests` now uses a compact `+` floating action button positioned above the shared dock instead of an extended button that still collided visually with navigation chrome
 - attribute allocation in `Build` now updates immediately on tap instead of waiting for a tab change or later rebuild to reveal the new value
 - `Home` now exposes a compact return-motivation signal tying tomorrow's return, weekly pressure, and next payoff into one visible loop cue
+- `Quests` now exposes a compact return-loop cue tying today's first action, tomorrow's return, and weekly/rank pressure into the action surface
 - the automated suite was cleaned to reduce stale local-flow assumptions and decorative copy assertions:
   - widget tests now anchor on critical actions, state surfaces, and stable keys
   - domain tests now prefer progress/state assertions over brittle wording where possible
@@ -132,16 +133,39 @@ Implemented and evidenced:
   - onboarding -> Quests -> first personal quest handoff without relying on an old local quest cache
   - first-week journey state transitions for personal-first, competitive-next, and early-rank deactivation
   - return-motivation state for tomorrow/streak, weekly pressure, and payoff visibility
+  - Quests return-loop surface visibility inside the onboarding-to-first-quest journey
   - optimistic attribute allocation with rollback on backend failure
 
-Planned completion note:
-- record how the first-week loop improved
-- record how Home, Quests, and Rank now show the next useful action
-- record which loop regressions are covered by tests
+Completion note recorded on: `2026-04-24`
+
+Phase 2 closure:
+- the first useful action is protected from onboarding into the first personal quest
+- `Home` and `Quests` now expose return motivation instead of leaving tomorrow/weekly pressure implicit
+- top-level loop surfaces have ownership and critical rendering coverage
+- core loop regression coverage is focused on state, actions, and stable keys rather than ornamental copy
+
+Accepted debt carried forward:
+- real-device visual and scroll-density pass is still pending
+- manual first-week smoke path on small and large screens is still pending
+- carried Phase 1 operational debt remains open:
+  - real support email
+  - trust-critical real-device smoke pass
+
+Why Phase 3 is allowed to start:
+- remaining Phase 2 gaps are validation and release-confidence work, not missing core-loop product behavior
+- Phase 3 is the right phase to close manual device evidence, release-candidate discipline, support ownership, and operational readiness
 
 ### Phase 3 - Product reliability and release readiness
 
-Status: `planned`
+Status: `in_progress`
+
+Activation note recorded on: `2026-04-24`
+
+Current focus:
+- close real-device smoke evidence
+- close support/release ownership gaps
+- validate release-candidate build discipline
+- keep Phase 1 and Phase 2 accepted debt visible until resolved
 
 Planned completion note:
 - record release identity/environment readiness

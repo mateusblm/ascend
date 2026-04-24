@@ -133,6 +133,22 @@ class QuestsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 95),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildQuestReturnLoopPanel(
+                      personalCount: personalActiveQuests.length,
+                      competitiveCount: competitiveQuests.length,
+                      completedCount: completedCount,
+                      weeklyReview: insights.review,
+                      weeklyBoss: weeklyBoss,
+                      weeklyBossProgress: weeklyBossProgress,
+                    ),
+                  ),
+                ),
+              ),
               if (firstWeekJourney.isActive)
                 SliverToBoxAdapter(
                   child: RevealBlock(
@@ -241,6 +257,74 @@ class QuestsScreen extends ConsumerWidget {
         child: _buildCreateQuestButton(context),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _buildQuestReturnLoopPanel({
+    required int personalCount,
+    required int competitiveCount,
+    required int completedCount,
+    required WeeklyReviewReport weeklyReview,
+    required WeeklyBossDefinition? weeklyBoss,
+    required int weeklyBossProgress,
+  }) {
+    final tomorrowAction = completedCount == 0
+        ? 'Feche uma quest hoje para voltar amanhã com streak em andamento.'
+        : 'Volte amanhã e repita uma quest curta antes de abrir carga nova.';
+    final todayAction = personalCount > 0
+        ? 'Primeira ação: concluir uma quest de Base.'
+        : competitiveCount > 0
+        ? 'Primeira ação: iniciar ou finalizar uma quest de Arena.'
+        : 'Primeira ação: abrir uma quest curta para tirar a semana do zero.';
+    final weeklyPressure = weeklyBoss == null
+        ? weeklyReview.recommendation
+        : 'Boss semanal em $weeklyBossProgress/${weeklyBoss.targetActiveDays}. Arena sustenta rank; Base sustenta retorno.';
+    final statusAccent = switch (weeklyReview.status) {
+      WeeklyReviewStatus.rising => AppColors.questAccent,
+      WeeklyReviewStatus.stable => AppColors.neonBlue,
+      WeeklyReviewStatus.risk => Colors.orangeAccent,
+      WeeklyReviewStatus.critical => AppColors.danger,
+    };
+
+    return _SectionPanel(
+      key: const ValueKey('quests-return-loop'),
+      accent: statusAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.event_repeat_rounded, color: statusAccent, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Ciclo de retorno',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+              ),
+              _StatusBadge(label: weeklyReview.badge, accent: statusAccent),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _LoopSignalLine(
+            icon: Icons.check_circle_outline_rounded,
+            text: todayAction,
+            accent: AppColors.questAccent,
+          ),
+          const SizedBox(height: 10),
+          _LoopSignalLine(
+            icon: Icons.local_fire_department_rounded,
+            text: tomorrowAction,
+            accent: Colors.orangeAccent,
+          ),
+          const SizedBox(height: 10),
+          _LoopSignalLine(
+            icon: Icons.shield_rounded,
+            text: weeklyPressure,
+            accent: AppColors.arenaAccent,
+          ),
+        ],
+      ),
     );
   }
 
@@ -1222,7 +1306,7 @@ class QuestsScreen extends ConsumerWidget {
 }
 
 class _SectionPanel extends StatelessWidget {
-  const _SectionPanel({required this.child, required this.accent});
+  const _SectionPanel({super.key, required this.child, required this.accent});
 
   final Widget child;
   final Color accent;
@@ -1249,6 +1333,40 @@ class _SectionPanel extends StatelessWidget {
         ],
       ),
       child: child,
+    );
+  }
+}
+
+class _LoopSignalLine extends StatelessWidget {
+  const _LoopSignalLine({
+    required this.icon,
+    required this.text,
+    required this.accent,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: accent, size: 17),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12.5,
+              height: 1.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

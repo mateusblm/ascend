@@ -8,7 +8,7 @@ This checklist is complementary to:
 - `docs/product/phase1-smoke-log.md`
 - `docs/product/release-checklist.md`
 
-Last updated: `2026-04-23`
+Last updated: `2026-04-24`
 
 ## Current Status
 
@@ -28,6 +28,19 @@ Automated desk pass evidence:
 - Remaining gap:
   - visual rhythm, scroll feel, and density still require a real-device pass
 
+### Automated desk pass - 2026-04-24
+
+- Result: `passed`
+- Validation:
+  - `rtk flutter analyze`
+  - `rtk flutter test`
+- Coverage added since the previous pass:
+  - onboarding -> `Quests` -> first personal quest journey
+  - `Home` return-motivation surface
+  - `Quests` return-loop surface
+- Remaining gap:
+  - visual rhythm, scroll feel, density, and small/large-screen manual judgment still require a real-device pass
+
 ## Manual Path
 
 ### `Base`
@@ -42,6 +55,7 @@ Check:
 Check:
 - hero shows actionable counts
 - weekly-priority block interprets the queue instead of repeating hero totals
+- return-loop block explains today's first action, tomorrow's return, and weekly/rank pressure
 - `Arena`, `Base`, and `Concluidas` sections are visually distinct
 - quest cards remain readable and do not render as flat black blocks
 

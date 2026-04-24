@@ -138,7 +138,7 @@ Make the first-week and daily-return loop obvious, reliable, and test-protected.
 
 ### Activation status
 
-Status: `in_progress`
+Status: `completed_with_accepted_debt`
 
 Activation note:
 - this phase started with tracked operational debt still open from Phase 1
@@ -149,7 +149,7 @@ Activation note:
 
 #### Workstream 2.1 - First-week path
 
-Status: `in_progress`
+Status: `completed_with_manual_validation_debt`
 
 Completed:
 - first-week guidance is visible inside `Quests`
@@ -164,21 +164,21 @@ Backlog:
 
 #### Workstream 2.2 - Core surface hierarchy
 
-Status: `in_progress`
+Status: `completed_with_manual_validation_debt`
 
 Current state:
 - Home, Quests, Arena, and Plano already have redesign direction
 - ownership audit and UI smoke checklist now exist
 - `Quests` no longer depends on a dock-obscured floating action button as the only top-level creation entry
+- `Home` and `Quests` now expose distinct return-loop cues without turning either surface into a duplicated dashboard
 
 Still required:
 - device-size validation for the redesigned surfaces
-- cleanup of remaining production-facing copy quality issues
-- confirmation that each top-level tab owns a distinct concept and does not duplicate metrics without purpose
+- real-device confirmation that each top-level tab owns a distinct concept and does not duplicate metrics without purpose
 
 #### Workstream 2.3 - Loop protection tests
 
-Status: `in_progress`
+Status: `done`
 
 Completed:
 - broad progression/rank/quest coverage already exists
@@ -188,31 +188,34 @@ Completed:
 - first-week journey coverage now protects the expected next-action progression across the early loop
 - onboarding-to-quests journey coverage now protects the Phase 2 handoff without decorative copy assertions
 - attribute allocation now has controller-level coverage for instant UI feedback and rollback on authority failure
+- Home return-motivation coverage protects tomorrow/streak, weekly pressure, and payoff state
+- Quests return-loop coverage is anchored in the onboarding-to-first-quest journey
 - widget coverage was trimmed away from decorative copy and stale local assumptions toward action/state contracts and authority-aware behavior
 
 Still required:
-- visual/behavioral regression protection for key loop surfaces where useful
+- add visual/behavioral regression protection only when future loop changes introduce new risk
 
 #### Workstream 2.4 - Return motivation
 
-Status: `in_progress`
+Status: `done`
 
 Completed:
 - `Home` now shows a compact return-motivation cue that connects tomorrow's return, weekly pressure, and the next payoff
+- `Quests` now shows a compact action-surface cue that connects today's first action, tomorrow's return, and weekly/rank pressure
 - automated coverage protects the return-motivation state contract and the Home surface key
+- onboarding-to-quests journey coverage protects that the `Quests` return-loop cue is present before the first personal quest action
 
 Backlog:
-- verify that streak, payoff, rank pressure, and weekly guidance all remain visible from the main loops
-- ensure users can tell why to return tomorrow and this week
-- reject additions that add surface area without improving return clarity
+- verify on device that streak, payoff, rank pressure, and weekly guidance remain readable without crowding
 
 ### Phase 2 exit checklist
 
-- first useful action is obvious from onboarding through the first week
-- Home and Quests make the next step clear
-- the core quest/progression loop is protected by automated tests
-- critical loop copy is production-quality Portuguese
-- carried Phase 1 debt is still visible and not forgotten
+- first useful action is obvious from onboarding through the first week: `met by automated journey coverage`
+- Home and Quests make the next step clear: `met in app surfaces and widget coverage`
+- the core quest/progression loop is protected by automated tests: `met`
+- critical loop copy is production-quality Portuguese: `met for changed loop-critical surfaces; continue reviewing during release polish`
+- carried Phase 1 debt is still visible and not forgotten: `met`
+- manual/device-size validation: `accepted debt carried into Phase 3 release readiness`
 
 ## Phase 3 - Product reliability and release readiness
 

@@ -92,10 +92,17 @@ Exit criteria:
 
 ### Phase 2 - Core loops and retention
 
-Status: `planned`
+Status: `in_progress`
 
 Goal:
 - make the product's daily and weekly return loop reliable and legible
+
+Phase activation note:
+- `Phase 2` was allowed to start before full closure of `Phase 1`
+- the remaining `Phase 1` debt is operational:
+  - real support channel
+  - recorded real-device trust-critical smoke pass
+- this exception does not remove the debt; it only allows loop work to proceed in parallel
 
 In scope:
 - personal quest loop quality

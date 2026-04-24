@@ -14,8 +14,8 @@ Update this file:
 - Current date baseline: `2026-04-23`
 - Active plan: `docs/product/project-plan.md`
 - Active requirements baseline: `docs/product/requirements-baseline.md`
-- Active phase: `Phase 1 - Core authority and trust`
-- Previous phase status: `Phase 0 completed`
+- Active phase: `Phase 2 - Core loops and retention`
+- Previous phase status: `Phase 1 advanced with accepted operational debt`
 - Active backlog: `docs/product/phase-backlog.md`
 - Active smoke log: `docs/product/phase1-smoke-log.md`
 
@@ -24,8 +24,8 @@ Update this file:
 | Phase | Status | Entry condition | Exit condition |
 | --- | --- | --- | --- |
 | Phase 0 - Baseline and control plane | `completed` | project needs operational discipline | requirements, plan, gates, and tracker are published |
-| Phase 1 - Core authority and trust | `in_progress` | Phase 0 completed | authority, sync, rules, and trust baseline are reliable |
-| Phase 2 - Core loops and retention | `planned` | Phase 1 complete | personal and competitive loops are clear and protected |
+| Phase 1 - Core authority and trust | `completed_with_accepted_debt` | Phase 0 completed | authority, sync, rules, and trust baseline are reliable |
+| Phase 2 - Core loops and retention | `in_progress` | Phase 1 complete or explicitly advanced with tracked debt | personal and competitive loops are clear and protected |
 | Phase 3 - Product reliability and release readiness | `planned` | Phase 2 complete | release candidate can be validated and distributed safely |
 | Phase 4 - Differentiation and guided growth | `planned` | Phase 3 complete | deeper guidance and payoff improve retention without weakening trust |
 
@@ -53,7 +53,7 @@ Next allowed focus:
 
 ### Phase 1 - Core authority and trust
 
-Status: `in_progress`
+Status: `completed_with_accepted_debt`
 
 Progress note recorded on: `2026-04-23`
 
@@ -72,9 +72,14 @@ Implemented and evidenced:
   - backend callable authority tests for profile sync and competitive quest verification
   - Firestore rules emulator checks for read/write boundaries on authority-sensitive collections
 
-Current blockers before phase exit:
+Accepted debt carried forward:
 - support now comes from release config, but still defaults to placeholder `support@ascend.app` until a real monitored channel is set
 - no recorded real-device smoke pass yet for the full trust-critical flow
+
+Why Phase 2 was allowed to start anyway:
+- the remaining gaps are operational and release-facing, not architectural blockers for core-loop product work
+- the authority, rules, sync, and trust baseline is strong enough to continue product shaping while the remaining release debt stays visible
+- the debt must still be closed before any broader external distribution or Phase 3 release-readiness signoff
 
 Reference:
 - see `docs/product/phase-backlog.md` for the current workstream status and exit checklist
@@ -86,21 +91,36 @@ Planned completion note:
 - record which trust/account/release surfaces are now safe enough for external testing
 - record which smoke path still remains
 
-Allowed focus while active:
-- account/session authority
-- canonical profile and quest continuity
-- Firebase rules hardening
-- trust/support/account surfaces
-- release-environment clarity
-
-Do not drift into:
-- cosmetic expansion
-- broad UI exploration
-- new progression systems without direct risk reduction
-
 ### Phase 2 - Core loops and retention
 
-Status: `planned`
+Status: `in_progress`
+
+Activation note recorded on: `2026-04-23`
+
+Current focus:
+- tighten first-week and daily-return clarity
+- verify top-level surface ownership and next-action readability
+- expand regression protection for loop-facing UI and quest/payoff flows
+
+Carried debt from Phase 1:
+- real support email is still pending
+- real-device trust-critical smoke pass is still pending
+- these remain blockers for Phase 3-style release confidence even while Phase 2 work continues
+
+Progress note recorded on: `2026-04-23`
+
+Implemented and evidenced:
+- top-level UI ownership is now documented and reviewable through the UI surface audit
+- UI smoke checklist now exists and records automated desk-pass validation separately from device validation
+- `Quests` regained an always-visible creation path:
+  - inline creation CTA in the weekly-priority block
+  - inline creation CTA in the first-week panel
+  - floating action button lifted above the shared bottom dock instead of hiding behind it
+- regression coverage now protects:
+  - Home critical rendering
+  - Arena critical rendering
+  - Plano weekly-read ownership
+  - quest-card rendering after the border/fill regression fix
 
 Planned completion note:
 - record how the first-week loop improved

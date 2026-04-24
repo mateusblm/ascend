@@ -33,6 +33,11 @@ What still blocks a clean Phase 1 exit:
 - rules/emulator validation now exists, but the completion still needs to be referenced in the phase-exit note
 - there is not yet one explicit Phase 1 completion review tying all of the above together
 
+Current handling decision:
+- product work is allowed to continue in `Phase 2`
+- the items above remain explicit carried debt and cannot silently disappear
+- treat them as required closure before Phase 3 release-readiness work
+
 ### Workstreams
 
 #### Workstream 1.1 - Session authority
@@ -131,11 +136,24 @@ Still required:
 
 Make the first-week and daily-return loop obvious, reliable, and test-protected.
 
+### Activation status
+
+Status: `in_progress`
+
+Activation note:
+- this phase started with tracked operational debt still open from Phase 1
+- allowed because the remaining debt is release-facing rather than a blocker for loop clarity work
+- do not treat this as permission to skip the pending support and real-device smoke items permanently
+
 ### Workstreams
 
 #### Workstream 2.1 - First-week path
 
-Status: `pending`
+Status: `in_progress`
+
+Completed:
+- first-week guidance is visible inside `Quests`
+- the first-week panel now exposes a direct creation CTA instead of only descriptive copy
 
 Backlog:
 - verify onboarding -> starter kit -> first quest path on small and large screens
@@ -144,10 +162,12 @@ Backlog:
 
 #### Workstream 2.2 - Core surface hierarchy
 
-Status: `partial`
+Status: `in_progress`
 
 Current state:
 - Home, Quests, Arena, and Plano already have redesign direction
+- ownership audit and UI smoke checklist now exist
+- `Quests` no longer depends on a dock-obscured floating action button as the only top-level creation entry
 
 Still required:
 - device-size validation for the redesigned surfaces
@@ -156,14 +176,15 @@ Still required:
 
 #### Workstream 2.3 - Loop protection tests
 
-Status: `partial`
+Status: `in_progress`
 
 Completed:
 - broad progression/rank/quest coverage already exists
 - Home, Rank, onboarding, account, and player tracking tests exist
+- stats screen ownership coverage exists
+- quest card coverage now protects the recent visual regression fix
 
 Still required:
-- Quests screen widget coverage
 - explicit tests for the first-week flow as a user journey
 - visual/behavioral regression protection for key loop surfaces where useful
 
@@ -182,6 +203,7 @@ Backlog:
 - Home and Quests make the next step clear
 - the core quest/progression loop is protected by automated tests
 - critical loop copy is production-quality Portuguese
+- carried Phase 1 debt is still visible and not forgotten
 
 ## Phase 3 - Product reliability and release readiness
 

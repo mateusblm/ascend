@@ -25,6 +25,8 @@ final questLiveNowProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
 
+  static const double _floatingButtonDockClearance = 92;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quests = ref.watch(questProvider);
@@ -87,6 +89,9 @@ class QuestsScreen extends ConsumerWidget {
     final heroDetail = weeklyBoss == null
         ? 'Base ativa. Abra ou conclua quests para manter o ritmo da semana.'
         : 'Boss semanal em $weeklyBossProgress/${weeklyBoss.targetActiveDays}. Feche quests de arena para sustentar o rank.';
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    void createQuest() => _openAddQuestModal(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -119,6 +124,7 @@ class QuestsScreen extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _buildQuestCommandDeck(
+                      onCreateQuest: createQuest,
                       competitiveCount: competitiveQuests.length,
                       personalCount: personalActiveQuests.length,
                       completedCount: completedCount,
@@ -132,7 +138,10 @@ class QuestsScreen extends ConsumerWidget {
                     delay: const Duration(milliseconds: 110),
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildFirstWeekPanel(firstWeekJourney),
+                      child: _buildFirstWeekPanel(
+                        firstWeekJourney,
+                        onCreateQuest: createQuest,
+                      ),
                     ),
                   ),
                 ),
@@ -224,7 +233,12 @@ class QuestsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: _buildCreateQuestButton(context),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: keyboardVisible ? 0 : _floatingButtonDockClearance,
+        ),
+        child: _buildCreateQuestButton(context),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
@@ -375,6 +389,7 @@ class QuestsScreen extends ConsumerWidget {
   }
 
   Widget _buildQuestCommandDeck({
+    required VoidCallback onCreateQuest,
     required int competitiveCount,
     required int personalCount,
     required int completedCount,
@@ -432,12 +447,28 @@ class QuestsScreen extends ConsumerWidget {
                 ? 'Ha suporte de base aberto, mas nada foi fechado ainda. Busque a primeira entrega do dia.'
                 : 'Sua base esta rodando. Agora o foco e transformar ritmo em fechamento real.',
           ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onCreateQuest,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(
+                personalCount == 0 && competitiveCount == 0
+                    ? 'Abrir primeira quest'
+                    : 'Nova quest',
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFirstWeekPanel(FirstWeekJourneySummary summary) {
+  Widget _buildFirstWeekPanel(
+    FirstWeekJourneySummary summary, {
+    required VoidCallback onCreateQuest,
+  }) {
     return _SectionPanel(
       accent: AppColors.planAccent,
       child: Column(
@@ -512,6 +543,19 @@ class QuestsScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onCreateQuest,
+              icon: const Icon(Icons.add_task_rounded),
+              label: Text(
+                summary.steps.every((step) => step.isDone)
+                    ? 'Abrir nova quest'
+                    : 'Criar quest para o proximo passo',
               ),
             ),
           ),

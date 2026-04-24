@@ -120,6 +120,7 @@ Implemented and evidenced:
 - onboarding now highlights the first recommended Base quest before exit, so the starter kit explains what to do first instead of only listing quests
 - `Quests` now uses a compact `+` floating action button positioned above the shared dock instead of an extended button that still collided visually with navigation chrome
 - attribute allocation in `Build` now updates immediately on tap instead of waiting for a tab change or later rebuild to reveal the new value
+- `Home` now exposes a compact return-motivation signal tying tomorrow's return, weekly pressure, and next payoff into one visible loop cue
 - the automated suite was cleaned to reduce stale local-flow assumptions and decorative copy assertions:
   - widget tests now anchor on critical actions, state surfaces, and stable keys
   - domain tests now prefer progress/state assertions over brittle wording where possible
@@ -130,6 +131,7 @@ Implemented and evidenced:
   - quest-card rendering after the border/fill regression fix
   - onboarding -> Quests -> first personal quest handoff without relying on an old local quest cache
   - first-week journey state transitions for personal-first, competitive-next, and early-rank deactivation
+  - return-motivation state for tomorrow/streak, weekly pressure, and payoff visibility
   - optimistic attribute allocation with rollback on backend failure
 
 Planned completion note:

@@ -62,6 +62,11 @@ class HomeScreen extends ConsumerWidget {
       seasonReward: seasonReward,
       seasonProfile: seasonProfile,
     );
+    final returnMotivation = buildReturnMotivation(
+      player: player,
+      progressPayoff: progressPayoff,
+      snapshot: rankSnapshot,
+    );
     final rivalry = buildRankRivalrySummary(bracketLeaderboard);
     final heroSummary = firstWeekJourney.isActive
         ? firstWeekJourney.headline
@@ -112,6 +117,7 @@ class HomeScreen extends ConsumerWidget {
                       player: player,
                       firstWeekJourney: firstWeekJourney,
                       progressPayoff: progressPayoff,
+                      returnMotivation: returnMotivation,
                       rankSnapshot: rankSnapshot,
                       prestige: prestige,
                       season: season,
@@ -299,6 +305,7 @@ class HomeScreen extends ConsumerWidget {
     required Player player,
     required FirstWeekJourneySummary firstWeekJourney,
     required ProgressPayoffSummary progressPayoff,
+    required ReturnMotivationSummary returnMotivation,
     required CompetitiveRankSnapshot? rankSnapshot,
     required RankPrestigeSummary prestige,
     required RankSeasonSummary season,
@@ -379,6 +386,8 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
+          _buildReturnMotivationPanel(returnMotivation),
+          const SizedBox(height: 12),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -396,6 +405,61 @@ class HomeScreen extends ConsumerWidget {
                 height: 1.4,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReturnMotivationPanel(ReturnMotivationSummary summary) {
+    final accent = summary.isUrgent ? Colors.orangeAccent : AppColors.neonBlue;
+
+    return Container(
+      key: const ValueKey('home-return-motivation'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.event_repeat_rounded, color: accent, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Voltar amanha',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              _buildHeaderPill(summary.statusLabel, accent),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _ReturnSignalLine(
+            icon: Icons.local_fire_department_rounded,
+            text: summary.tomorrowAction,
+            accent: Colors.orangeAccent,
+          ),
+          const SizedBox(height: 8),
+          _ReturnSignalLine(
+            icon: Icons.shield_rounded,
+            text: summary.weeklyPressure,
+            accent: AppColors.arenaAccent,
+          ),
+          const SizedBox(height: 8),
+          _ReturnSignalLine(
+            icon: Icons.auto_awesome_rounded,
+            text: summary.payoffReason,
+            accent: AppColors.questAccent,
           ),
         ],
       ),
@@ -2164,6 +2228,40 @@ class _BaseDetailSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ReturnSignalLine extends StatelessWidget {
+  const _ReturnSignalLine({
+    required this.icon,
+    required this.text,
+    required this.accent,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: accent, size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

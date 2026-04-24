@@ -195,7 +195,11 @@ Still required:
 
 #### Workstream 2.4 - Return motivation
 
-Status: `pending`
+Status: `in_progress`
+
+Completed:
+- `Home` now shows a compact return-motivation cue that connects tomorrow's return, weekly pressure, and the next payoff
+- automated coverage protects the return-motivation state contract and the Home surface key
 
 Backlog:
 - verify that streak, payoff, rank pressure, and weekly guidance all remain visible from the main loops

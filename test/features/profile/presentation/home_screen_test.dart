@@ -92,6 +92,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('home-header')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('home-return-motivation')),
+      findsOneWidget,
+    );
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('home-entry-competitive-pulse')),
@@ -106,7 +110,10 @@ void main() {
       find.byKey(const ValueKey('home-entry-competitive-pulse')),
       findsOneWidget,
     );
-    expect(find.byKey(const ValueKey('home-entry-weekly-boss')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('home-entry-weekly-boss')),
+      findsOneWidget,
+    );
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('home-entry-weekly-boss')),
@@ -116,51 +123,55 @@ void main() {
     expect(find.text('Primeira Ruptura'), findsOneWidget);
   });
 
-  testWidgets('HomeScreen keeps weekly boss panel visible without remote event', (
-    tester,
-  ) async {
-    _setLargeSurface(tester);
-    final player = _buildPlayer(level: 2);
+  testWidgets(
+    'HomeScreen keeps weekly boss panel visible without remote event',
+    (tester) async {
+      _setLargeSurface(tester);
+      final player = _buildPlayer(level: 2);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authProvider.overrideWith(
-            (ref) => _FakeAuthController(AuthInitial()),
-          ),
-          playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
-          competitiveRankProvider.overrideWith((ref) => 'E'),
-          rankProgressionSnapshotProvider.overrideWith(
-            (ref) => Stream.value(null),
-          ),
-          rankProgressionHistoryProvider.overrideWith(
-            (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
-          ),
-          seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
-          currentCompetitiveIntegrityProvider.overrideWith(
-            (ref) => Stream.value(null),
-          ),
-          seasonBracketLeaderboardProvider.overrideWith(
-            (ref) async => const <RankSeasonLeaderboardEntry>[],
-          ),
-          remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
-          weeklyBossTopCompletionsProvider.overrideWith(
-            (ref) => Stream.value(const <WeeklyBossCompletion>[]),
-          ),
-        ],
-        child: const MaterialApp(home: HomeScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(
+              (ref) => _FakeAuthController(AuthInitial()),
+            ),
+            playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
+            competitiveRankProvider.overrideWith((ref) => 'E'),
+            rankProgressionSnapshotProvider.overrideWith(
+              (ref) => Stream.value(null),
+            ),
+            rankProgressionHistoryProvider.overrideWith(
+              (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
+            ),
+            seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
+            currentCompetitiveIntegrityProvider.overrideWith(
+              (ref) => Stream.value(null),
+            ),
+            seasonBracketLeaderboardProvider.overrideWith(
+              (ref) async => const <RankSeasonLeaderboardEntry>[],
+            ),
+            remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
+            weeklyBossTopCompletionsProvider.overrideWith(
+              (ref) => Stream.value(const <WeeklyBossCompletion>[]),
+            ),
+          ],
+          child: const MaterialApp(home: HomeScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('home-entry-weekly-boss')),
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.byKey(const ValueKey('home-entry-weekly-boss')), findsOneWidget);
-    expect(find.text('Nenhum boss remoto ativo agora.'), findsOneWidget);
-  });
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('home-entry-weekly-boss')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        find.byKey(const ValueKey('home-entry-weekly-boss')),
+        findsOneWidget,
+      );
+      expect(find.text('Nenhum boss remoto ativo agora.'), findsOneWidget);
+    },
+  );
 }
 
 class _TestPlayerNotifier extends PlayerNotifier {

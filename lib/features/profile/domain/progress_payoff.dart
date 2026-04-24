@@ -20,6 +20,22 @@ class ProgressPayoffSummary {
   final String seasonLabel;
 }
 
+class ReturnMotivationSummary {
+  const ReturnMotivationSummary({
+    required this.statusLabel,
+    required this.tomorrowAction,
+    required this.weeklyPressure,
+    required this.payoffReason,
+    required this.isUrgent,
+  });
+
+  final String statusLabel;
+  final String tomorrowAction;
+  final String weeklyPressure;
+  final String payoffReason;
+  final bool isUrgent;
+}
+
 ProgressPayoffSummary buildProgressPayoff({
   required Player player,
   CompetitiveRankSnapshot? snapshot,
@@ -48,9 +64,10 @@ ProgressPayoffSummary buildProgressPayoff({
       seasonProfile == null
           ? 'Legado sazonal equipado'
           : 'Titulo ativo: ${seasonProfile.activeTitleLabel}',
-    _ => seasonReward == null
-        ? 'Temporada carregando'
-        : '${seasonReward.rewardName} a caminho',
+    _ =>
+      seasonReward == null
+          ? 'Temporada carregando'
+          : '${seasonReward.rewardName} a caminho',
   };
 
   final headline = xpToNextLevel <= 20
@@ -65,4 +82,84 @@ ProgressPayoffSummary buildProgressPayoff({
     rankLabel: rankLabel,
     seasonLabel: seasonLabel,
   );
+}
+
+ReturnMotivationSummary buildReturnMotivation({
+  required Player player,
+  required ProgressPayoffSummary progressPayoff,
+  CompetitiveRankSnapshot? snapshot,
+  DateTime? now,
+}) {
+  final today = _dateOnly(now ?? DateTime.now());
+  final activeThisWeek = _activeDaysInCurrentWeek(player, today);
+  final daysLeftInWeek = (DateTime.daysPerWeek - today.weekday).clamp(0, 6);
+  final xpToNextLevel = (player.maxXp - player.xp).clamp(0, player.maxXp);
+  final rankStatus = snapshot?.status;
+  final isRankUnderPressure =
+      rankStatus == RankMaintenanceStatus.warning ||
+      rankStatus == RankMaintenanceStatus.critical ||
+      rankStatus == RankMaintenanceStatus.demoted;
+  final isUrgent = player.currentStreak == 0 || isRankUnderPressure;
+
+  final statusLabel = isUrgent
+      ? 'RETOMAR'
+      : activeThisWeek >= 4
+      ? 'SUSTENTAR'
+      : 'CONSTRUIR';
+
+  final tomorrowAction = player.currentStreak == 0
+      ? 'Volte amanha para transformar uma entrega isolada em streak.'
+      : 'Volte amanha para manter ${player.currentStreak + 1} dias vivos.';
+
+  final weeklyPressure = switch (rankStatus) {
+    RankMaintenanceStatus.warning =>
+      'Rank em aviso: faltam poucos dias para estabilizar a semana.',
+    RankMaintenanceStatus.critical =>
+      'Rank em risco: a proxima quest competitiva precisa entrar no plano.',
+    RankMaintenanceStatus.demoted =>
+      'Rank caiu: a semana precisa recomecar com uma entrega validada.',
+    RankMaintenanceStatus.promotionReady =>
+      'Promocao pronta: volte com energia para abrir a prova no momento certo.',
+    RankMaintenanceStatus.secure =>
+      'Semana segura: use os proximos $daysLeftInWeek dia(s) para consolidar.',
+    null => 'Semana em montagem: $activeThisWeek/7 dia(s) ativos registrados.',
+  };
+
+  final payoffReason = xpToNextLevel <= 20
+      ? progressPayoff.levelLabel
+      : progressPayoff.rankLabel;
+
+  return ReturnMotivationSummary(
+    statusLabel: statusLabel,
+    tomorrowAction: tomorrowAction,
+    weeklyPressure: weeklyPressure,
+    payoffReason: payoffReason,
+    isUrgent: isUrgent,
+  );
+}
+
+int _activeDaysInCurrentWeek(Player player, DateTime today) {
+  final start = _weekStartFor(today);
+  final end = start.add(const Duration(days: 7));
+  final activeDates = {
+    ...player.activityHistory.map(_dateOnly),
+    ...player.competitiveActivityHistory.map(_dateOnly),
+    if (player.lastQuestCompletionDate != null)
+      _dateOnly(player.lastQuestCompletionDate!),
+    if (player.lastCompetitiveQuestCompletionDate != null)
+      _dateOnly(player.lastCompetitiveQuestCompletionDate!),
+  };
+
+  return activeDates
+      .where((date) => !date.isBefore(start) && date.isBefore(end))
+      .length;
+}
+
+DateTime _weekStartFor(DateTime date) {
+  final normalized = _dateOnly(date);
+  return normalized.subtract(Duration(days: normalized.weekday - 1));
+}
+
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
 }

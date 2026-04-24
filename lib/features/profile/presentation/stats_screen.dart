@@ -469,6 +469,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
+              key: const ValueKey('stats-open-week-detail'),
               onPressed: () => _openPlanDetail(
                 context,
                 title: 'Semana',
@@ -499,6 +500,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     CompetitiveRankSnapshot? rankSnapshot,
   ) {
     return _Panel(
+      key: const ValueKey('stats-next-step-panel'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -580,6 +582,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
+              key: const ValueKey('stats-open-plan-detail'),
               onPressed: () => _openPlanDetail(
                 context,
                 title: 'Proximo Passo',
@@ -1163,7 +1166,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 }
 
 class _Panel extends StatelessWidget {
-  const _Panel({required this.child});
+  const _Panel({super.key, required this.child});
 
   final Widget child;
 

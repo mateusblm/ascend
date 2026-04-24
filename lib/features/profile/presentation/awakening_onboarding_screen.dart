@@ -67,6 +67,7 @@ class _AwakeningOnboardingScreenState
                     RevealBlock(
                       delay: const Duration(milliseconds: 80),
                       child: _FocusSection(
+                        key: const ValueKey('onboarding-focus-section'),
                         selectedFocus: _selectedFocus,
                         onSelect: (focus) =>
                             setState(() => _selectedFocus = focus),
@@ -76,6 +77,7 @@ class _AwakeningOnboardingScreenState
                     RevealBlock(
                       delay: const Duration(milliseconds: 150),
                       child: _StarterKitPanel(
+                        key: const ValueKey('onboarding-starter-kit'),
                         focusLabel: _displayFocusLabel(_selectedFocus),
                         starterKit: starterKit,
                       ),
@@ -84,6 +86,7 @@ class _AwakeningOnboardingScreenState
                     RevealBlock(
                       delay: const Duration(milliseconds: 200),
                       child: _FirstRecommendedActionPanel(
+                        key: const ValueKey('onboarding-first-action'),
                         quest: firstRecommendedQuest,
                       ),
                     ),
@@ -167,6 +170,7 @@ class _AwakeningOnboardingScreenState
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    key: const ValueKey('onboarding-primary-cta'),
                     onPressed: _completeOnboarding,
                     child: const Text('Entrar em Quests com esse kit'),
                   ),
@@ -274,7 +278,7 @@ class _OnboardingHero extends StatelessWidget {
 }
 
 class _FirstRecommendedActionPanel extends StatelessWidget {
-  const _FirstRecommendedActionPanel({required this.quest});
+  const _FirstRecommendedActionPanel({super.key, required this.quest});
 
   final Quest quest;
 
@@ -343,7 +347,11 @@ class _FirstRecommendedActionPanel extends StatelessWidget {
 }
 
 class _FocusSection extends StatelessWidget {
-  const _FocusSection({required this.selectedFocus, required this.onSelect});
+  const _FocusSection({
+    super.key,
+    required this.selectedFocus,
+    required this.onSelect,
+  });
 
   final AwakeningPath selectedFocus;
   final ValueChanged<AwakeningPath> onSelect;
@@ -368,9 +376,10 @@ class _FocusSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Material(
               color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
-                onTap: () => onSelect(focus),
+                child: InkWell(
+                  key: ValueKey('onboarding-focus-${focus.name}'),
+                  borderRadius: BorderRadius.circular(22),
+                  onTap: () => onSelect(focus),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: double.infinity,
@@ -438,7 +447,11 @@ class _FocusSection extends StatelessWidget {
 }
 
 class _StarterKitPanel extends StatelessWidget {
-  const _StarterKitPanel({required this.focusLabel, required this.starterKit});
+  const _StarterKitPanel({
+    super.key,
+    required this.focusLabel,
+    required this.starterKit,
+  });
 
   final String focusLabel;
   final List<Quest> starterKit;
@@ -476,7 +489,10 @@ class _StarterKitPanel extends StatelessWidget {
           ...starterKit.map(
             (quest) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _StarterQuestTile(quest: quest),
+              child: _StarterQuestTile(
+                key: ValueKey('onboarding-starter-quest-${quest.id}'),
+                quest: quest,
+              ),
             ),
           ),
         ],
@@ -533,7 +549,7 @@ class _StarterMetric extends StatelessWidget {
 }
 
 class _StarterQuestTile extends StatelessWidget {
-  const _StarterQuestTile({required this.quest});
+  const _StarterQuestTile({super.key, required this.quest});
 
   final Quest quest;
 

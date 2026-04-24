@@ -38,6 +38,7 @@ class LoginScreen extends ConsumerWidget {
                   children: [
                     RevealBlock(
                       child: Container(
+                        key: const ValueKey('login-hero'),
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -111,6 +112,7 @@ class LoginScreen extends ConsumerWidget {
                     RevealBlock(
                       delay: const Duration(milliseconds: 90),
                       child: Container(
+                        key: const ValueKey('login-auth-panel'),
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -146,6 +148,7 @@ class LoginScreen extends ConsumerWidget {
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton.icon(
+                                  key: const ValueKey('login-google-button'),
                                   onPressed: () => ref
                                       .read(authProvider.notifier)
                                       .signInWithGoogle(),
@@ -161,6 +164,7 @@ class LoginScreen extends ConsumerWidget {
                             if (state is AuthFailure) ...[
                               const SizedBox(height: 14),
                               Container(
+                                key: const ValueKey('login-error-panel'),
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(

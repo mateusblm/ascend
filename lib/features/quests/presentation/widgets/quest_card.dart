@@ -38,6 +38,7 @@ class QuestCard extends StatelessWidget {
         : accent.withValues(alpha: 0.06);
 
     return AnimatedContainer(
+      key: ValueKey('quest-card-${quest.id}'),
       duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
@@ -139,6 +140,7 @@ class QuestCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton.tonal(
+                        key: ValueKey('quest-card-primary-${quest.id}'),
                         onPressed: primaryActionEnabled
                             ? onPrimaryAction
                             : null,
@@ -160,6 +162,7 @@ class QuestCard extends StatelessWidget {
                         onSecondaryAction != null) ...[
                       const SizedBox(width: 10),
                       TextButton(
+                        key: ValueKey('quest-card-secondary-${quest.id}'),
                         onPressed: onSecondaryAction,
                         child: Text(secondaryActionLabel!),
                       ),

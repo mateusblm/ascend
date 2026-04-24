@@ -70,6 +70,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               RevealBlock(
                 delay: const Duration(milliseconds: 120),
                 child: _AccountPanel(
+                  key: const ValueKey('account-profile-panel'),
                   child: Row(
                     children: [
                       _AccountAvatar(photoUrl: authProfile?.photoUrl ?? ''),
@@ -189,6 +190,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               RevealBlock(
                 delay: const Duration(milliseconds: 300),
                 child: _AccountPanel(
+                  key: const ValueKey('account-privacy-panel'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -215,6 +217,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
+                              key: const ValueKey('account-privacy-button'),
                               onPressed: () => _openPolicyDialog(
                                 context,
                                 title: 'Politica de privacidade',
@@ -226,6 +229,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: OutlinedButton(
+                              key: const ValueKey('account-terms-button'),
                               onPressed: () => _openPolicyDialog(
                                 context,
                                 title: 'Termos de uso',
@@ -244,6 +248,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               RevealBlock(
                 delay: const Duration(milliseconds: 360),
                 child: _AccountPanel(
+                  key: const ValueKey('account-support-panel'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -293,6 +298,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               RevealBlock(
                 delay: const Duration(milliseconds: 420),
                 child: _AccountPanel(
+                  key: const ValueKey('account-session-panel'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -318,6 +324,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
+                          key: const ValueKey('account-sign-out-button'),
                           onPressed: authProfile == null || _isSigningOut
                               ? null
                               : () => _handleSignOut(context),
@@ -517,7 +524,7 @@ class _AccountAvatar extends StatelessWidget {
 }
 
 class _AccountPanel extends StatelessWidget {
-  const _AccountPanel({required this.child});
+  const _AccountPanel({super.key, required this.child});
 
   final Widget child;
 

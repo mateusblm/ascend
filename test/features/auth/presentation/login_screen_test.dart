@@ -6,28 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('LoginScreen renders shorter launch copy and primary CTA', (
+  testWidgets('LoginScreen exposes primary auth surfaces and CTA', (
     tester,
   ) async {
+    final controller = _FakeAuthController(AuthInitial());
+
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          authProvider.overrideWith(
-            (ref) => _FakeAuthController(AuthInitial()),
-          ),
-        ],
+        overrides: [authProvider.overrideWith((ref) => controller)],
         child: const MaterialApp(home: LoginScreen()),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Ascend'), findsOneWidget);
-    expect(find.text('Rotina com peso de jogo'), findsOneWidget);
-    expect(find.text('Primeiro passo'), findsOneWidget);
-    expect(find.text('Continuar com Google'), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-hero')), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-auth-panel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-google-button')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('login-google-button')));
+    await tester.tap(find.byKey(const ValueKey('login-google-button')));
+    expect(controller.signInCalls, 1);
   });
 
-  testWidgets('LoginScreen renders auth failure inside feedback panel', (
+  testWidgets('LoginScreen renders auth failure inside feedback surface', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -42,14 +43,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const ValueKey('login-error-panel')), findsOneWidget);
     expect(find.text('Falha ao entrar.'), findsOneWidget);
-    expect(find.text('Continuar com Google'), findsOneWidget);
   });
 }
 
 class _FakeAuthController extends StateNotifier<AuthState>
     implements AuthController {
   _FakeAuthController(super.state);
+
+  int signInCalls = 0;
 
   @override
   Future<void> handleActiveSessionConflict() async {}
@@ -58,7 +61,9 @@ class _FakeAuthController extends StateNotifier<AuthState>
   Future<void> refreshActiveSession() async {}
 
   @override
-  Future<void> signInWithGoogle() async {}
+  Future<void> signInWithGoogle() async {
+    signInCalls += 1;
+  }
 
   @override
   Future<void> signOut() async {}

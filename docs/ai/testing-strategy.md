@@ -63,6 +63,16 @@ Use for:
 
 Prefer widget tests over broad integration tests when the behavior can be validated locally.
 
+Widget tests should prefer:
+- critical actions and navigation entry points
+- stable `Key` anchors for panels, CTAs, and stateful surfaces
+- dynamic data that is part of the contract
+
+Widget tests should avoid:
+- decorative headlines and non-critical copy
+- asserting the same metric wording across multiple tabs
+- re-testing domain logic that already has unit coverage
+
 ### Integration Tests
 
 Use sparingly for:
@@ -190,6 +200,8 @@ Current competitive additions to protect:
 - If tests cannot be added yet, state the exact missing coverage.
 - Do not add shallow tests that only mirror implementation details.
 - Prefer tests that describe expected behavior from the product perspective.
+- When widget coverage is needed, prefer state/action assertions over decorative text checks.
+- When backend authority replaces old local ownership, migrate tests toward domain, repository, rules, and authority boundaries instead of preserving stale local-flow assumptions.
 - When a task touches release readiness, include both automated coverage and the exact manual smoke path still required.
 
 ## Validation Minimum For Critical Changes

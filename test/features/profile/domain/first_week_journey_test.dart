@@ -44,8 +44,9 @@ void main() {
     );
 
     expect(summary.isActive, isTrue);
-    expect(summary.progressLabel, '2/3 passos');
-    expect(summary.nextAction, contains('3 dias ativos'));
+    expect(summary.progress, closeTo(2 / 3, 0.001));
+    expect(summary.steps.where((step) => step.isDone), hasLength(2));
+    expect(summary.steps.last.isDone, isFalse);
   });
 
   test(
@@ -68,8 +69,9 @@ void main() {
       );
 
       expect(summary.isActive, isTrue);
-      expect(summary.progressLabel, '0/3 passos');
-      expect(summary.nextAction, contains('quest pessoal'));
+      expect(summary.progress, 0);
+      expect(summary.steps.where((step) => step.isDone), isEmpty);
+      expect(summary.nextAction, isNotEmpty);
       expect(summary.steps.first.isDone, isFalse);
     },
   );
@@ -104,8 +106,9 @@ void main() {
         now: DateTime(2026, 4, 20),
       );
 
-      expect(summary.progressLabel, '1/3 passos');
-      expect(summary.nextAction, contains('quest de rank'));
+      expect(summary.progress, closeTo(1 / 3, 0.001));
+      expect(summary.steps.where((step) => step.isDone), hasLength(1));
+      expect(summary.nextAction, isNotEmpty);
       expect(summary.steps[0].isDone, isTrue);
       expect(summary.steps[1].isDone, isFalse);
     },

@@ -463,6 +463,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
+          key: const ValueKey('rank-entry-now'),
           title: 'Agora',
           summary: snapshot?.summary ?? arena.leaderHeadline,
           supporting: currentRank == season.peakRank
@@ -488,6 +489,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
+          key: const ValueKey('rank-entry-season'),
           title: 'Temporada',
           summary: seasonSummary,
           supporting: 'Pontuacao sazonal, recompensa do ciclo e grupo atual.',
@@ -510,6 +512,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
         const SizedBox(height: 12),
         _SectionEntryCard(
+          key: const ValueKey('rank-entry-legacy'),
           title: 'Legado',
           summary: legacySummary,
           supporting: 'Titulos, picos e recompensas permanentes da conta.',
@@ -838,6 +841,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             children: [
               if (snapshot?.promotionReady == true && exam == null)
                 _ActionButton(
+                  key: const ValueKey('rank-start-exam-action'),
                   label:
                       snapshot?.advancementMode ==
                           RankAdvancementMode.reconquest
@@ -863,6 +867,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               if (exam?.status == PromotionExamStatus.passed &&
                   snapshot != null)
                 _ActionButton(
+                  key: const ValueKey('rank-promote-action'),
                   label: exam?.mode == PromotionExamMode.reconquest
                       ? 'RECONQUISTAR RANK'
                       : 'PROMOVER RANK',
@@ -884,6 +889,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 ),
               if (exam?.status == PromotionExamStatus.inProgress)
                 _ActionButton(
+                  key: const ValueKey('rank-refresh-exam-action'),
                   label: 'ATUALIZAR STATUS',
                   accent: Colors.orangeAccent,
                   onTap: () async {
@@ -2050,6 +2056,7 @@ class _HeroReadTile extends StatelessWidget {
 
 class _SectionEntryCard extends StatelessWidget {
   const _SectionEntryCard({
+    super.key,
     required this.title,
     required this.summary,
     required this.supporting,
@@ -2199,6 +2206,7 @@ class _StatusPill extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
+    super.key,
     required this.label,
     required this.accent,
     required this.onTap,

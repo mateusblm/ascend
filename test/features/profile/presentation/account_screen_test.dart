@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
-  testWidgets('AccountScreen shows connected account and support surfaces', (
+  testWidgets('AccountScreen exposes trust-critical panels and dialogs', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -25,46 +25,28 @@ void main() {
               ),
             ),
           ),
-          playerProvider.overrideWith(
-            (ref) => _TestPlayerNotifier(
-              Player(
-                ownerUid: 'uid-1',
-                name: 'Hunter',
-                level: 6,
-                xp: 40,
-                maxXp: 100,
-                attributes: PlayerAttributes(),
-                lastResetDate: DateTime(2026, 4, 21),
-                primaryFocus: AwakeningPath.study,
-                hasCompletedOnboarding: true,
-              ),
-            ),
-          ),
+          playerProvider.overrideWith((ref) => _TestPlayerNotifier(_player())),
         ],
         child: const MaterialApp(home: AccountScreen()),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hunter'), findsWidgets);
-    expect(find.text('hunter@example.com'), findsWidgets);
-    expect(find.text('support@ascend.app'), findsOneWidget);
-    expect(find.text('Pedido manual com revisao operacional'), findsOneWidget);
-    expect(find.text('SAIR DA CONTA'), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-profile-panel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-privacy-panel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-support-panel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-session-panel')), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('PRIVACIDADE'),
+      find.byKey(const ValueKey('account-privacy-button')),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('PRIVACIDADE'));
+    await tester.tap(find.byKey(const ValueKey('account-privacy-button')));
     await tester.pumpAndSettle();
 
+    expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('Politica de privacidade'), findsOneWidget);
-    expect(
-      find.textContaining('Ascend coleta somente os dados necessarios'),
-      findsOneWidget,
-    );
   });
 
   testWidgets('AccountScreen triggers sign out through auth controller', (
@@ -83,20 +65,7 @@ void main() {
       ProviderScope(
         overrides: [
           authProvider.overrideWith((ref) => authController),
-          playerProvider.overrideWith(
-            (ref) => _TestPlayerNotifier(
-              Player(
-                ownerUid: 'uid-1',
-                name: 'Hunter',
-                level: 6,
-                xp: 40,
-                maxXp: 100,
-                attributes: PlayerAttributes(),
-                lastResetDate: DateTime(2026, 4, 21),
-                hasCompletedOnboarding: true,
-              ),
-            ),
-          ),
+          playerProvider.overrideWith((ref) => _TestPlayerNotifier(_player())),
         ],
         child: const MaterialApp(home: AccountScreen()),
       ),
@@ -104,11 +73,11 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('SAIR DA CONTA'),
+      find.byKey(const ValueKey('account-sign-out-button')),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('SAIR DA CONTA'));
+    await tester.tap(find.byKey(const ValueKey('account-sign-out-button')));
     await tester.pumpAndSettle();
 
     expect(authController.signOutCalls, 1);
@@ -144,4 +113,18 @@ class _FakeAuthController extends StateNotifier<AuthState>
 class _FakeIsar implements Isar {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+Player _player() {
+  return Player(
+    ownerUid: 'uid-1',
+    name: 'Hunter',
+    level: 6,
+    xp: 40,
+    maxXp: 100,
+    attributes: PlayerAttributes(),
+    lastResetDate: DateTime(2026, 4, 21),
+    primaryFocus: AwakeningPath.study,
+    hasCompletedOnboarding: true,
+  );
 }

@@ -186,6 +186,7 @@ Completed:
 - quest card coverage now protects the recent visual regression fix
 - first-week journey coverage now protects the expected next-action progression across the early loop
 - attribute allocation now has controller-level coverage for instant UI feedback and rollback on authority failure
+- widget coverage was trimmed away from decorative copy and stale local assumptions toward action/state contracts and authority-aware behavior
 
 Still required:
 - explicit tests for the first-week flow as a user journey

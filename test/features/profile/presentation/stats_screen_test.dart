@@ -12,45 +12,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
-  testWidgets(
-    'StatsScreen keeps score ownership in weekly read instead of header',
-    (tester) async {
-      final player = _buildPlayer();
+  testWidgets('StatsScreen routes to week and plan detail surfaces', (
+    tester,
+  ) async {
+    _setLargeSurface(tester);
+    final player = _buildPlayer();
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authProvider.overrideWith(
-              (ref) => _FakeAuthController(AuthInitial()),
-            ),
-            playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
-            rankProgressionSnapshotProvider.overrideWith(
-              (ref) => Stream.value(_buildSnapshot()),
-            ),
-            rankProgressionHistoryProvider.overrideWith(
-              (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
-            ),
-            promotionExamProvider.overrideWith((ref) => Stream.value(null)),
-            remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
-          ],
-          child: const MaterialApp(home: StatsScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith(
+            (ref) => _FakeAuthController(AuthInitial()),
+          ),
+          playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
+          rankProgressionSnapshotProvider.overrideWith(
+            (ref) => Stream.value(_buildSnapshot()),
+          ),
+          rankProgressionHistoryProvider.overrideWith(
+            (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
+          ),
+          promotionExamProvider.overrideWith((ref) => Stream.value(null)),
+          remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
+        ],
+        child: const MaterialApp(home: StatsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(
-        find.text('Proximo passo'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('stats-open-week-detail')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('stats-open-week-detail')));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Plano'), findsOneWidget);
-      expect(find.text('Leitura da semana'), findsOneWidget);
-      expect(find.text('Proximo passo'), findsOneWidget);
-      expect(find.text('Score'), findsOneWidget);
-      expect(find.text('Grau'), findsOneWidget);
-    },
-  );
+    expect(find.byKey(const ValueKey('week')), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('stats-open-plan-detail')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('stats-open-plan-detail')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('plan')), findsOneWidget);
+  });
 }
 
 class _TestPlayerNotifier extends PlayerNotifier {
@@ -121,4 +132,13 @@ CompetitiveRankSnapshot _buildSnapshot() {
     syncSource: 'client',
     updatedAt: DateTime(2026, 4, 23),
   );
+}
+
+void _setLargeSurface(WidgetTester tester) {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = const Size(1080, 2200);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
 }

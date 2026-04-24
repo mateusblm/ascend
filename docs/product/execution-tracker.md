@@ -120,6 +120,9 @@ Implemented and evidenced:
 - onboarding now highlights the first recommended Base quest before exit, so the starter kit explains what to do first instead of only listing quests
 - `Quests` now uses a compact `+` floating action button positioned above the shared dock instead of an extended button that still collided visually with navigation chrome
 - attribute allocation in `Build` now updates immediately on tap instead of waiting for a tab change or later rebuild to reveal the new value
+- the automated suite was cleaned to reduce stale local-flow assumptions and decorative copy assertions:
+  - widget tests now anchor on critical actions, state surfaces, and stable keys
+  - domain tests now prefer progress/state assertions over brittle wording where possible
 - regression coverage now protects:
   - Home critical rendering
   - Arena critical rendering

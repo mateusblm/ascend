@@ -1,5 +1,5 @@
-import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
+import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
 import 'package:ascend/features/profile/domain/rank_progression.dart';
 import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
-  testWidgets('RankScreen renders season, boss arena and exam state', (
+  testWidgets('RankScreen routes to now, season and legacy detail surfaces', (
     tester,
   ) async {
     final player = _buildPlayer();
@@ -60,8 +60,7 @@ void main() {
       id: 'boss-c',
       rank: 'C',
       title: 'Primeira Ruptura',
-      description:
-          'Fique ativo em 5 dias da semana para provar que voce merece subir.',
+      description: 'Evento de teste.',
       targetActiveDays: 5,
       rewardXp: 120,
       rewardStatPoints: 2,
@@ -71,15 +70,6 @@ void main() {
       endsAt: DateTime(2026, 4, 21),
       isActive: true,
     );
-    final top = [
-      WeeklyBossCompletion(
-        uid: '1',
-        displayName: 'Mateus',
-        photoUrl: '',
-        rankAtCompletion: 'C',
-        completedAt: DateTime(2026, 4, 18, 9, 30),
-      ),
-    ];
 
     await tester.pumpWidget(
       ProviderScope(
@@ -194,7 +184,7 @@ void main() {
           ),
           remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(boss)),
           weeklyBossTopCompletionsProvider.overrideWith(
-            (ref) => Stream.value(top),
+            (ref) => Stream.value(const <WeeklyBossCompletion>[]),
           ),
         ],
         child: const MaterialApp(home: RankScreen()),
@@ -202,50 +192,33 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Arena'), findsOneWidget);
-    expect(find.text('Agora'), findsOneWidget);
-    expect(find.text('Temporada'), findsOneWidget);
-    expect(find.text('Legado'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-entry-now')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-entry-season')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-entry-legacy')), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Agora'));
-    await tester.tap(find.text('Agora'));
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-now')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-now')));
     await tester.pumpAndSettle();
-
-    expect(find.text('Pressao Atual'), findsOneWidget);
-    expect(find.text('CONFIANCA DA CONTA'), findsOneWidget);
-    expect(find.text('SUBIR PARA B'), findsOneWidget);
-    expect(find.text('DIAS PARA LIBERAR'), findsOneWidget);
-    expect(find.text('LEVEL OK'), findsOneWidget);
-    expect(find.text('Primeiro clear: Mateus abriu a arena.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-now')), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Temporada'));
-    await tester.tap(find.text('Temporada'));
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-season')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-season')));
     await tester.pumpAndSettle();
-
-    expect(find.text('PLACAR DA TEMPORADA'), findsOneWidget);
-    expect(find.text('RIVALIDADE'), findsOneWidget);
-    expect(find.text('Voce abriu a disputa'), findsOneWidget);
-    expect(find.textContaining('2/3 semanas seguras'), findsOneWidget);
-    expect(find.text('Pacote de Manutencao'), findsOneWidget);
-    expect(find.text('RESGATAR TEMPORADA'), findsOneWidget);
-    expect(find.text('VOCE'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-season')), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Legado').first);
-    await tester.tap(find.text('Legado').first);
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-legacy')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-legacy')));
     await tester.pumpAndSettle();
-
-    expect(find.text('LEGADO ATIVO'), findsOneWidget);
-    expect(find.text('ARQUIVO SAZONAL'), findsOneWidget);
-    expect(find.text('AURA DE DISCIPLINA'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-legacy')), findsOneWidget);
   });
 
-  testWidgets('RankScreen shows inactive arena copy without boss', (
+  testWidgets('RankScreen keeps now detail accessible without active boss', (
     tester,
   ) async {
     final player = _buildPlayer(level: 2);
@@ -282,14 +255,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Agora'), findsOneWidget);
-    expect(find.text('Nenhum boss ativo para este rank.'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Agora'));
-    await tester.tap(find.text('Agora'));
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-now')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-now')));
     await tester.pumpAndSettle();
 
-    expect(find.text('SEM EVENTO'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-now')), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-start-exam-action')), findsNothing);
+    expect(find.byKey(const ValueKey('rank-promote-action')), findsNothing);
   });
 
   testWidgets('RankScreen exposes exam start action when promotion is ready', (
@@ -338,11 +310,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Agora'));
-    await tester.tap(find.text('Agora'));
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-now')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-now')));
     await tester.pumpAndSettle();
 
-    expect(find.text('INICIAR EXAME'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-start-exam-action')), findsOneWidget);
   });
 
   testWidgets('RankScreen exposes promotion action after exam is passed', (
@@ -405,11 +377,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Agora'));
-    await tester.tap(find.text('Agora'));
+    await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-now')));
+    await tester.tap(find.byKey(const ValueKey('rank-entry-now')));
     await tester.pumpAndSettle();
 
-    expect(find.text('PROMOVER RANK'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rank-promote-action')), findsOneWidget);
   });
 }
 

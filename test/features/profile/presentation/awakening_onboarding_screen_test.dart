@@ -1,3 +1,4 @@
+import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/awakening_onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,8 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets(
-    'AwakeningOnboardingScreen keeps focus selection and next action visible',
+    'AwakeningOnboardingScreen exposes focus selection, starter kit and first action',
     (tester) async {
+      _setLargeSurface(tester);
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(home: AwakeningOnboardingScreen()),
@@ -14,28 +16,63 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Primeira semana'), findsOneWidget);
-      expect(find.text('Escolha seu foco'), findsOneWidget);
-      expect(find.text('Entrar em Quests com esse kit'), findsOneWidget);
-      expect(find.text('Disciplina'), findsAtLeastNWidgets(1));
-      await tester.scrollUntilVisible(
-        find.text('Seu kit inicial'),
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.text('Seu kit inicial'), findsOneWidget);
       expect(
-        find.textContaining('Disciplina entra com um kit curto'),
+        find.byKey(const ValueKey('onboarding-focus-section')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('onboarding-primary-cta')),
+        findsOneWidget,
+      );
+
+      for (final focus in AwakeningPath.values) {
+        expect(
+          find.byKey(ValueKey('onboarding-focus-${focus.name}')),
+          findsOneWidget,
+        );
+      }
+
       await tester.scrollUntilVisible(
-        find.text('Primeiro passo recomendado'),
+        find.byKey(const ValueKey('onboarding-focus-health')),
         250,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Primeiro passo recomendado'), findsOneWidget);
-      expect(find.text('Arrumar a cama ao acordar'), findsAtLeastNWidgets(1));
-      expect(find.text('Base primeiro'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('onboarding-focus-health')));
+      await tester.pumpAndSettle();
+
+      await _dragUntilVisible(
+        tester,
+        find.byKey(const ValueKey('onboarding-starter-kit')),
+      );
+      await _dragUntilVisible(
+        tester,
+        find.byKey(const ValueKey('onboarding-first-action')),
+      );
+      expect(
+        find.byKey(const ValueKey('onboarding-first-action')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('onboarding-starter-quest-health-personal')),
+        findsOneWidget,
+      );
+      expect(find.text('Bater a meta de agua do dia'), findsAtLeastNWidgets(1));
     },
   );
+}
+
+Future<void> _dragUntilVisible(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 12 && finder.evaluate().isEmpty; i++) {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
+  }
+}
+
+void _setLargeSurface(WidgetTester tester) {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = const Size(1080, 2200);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
 }

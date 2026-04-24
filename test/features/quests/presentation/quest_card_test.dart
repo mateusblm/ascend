@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets(
-    'QuestCard renders competitive reward and helper copy without crashing',
+    'QuestCard keeps competitive primary action interactive without render errors',
     (tester) async {
+      var primaryCalls = 0;
       final quest = Quest(
         id: 'competitive-1',
         title: 'Sessao profunda de estudo',
@@ -24,52 +25,73 @@ void main() {
             body: QuestCard(
               quest: quest,
               helperText: 'Inicie no app e feche 25 min para contar.',
-              onPrimaryAction: () {},
+              onPrimaryAction: () => primaryCalls += 1,
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Sessao profunda de estudo'), findsOneWidget);
-      expect(find.text('+14 XP'), findsOneWidget);
-      expect(find.text('Inteligência'), findsOneWidget);
-      expect(find.text('Arena'), findsOneWidget);
-      expect(find.text('25 min'), findsOneWidget);
+      final primaryFinder = find.byKey(
+        const ValueKey('quest-card-primary-competitive-1'),
+      );
+      expect(find.byKey(const ValueKey('quest-card-competitive-1')), findsOneWidget);
+      expect(primaryFinder, findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(primaryFinder).onPressed,
+        isNotNull,
+      );
+
+      await tester.tap(primaryFinder);
+      expect(primaryCalls, 1);
     },
   );
 
-  testWidgets('QuestCard renders completed personal quest with readable state', (
+  testWidgets('QuestCard exposes secondary action for completed personal quests', (
     tester,
   ) async {
-    final quest = Quest(
-      id: 'personal-1',
-      title: 'Revisar metas do dia',
-      rewardAttribute: AttributeType.agility,
-      xpReward: 12,
-      isCompleted: true,
-    );
+      var secondaryCalls = 0;
+      final quest = Quest(
+        id: 'personal-1',
+        title: 'Revisar metas do dia',
+        rewardAttribute: AttributeType.agility,
+        xpReward: 12,
+        isCompleted: true,
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: QuestCard(
-            quest: quest,
-            helperText:
-                'Quest pessoal: ajuda no progresso geral, mas não entra no rank.',
-            onPrimaryAction: () {},
-            primaryActionLabel: 'Concluida',
-            primaryActionEnabled: false,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: QuestCard(
+              quest: quest,
+              helperText:
+                  'Quest pessoal: ajuda no progresso geral, mas não entra no rank.',
+              onPrimaryAction: () {},
+              primaryActionLabel: 'Concluida',
+              primaryActionEnabled: false,
+              onSecondaryAction: () => secondaryCalls += 1,
+              secondaryActionLabel: 'Desfazer',
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Revisar metas do dia'), findsOneWidget);
-    expect(find.text('+12 XP'), findsOneWidget);
-    expect(find.text('Agilidade'), findsOneWidget);
-    expect(find.text('Base'), findsOneWidget);
-    expect(find.text('Concluida'), findsOneWidget);
-  });
+      final primaryFinder = find.byKey(
+        const ValueKey('quest-card-primary-personal-1'),
+      );
+      final secondaryFinder = find.byKey(
+        const ValueKey('quest-card-secondary-personal-1'),
+      );
+      expect(primaryFinder, findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(primaryFinder).onPressed,
+        isNull,
+      );
+      expect(secondaryFinder, findsOneWidget);
+
+      await tester.tap(secondaryFinder);
+      expect(secondaryCalls, 1);
+    },
+  );
 }

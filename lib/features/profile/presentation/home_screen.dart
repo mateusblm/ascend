@@ -177,6 +177,7 @@ class HomeScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
+      key: const ValueKey('home-header'),
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -938,6 +939,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildProgressPayoffCard(ProgressPayoffSummary summary) {
     return Container(
+      key: const ValueKey('home-progress-payoff'),
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1002,6 +1004,7 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildRivalryCard(RankRivalrySummary summary) {
     return Container(
+      key: const ValueKey('home-competitive-pulse'),
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1082,6 +1085,7 @@ class HomeScreen extends ConsumerWidget {
     };
 
     return Container(
+      key: const ValueKey('home-weekly-boss'),
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1505,6 +1509,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _BaseDetailEntry(
+          key: const ValueKey('home-entry-progress-payoff'),
           title: 'Próximo ganho',
           summary: progressPayoff.headline,
           accent: AppColors.questAccent,
@@ -1516,6 +1521,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _BaseDetailEntry(
+          key: const ValueKey('home-entry-competitive-pulse'),
           title: 'Pulso competitivo',
           summary:
               rankSnapshot?.summary ??
@@ -1542,6 +1548,7 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 10),
         ],
         _BaseDetailEntry(
+          key: const ValueKey('home-entry-weekly-boss'),
           title: 'Evento da Semana',
           summary: remoteBoss?.title ?? 'Nenhum boss remoto ativo agora.',
           accent: Colors.redAccent,
@@ -2014,6 +2021,7 @@ class _AttributeBuildSummary {
 
 class _BaseDetailEntry extends StatelessWidget {
   const _BaseDetailEntry({
+    super.key,
     required this.title,
     required this.summary,
     required this.accent,

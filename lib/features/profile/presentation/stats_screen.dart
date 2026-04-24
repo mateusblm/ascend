@@ -149,12 +149,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     PromotionExam? promotionExam,
   ) {
     final textTheme = Theme.of(context).textTheme;
-    final statusAccent = switch (insights.review.status) {
-      WeeklyReviewStatus.rising => AppColors.questAccent,
-      WeeklyReviewStatus.stable => AppColors.planAccent,
-      WeeklyReviewStatus.risk => AppColors.arenaAccent,
-      WeeklyReviewStatus.critical => AppColors.danger,
-    };
 
     return _ContrastPanel(
       accent: AppColors.planAccent,
@@ -233,16 +227,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _MetricCard(
-                label: 'Score',
-                value: '${insights.discipline.score}%',
-                accent: statusAccent,
-              ),
-              _MetricCard(
-                label: 'Grau',
-                value: insights.discipline.grade,
-                accent: statusAccent,
-              ),
               _MetricCard(
                 label: 'Semana',
                 value: '${insights.discipline.currentWeekActiveDays}/7',

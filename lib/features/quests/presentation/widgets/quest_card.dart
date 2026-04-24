@@ -40,7 +40,7 @@ class QuestCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -48,17 +48,8 @@ class QuestCard extends StatelessWidget {
           colors: [surfaceGlow, surfaceBase, AppColors.surface],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: accent, width: 3),
-          top: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
-          ),
-          right: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
-          ),
-          bottom: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
-          ),
+        border: Border.all(
+          color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
         ),
         boxShadow: [
           BoxShadow(
@@ -74,94 +65,109 @@ class QuestCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(width: 4, color: accent),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _QuestChip(
-                          label: quest.isCompetitive ? 'Arena' : 'Base',
-                          color: accent,
-                        ),
-                        _QuestChip(
-                          label: _verificationLabel(quest),
-                          color: AppColors.textSecondary,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      quest.title,
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
-                        color: AppColors.textPrimary,
-                        decoration: quest.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _QuestChip(
+                                label: quest.isCompetitive ? 'Arena' : 'Base',
+                                color: accent,
+                              ),
+                              _QuestChip(
+                                label: _verificationLabel(quest),
+                                color: AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            quest.title,
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              height: 1.25,
+                              color: AppColors.textPrimary,
+                              decoration: quest.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    _RewardPill(
+                      xpReward: quest.xpReward,
+                      attribute: _attributeLabel(quest.rewardAttribute),
+                      accent: accent,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              _RewardPill(
-                xpReward: quest.xpReward,
-                attribute: _attributeLabel(quest.rewardAttribute),
-                accent: accent,
-              ),
-            ],
-          ),
-          if (helperText != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              helperText!,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.tonal(
-                  onPressed: primaryActionEnabled ? onPrimaryAction : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accent.withValues(alpha: 0.16),
-                    foregroundColor: accent,
-                    disabledBackgroundColor: Colors.white.withValues(
-                      alpha: 0.05,
+                if (helperText != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    helperText!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary,
+                      height: 1.45,
                     ),
-                    disabledForegroundColor: Colors.white38,
                   ),
-                  child: Text(
-                    primaryActionLabel ??
-                        (quest.isCompleted ? 'Concluida' : 'Marcar'),
-                  ),
-                ),
-              ),
-              if (secondaryActionLabel != null &&
-                  onSecondaryAction != null) ...[
-                const SizedBox(width: 10),
-                TextButton(
-                  onPressed: onSecondaryAction,
-                  child: Text(secondaryActionLabel!),
+                ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: primaryActionEnabled
+                            ? onPrimaryAction
+                            : null,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: accent.withValues(alpha: 0.16),
+                          foregroundColor: accent,
+                          disabledBackgroundColor: Colors.white.withValues(
+                            alpha: 0.05,
+                          ),
+                          disabledForegroundColor: Colors.white38,
+                        ),
+                        child: Text(
+                          primaryActionLabel ??
+                              (quest.isCompleted ? 'Concluida' : 'Marcar'),
+                        ),
+                      ),
+                    ),
+                    if (secondaryActionLabel != null &&
+                        onSecondaryAction != null) ...[
+                      const SizedBox(width: 10),
+                      TextButton(
+                        onPressed: onSecondaryAction,
+                        child: Text(secondaryActionLabel!),
+                      ),
+                    ],
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
         ],
       ),

@@ -413,35 +413,24 @@ class QuestsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _QuestSummaryTile(
-                  label: 'Arena abertas',
-                  value: '$competitiveCount',
-                  accent: AppColors.arenaAccent,
-                  compact: true,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QuestSummaryTile(
-                  label: 'Base abertas',
-                  value: '$personalCount',
-                  accent: AppColors.questAccent,
-                  compact: true,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QuestSummaryTile(
-                  label: 'Ja fechadas',
-                  value: '$completedCount',
-                  accent: AppColors.arenaAccent,
-                  compact: true,
-                ),
-              ),
-            ],
+          _CommandReadTile(
+            label: 'Arena',
+            accent: AppColors.arenaAccent,
+            body: competitiveCount == 0
+                ? 'Nenhuma frente competitiva aberta. Abra uma quest de arena para a semana contar no rank.'
+                : competitiveCount == 1
+                ? 'Existe 1 frente competitiva aberta. Priorize fechar essa sessao antes de abrir outra.'
+                : 'Existem $competitiveCount frentes competitivas abertas. Feche o que ja começou antes de expandir.',
+          ),
+          const SizedBox(height: 10),
+          _CommandReadTile(
+            label: 'Base',
+            accent: AppColors.questAccent,
+            body: personalCount == 0
+                ? 'Sua base esta vazia. Uma quest pessoal simples ja ajuda a sustentar consistencia.'
+                : completedCount == 0
+                ? 'Ha suporte de base aberto, mas nada foi fechado ainda. Busque a primeira entrega do dia.'
+                : 'Sua base esta rodando. Agora o foco e transformar ritmo em fechamento real.',
           ),
         ],
       ),
@@ -1252,22 +1241,17 @@ class _QuestSummaryTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.accent,
-    this.compact = false,
   });
 
   final String label;
   final String value;
   final Color accent;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(minWidth: compact ? 0 : 104),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 12 : 14,
-        vertical: compact ? 12 : 14,
-      ),
+      constraints: const BoxConstraints(minWidth: 104),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(18),
@@ -1279,7 +1263,7 @@ class _QuestSummaryTile extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: compact ? 10.5 : 11,
+              fontSize: 11,
               color: accent,
               fontWeight: FontWeight.w700,
             ),
@@ -1288,10 +1272,57 @@ class _QuestSummaryTile extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: compact ? 20 : 24,
+              fontSize: 24,
               fontWeight: FontWeight.w700,
               color: Colors.white,
               height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommandReadTile extends StatelessWidget {
+  const _CommandReadTile({
+    required this.label,
+    required this.body,
+    required this.accent,
+  });
+
+  final String label;
+  final String body;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: accent,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: AppColors.textSecondary,
+              height: 1.45,
             ),
           ),
         ],

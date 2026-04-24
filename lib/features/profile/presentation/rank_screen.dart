@@ -116,6 +116,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final currentRank =
         snapshot?.currentRank ?? playerRankForLevel(player.level);
     final status = snapshot?.status ?? RankMaintenanceStatus.secure;
+    final statusHeadline = _statusHeadline(status);
     final accent = _statusColor(status);
     final peakRank = snapshot?.peakRank ?? currentRank;
     final nextRank = snapshot?.promotionTargetRank ?? rankAfter(currentRank);
@@ -297,7 +298,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rank $currentRank',
+                            statusHeadline,
                             style: textTheme.titleLarge?.copyWith(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w800,
@@ -305,7 +306,9 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Pico histórico: $peakRank',
+                            peakRank == currentRank
+                                ? 'Seu melhor marco atual coincide com o posto da semana.'
+                                : 'Pico histórico: $peakRank',
                             style: textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
@@ -388,28 +391,26 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                       ? AppColors.neonBlue
                       : Colors.orangeAccent,
                 ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _MetricCard(
-                      label: 'Level',
-                      value: player.level.toString().padLeft(2, '0'),
-                      accent: AppColors.neonBlue,
-                    ),
-                    _MetricCard(
-                      label: 'Pico',
-                      value: peakRank,
-                      accent: AppColors.arenaAccent,
-                    ),
-                    _MetricCard(
-                      label: 'Liberado até',
-                      value: eligibleRank,
-                      accent: accent,
-                    ),
-                  ],
-                ),
+                if (nextRank != null || eligibleRank != currentRank) ...[
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _MetricCard(
+                        label: 'Level',
+                        value: player.level.toString().padLeft(2, '0'),
+                        accent: AppColors.neonBlue,
+                      ),
+                      if (eligibleRank != currentRank)
+                        _MetricCard(
+                          label: 'Liberado até',
+                          value: eligibleRank,
+                          accent: accent,
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -442,7 +443,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         '${leaderboard.playerStandingLabel} • ${season.rewardStatusLabel}';
     final legacySummary =
         seasonProfile?.activeTitleLabel ??
-        'Pico atual: ${snapshot?.peakRank ?? currentRank}';
+        'Titulos, picos e recompensas permanentes da conta.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,9 +513,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           title: 'Legado',
           summary: legacySummary,
           supporting: 'Titulos, picos e recompensas permanentes da conta.',
-          badge: season.peakRank == '-'
-              ? (snapshot?.peakRank ?? currentRank)
-              : season.peakRank,
+          badge: 'ARQUIVO',
           accent: Colors.amberAccent,
           onTap: () => _openRankDetail(
             context,

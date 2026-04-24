@@ -17,6 +17,7 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
   - `docs/product/ui-redesign-phases.md`
+  - `docs/product/ui-surface-audit.md`
 - Identify whether the change touches a critical system:
   - progression logic
   - quest completion
@@ -45,6 +46,8 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
   - `docs/product/ui-redesign-phases.md`
+  - `docs/product/ui-surface-audit.md`
+  - `docs/product/ui-smoke-checklist.md`
   - `docs/ai/architecture-map.md`
 
 ## Before Finishing
@@ -57,6 +60,11 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
   - `docs/product/vision.md`
   - `docs/product/roadmap.md`
 - Check whether the change increases information redundancy across tabs or repeats the same panel pattern without a clear reason.
+- Check whether each top-level block has a clear owner:
+  - raw state
+  - interpretation
+  - action
+- Check whether a nearby block or sibling tab already owns the same metric with the same visual weight.
 - Check whether the change makes the app feel more like a generic productivity tool instead of a progression product.
 - Check whether tests should be added or updated.
 - Note any validation step that could not be run.

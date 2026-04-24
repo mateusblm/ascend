@@ -97,6 +97,7 @@ lib/
   - `docs/product/ux-positioning.md`
   - `docs/product/ui-information-architecture.md`
   - `docs/product/ui-redesign-phases.md`
+  - `docs/product/ui-surface-audit.md`
   - intended labels:
     - `BASE`: snapshot, momentum, build identity
     - `QUESTS`: execution
@@ -110,6 +111,9 @@ lib/
 - repeated metrics across screens should be treated carefully:
   - reuse is allowed only when the meaning changes by surface
   - simple duplication of the same block in different tabs is a product smell
+- visual hierarchy changes on top-level screens should also pass:
+  - `docs/product/ui-smoke-checklist.md`
+  - the relevant widget coverage for the touched surface when available
 - UI surfaces should prefer progressive disclosure:
   - short strong summary on the top-level tab
   - detail on tap through rows, sheets, or child screens

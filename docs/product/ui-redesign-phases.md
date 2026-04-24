@@ -164,4 +164,6 @@ Before continuing this redesign:
 When finishing a redesign phase:
 - update this file
 - update `docs/ai/architecture-map.md` if the shared UI system changed
+- update `docs/product/ui-surface-audit.md` if ownership changed
+- update `docs/product/ui-smoke-checklist.md` if the manual path changed
 - note what is complete vs what still needs tuning

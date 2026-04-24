@@ -30,34 +30,47 @@ class QuestCard extends StatelessWidget {
     final accent = quest.isCompleted
         ? Color.lerp(categoryAccent, Colors.white, 0.12) ?? categoryAccent
         : categoryAccent;
-    final surfaceColor = quest.isCompleted
+    final surfaceBase = quest.isCompleted
         ? AppColors.surfaceMuted
-        : AppColors.surface;
+        : AppColors.surfaceStrong;
+    final surfaceGlow = quest.isCompleted
+        ? Colors.white.withValues(alpha: 0.015)
+        : accent.withValues(alpha: 0.06);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: surfaceColor,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [surfaceGlow, surfaceBase, AppColors.surface],
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border(
           left: BorderSide(color: accent, width: 3),
           top: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
           ),
           right: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
           ),
           bottom: BorderSide(
-            color: accent.withValues(alpha: quest.isCompleted ? 0.20 : 0.14),
+            color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 14,
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 18,
             offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: accent.withValues(alpha: quest.isCompleted ? 0.06 : 0.12),
+            blurRadius: 18,
+            spreadRadius: -8,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -214,27 +227,35 @@ class _RewardPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          '+$xpReward XP',
-          style: TextStyle(
-            color: accent,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '+$xpReward XP',
+            style: TextStyle(
+              color: accent,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          attribute,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
+          const SizedBox(height: 2),
+          Text(
+            attribute,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

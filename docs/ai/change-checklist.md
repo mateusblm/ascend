@@ -9,6 +9,9 @@ Use this checklist before, during, and after any AI-assisted code change in Asce
 - Confirm the feature area being changed.
 - Read the relevant model, controller, and screen files.
 - Read `AGENTS.md` and any related file in `docs/ai/` or `docs/product/` if the change affects architecture or behavior.
+- Confirm the active phase in `docs/product/execution-tracker.md`.
+- Read `docs/product/requirements-baseline.md` when deciding if the work belongs in scope.
+- Read `docs/ai/quality-gates.md` for high-risk or release-facing work.
 - For progression/account changes, read `docs/product/progression-architecture.md` before deciding where the rule should live.
 - For navigation, labels, or major UI hierarchy, read:
   - `docs/product/ux-positioning.md`

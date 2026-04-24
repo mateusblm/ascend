@@ -31,6 +31,7 @@ The goal is simple:
 - `flutter build apk --debug --flavor production`
 - `flutter build apk --release --flavor production`
 - `cd functions && npm run build`
+- `cd functions && npm run test:rules`
 
 ### Firebase
 

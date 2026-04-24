@@ -35,6 +35,19 @@ An iOS staging Firebase app also exists for future use:
 
 The iOS repo wiring is currently production-only. There is no separate staging target/scheme yet.
 
+## Explicit Environment Decision
+
+Decision recorded on: `2026-04-23`
+
+Phase 1 and current validation policy:
+- Ascend will keep one shared Firebase project (`ascend-b7c20`) for the current controlled validation phase
+- Android flavor separation remains the primary environment boundary right now
+- this shared-project policy is acceptable for `Phase 1 - Core authority and trust`
+
+Future boundary:
+- before public store launch or broad external distribution, re-evaluate whether production must move to a dedicated Firebase project
+- treat that re-evaluation as a `Phase 3 - Product reliability and release readiness` gate, not as an open `Phase 1` decision
+
 ## Current Release Signing State
 
 Android release signing now supports a real keystore path through:
@@ -82,14 +95,14 @@ flutter build ios --release
 
 ## Current Constraints
 
-- the current Firebase project is shared by staging and production for now
-- before public store launch, decide whether production should stay in this Firebase project or move to a dedicated production project
+- the current Firebase project is shared by staging and production by explicit decision for the current validation phase
+- before public store launch, confirm whether the shared project remains acceptable or whether production moves to a dedicated project
 - before public store launch, register the real release SHA certificates for the production Android app if the keystore changes again
 - iOS still depends on Xcode signing/provisioning being configured on the Mac that performs the archive
 
 ## Required Next Steps Before Store Submission
 
-1. decide whether Firebase remains shared or splits into dedicated `staging` and `prod` projects
+1. confirm whether the shared Firebase project remains acceptable or splits into dedicated `staging` and `prod` projects before public launch
 2. verify install, update, login, and Google Sign-In on real staging and production builds
 3. configure iOS signing/provisioning in Xcode for `com.ascend.mobile`
 4. move the keystore backup and password escrow to the final operational owner before store submission

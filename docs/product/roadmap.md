@@ -1,5 +1,12 @@
 # Ascend Roadmap
 
+Operational companion documents:
+- `docs/product/requirements-baseline.md`
+- `docs/product/project-plan.md`
+- `docs/product/phase-backlog.md`
+- `docs/product/execution-tracker.md`
+- `docs/ai/quality-gates.md`
+
 ## Product Goal
 
 Turn Ascend from a simple gamified habit tracker into a retention-focused progression product with a clear path to monetization.

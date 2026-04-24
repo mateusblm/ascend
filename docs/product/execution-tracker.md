@@ -73,7 +73,7 @@ Implemented and evidenced:
   - Firestore rules emulator checks for read/write boundaries on authority-sensitive collections
 
 Current blockers before phase exit:
-- support still points to placeholder `support@ascend.app`
+- support now comes from release config, but still defaults to placeholder `support@ascend.app` until a real monitored channel is set
 - no recorded real-device smoke pass yet for the full trust-critical flow
 
 Reference:

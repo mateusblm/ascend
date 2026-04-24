@@ -11,6 +11,7 @@ Ascend now has an in-app account surface that explains support, privacy, and del
 The support contact is still a release-readiness dependency:
 
 - current placeholder: `support@ascend.app`
+- current app config key: `ASCEND_SUPPORT_EMAIL`
 - required before external beta: replace placeholder with a real monitored inbox or support channel
 
 ## Minimum Support Scope

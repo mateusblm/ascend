@@ -93,6 +93,14 @@ flutter build apk --release --flavor production
 flutter build ios --release
 ```
 
+Support channel for release builds can also be provided through compile-time defines:
+
+```powershell
+flutter run --flavor staging --dart-define=ASCEND_SUPPORT_EMAIL=support@your-domain.com --dart-define=ASCEND_SUPPORT_LABEL="Email de suporte"
+```
+
+If no define is provided, the app falls back to the placeholder `support@ascend.app`.
+
 ## Current Constraints
 
 - the current Firebase project is shared by staging and production by explicit decision for the current validation phase

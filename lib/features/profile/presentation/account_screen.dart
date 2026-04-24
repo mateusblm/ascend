@@ -1,3 +1,4 @@
+import 'package:ascend/core/config/release_contact_config.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
@@ -257,13 +258,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       ),
                       const SizedBox(height: 14),
                       const _InfoLine(
-                        label: 'Canal inicial de suporte',
-                        value: _supportEmail,
+                        label: ReleaseContactConfig.supportChannelLabel,
+                        value: ReleaseContactConfig.supportEmail,
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Substitua esse inbox por um canal real antes de distribuir o app fora do teste controlado.',
-                        style: TextStyle(
+                      Text(
+                        ReleaseContactConfig.usesPlaceholderSupport
+                            ? 'Substitua esse inbox por um canal real antes de distribuir o app fora do teste controlado.'
+                            : 'Canal configurado para a release atual. Confirme monitoramento ativo antes de ampliar a distribuicao.',
+                        style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 11.8,
                           height: 1.4,
@@ -465,8 +468,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     );
   }
 }
-
-const String _supportEmail = 'support@ascend.app';
 
 const String _privacyPolicySummary =
     'Ascend coleta somente os dados necessarios para autenticacao, progresso do jogador, quests, estado competitivo, analytics operacionais e erros de execucao. '

@@ -47,6 +47,7 @@ The goal is simple:
 - confirm Crashlytics remains wired at startup
 - confirm new recoverable remote failures use the centralized crash boundary instead of silent swallow
 - confirm support/privacy/deletion surfaces still reflect the current operational policy
+- confirm `ASCEND_SUPPORT_EMAIL` is set to a real monitored channel for the target release when distributing beyond controlled internal validation
 
 ### Competitive Safety
 

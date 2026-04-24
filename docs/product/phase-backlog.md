@@ -28,7 +28,7 @@ The repo already has strong Phase 1 movement:
 - the account surface already exposes account identity, privacy, terms, support, and deletion direction
 
 What still blocks a clean Phase 1 exit:
-- support still uses a placeholder inbox
+- support is now configurable at build time, but still defaults to the placeholder inbox until a real monitored channel is set for release
 - real-device smoke validation is documented but not recorded as completed
 - rules/emulator validation now exists, but the completion still needs to be referenced in the phase-exit note
 - there is not yet one explicit Phase 1 completion review tying all of the above together
@@ -90,9 +90,10 @@ Completed:
 - privacy and terms summaries are accessible in-app
 - support/deletion direction is documented
 - widget coverage now protects account rendering and logout entry
+- support channel is now configurable through `ASCEND_SUPPORT_EMAIL`
 
 Still required:
-- replace placeholder support contact with a real monitored channel
+- set a real monitored support contact for the target release
 - align the public operational policy with the actual support owner and response expectation
 
 #### Workstream 1.5 - Release environment clarity

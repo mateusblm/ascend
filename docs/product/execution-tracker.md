@@ -128,6 +128,7 @@ Implemented and evidenced:
   - Arena critical rendering
   - Plano weekly-read ownership
   - quest-card rendering after the border/fill regression fix
+  - onboarding -> Quests -> first personal quest handoff without relying on an old local quest cache
   - first-week journey state transitions for personal-first, competitive-next, and early-rank deactivation
   - optimistic attribute allocation with rollback on backend failure
 

@@ -156,9 +156,10 @@ Completed:
 - the first-week panel now exposes a direct creation CTA instead of only descriptive copy
 - onboarding now routes directly into `Quests` after starter-kit confirmation
 - onboarding now names the first recommended Base quest instead of ending at a generic confirmation step
+- automated journey coverage now verifies onboarding focus selection, starter-kit confirmation, navigation into `Quests`, actionable starter quests, and first personal quest completion from an empty local quest cache
 
 Backlog:
-- verify onboarding -> starter kit -> first quest path on small and large screens
+- manually verify onboarding -> starter kit -> first quest path on small and large screens
 - record manual first-week smoke path
 
 #### Workstream 2.2 - Core surface hierarchy
@@ -185,11 +186,11 @@ Completed:
 - stats screen ownership coverage exists
 - quest card coverage now protects the recent visual regression fix
 - first-week journey coverage now protects the expected next-action progression across the early loop
+- onboarding-to-quests journey coverage now protects the Phase 2 handoff without decorative copy assertions
 - attribute allocation now has controller-level coverage for instant UI feedback and rollback on authority failure
 - widget coverage was trimmed away from decorative copy and stale local assumptions toward action/state contracts and authority-aware behavior
 
 Still required:
-- explicit tests for the first-week flow as a user journey
 - visual/behavioral regression protection for key loop surfaces where useful
 
 #### Workstream 2.4 - Return motivation

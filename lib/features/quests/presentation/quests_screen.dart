@@ -94,6 +94,7 @@ class QuestsScreen extends ConsumerWidget {
     void createQuest() => _openAddQuestModal(context);
 
     return Scaffold(
+      key: const ValueKey('quests-screen'),
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Padding(

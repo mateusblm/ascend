@@ -25,7 +25,7 @@ final questLiveNowProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
 
-  static const double _floatingButtonDockClearance = 92;
+  static const double _floatingButtonDockClearance = 112;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -766,13 +766,12 @@ class QuestsScreen extends ConsumerWidget {
   }
 
   Widget _buildCreateQuestButton(BuildContext context) {
-    return FloatingActionButton.extended(
+    return FloatingActionButton(
       onPressed: () => _openAddQuestModal(context),
       backgroundColor: AppColors.neonBlue,
       foregroundColor: Colors.black,
       elevation: 0,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text('Nova quest'),
+      child: const Icon(Icons.add_rounded),
     );
   }
 

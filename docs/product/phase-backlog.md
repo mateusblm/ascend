@@ -184,6 +184,7 @@ Completed:
 - Home, Rank, onboarding, account, and player tracking tests exist
 - stats screen ownership coverage exists
 - quest card coverage now protects the recent visual regression fix
+- first-week journey coverage now protects the expected next-action progression across the early loop
 
 Still required:
 - explicit tests for the first-week flow as a user journey

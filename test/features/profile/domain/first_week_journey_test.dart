@@ -48,6 +48,115 @@ void main() {
     expect(summary.nextAction, contains('3 dias ativos'));
   });
 
+  test(
+    'buildFirstWeekJourney points to a personal quest first when no step is complete',
+    () {
+      final player = Player(
+        name: 'Tester',
+        level: 2,
+        xp: 0,
+        maxXp: 100,
+        attributes: PlayerAttributes(),
+        lastResetDate: DateTime(2026, 4, 20),
+        hasCompletedOnboarding: true,
+      );
+
+      final summary = buildFirstWeekJourney(
+        player: player,
+        quests: const [],
+        now: DateTime(2026, 4, 20),
+      );
+
+      expect(summary.isActive, isTrue);
+      expect(summary.progressLabel, '0/3 passos');
+      expect(summary.nextAction, contains('quest pessoal'));
+      expect(summary.steps.first.isDone, isFalse);
+    },
+  );
+
+  test(
+    'buildFirstWeekJourney shifts to competitive guidance after the first personal completion',
+    () {
+      final player = Player(
+        name: 'Tester',
+        level: 2,
+        xp: 12,
+        maxXp: 100,
+        attributes: PlayerAttributes(),
+        lastResetDate: DateTime(2026, 4, 20),
+        hasCompletedOnboarding: true,
+        activityHistory: [DateTime(2026, 4, 20)],
+        lastQuestCompletionDate: DateTime(2026, 4, 20, 8),
+      );
+      final quests = [
+        Quest(
+          id: 'personal-1',
+          title: 'Arrumar a cama',
+          rewardAttribute: AttributeType.vitality,
+          xpReward: 12,
+          isCompleted: true,
+        ),
+      ];
+
+      final summary = buildFirstWeekJourney(
+        player: player,
+        quests: quests,
+        now: DateTime(2026, 4, 20),
+      );
+
+      expect(summary.progressLabel, '1/3 passos');
+      expect(summary.nextAction, contains('quest de rank'));
+      expect(summary.steps[0].isDone, isTrue);
+      expect(summary.steps[1].isDone, isFalse);
+    },
+  );
+
+  test(
+    'buildFirstWeekJourney deactivates once the player is outside the early-rank window',
+    () {
+      final player = Player(
+        name: 'Tester',
+        level: 5,
+        xp: 20,
+        maxXp: 120,
+        attributes: PlayerAttributes(),
+        lastResetDate: DateTime(2026, 4, 20),
+        hasCompletedOnboarding: true,
+        activityHistory: [
+          DateTime(2026, 4, 18),
+          DateTime(2026, 4, 19),
+          DateTime(2026, 4, 20),
+        ],
+      );
+
+      final summary = buildFirstWeekJourney(
+        player: player,
+        quests: const [],
+        snapshot: CompetitiveRankSnapshot(
+          currentRank: 'D',
+          weekKey: '2026W0420',
+          activeDays: 3,
+          requiredActiveDays: 3,
+          requiresBossClear: false,
+          bossCompleted: false,
+          status: RankMaintenanceStatus.secure,
+          demotionStrikes: 0,
+          promotionReady: false,
+          promotionTargetRank: 'C',
+          eventType: CompetitiveRankEventType.routine,
+          summary: 'Fora da janela inicial.',
+          detail: 'Rank acima de E.',
+          syncSchemaVersion: 3,
+          syncSource: 'client',
+          updatedAt: DateTime(2026, 4, 20),
+        ),
+        now: DateTime(2026, 4, 20),
+      );
+
+      expect(summary.isActive, isFalse);
+    },
+  );
+
   test('buildProgressPayoff highlights next level, rank and seasonal reward', () {
     final player = Player(
       name: 'Tester',

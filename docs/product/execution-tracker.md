@@ -116,6 +116,8 @@ Implemented and evidenced:
   - inline creation CTA in the weekly-priority block
   - inline creation CTA in the first-week panel
   - floating action button lifted above the shared bottom dock instead of hiding behind it
+- onboarding now sends the user straight into `Quests` after starter-kit confirmation instead of dropping them back into a generic tab default
+- onboarding now highlights the first recommended Base quest before exit, so the starter kit explains what to do first instead of only listing quests
 - regression coverage now protects:
   - Home critical rendering
   - Arena critical rendering

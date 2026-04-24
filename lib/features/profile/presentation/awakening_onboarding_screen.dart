@@ -1,3 +1,4 @@
+import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -23,6 +24,10 @@ class _AwakeningOnboardingScreenState
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final starterKit = starterQuestsForFocus(_selectedFocus);
+    final firstRecommendedQuest = starterKit.firstWhere(
+      (quest) => !quest.isCompetitive,
+      orElse: () => starterKit.first,
+    );
     final competitiveCount = starterKit
         .where((quest) => quest.isCompetitive)
         .length;
@@ -55,6 +60,7 @@ class _AwakeningOnboardingScreenState
                         focusLabel: _displayFocusLabel(_selectedFocus),
                         competitiveCount: competitiveCount,
                         personalCount: personalCount,
+                        firstActionTitle: firstRecommendedQuest.title,
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -76,7 +82,14 @@ class _AwakeningOnboardingScreenState
                     ),
                     const SizedBox(height: 16),
                     RevealBlock(
-                      delay: const Duration(milliseconds: 220),
+                      delay: const Duration(milliseconds: 200),
+                      child: _FirstRecommendedActionPanel(
+                        quest: firstRecommendedQuest,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    RevealBlock(
+                      delay: const Duration(milliseconds: 260),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(18),
@@ -93,7 +106,7 @@ class _AwakeningOnboardingScreenState
                             Text('Depois disso', style: textTheme.titleMedium),
                             const SizedBox(height: 8),
                             Text(
-                              'Voce entra direto em Quests com seu kit pronto. Depois pode ajustar foco, criar quests novas e explorar o app com calma.',
+                              'Ao confirmar, voce entra direto em Quests com seu kit pronto. A ideia e fechar a primeira quest de Base antes de mexer no resto.',
                               style: textTheme.bodyMedium,
                             ),
                           ],
@@ -155,12 +168,12 @@ class _AwakeningOnboardingScreenState
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _completeOnboarding,
-                    child: const Text('Montar minha primeira semana'),
+                    child: const Text('Entrar em Quests com esse kit'),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Voce pode trocar esse foco depois.',
+                  'Voce pode trocar esse foco depois sem perder o que ja iniciou.',
                   style: textTheme.bodySmall,
                 ),
               ],
@@ -174,6 +187,7 @@ class _AwakeningOnboardingScreenState
   void _completeOnboarding() {
     ref.read(playerProvider.notifier).completeOnboarding(_selectedFocus);
     ref.read(questProvider.notifier).applyStarterKit(_selectedFocus);
+    ref.read(navigationProvider.notifier).state = 1;
   }
 }
 
@@ -182,11 +196,13 @@ class _OnboardingHero extends StatelessWidget {
     required this.focusLabel,
     required this.competitiveCount,
     required this.personalCount,
+    required this.firstActionTitle,
   });
 
   final String focusLabel;
   final int competitiveCount;
   final int personalCount;
+  final String firstActionTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +248,7 @@ class _OnboardingHero extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Voce escolhe a direcao e o app monta um kit curto para ja entrar em movimento.',
+            'Voce escolhe a direcao e o app monta um kit curto para ja entrar em movimento. O primeiro passo recomendado sai pronto: $firstActionTitle.',
             style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 18),
@@ -248,6 +264,75 @@ class _OnboardingHero extends StatelessWidget {
               _HeroPill(
                 label: '$personalCount para Base',
                 accent: AppColors.questAccent,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FirstRecommendedActionPanel extends StatelessWidget {
+  const _FirstRecommendedActionPanel({required this.quest});
+
+  final Quest quest;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.questAccent.withValues(alpha: 0.12),
+            AppColors.surface.withValues(alpha: 0.98),
+            AppColors.surfaceStrong.withValues(alpha: 0.84),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: AppColors.questAccent.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Primeiro passo recomendado',
+            style: textTheme.titleLarge?.copyWith(color: AppColors.questAccent),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            quest.title,
+            style: textTheme.titleMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Comece pela Base. Fechar uma quest pessoal primeiro reduz friccao, marca seu ritmo inicial e deixa a Arena para o segundo movimento.',
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _HeroPill(label: 'Base primeiro', accent: AppColors.questAccent),
+              _HeroPill(
+                label: '${quest.xpReward} XP',
+                accent: AppColors.planAccent,
+              ),
+              _HeroPill(
+                label: _attributeLabel(quest.rewardAttribute),
+                accent: AppColors.neonBlue,
               ),
             ],
           ),

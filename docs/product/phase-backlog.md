@@ -154,10 +154,11 @@ Status: `in_progress`
 Completed:
 - first-week guidance is visible inside `Quests`
 - the first-week panel now exposes a direct creation CTA instead of only descriptive copy
+- onboarding now routes directly into `Quests` after starter-kit confirmation
+- onboarding now names the first recommended Base quest instead of ending at a generic confirmation step
 
 Backlog:
 - verify onboarding -> starter kit -> first quest path on small and large screens
-- tighten first-week copy until the next action is obvious without reading multiple panels
 - record manual first-week smoke path
 
 #### Workstream 2.2 - Core surface hierarchy

@@ -45,10 +45,19 @@ class PlayerNotifier extends StateNotifier<Player> {
     AppAnalytics? analytics,
     FirebaseAuth? auth,
     PlayerProfileRepository? profileRepository,
+    Future<Player> Function({
+      required String uid,
+      required String fallbackName,
+      required AttributeType attribute,
+    })?
+    allocateAttributePointOverride,
+    bool enableLocalPersistence = true,
     bool enableCloudSync = false,
   }) : _analytics = analytics ?? const NoopAppAnalytics(),
        _auth = enableCloudSync ? (auth ?? FirebaseAuth.instance) : auth,
-       _profileRepository = profileRepository {
+       _profileRepository = profileRepository,
+       _allocateAttributePointOverride = allocateAttributePointOverride,
+       _enableLocalPersistence = enableLocalPersistence {
     if (enableCloudSync) {
       _bindCloudProfile();
     }
@@ -58,11 +67,19 @@ class PlayerNotifier extends StateNotifier<Player> {
   final AppAnalytics _analytics;
   final FirebaseAuth? _auth;
   final PlayerProfileRepository? _profileRepository;
+  final Future<Player> Function({
+    required String uid,
+    required String fallbackName,
+    required AttributeType attribute,
+  })?
+  _allocateAttributePointOverride;
+  final bool _enableLocalPersistence;
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<Player?>? _remoteProfileSubscription;
   String? _activeUid;
   bool _isApplyingRemoteSnapshot = false;
   bool _handledMissingRemoteForActiveUser = false;
+  bool _attributeAllocationInFlight = false;
 
   void _bindCloudProfile() {
     final auth = _auth;
@@ -151,6 +168,9 @@ class PlayerNotifier extends StateNotifier<Player> {
   }
 
   Player? _loadCachedPlayerForUid(String uid) {
+    if (!_enableLocalPersistence) {
+      return null;
+    }
     final players = _isar.players.where().findAllSync();
     for (final player in players) {
       if (player.ownerUid == uid) {
@@ -161,6 +181,9 @@ class PlayerNotifier extends StateNotifier<Player> {
   }
 
   Player? _loadLegacyCachedPlayer() {
+    if (!_enableLocalPersistence) {
+      return null;
+    }
     final players = _isar.players.where().findAllSync();
     for (final player in players) {
       if (player.ownerUid == null) {
@@ -197,6 +220,13 @@ class PlayerNotifier extends StateNotifier<Player> {
 
   void _saveToDb({bool syncRemote = false}) {
     final localState = state.copyWith(ownerUid: _activeUid ?? state.ownerUid);
+    if (!_enableLocalPersistence) {
+      state = localState;
+      if (syncRemote) {
+        unawaited(_pushRemoteProfile(localState));
+      }
+      return;
+    }
     final existing = _activeUid == null
         ? null
         : _loadCachedPlayerForUid(_activeUid!);
@@ -361,21 +391,78 @@ class PlayerNotifier extends StateNotifier<Player> {
     AttributeType type, {
     void Function(int level)? onLevelUp,
   }) async {
-    if (state.statPoints <= 0) return;
+    if (state.statPoints <= 0 || _attributeAllocationInFlight) return;
     final uid = _activeUid;
     final repository = _profileRepository;
-    if (uid == null || repository == null) return;
+    if (uid == null || (repository == null && _allocateAttributePointOverride == null)) {
+      return;
+    }
+    final previousState = state;
+    final optimisticAttributes = _copyAttributes(previousState.attributes);
+
+    switch (type) {
+      case AttributeType.strength:
+        optimisticAttributes.strength++;
+        break;
+      case AttributeType.intelligence:
+        optimisticAttributes.intelligence++;
+        break;
+      case AttributeType.vitality:
+        optimisticAttributes.vitality++;
+        break;
+      case AttributeType.agility:
+        optimisticAttributes.agility++;
+        break;
+    }
 
     try {
-      final updated = await repository.allocateAttributePoint(
+      _attributeAllocationInFlight = true;
+      state = previousState.copyWith(
+        statPoints: previousState.statPoints - 1,
+        attributes: optimisticAttributes,
+      );
+      _saveToDb(syncRemote: false);
+      final allocateAttributePoint =
+          _allocateAttributePointOverride ??
+          ({
+            required String uid,
+            required String fallbackName,
+            required AttributeType attribute,
+          }) => repository!.allocateAttributePoint(
+            uid: uid,
+            fallbackName: fallbackName,
+            attribute: attribute,
+          );
+      final updated = await allocateAttributePoint(
         uid: uid,
         fallbackName: state.name,
         attribute: type,
       );
       applyAuthoritativeProfile(updated, onLevelUp: onLevelUp);
     } on ActiveSessionConflictException {
+      state = previousState;
+      _saveToDb(syncRemote: false);
       // Auth heartbeat and resume checks handle session conflicts centrally.
+    } catch (_) {
+      state = previousState;
+      _saveToDb(syncRemote: false);
+      rethrow;
+    } finally {
+      _attributeAllocationInFlight = false;
     }
+  }
+
+  PlayerAttributes _copyAttributes(PlayerAttributes source) {
+    return PlayerAttributes(
+      strength: source.strength,
+      intelligence: source.intelligence,
+      vitality: source.vitality,
+      agility: source.agility,
+    );
+  }
+
+  void debugSetActiveUid(String? uid) {
+    _activeUid = uid;
   }
 
   Future<void> updateName(String value) async {

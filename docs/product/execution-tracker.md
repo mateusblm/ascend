@@ -119,12 +119,14 @@ Implemented and evidenced:
 - onboarding now sends the user straight into `Quests` after starter-kit confirmation instead of dropping them back into a generic tab default
 - onboarding now highlights the first recommended Base quest before exit, so the starter kit explains what to do first instead of only listing quests
 - `Quests` now uses a compact `+` floating action button positioned above the shared dock instead of an extended button that still collided visually with navigation chrome
+- attribute allocation in `Build` now updates immediately on tap instead of waiting for a tab change or later rebuild to reveal the new value
 - regression coverage now protects:
   - Home critical rendering
   - Arena critical rendering
   - Plano weekly-read ownership
   - quest-card rendering after the border/fill regression fix
   - first-week journey state transitions for personal-first, competitive-next, and early-rank deactivation
+  - optimistic attribute allocation with rollback on backend failure
 
 Planned completion note:
 - record how the first-week loop improved

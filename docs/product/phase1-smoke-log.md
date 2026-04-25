@@ -14,10 +14,15 @@ Related documents:
 ## Current Status
 
 Status: `pending`
-Last updated: `2026-04-23`
+Last updated: `2026-04-25`
 
 Blocking note:
 - this log exists, but no real-device pass has been recorded yet
+- current Codex environment reports only `Linux (desktop)` from `rtk flutter devices`; Android/iOS mobile smoke must be run outside this environment or after attaching a device/emulator
+
+Current target candidate:
+- `RC-internal-2026-04-25`
+- artifact: `build/app/outputs/flutter-apk/app-production-release.apk`
 
 ## Required Smoke Path
 

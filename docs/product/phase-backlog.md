@@ -242,15 +242,17 @@ Still required:
 
 #### Workstream 3.2 - Operational observability
 
-Status: `partial`
+Status: `done_with_owner_placeholder`
 
 Completed:
 - analytics and crash boundaries exist centrally
 - automated RC validation now includes Functions authority tests and Firestore rules emulator tests
+- operational dashboard now documents the external-test review cadence and signal ownership placeholder
+- live-risk response path now documents stop-distribution, backend hotfix, mobile hotfix, and future kill-switch direction
 
 Still required:
-- verify event and non-fatal coverage on current critical flows
-- document who watches operational signals and how often during external testing
+- replace owner placeholder with named human owner and backup before broader beta
+- verify live Analytics and Crashlytics signals during real-device smoke and first external test
 
 #### Workstream 3.3 - Store and trust package
 
@@ -258,20 +260,24 @@ Status: `partial`
 
 Completed:
 - privacy, terms, support, and deletion docs exist
+- external test distribution stages and tester instructions are documented
 
 Still required:
 - screenshots
 - listing copy
 - support ownership
-- external test distribution plan
+- Stage 1 real-device smoke before closed external test
 
 #### Workstream 3.4 - Live-risk response
 
-Status: `pending`
+Status: `done_for_controlled_validation`
 
-Backlog:
-- define remote-config/feature-flag/kill-switch direction for risky competitive behavior
-- document the rollback response path for bad live regressions
+Completed:
+- manual stop-distribution, backend hotfix, mobile hotfix, and RC replacement paths are documented
+- future Remote Config / kill-switch direction is documented without adding premature flags
+
+Still required:
+- add actual Remote Config flags only when a specific risky behavior needs live toggling
 
 ### Phase 3 exit checklist
 

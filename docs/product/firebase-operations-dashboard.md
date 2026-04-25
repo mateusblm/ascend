@@ -84,3 +84,29 @@ These should help us spot:
 3. Check the first-week funnel drop-offs.
 4. Compare onboarding completion against competitive quest starts.
 5. Review whether remote failures correlate with any funnel drop.
+
+## Controlled External Testing Cadence
+
+During the first 72 hours after distributing a new RC:
+
+- review Crashlytics daily
+- review Analytics first-week funnel daily
+- check tester reports daily
+- stop distribution immediately for launch crashes, login failure, duplicate reward risk, or competitive authority bypass
+
+After 72 hours:
+
+- review twice weekly until the next RC
+- review immediately after any backend deploy or mobile hotfix
+
+Current owner:
+- `product/engineering operator for the RC`
+
+Before broader beta:
+- replace the owner placeholder with a named human owner and backup
+- confirm who watches support requests and who can stop distribution
+
+Related:
+- `docs/product/live-risk-response.md`
+- `docs/product/phase3-smoke-runbook.md`
+- `docs/product/release-candidate-log.md`

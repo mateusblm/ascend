@@ -14,6 +14,7 @@ Last updated: `2026-04-24`
 
 - Automated desk pass: `completed`
 - Real-device visual pass: `pending`
+- Current blocker: the active Codex environment reports only `Linux (desktop)` from `rtk flutter devices`
 
 Automated desk pass evidence:
 - `flutter analyze`

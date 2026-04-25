@@ -186,6 +186,21 @@ Still blocking external beta:
 - real-device trust-critical smoke pass remains unrecorded
 - real-device visual/scroll-density pass remains unrecorded
 
+Progress note recorded on: `2026-04-25`
+
+Implemented and evidenced:
+- Phase 3 smoke runbook added for real-device execution against `RC-internal-2026-04-25`
+- external test distribution plan added with Stage 0-3 gates and tester instructions
+- live-risk response path added for stop-distribution, backend hotfix, mobile hotfix, and future kill-switch direction
+- Firebase operations dashboard now records the controlled external testing review cadence and owner placeholder
+- real-device smoke blocker is explicit:
+  - current environment reports only `Linux (desktop)` from `rtk flutter devices`
+
+Still blocking external beta, ignoring support email by operator decision for now:
+- real-device trust-critical smoke pass remains unrecorded
+- real-device visual/scroll-density pass remains unrecorded
+- named operational owner and backup remain placeholders
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

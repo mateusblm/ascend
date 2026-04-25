@@ -306,6 +306,10 @@ lib/
   - `verifyCompetitiveQuestCompletion`
   - backend stores session state and authoritative reward grants
   - competitive state/integrity sync can prefer `competitive_quest_grants` over client-only competitive history
+- the next competitive architecture target is `Competitive Verification V1`:
+  - product source: `docs/product/competitive-verification-v1.md`
+  - next-agent brief: `docs/ai/competitive-verification-next-agent.md`
+  - build evidence contracts, evaluator, richer official templates, and fake/test providers before real Health Connect, Strava, GPS, or AI integrations
 - quest presentation also has two important behavioral guarantees now:
   - `QuestsScreen` keeps a live timer helper through a lightweight time stream instead of frozen `DateTime.now()` text
   - `QuestNotifier._applyCompletion(...)` triggers immediate competitive sync after a verified competitive completion so Rank does not wait only for navigation-level debounce

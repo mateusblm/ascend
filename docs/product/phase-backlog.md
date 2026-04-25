@@ -223,6 +223,25 @@ Backlog:
 
 Turn the validated build into a releasable candidate for external testers.
 
+### Product focus override
+
+Status: `active`
+
+Decision:
+- broader external-release work is paused by operator choice
+- support email and real-device smoke remain known debt
+- the next implementation package should improve competitive quest value and anti-fraud before depending on device APIs
+
+Reference:
+- `docs/product/competitive-verification-v1.md`
+- `docs/ai/competitive-verification-next-agent.md`
+
+Implementation target:
+- add an evidence-based competitive verification contract
+- add richer official competitive quest templates
+- add a pure evaluator and fake/test evidence provider
+- keep backend authority over reward and rank-bearing decisions
+
 ### Workstreams
 
 #### Workstream 3.1 - Release candidate discipline

@@ -15,6 +15,7 @@ Update this file:
 - Active plan: `docs/product/project-plan.md`
 - Active requirements baseline: `docs/product/requirements-baseline.md`
 - Active phase: `Phase 3 - Product reliability and release readiness`
+- Active product focus override: `Competitive Verification V1` before more external-release work
 - Previous phase status: `Phase 1 advanced with accepted operational debt`
 - Active backlog: `docs/product/phase-backlog.md`
 - Active smoke log: `docs/product/phase1-smoke-log.md`
@@ -200,6 +201,22 @@ Still blocking external beta, ignoring support email by operator decision for no
 - real-device trust-critical smoke pass remains unrecorded
 - real-device visual/scroll-density pass remains unrecorded
 - named operational owner and backup remain placeholders
+
+Product focus override recorded on: `2026-04-25`
+
+Decision:
+- pause broader release-readiness work until competitive quests are more valuable and harder to fake
+- keep support email and real-device smoke as known debt, but do not spend the next package on them
+- continue implementation without requiring device APIs first
+
+Next implementation focus:
+- `Competitive Verification V1`, documented in `docs/product/competitive-verification-v1.md`
+- next-agent brief in `docs/ai/competitive-verification-next-agent.md`
+
+Why:
+- the core product value depends on Arena progress being evidence-based
+- current competitive verification is too narrow for running, reading, workout, and study quests
+- a pure evaluator, richer official templates, and fake evidence provider can be built and tested before Health Connect, Strava, GPS, or AI integrations
 
 Planned completion note:
 - record release identity/environment readiness

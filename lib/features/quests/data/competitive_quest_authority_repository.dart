@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
@@ -158,10 +159,12 @@ class CompetitiveQuestAuthorityRepository {
     Quest quest, {
     required bool includeVerificationStartedAt,
   }) async {
+    final template = officialTemplateForQuest(quest);
     return <String, dynamic>{
       'deviceSessionId': await _sessionRepository.deviceSessionId(),
       'deviceLabel': defaultTargetPlatform.name,
       'questId': quest.id,
+      if (template != null) 'templateCatalogId': template.id,
       'title': quest.title,
       'templateType': quest.templateType.name,
       'verificationMode': quest.verificationMode.name,

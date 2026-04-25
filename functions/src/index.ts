@@ -87,6 +87,7 @@ type CompetitiveQuestSessionPayload = {
   deviceSessionId?: unknown;
   deviceLabel?: unknown;
   questId?: unknown;
+  templateCatalogId?: unknown;
   title?: unknown;
   templateType?: unknown;
   verificationMode?: unknown;
@@ -143,6 +144,7 @@ type ServerQuestIntegritySource = {
 };
 
 type ServerCompetitiveQuestDefinition = {
+  id: string;
   title: string;
   templateType: string;
   verificationMode: string;
@@ -933,6 +935,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
 
   return [
     {
+      id: 'run-2k-controlled',
       title: 'Corrida controlada de 2 km',
       templateType: 'runningSession',
       verificationMode: 'timer',
@@ -942,6 +945,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: run2k,
     },
     {
+      id: 'run-5k-ranked',
       title: 'Corrida ranqueada de 5 km',
       templateType: 'runningSession',
       verificationMode: 'timer',
@@ -951,6 +955,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: run5k,
     },
     {
+      id: 'bodyweight-20',
       title: 'Treino corporal de 20 minutos',
       templateType: 'workoutSession',
       verificationMode: 'timer',
@@ -960,6 +965,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: workout20,
     },
     {
+      id: 'focus-25',
       title: 'Sessao de foco de 25 minutos',
       templateType: 'focusSession',
       verificationMode: 'timer',
@@ -969,6 +975,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: timer25,
     },
     {
+      id: 'reading-20',
       title: 'Leitura de 20 minutos',
       templateType: 'readingSession',
       verificationMode: 'timerWithReflection',
@@ -978,6 +985,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: reading20,
     },
     {
+      id: 'study-30',
       title: 'Estudo profundo de 30 minutos',
       templateType: 'studySession',
       verificationMode: 'timer',
@@ -987,6 +995,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: study30,
     },
     {
+      id: 'reading-15-training',
       title: 'Revisao de treino de 15 minutos',
       templateType: 'readingSession',
       verificationMode: 'timerWithReflection',
@@ -996,6 +1005,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: reading15,
     },
     {
+      id: 'focus-20',
       title: 'Sessao de foco de 20 minutos',
       templateType: 'focusSession',
       verificationMode: 'timer',
@@ -1005,6 +1015,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: timer20,
     },
     {
+      id: 'reading-15',
       title: 'Leitura ou revisao de 15 minutos',
       templateType: 'readingSession',
       verificationMode: 'timerWithReflection',
@@ -1014,6 +1025,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: reading15,
     },
     {
+      id: 'focus-30',
       title: 'Bloco de foco de 30 minutos',
       templateType: 'focusSession',
       verificationMode: 'timer',
@@ -1023,7 +1035,18 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       verificationRequirement: timer30,
     },
     {
+      id: 'study-20',
       title: 'Revisao de 20 minutos',
+      templateType: 'studySession',
+      verificationMode: 'timerWithReflection',
+      targetDurationMinutes: 20,
+      xpReward: 30,
+      rewardAttribute: 'intelligence',
+      verificationRequirement: study20,
+    },
+    {
+      id: 'study-20-recall',
+      title: 'Revisao ativa de 20 minutos',
       templateType: 'studySession',
       verificationMode: 'timerWithReflection',
       targetDurationMinutes: 20,
@@ -1850,6 +1873,8 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
 
   const data = payload as Record<string, unknown>;
   const questId = ensureString(data.questId, 'questId', 120);
+  const templateCatalogId =
+    data.templateCatalogId == null ? null : ensureString(data.templateCatalogId, 'templateCatalogId', 80);
   const title = ensureString(data.title, 'title', 120);
   const templateType = ensureString(data.templateType, 'templateType', 64);
   const verificationMode = ensureString(data.verificationMode, 'verificationMode', 64);
@@ -1867,14 +1892,24 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
   const reflectionAnswer =
     data.reflectionAnswer == null ? null : ensureString(data.reflectionAnswer, 'reflectionAnswer', 500);
 
-  const definition = competitiveQuestDefinitions().find((entry) =>
-    entry.title === title &&
-    entry.templateType === templateType &&
-    entry.verificationMode === verificationMode &&
-    entry.targetDurationMinutes === targetDurationMinutes &&
-    entry.xpReward === xpReward &&
-    entry.rewardAttribute === rewardAttribute,
-  );
+  const definitions = competitiveQuestDefinitions();
+  const definition = templateCatalogId == null
+    ? definitions.find((entry) =>
+      entry.title === title &&
+      entry.templateType === templateType &&
+      entry.verificationMode === verificationMode &&
+      entry.targetDurationMinutes === targetDurationMinutes &&
+      entry.xpReward === xpReward &&
+      entry.rewardAttribute === rewardAttribute,
+    )
+    : definitions.find((entry) =>
+      entry.id === templateCatalogId &&
+      entry.templateType === templateType &&
+      entry.verificationMode === verificationMode &&
+      entry.targetDurationMinutes === targetDurationMinutes &&
+      entry.xpReward === xpReward &&
+      entry.rewardAttribute === rewardAttribute,
+    );
 
   if (!definition) {
     throw new HttpsError(
@@ -1885,7 +1920,8 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
 
   return {
     questId,
-    title,
+    templateCatalogId: definition.id,
+    title: definition.title,
     templateType,
     verificationMode,
     targetDurationMinutes,
@@ -2103,6 +2139,7 @@ export function resolveCompetitiveQuestSessionStart(args: {
     sessionWrite: {
       questId: quest.questId,
       title: quest.title,
+      templateCatalogId: quest.templateCatalogId,
       dayKey: normalizedDateKey(now),
       templateType: quest.templateType,
       verificationMode: quest.verificationMode,
@@ -2169,6 +2206,7 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
     grantWrite: {
       questId: quest.questId,
       title: quest.title,
+      templateCatalogId: quest.templateCatalogId,
       dayKey: normalizedDateKey(session?.startedAt ?? now),
       templateType: quest.templateType,
       verificationMode: quest.verificationMode,

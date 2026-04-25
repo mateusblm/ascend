@@ -22,6 +22,7 @@ function buildQuest(overrides = {}) {
     targetDurationMinutes: 20,
     xpReward: 25,
     rewardAttribute: 'vitality',
+    templateCatalogId: null,
     verificationRequirement: {
       evidenceType: 'timedFocus',
       minimumTrustTier: 2,
@@ -68,6 +69,29 @@ test('starts a competitive quest session and prepares the session write', () => 
   assert.equal(result.sessionWrite.questId, 'quest-focus-20');
   assert.equal(result.sessionWrite.status, 'inProgress');
   assert.equal(result.sessionWrite.startedAt.toMillis(), now.toMillis());
+});
+
+test('accepts official template catalog id even when local title copy changed', () => {
+  const now = timestamp('2026-04-21T15:00:00.000Z');
+
+  const result = resolveCompetitiveQuestSessionStart({
+    quest: buildQuest({
+      templateCatalogId: 'study-20-recall',
+      questId: 'study-20-recall-123',
+      title: 'Copy local antiga',
+      templateType: 'studySession',
+      verificationMode: 'timerWithReflection',
+      targetDurationMinutes: 20,
+      xpReward: 30,
+      rewardAttribute: 'intelligence',
+    }),
+    session: null,
+    grant: null,
+    now,
+  });
+
+  assert.equal(result.status, 'started');
+  assert.equal(result.sessionWrite.templateCatalogId, 'study-20-recall');
 });
 
 test('restarts an existing in-progress session with the current timestamp', () => {

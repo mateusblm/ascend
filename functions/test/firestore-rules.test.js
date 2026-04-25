@@ -118,6 +118,9 @@ test('authenticated users can read but not write competitive authority collectio
   await seedDoc('users/user-1/competitive_quest_sessions/quest-1', {
     status: 'inProgress',
   });
+  await seedDoc('users/user-1/competitive_quest_evidence/quest-1', {
+    status: 'accepted',
+  });
 
   const ownDb = testEnv.authenticatedContext('user-1').firestore();
 
@@ -127,6 +130,14 @@ test('authenticated users can read but not write competitive authority collectio
   await assertFails(
     setDoc(doc(ownDb, 'users/user-1/competitive_quest_sessions/quest-1'), {
       status: 'verified',
+    }),
+  );
+  await assertSucceeds(
+    getDoc(doc(ownDb, 'users/user-1/competitive_quest_evidence/quest-1')),
+  );
+  await assertFails(
+    setDoc(doc(ownDb, 'users/user-1/competitive_quest_evidence/quest-1'), {
+      status: 'accepted',
     }),
   );
 });

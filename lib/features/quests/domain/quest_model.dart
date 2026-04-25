@@ -6,7 +6,14 @@ enum AttributeType { strength, intelligence, vitality, agility }
 
 enum QuestCategory { personal, competitive }
 
-enum QuestTemplateType { custom, focusSession, studySession, readingSession }
+enum QuestTemplateType {
+  custom,
+  focusSession,
+  studySession,
+  readingSession,
+  runningSession,
+  workoutSession,
+}
 
 enum QuestVerificationMode { manual, timer, timerWithReflection }
 

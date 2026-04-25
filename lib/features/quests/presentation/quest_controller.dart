@@ -11,6 +11,7 @@ import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
@@ -426,7 +427,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       (quest) =>
           quest.isCompetitive &&
           !quest.isCompleted &&
-          quest.templateType == template.templateType,
+          quest.id.startsWith('${template.id}-'),
     );
     if (alreadyExists) {
       unawaited(
@@ -484,7 +485,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
         );
         startedAt = session.startedAt;
       } on ActiveSessionConflictException {
-        unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+        unawaited(
+          ref.read(authProvider.notifier).handleActiveSessionConflict(),
+        );
         return QuestCompletionResult.invalidFlow;
       }
     }
@@ -624,6 +627,43 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return QuestCompletionResult.missingReflection;
     }
 
+    final template = officialTemplateForQuest(quest);
+    final requirement = template?.verificationRequirement;
+    if (requirement == null) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'missing_verification_requirement',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
+      return QuestCompletionResult.invalidFlow;
+    }
+
+    final evidence = mockEvidenceForQuest(
+      quest: quest,
+      requirement: requirement,
+      startedAt: quest.verificationStartedAt ?? now,
+      completedAt: now,
+      reflection: reflectionAnswer?.trim(),
+    );
+    final decision = evaluateCompetitiveQuestEvidence(
+      quest: quest,
+      requirement: requirement,
+      evidence: evidence,
+      now: now,
+    );
+    if (!decision.accepted) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'insufficient_evidence_${decision.status.name}',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
+      return QuestCompletionResult.invalidFlow;
+    }
+
     DateTime completedAt = now;
     if (_competitiveAuthority != null) {
       final uid = _activeUid;
@@ -640,6 +680,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           quest: quest,
           uid: uid,
           fallbackName: fallbackName,
+          evidence: evidence,
           reflectionAnswer: reflectionAnswer?.trim(),
         );
         completedAt = verification.completedAt;
@@ -653,7 +694,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
         _logQuestMutationResult(verification.quest, verification.player);
         return QuestCompletionResult.success;
       } on ActiveSessionConflictException {
-        unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+        unawaited(
+          ref.read(authProvider.notifier).handleActiveSessionConflict(),
+        );
         return QuestCompletionResult.invalidFlow;
       }
     }
@@ -723,7 +766,10 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _replaceLocalState(newState, syncRemote: syncRemote);
   }
 
-  void _applyAuthoritativeQuestMutation(Quest updatedQuest, {bool syncRemote = false}) {
+  void _applyAuthoritativeQuestMutation(
+    Quest updatedQuest, {
+    bool syncRemote = false,
+  }) {
     _persistQuestUpdate(updatedQuest, syncRemote: syncRemote);
   }
 

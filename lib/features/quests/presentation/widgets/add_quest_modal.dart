@@ -264,6 +264,11 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                           color: AppColors.neonBlue,
                         ),
                         _TemplateChip(
+                          label:
+                              'TIER ${template.verificationRequirement.minimumTrustTier}',
+                          color: AppColors.arenaAccent,
+                        ),
+                        _TemplateChip(
                           label: '+${template.xpReward} XP',
                           color: AppColors.questAccent,
                         ),

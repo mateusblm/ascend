@@ -309,7 +309,8 @@ lib/
 - the next competitive architecture target is `Competitive Verification V1`:
   - product source: `docs/product/competitive-verification-v1.md`
   - next-agent brief: `docs/ai/competitive-verification-next-agent.md`
-  - build evidence contracts, evaluator, richer official templates, and fake/test providers before real Health Connect, Strava, GPS, or AI integrations
+  - evidence contracts, evaluator, richer official templates, and fake/test provider now exist before real Health Connect, Strava, GPS, or AI integrations
+  - backend verification now evaluates submitted evidence and writes read-only audit records under `competitive_quest_evidence`
 - quest presentation also has two important behavioral guarantees now:
   - `QuestsScreen` keeps a live timer helper through a lightweight time stream instead of frozen `DateTime.now()` text
   - `QuestNotifier._applyCompletion(...)` triggers immediate competitive sync after a verified competitive completion so Rank does not wait only for navigation-level debounce

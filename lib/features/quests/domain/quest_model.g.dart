@@ -396,12 +396,16 @@ const _QuesttemplateTypeEnumValueMap = {
   'focusSession': 1,
   'studySession': 2,
   'readingSession': 3,
+  'runningSession': 4,
+  'workoutSession': 5,
 };
 const _QuesttemplateTypeValueEnumMap = {
   0: QuestTemplateType.custom,
   1: QuestTemplateType.focusSession,
   2: QuestTemplateType.studySession,
   3: QuestTemplateType.readingSession,
+  4: QuestTemplateType.runningSession,
+  5: QuestTemplateType.workoutSession,
 };
 const _QuestverificationModeEnumValueMap = {
   'manual': 0,

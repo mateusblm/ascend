@@ -5,14 +5,12 @@ import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
-enum CompetitiveQuestSessionStartStatus {
-  started,
-  alreadyStarted,
-}
+enum CompetitiveQuestSessionStartStatus { started, alreadyStarted }
 
 class CompetitiveQuestSessionStartResult {
   const CompetitiveQuestSessionStartResult({
@@ -24,10 +22,7 @@ class CompetitiveQuestSessionStartResult {
   final DateTime startedAt;
 }
 
-enum CompetitiveQuestVerificationStatusResult {
-  verified,
-  alreadyVerified,
-}
+enum CompetitiveQuestVerificationStatusResult { verified, alreadyVerified }
 
 class CompetitiveQuestVerificationResult {
   const CompetitiveQuestVerificationResult({
@@ -49,7 +44,8 @@ class CompetitiveQuestAuthorityRepository {
     ActiveSessionRepository? sessionRepository,
     AppCrashReporter? crashReporter,
   }) : _functions =
-           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
        _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
@@ -100,6 +96,7 @@ class CompetitiveQuestAuthorityRepository {
     required Quest quest,
     required String uid,
     required String fallbackName,
+    required QuestEvidence evidence,
     String? reflectionAnswer,
   }) async {
     try {
@@ -110,6 +107,7 @@ class CompetitiveQuestAuthorityRepository {
       final response = await callable
           .call(<String, dynamic>{
             ...await _questPayload(quest, includeVerificationStartedAt: true),
+            'evidence': evidence.toPayload(),
             if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,
           })
           .timeout(_rpcTimeout);

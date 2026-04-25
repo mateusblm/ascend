@@ -62,7 +62,7 @@ class QuestsScreen extends ConsumerWidget {
             (quest) =>
                 quest.isCompetitive &&
                 !quest.isCompleted &&
-                quest.templateType == template.templateType,
+                quest.id.startsWith('${template.id}-'),
           ),
         )
         .toList();
@@ -711,6 +711,10 @@ class QuestsScreen extends ConsumerWidget {
                         AppColors.neonBlue,
                       ),
                       _buildQuestChip(
+                        'Tier ${template.verificationRequirement.minimumTrustTier}',
+                        AppColors.arenaAccent,
+                      ),
+                      _buildQuestChip(
                         '+${template.xpReward} XP',
                         AppColors.questAccent,
                       ),
@@ -988,9 +992,9 @@ class QuestsScreen extends ConsumerWidget {
     return switch (quest.verificationMode) {
       QuestVerificationMode.manual => 'Pronta para validar.',
       QuestVerificationMode.timer =>
-        'Inicie no app e feche ${quest.targetDurationMinutes} min para contar.',
+        'Inicie no app e envie evidencia simulada apos ${quest.targetDurationMinutes} min.',
       QuestVerificationMode.timerWithReflection =>
-        'Inicie no app, feche ${quest.targetDurationMinutes} min e responda uma pergunta curta.',
+        'Inicie no app, feche ${quest.targetDurationMinutes} min e responda para gerar prova.',
     };
   }
 

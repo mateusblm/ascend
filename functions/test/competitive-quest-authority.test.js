@@ -22,7 +22,32 @@ function buildQuest(overrides = {}) {
     targetDurationMinutes: 20,
     xpReward: 25,
     rewardAttribute: 'vitality',
+    verificationRequirement: {
+      evidenceType: 'timedFocus',
+      minimumTrustTier: 2,
+      minimumDurationMinutes: 20,
+      minimumDistanceMeters: 0,
+      minimumQuizScore: 0,
+      allowedProviders: ['appTimer', 'mockEvidence'],
+    },
     reflectionAnswer: null,
+    ...overrides,
+  };
+}
+
+function buildEvidence(overrides = {}) {
+  return {
+    questId: 'quest-focus-20',
+    provider: 'mockEvidence',
+    type: 'timedFocus',
+    startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+    completedAt: timestamp('2026-04-21T15:30:00.000Z'),
+    durationMinutes: 30,
+    distanceMeters: null,
+    sourceActivityId: null,
+    quizScore: null,
+    answers: [],
+    reflection: null,
     ...overrides,
   };
 }
@@ -97,7 +122,21 @@ test('verifies a valid competitive quest completion and prepares the grant write
       targetDurationMinutes: 15,
       xpReward: 25,
       rewardAttribute: 'intelligence',
+      verificationRequirement: {
+        evidenceType: 'readingComprehension',
+        minimumTrustTier: 2,
+        minimumDurationMinutes: 15,
+        minimumDistanceMeters: 0,
+        minimumQuizScore: 70,
+        allowedProviders: ['mockEvidence'],
+      },
       reflectionAnswer: 'Resumo curto da sessao.',
+      evidence: buildEvidence({
+        type: 'readingComprehension',
+        durationMinutes: 30,
+        quizScore: 80,
+        answers: ['Resumo curto da sessao.'],
+      }),
     }),
     session: {
       startedAt: timestamp('2026-04-21T15:00:00.000Z'),
@@ -111,8 +150,73 @@ test('verifies a valid competitive quest completion and prepares the grant write
   assert.ok(result.grantWrite);
   assert.ok(result.sessionWrite);
   assert.equal(result.grantWrite.dayKey, '2026-04-21');
+  assert.equal(result.grantWrite.evidenceType, 'readingComprehension');
+  assert.equal(result.grantWrite.confidenceScore, 75);
   assert.equal(result.grantWrite.completedAt.toMillis(), now.toMillis());
   assert.equal(result.sessionWrite.status, 'verified');
+});
+
+test('rejects competitive quest completion when evidence is missing', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+
+  assert.throws(
+    () =>
+      resolveCompetitiveQuestCompletionVerification({
+        quest: buildQuest(),
+        session: {
+          startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+        },
+        grant: null,
+        now,
+      }),
+    (error) => {
+      assert.equal(error.code, 'failed-precondition');
+      assert.match(error.message, /missingEvidence/);
+      return true;
+    },
+  );
+});
+
+test('rejects impossible running evidence before granting rank progress', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+
+  assert.throws(
+    () =>
+      resolveCompetitiveQuestCompletionVerification({
+        quest: buildQuest({
+          title: 'Corrida controlada de 2 km',
+          templateType: 'runningSession',
+          verificationMode: 'timer',
+          targetDurationMinutes: 10,
+          xpReward: 35,
+          rewardAttribute: 'agility',
+          verificationRequirement: {
+            evidenceType: 'runningDistance',
+            minimumTrustTier: 2,
+            minimumDurationMinutes: 10,
+            minimumDistanceMeters: 2000,
+            minimumQuizScore: 0,
+            allowedProviders: ['mockEvidence'],
+          },
+          evidence: buildEvidence({
+            type: 'runningDistance',
+            durationMinutes: 10,
+            distanceMeters: 5000,
+            sourceActivityId: 'activity-1',
+          }),
+        }),
+        session: {
+          startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+        },
+        grant: null,
+        now,
+      }),
+    (error) => {
+      assert.equal(error.code, 'failed-precondition');
+      assert.match(error.message, /impossiblePace/);
+      return true;
+    },
+  );
 });
 
 test('prevents duplicate grants by returning the existing verification result', () => {

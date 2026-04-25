@@ -6,34 +6,32 @@ Read this when continuing after Phase 3 release work was paused for deeper produ
 
 User wants implementation before device dependency. Main value gap: competitive quests are not attractive enough and anti-fraud is weak.
 
-Do not start with real Health Connect, Strava, GPS, or AI integration. First implement the evidence contract, evaluator, richer quest catalog, and tests.
+Do not start with real Health Connect, Strava, GPS, or AI integration. First slice already implemented the evidence contract, evaluator, richer quest catalog, fake evidence, and backend gate.
 
 Product source:
 - `docs/product/competitive-verification-v1.md`
 
+## Current Implementation State
+
+First slice is implemented:
+- Dart evidence domain/evaluator/mock evidence
+- richer official catalog
+- Flutter completion submits evidence payload
+- backend evaluator blocks grants without accepted evidence
+- evidence audit docs under `competitive_quest_evidence`
+- rules/tests for read-only evidence audits
+
+Do not reimplement this from scratch. Continue from these files.
+
 ## Next Package
 
-Build `Competitive Verification V1`:
+Continue `Competitive Verification V1`:
 
-1. Add pure domain types for:
-   - verification requirement
-   - quest evidence
-   - evidence provider
-   - verification decision
-   - risk flags
-2. Add a pure evaluator:
-   - accepts/rejects evidence against official template requirements
-   - returns confidence score and risk flags
-3. Expand official competitive templates:
-   - running 2k
-   - running 5k
-   - focus 25m
-   - reading comprehension
-   - workout session
-   - study recall
-4. Add fake/mock evidence provider for tests.
-5. Wire backend authority tests before broad UI work.
-6. Add minimal UI keys/actions only when needed by tests.
+1. Add historical duplicate `sourceActivityId` checks for evidence.
+2. Add visible evidence decision details in competitive quest UI.
+3. Add provider adapter boundary interfaces.
+4. Add Health Connect or Strava only after adapter tests exist.
+5. Add AI reading quiz only after quiz contract is backend-owned.
 
 ## Likely Files
 
@@ -45,6 +43,7 @@ Start by reading:
 - `lib/features/quests/presentation/widgets/quest_card.dart`
 - `functions/src/index.ts`
 - `functions/test/`
+- `firestore.rules`
 - `test/features/quests/`
 - `docs/ai/architecture-map.md`
 - `docs/ai/testing-strategy.md`
@@ -57,6 +56,7 @@ Start by reading:
 - If Isar models change, regenerate generated files; never edit generated files manually.
 - Avoid copy-fragile tests. Prefer state, keys, decisions, and backend contract.
 - Keep docs updated when behavior changes.
+- Existing evidence provider is mock-only by design; do not treat it as production anti-cheat.
 
 ## Validation
 
@@ -71,4 +71,3 @@ If functions changed:
 
 If Isar schema changed:
 - `rtk dart run build_runner build --delete-conflicting-outputs`
-

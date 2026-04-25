@@ -218,6 +218,24 @@ Why:
 - current competitive verification is too narrow for running, reading, workout, and study quests
 - a pure evaluator, richer official templates, and fake evidence provider can be built and tested before Health Connect, Strava, GPS, or AI integrations
 
+Progress note recorded on: `2026-04-25`
+
+Implemented and evidenced:
+- `Competitive Verification V1` foundation added without requiring a real device
+- Dart domain now has evidence types, providers, verification requirements, decisions, risk flags, pure evaluator, and deterministic mock evidence
+- official competitive catalog now includes running, focus, reading comprehension, workout, and study recall templates
+- Flutter competitive completion now builds evidence from the official template requirement before calling backend authority
+- backend competitive verification now evaluates submitted evidence before granting reward/rank-facing progress
+- backend writes evidence audit records under `users/{uid}/competitive_quest_evidence/{attemptId}`
+- Firestore rules allow users to read their own evidence audits but block direct client writes
+- automated validation passed for Flutter, Functions, and Firestore rules
+
+Remaining for later adapters:
+- Health Connect / Strava provider integration
+- AI reading quiz generation
+- source activity reuse checks across provider history
+- richer visible evidence detail UI
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

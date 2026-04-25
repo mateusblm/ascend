@@ -108,6 +108,11 @@ service cloud.firestore {
         allow read: if isSignedIn() && request.auth.uid == userId;
         allow create, update, delete: if false;
       }
+
+      match /competitive_quest_evidence/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update, delete: if false;
+      }
     }
   }
 }

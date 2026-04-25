@@ -6,6 +6,24 @@ Define the next product implementation track for competitive quests: make Arena 
 
 This is the main product direction after the internal release-candidate work was paused for deeper gameplay value. The app can stay pre-device and pre-public-launch while this architecture is built and tested.
 
+Status: `partially_implemented`
+
+Implemented on `2026-04-25`:
+- Dart evidence domain and pure evaluator
+- richer official competitive quest catalog for running, focus, reading, workout, and study
+- deterministic mock evidence for pre-device development and tests
+- backend evidence evaluator inside competitive verification authority
+- backend evidence audit records in `competitive_quest_evidence`
+- Firestore read-only client rules for evidence audit records
+- domain, backend, and rules tests for valid evidence, missing evidence, impossible pace, and read/write boundaries
+
+Still future:
+- real Health Connect adapter
+- real Strava adapter
+- real AI reading quiz generation
+- full UI for manual/provider evidence details
+- duplicate source-activity checks against historical provider ids
+
 ## Product Problem
 
 Competitive quests are the highest-trust part of Ascend. If a player can claim rank-bearing running, reading, study, or workout quests with no meaningful proof, the Arena loses value.
@@ -251,4 +269,3 @@ Flutter tests:
 - public anti-cheat claims
 - manual human review queue
 - external launch dependency
-

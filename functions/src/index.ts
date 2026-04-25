@@ -95,6 +95,7 @@ type CompetitiveQuestSessionPayload = {
   rewardAttribute?: unknown;
   verificationStartedAt?: unknown;
   reflectionAnswer?: unknown;
+  evidence?: unknown;
 };
 
 type ValidatedSeasonReward = NonNullable<
@@ -148,6 +149,30 @@ type ServerCompetitiveQuestDefinition = {
   targetDurationMinutes: number;
   xpReward: number;
   rewardAttribute: string;
+  verificationRequirement: ServerCompetitiveVerificationRequirement;
+};
+
+type ServerCompetitiveVerificationRequirement = {
+  evidenceType: string;
+  minimumTrustTier: number;
+  minimumDurationMinutes: number;
+  minimumDistanceMeters: number;
+  minimumQuizScore: number;
+  allowedProviders: string[];
+};
+
+type ServerQuestEvidence = {
+  questId: string;
+  provider: string;
+  type: string;
+  startedAt: admin.firestore.Timestamp;
+  completedAt: admin.firestore.Timestamp;
+  durationMinutes: number | null;
+  distanceMeters: number | null;
+  sourceActivityId: string | null;
+  quizScore: number | null;
+  answers: string[];
+  reflection: string | null;
 };
 
 type ServerPlayerProfileSource = {
@@ -511,7 +536,14 @@ function ensureQuestCategory(value: unknown, field: string): string {
 
 function ensureQuestTemplateType(value: unknown, field: string): string {
   const templateType = ensureString(value, field, 32);
-  if (!['custom', 'focusSession', 'studySession', 'readingSession'].includes(templateType)) {
+  if (![
+    'custom',
+    'focusSession',
+    'studySession',
+    'readingSession',
+    'runningSession',
+    'workoutSession',
+  ].includes(templateType)) {
     throw new HttpsError('invalid-argument', `${field} invalido.`);
   }
   return templateType;
@@ -818,7 +850,115 @@ function validateCompetitiveIntegritySourcePayload(source: unknown) {
 }
 
 function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
+  const timer25: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'timedFocus',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 25,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 0,
+    allowedProviders: ['appTimer', 'mockEvidence'],
+  };
+  const timer20: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'timedFocus',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 20,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 0,
+    allowedProviders: ['appTimer', 'mockEvidence'],
+  };
+  const timer30: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'timedFocus',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 30,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 0,
+    allowedProviders: ['appTimer', 'mockEvidence'],
+  };
+  const reading20: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'readingComprehension',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 20,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 70,
+    allowedProviders: ['mockEvidence'],
+  };
+  const reading15: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'readingComprehension',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 15,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 70,
+    allowedProviders: ['mockEvidence'],
+  };
+  const study20: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'studySession',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 20,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 70,
+    allowedProviders: ['mockEvidence'],
+  };
+  const study30: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'studySession',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 30,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 0,
+    allowedProviders: ['appTimer', 'mockEvidence'],
+  };
+  const run2k: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'runningDistance',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 10,
+    minimumDistanceMeters: 2000,
+    minimumQuizScore: 0,
+    allowedProviders: ['mockEvidence'],
+  };
+  const run5k: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'runningDistance',
+    minimumTrustTier: 3,
+    minimumDurationMinutes: 20,
+    minimumDistanceMeters: 5000,
+    minimumQuizScore: 0,
+    allowedProviders: ['mockEvidence'],
+  };
+  const workout20: ServerCompetitiveVerificationRequirement = {
+    evidenceType: 'workoutSession',
+    minimumTrustTier: 2,
+    minimumDurationMinutes: 20,
+    minimumDistanceMeters: 0,
+    minimumQuizScore: 0,
+    allowedProviders: ['appTimer', 'mockEvidence'],
+  };
+
   return [
+    {
+      title: 'Corrida controlada de 2 km',
+      templateType: 'runningSession',
+      verificationMode: 'timer',
+      targetDurationMinutes: 10,
+      xpReward: 35,
+      rewardAttribute: 'agility',
+      verificationRequirement: run2k,
+    },
+    {
+      title: 'Corrida ranqueada de 5 km',
+      templateType: 'runningSession',
+      verificationMode: 'timer',
+      targetDurationMinutes: 20,
+      xpReward: 55,
+      rewardAttribute: 'vitality',
+      verificationRequirement: run5k,
+    },
+    {
+      title: 'Treino corporal de 20 minutos',
+      templateType: 'workoutSession',
+      verificationMode: 'timer',
+      targetDurationMinutes: 20,
+      xpReward: 35,
+      rewardAttribute: 'strength',
+      verificationRequirement: workout20,
+    },
     {
       title: 'Sessao de foco de 25 minutos',
       templateType: 'focusSession',
@@ -826,6 +966,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 25,
       xpReward: 30,
       rewardAttribute: 'agility',
+      verificationRequirement: timer25,
     },
     {
       title: 'Leitura de 20 minutos',
@@ -834,6 +975,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 20,
       xpReward: 30,
       rewardAttribute: 'intelligence',
+      verificationRequirement: reading20,
     },
     {
       title: 'Estudo profundo de 30 minutos',
@@ -842,6 +984,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 30,
       xpReward: 35,
       rewardAttribute: 'intelligence',
+      verificationRequirement: study30,
     },
     {
       title: 'Revisao de treino de 15 minutos',
@@ -850,6 +993,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 15,
       xpReward: 25,
       rewardAttribute: 'intelligence',
+      verificationRequirement: reading15,
     },
     {
       title: 'Sessao de foco de 20 minutos',
@@ -858,6 +1002,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 20,
       xpReward: 25,
       rewardAttribute: 'vitality',
+      verificationRequirement: timer20,
     },
     {
       title: 'Leitura ou revisao de 15 minutos',
@@ -866,6 +1011,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 15,
       xpReward: 25,
       rewardAttribute: 'intelligence',
+      verificationRequirement: reading15,
     },
     {
       title: 'Bloco de foco de 30 minutos',
@@ -874,6 +1020,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 30,
       xpReward: 35,
       rewardAttribute: 'agility',
+      verificationRequirement: timer30,
     },
     {
       title: 'Revisao de 20 minutos',
@@ -882,6 +1029,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
       targetDurationMinutes: 20,
       xpReward: 30,
       rewardAttribute: 'intelligence',
+      verificationRequirement: study20,
     },
   ];
 }
@@ -1743,8 +1891,166 @@ function validateCompetitiveQuestSessionPayload(payload: unknown) {
     targetDurationMinutes,
     xpReward,
     rewardAttribute,
+    verificationRequirement: definition.verificationRequirement,
     verificationStartedAt,
     reflectionAnswer,
+    evidence: data.evidence == null ? null : validateQuestEvidencePayload(data.evidence, questId),
+  };
+}
+
+function ensureEvidenceProvider(value: unknown, field: string): string {
+  const provider = ensureString(value, field, 32);
+  if (!['manual', 'appTimer', 'mockEvidence'].includes(provider)) {
+    throw new HttpsError('invalid-argument', `${field} invalido.`);
+  }
+  return provider;
+}
+
+function ensureEvidenceType(value: unknown, field: string): string {
+  const type = ensureString(value, field, 48);
+  if (![
+    'timedFocus',
+    'runningDistance',
+    'readingComprehension',
+    'workoutSession',
+    'studySession',
+  ].includes(type)) {
+    throw new HttpsError('invalid-argument', `${field} invalido.`);
+  }
+  return type;
+}
+
+function validateQuestEvidencePayload(payload: unknown, expectedQuestId: string): ServerQuestEvidence {
+  if (!payload || typeof payload !== 'object') {
+    throw new HttpsError('invalid-argument', 'Evidencia competitiva invalida.');
+  }
+
+  const data = payload as Record<string, unknown>;
+  const questId = ensureString(data.questId, 'evidence.questId', 120);
+  if (questId !== expectedQuestId) {
+    throw new HttpsError('permission-denied', 'Evidencia enviada para quest diferente.');
+  }
+
+  return {
+    questId,
+    provider: ensureEvidenceProvider(data.provider, 'evidence.provider'),
+    type: ensureEvidenceType(data.type, 'evidence.type'),
+    startedAt: ensureTimestamp(data.startedAt, 'evidence.startedAt'),
+    completedAt: ensureTimestamp(data.completedAt, 'evidence.completedAt'),
+    durationMinutes: ensureNonNegativeIntOrNull(data.durationMinutes, 'evidence.durationMinutes'),
+    distanceMeters: ensureNonNegativeIntOrNull(data.distanceMeters, 'evidence.distanceMeters'),
+    sourceActivityId: data.sourceActivityId == null
+      ? null
+      : ensureString(data.sourceActivityId, 'evidence.sourceActivityId', 160),
+    quizScore: ensureNonNegativeIntOrNull(data.quizScore, 'evidence.quizScore'),
+    answers: data.answers == null ? [] : ensureStringArray(data.answers, 'evidence.answers', 500),
+    reflection: data.reflection == null ? null : ensureString(data.reflection, 'evidence.reflection', 500),
+  };
+}
+
+export function evaluateCompetitiveQuestEvidence(args: {
+  quest: ReturnType<typeof validateCompetitiveQuestSessionPayload>;
+  evidence: ServerQuestEvidence | null;
+  now: admin.firestore.Timestamp;
+}) {
+  const {quest, evidence, now} = args;
+  const requirement = quest.verificationRequirement;
+  const riskFlags: string[] = [];
+
+  if (!evidence) {
+    return {
+      status: 'insufficientEvidence' as const,
+      confidenceScore: 0,
+      riskFlags: ['missingEvidence'],
+    };
+  }
+
+  if (evidence.type !== requirement.evidenceType ||
+      !requirement.allowedProviders.includes(evidence.provider)) {
+    riskFlags.push('invalidProvider');
+  }
+
+  if (evidence.completedAt.toMillis() < evidence.startedAt.toMillis()) {
+    riskFlags.push('completedBeforeStart');
+  }
+
+  const elapsedMinutes = Math.floor(
+    (evidence.completedAt.toMillis() - evidence.startedAt.toMillis()) / (60 * 1000),
+  );
+  const effectiveDuration = evidence.durationMinutes ?? elapsedMinutes;
+  if (effectiveDuration <= 0) {
+    riskFlags.push('missingDuration');
+  } else if (effectiveDuration < requirement.minimumDurationMinutes) {
+    riskFlags.push('durationTooShort');
+  }
+
+  if (requirement.minimumDistanceMeters > 0) {
+    const distance = evidence.distanceMeters ?? 0;
+    if (distance <= 0) {
+      riskFlags.push('missingDistance');
+    } else if (distance < requirement.minimumDistanceMeters) {
+      riskFlags.push('distanceTooShort');
+    }
+
+    if (distance > 0 && effectiveDuration > 0) {
+      const metersPerMinute = distance / effectiveDuration;
+      if (metersPerMinute > 420) {
+        riskFlags.push('impossiblePace');
+      } else if (metersPerMinute > 300) {
+        riskFlags.push('unusuallyFastPace');
+      }
+    }
+  }
+
+  if (requirement.minimumQuizScore > 0 &&
+      (evidence.quizScore == null || evidence.quizScore < requirement.minimumQuizScore)) {
+    riskFlags.push('missingQuiz');
+  }
+
+  if (evidence.completedAt.toMillis() < now.toMillis() - (2 * 24 * 60 * 60 * 1000)) {
+    riskFlags.push('staleEvidence');
+  }
+
+  if (
+    riskFlags.includes('invalidProvider') ||
+    riskFlags.includes('completedBeforeStart') ||
+    riskFlags.includes('impossiblePace') ||
+    riskFlags.includes('staleEvidence')
+  ) {
+    return {
+      status: 'rejected' as const,
+      confidenceScore: 0,
+      riskFlags,
+    };
+  }
+
+  if (
+    riskFlags.includes('missingDuration') ||
+    riskFlags.includes('durationTooShort') ||
+    riskFlags.includes('missingDistance') ||
+    riskFlags.includes('distanceTooShort') ||
+    riskFlags.includes('missingQuiz')
+  ) {
+    return {
+      status: 'insufficientEvidence' as const,
+      confidenceScore: 15,
+      riskFlags,
+    };
+  }
+
+  const baseConfidence = evidence.provider === 'manual'
+    ? 35
+    : evidence.provider === 'appTimer'
+      ? 65
+      : 75;
+  const confidenceScore = riskFlags.includes('unusuallyFastPace')
+    ? Math.max(0, baseConfidence - 25)
+    : baseConfidence;
+
+  return {
+    status: riskFlags.includes('unusuallyFastPace') ? 'needsReview' as const : 'accepted' as const,
+    confidenceScore,
+    riskFlags,
   };
 }
 
@@ -1844,9 +2150,22 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
     throw new HttpsError('failed-precondition', 'A resposta curta ainda nao foi enviada.');
   }
 
+  const decision = evaluateCompetitiveQuestEvidence({
+    quest,
+    evidence: quest.evidence,
+    now,
+  });
+  if (decision.status !== 'accepted') {
+    throw new HttpsError(
+      'failed-precondition',
+      `Evidencia competitiva insuficiente: ${decision.riskFlags.join(',') || decision.status}.`,
+    );
+  }
+
   return {
     status: 'verified' as const,
     completedAt: now.toDate().toISOString(),
+    decision,
     grantWrite: {
       questId: quest.questId,
       title: quest.title,
@@ -1856,6 +2175,11 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
       targetDurationMinutes: quest.targetDurationMinutes,
       xpReward: quest.xpReward,
       rewardAttribute: quest.rewardAttribute,
+      evidenceType: quest.evidence?.type ?? null,
+      evidenceProvider: quest.evidence?.provider ?? null,
+      confidenceScore: decision.confidenceScore,
+      riskFlags: decision.riskFlags,
+      sourceActivityId: quest.evidence?.sourceActivityId ?? null,
       completedAt: now,
       approvedAt: now,
     },
@@ -3717,6 +4041,11 @@ export const verifyCompetitiveQuestCompletion = onCall(
       db,
       uid,
     ).doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
+    const evidenceRef = db
+      .collection('users')
+      .doc(uid)
+      .collection('competitive_quest_evidence')
+      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
     const fallbackName = sanitizeDisplayName(request.auth.token.name);
 
     return db.runTransaction(async (transaction) => {
@@ -3897,6 +4226,30 @@ export const verifyCompetitiveQuestCompletion = onCall(
       if (resolution.sessionWrite) {
         transaction.set(sessionRef, resolution.sessionWrite, {merge: true});
       }
+      transaction.set(
+        evidenceRef,
+        {
+          questId: quest.questId,
+          title: quest.title,
+          templateType: quest.templateType,
+          evidenceType: quest.evidence?.type ?? null,
+          evidenceProvider: quest.evidence?.provider ?? null,
+          startedAt: quest.evidence?.startedAt ?? null,
+          completedAt: quest.evidence?.completedAt ?? null,
+          durationMinutes: quest.evidence?.durationMinutes ?? null,
+          distanceMeters: quest.evidence?.distanceMeters ?? null,
+          sourceActivityId: quest.evidence?.sourceActivityId ?? null,
+          quizScore: quest.evidence?.quizScore ?? null,
+          confidenceScore: resolution.decision.confidenceScore,
+          riskFlags: resolution.decision.riskFlags,
+          status: resolution.decision.status,
+          auditedAt: now,
+          syncSource: 'backend',
+          activeDeviceSessionId: session.deviceSessionId,
+          activeDeviceLabel: session.deviceLabel,
+        },
+        {merge: true},
+      );
       transaction.set(profileRef, nextProfile, {merge: true});
       transaction.set(questRef, questWrite, {merge: true});
       transaction.set(
@@ -3925,6 +4278,7 @@ export const verifyCompetitiveQuestCompletion = onCall(
       return {
         status: resolution.status,
         completedAt: resolution.completedAt,
+        verificationDecision: resolution.decision,
         profile: nextProfile,
         questId: quest.questId,
         quest: questWrite,

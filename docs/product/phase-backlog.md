@@ -242,6 +242,20 @@ Implementation target:
 - add a pure evaluator and fake/test evidence provider
 - keep backend authority over reward and rank-bearing decisions
 
+Completed in the first implementation slice:
+- evidence domain and evaluator in Flutter
+- mock evidence provider for non-device tests
+- running, focus, reading, workout, and study official templates
+- backend evidence evaluator before competitive reward grant
+- backend evidence audit collection
+- Firestore rule/test coverage for evidence audit read-only access
+
+Still pending after the first slice:
+- real provider adapters
+- AI reading quiz generation
+- historical duplicate source-activity checks
+- richer evidence-status UI
+
 ### Workstreams
 
 #### Workstream 3.1 - Release candidate discipline

@@ -49,6 +49,16 @@ The goal is simple:
 - confirm support/privacy/deletion surfaces still reflect the current operational policy
 - confirm `ASCEND_SUPPORT_EMAIL` is set to a real monitored channel for the target release when distributing beyond controlled internal validation
 
+## Candidate Records
+
+- `docs/product/release-candidate-log.md`
+
+Latest recorded candidate:
+- `RC-internal-2026-04-25`
+- Android artifacts built successfully for staging debug, production debug, and production release
+- automated validation passed
+- external distribution remains blocked by placeholder support email and missing real-device smoke evidence
+
 ### Competitive Safety
 
 - confirm competitive quests still require backend validation

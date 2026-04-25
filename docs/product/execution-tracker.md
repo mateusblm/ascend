@@ -167,6 +167,25 @@ Current focus:
 - validate release-candidate build discipline
 - keep Phase 1 and Phase 2 accepted debt visible until resolved
 
+Progress note recorded on: `2026-04-25`
+
+Implemented and evidenced:
+- `RC-internal-2026-04-25` recorded in `docs/product/release-candidate-log.md`
+- Android APK artifacts built successfully:
+  - `build/app/outputs/flutter-apk/app-staging-debug.apk`
+  - `build/app/outputs/flutter-apk/app-production-debug.apk`
+  - `build/app/outputs/flutter-apk/app-production-release.apk`
+- automated validation passed:
+  - `rtk flutter analyze`
+  - `rtk flutter test`
+  - `rtk npm --prefix functions test -- --test-reporter=spec`
+  - `rtk npm --prefix functions run test:rules`
+
+Still blocking external beta:
+- placeholder support email remains configured for the internal candidate
+- real-device trust-critical smoke pass remains unrecorded
+- real-device visual/scroll-density pass remains unrecorded
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

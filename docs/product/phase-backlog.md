@@ -233,10 +233,12 @@ Completed:
 - release checklist exists
 - environment doc exists
 - Android identities are documented
+- internal release-candidate log exists
+- Android staging/debug, production/debug, and production/release APK artifacts have been built and recorded for `RC-internal-2026-04-25`
 
 Still required:
-- record an actual release-candidate checklist pass
-- capture the exact release artifact path used for testing
+- record real-device install and smoke results against the recorded artifact
+- replace placeholder support contact before external beta
 
 #### Workstream 3.2 - Operational observability
 
@@ -244,6 +246,7 @@ Status: `partial`
 
 Completed:
 - analytics and crash boundaries exist centrally
+- automated RC validation now includes Functions authority tests and Firestore rules emulator tests
 
 Still required:
 - verify event and non-fatal coverage on current critical flows

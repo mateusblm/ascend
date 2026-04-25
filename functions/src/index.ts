@@ -474,10 +474,52 @@ export function parseTimestampInput(value: unknown): admin.firestore.Timestamp |
     return admin.firestore.Timestamp.fromDate(value);
   }
 
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return admin.firestore.Timestamp.fromMillis(value);
+  }
+
   if (typeof value === 'string') {
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) {
       return admin.firestore.Timestamp.fromDate(parsed);
+    }
+  }
+
+  if (value && typeof value === 'object') {
+    const data = value as Record<string, unknown>;
+    const seconds = typeof data.seconds === 'number'
+      ? data.seconds
+      : typeof data._seconds === 'number'
+        ? data._seconds
+        : null;
+    const nanoseconds = typeof data.nanoseconds === 'number'
+      ? data.nanoseconds
+      : typeof data._nanoseconds === 'number'
+        ? data._nanoseconds
+        : 0;
+    if (seconds != null) {
+      return new admin.firestore.Timestamp(seconds, nanoseconds);
+    }
+
+    const milliseconds = typeof data.millisecondsSinceEpoch === 'number'
+      ? data.millisecondsSinceEpoch
+      : typeof data._millisecondsSinceEpoch === 'number'
+        ? data._millisecondsSinceEpoch
+        : null;
+    if (milliseconds != null) {
+      return admin.firestore.Timestamp.fromMillis(milliseconds);
+    }
+
+    const isoString = typeof data.iso8601 === 'string'
+      ? data.iso8601
+      : typeof data.isoString === 'string'
+        ? data.isoString
+        : null;
+    if (isoString != null) {
+      const parsed = new Date(isoString);
+      if (!Number.isNaN(parsed.getTime())) {
+        return admin.firestore.Timestamp.fromDate(parsed);
+      }
     }
   }
 

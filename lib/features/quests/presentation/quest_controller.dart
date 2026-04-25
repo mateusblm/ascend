@@ -489,6 +489,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           ref.read(authProvider.notifier).handleActiveSessionConflict(),
         );
         return QuestCompletionResult.invalidFlow;
+      } on FirebaseFunctionsException catch (error) {
+        if (error.code == 'failed-precondition' &&
+            error.message?.contains('sessao ainda nao foi iniciada') == true) {
+          _persistQuestUpdate(quest.copyWith(clearVerificationProgress: true));
+          return QuestCompletionResult.invalidFlow;
+        }
+        rethrow;
       }
     }
 

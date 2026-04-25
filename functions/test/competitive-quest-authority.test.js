@@ -5,6 +5,7 @@ const admin = require('firebase-admin');
 const {
   competitiveQuestAttemptDayKey,
   matchesCompetitiveAttemptDay,
+  parseTimestampInput,
   resolveCompetitiveQuestSessionStart,
   resolveCompetitiveQuestCompletionVerification,
 } = require('../lib/index.js');
@@ -316,5 +317,20 @@ test('matches only records from the same competitive attempt day', () => {
       timestampField: 'startedAt',
     }),
     false,
+  );
+});
+
+test('parses timestamp payloads sent by mobile callable clients', () => {
+  assert.equal(
+    parseTimestampInput('2026-04-21T15:00:00.000Z').toMillis(),
+    timestamp('2026-04-21T15:00:00.000Z').toMillis(),
+  );
+  assert.equal(
+    parseTimestampInput({seconds: 1776783600, nanoseconds: 0}).toMillis(),
+    timestamp('2026-04-21T15:00:00.000Z').toMillis(),
+  );
+  assert.equal(
+    parseTimestampInput({millisecondsSinceEpoch: 1776783600000}).toMillis(),
+    timestamp('2026-04-21T15:00:00.000Z').toMillis(),
   );
 });

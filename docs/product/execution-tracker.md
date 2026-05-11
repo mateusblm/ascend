@@ -286,6 +286,17 @@ Environment validation closure:
 - `npm audit fix` was applied without `--force`, reducing the Functions audit from 17 vulnerabilities to 11.
 - remaining audit findings require `npm audit fix --force`, which would introduce breaking dependency changes around Firebase packages/tooling; defer those to a dedicated dependency-upgrade pass instead of treating them as a blind month-1 environment fix.
 
+Progress note recorded on: `2026-05-11`
+
+Month 2 backend hardening started:
+- first safe extraction slice completed in Functions.
+- generic validation, timestamp parsing, sanitization, and safe coercion helpers moved from `functions/src/index.ts` to `functions/src/shared/validation.ts`.
+- callable exports and the public test import for `parseTimestampInput` remain compatible through a re-export from `index.ts`.
+- no behavior change intended.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

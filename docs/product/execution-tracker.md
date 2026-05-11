@@ -11,14 +11,16 @@ Update this file:
 
 ## Current State
 
-- Current date baseline: `2026-04-24`
+- Current date baseline: `2026-05-11`
 - Active plan: `docs/product/project-plan.md`
 - Active requirements baseline: `docs/product/requirements-baseline.md`
 - Active phase: `Phase 3 - Product reliability and release readiness`
-- Active product focus override: `Competitive Verification V1` before more external-release work
+- Active stabilization package: `Documentation and control-plane cleanup`
+- Active product focus override: `Competitive Verification V1` remains the next implementation track after the control plane is coherent
 - Previous phase status: `Phase 1 advanced with accepted operational debt`
 - Active backlog: `docs/product/phase-backlog.md`
 - Active smoke log: `docs/product/phase1-smoke-log.md`
+- Active source-of-truth map: `docs/ai/source-of-truth.md`
 
 ## Phase Table
 
@@ -211,7 +213,7 @@ Decision:
 
 Next implementation focus:
 - `Competitive Verification V1`, documented in `docs/product/competitive-verification-v1.md`
-- next-agent brief in `docs/ai/competitive-verification-next-agent.md`
+- work-package brief in `docs/ai/work-packages/competitive-verification-v1-next.md`
 
 Why:
 - the core product value depends on Arena progress being evidence-based
@@ -235,6 +237,54 @@ Remaining for later adapters:
 - AI reading quiz generation
 - source activity reuse checks across provider history
 - richer visible evidence detail UI
+
+Progress note recorded on: `2026-05-11`
+
+Control-plane audit:
+- `README.md` was stale and still described Android as `com.example.ascend`, while the current Gradle configuration uses `com.ascend.mobile` with `staging` and `production` flavors.
+- `roadmap.md` and `architecture-map.md` remain useful but too cumulative; treat them as context until they are compacted, not as the fastest entry point for current work.
+- `knowledge-vault/` remains retrieval memory only and must not override current code or curated docs.
+- the active release blockers are still support ownership, real-device smoke evidence, and operational owner/backup assignment.
+
+Validation observed on `2026-05-11`:
+- `rtk flutter analyze`: passed with no issues.
+- `rtk npm test` in `functions`: passed, 14 tests.
+- `rtk flutter test`: blocked by Windows Developer Mode / symlink support not being enabled.
+- `rtk npm run test:rules`: blocked because Java is not available on `PATH`.
+- `rtk npm ci`: completed, but reported Node engine mismatch because the environment used Node `v24.15.0` while `functions/package.json` requires Node `20`; it also reported npm audit vulnerabilities that need a separate dependency/security pass.
+
+Current stabilization outcome:
+- documentation cleanup is now the immediate next package before more product implementation.
+- do not start new feature breadth until the docs tell a single operational story again.
+
+Progress note recorded on: `2026-05-11`
+
+Control-plane cleanup follow-through:
+- `docs/product/roadmap.md` is now a current strategy document instead of an accumulated changelog.
+- `docs/ai/architecture-map.md` is now a current architecture boundary map instead of a long historical implementation log.
+- the six-month direction now lives in the roadmap, while execution status remains in this tracker and `docs/product/phase-backlog.md`.
+- the remaining documentation cleanup is narrower:
+  - archive, delete, or fold work-package briefs into durable docs after their package is complete
+  - keep `roadmap.md` and `architecture-map.md` from becoming changelogs again
+  - resolve local validation environment blockers
+
+Progress note recorded on: `2026-05-11`
+
+Work-package cleanup:
+- `docs/ai/competitive-verification-next-agent.md` was moved out of the root AI docs.
+- the active Competitive Verification V1 brief now lives at `docs/ai/work-packages/competitive-verification-v1-next.md`.
+- `docs/ai/work-packages/README.md` defines that these briefs are temporary execution aids, not permanent architecture.
+
+Progress note recorded on: `2026-05-11`
+
+Environment validation closure:
+- operator confirmed the local environment blockers are resolved:
+  - Windows Developer Mode / symlink support for Flutter plugin tests
+  - Java on `PATH` for Firestore rules emulator tests
+  - Node 20 for Functions validation parity
+- operator confirmed the previously blocked validation commands now run successfully locally.
+- `npm audit fix` was applied without `--force`, reducing the Functions audit from 17 vulnerabilities to 11.
+- remaining audit findings require `npm audit fix --force`, which would introduce breaking dependency changes around Firebase packages/tooling; defer those to a dedicated dependency-upgrade pass instead of treating them as a blind month-1 environment fix.
 
 Planned completion note:
 - record release identity/environment readiness

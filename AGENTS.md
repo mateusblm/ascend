@@ -13,6 +13,7 @@ Additional source-of-truth documents:
 - `docs/product/ux-positioning.md`
 - `docs/product/ui-information-architecture.md`
 - `docs/ai/development-charter.md`
+- `docs/ai/source-of-truth.md`
 - `docs/ai/architecture-map.md`
 - `docs/ai/change-checklist.md`
 - `docs/ai/testing-strategy.md`

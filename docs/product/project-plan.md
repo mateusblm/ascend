@@ -49,7 +49,7 @@ Exit criteria:
 
 ### Phase 1 - Core authority and trust
 
-Status: `in_progress`
+Status: `completed_with_accepted_debt`
 
 Goal:
 - make account, progression, and competitive actions safe enough to trust
@@ -92,7 +92,7 @@ Exit criteria:
 
 ### Phase 2 - Core loops and retention
 
-Status: `in_progress`
+Status: `completed_with_accepted_debt`
 
 Goal:
 - make the product's daily and weekly return loop reliable and legible
@@ -139,7 +139,7 @@ Exit criteria:
 
 ### Phase 3 - Product reliability and release readiness
 
-Status: `planned`
+Status: `in_progress`
 
 Goal:
 - make the app releasable to strangers, not just workable for internal use

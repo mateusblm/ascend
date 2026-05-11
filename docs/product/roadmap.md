@@ -1,375 +1,220 @@
 # Ascend Roadmap
 
-Operational companion documents:
-- `docs/product/requirements-baseline.md`
-- `docs/product/project-plan.md`
-- `docs/product/phase-backlog.md`
+## Purpose
+
+Define the product direction for Ascend without acting as a changelog.
+
+For execution state, use:
 - `docs/product/execution-tracker.md`
-- `docs/ai/quality-gates.md`
+- `docs/product/phase-backlog.md`
+- `docs/product/project-plan.md`
+- `docs/ai/source-of-truth.md`
 
 ## Product Goal
 
-Turn Ascend from a simple gamified habit tracker into a retention-focused progression product with a clear path to monetization.
+Turn Ascend into a stable account-backed RPG progression product where daily
+actions create visible identity, momentum, and competitive progress.
 
-## Phase 1: Foundation
+Ascend should not drift into a generic to-do list. Quests are the input; player
+growth, weekly pressure, rank, and payoff are the product center.
 
-Goal:
-- stabilize the codebase and define product direction
+## Current Strategy
 
-Deliverables:
-- clear product vision
-- AI development guardrails
-- updated engineering instructions
-- architecture cleanup around app state and persistence
-- basic tests for player progression and quest logic
+The current strategy is production readiness before feature breadth.
 
-Success criteria:
-- contributors and AI agents can safely work in the repo
-- core progression rules are protected by tests
+Priorities:
+- make account, progression, and competitive rewards trustworthy
+- keep reward-bearing outcomes backend-authoritative
+- make the first week and daily return loop clear
+- close release, support, smoke-test, and operational ownership gaps
+- deepen Competitive Verification V1 only where it improves Arena trust
 
-## Phase 2: Retention
+Non-priorities right now:
+- broad social systems
+- cosmetic economy breadth
+- AI features across the whole app
+- new gameplay systems that increase release risk
 
-Goal:
-- make users want to come back every day
+## Current Phase
 
-Deliverables:
-- daily streaks
-- weekly completion score
-- historical XP and attribute charts
-- reset-safe progress summaries
-- better onboarding with objective selection
+Active phase:
+- `Phase 3 - Product reliability and release readiness`
 
-Success criteria:
-- app has stronger daily and weekly loops
-- user can understand progress over time
+Current stabilization package:
+- documentation and control-plane cleanup
 
-## Phase 3: Progression Depth
+Next implementation track after cleanup:
+- `Competitive Verification V1`
 
-Goal:
-- make the game layer feel meaningful
+External beta remains blocked until:
+- real support channel and owner are set
+- real-device smoke is recorded
+- staging/production build identity is validated on device
+- operational owner and backup are named
 
-Deliverables:
-- titles and achievement improvements
-- classes or builds
-- talent or specialization system
-- weekly bosses or milestone challenges
-- reward economy for unlocks and cosmetics
+## Six-Month Direction
 
-Success criteria:
-- character progression feels deeper than simple XP gain
-- users can develop identity and attachment
-
-## Phase 4: Guided Growth
+### Month 1 - Control Plane And Validation Environment
 
 Goal:
-- make the app actively useful, not just reactive
+- make the repo understandable and validation repeatable
 
 Deliverables:
-- journey templates such as study, fitness, focus, or health
-- AI-assisted quest suggestions
-- weekly planning and review flow
-- adaptive difficulty for quests
+- compact current documentation into a small trusted set
+- reclassify temporal AI handoff docs as work-package briefs
+- fix local validation prerequisites: `completed on 2026-05-11`
+  - Windows Developer Mode or symlink support for Flutter plugin tests
+  - Java on `PATH` for Firestore rules emulator tests
+  - Node 20 for Functions validation parity
+- run and record the full validation suite
+- triage Functions dependency vulnerabilities:
+  - safe `npm audit fix` applied
+  - breaking `npm audit --force` path deferred to a dedicated dependency-upgrade pass
 
-Success criteria:
-- user can start with a goal and receive structure
-- app helps maintain momentum, not just record actions
+Exit criteria:
+- future sessions can start from `docs/ai/source-of-truth.md`
+- roadmap and architecture docs describe current state, not accumulated history
+- active handoff docs live under `docs/ai/work-packages/` and are clearly temporary
+- validation failures are product failures, not environment ambiguity
 
-## Phase 5: Monetization and Distribution
+### Month 2 - Backend And Authority Hardening
 
 Goal:
-- prepare the app for real product validation
+- make reward-bearing flows easier to trust and maintain
 
 Deliverables:
-- premium feature boundary
-- app branding and polished onboarding
-- analytics events for retention funnel
-- release checklist and store preparation
+- split large Functions implementation into domain/service modules without
+  changing behavior
+- keep callable contracts test-protected
+- remove or instrument silent failure paths in critical sync flows
+- confirm backend grant records are the long-term source for competitive credit
+- keep `sync*FromSource` paths as migration/repair tooling, not normal reward
+  authority
 
-Success criteria:
-- product has a credible premium offer
-- app is ready for early user validation
+Exit criteria:
+- account progression and competitive grants are auditable
+- backend code can be changed safely without editing one very large file
+- direct client reward authority does not reappear
 
-## Current Strategic Shift: Production Readiness
-
-The next major goal is not more feature breadth. It is turning the current build into something that behaves like a real product in the hands of real users.
-
-This means the main execution focus should now be:
-- release identity instead of prototype defaults
-- operational reliability instead of feature expansion
-- market trust surfaces instead of internal-only polish
-- backend-owned progression architecture instead of frontend-owned reward rules
-
-## Final Progression Architecture
+### Month 3 - UI Maintainability And Core Loop Clarity
 
 Goal:
-- make account progression secure, consistent across devices, and cheap to read
+- keep top-level surfaces clear while reducing regression risk
 
 Deliverables:
-- canonical progression facts persisted by the backend
-- backend-authored `profile/current` aggregate
-- backend-authored command paths for:
-  - personal quest completion
-  - personal quest revocation
-  - attribute allocation
-  - weekly boss claim
-- client snapshots downgraded to migration/repair tooling instead of normal truth
-- local Isar persistence treated as cache/offline support, not final account authority
+- break oversized screens into local sections/widgets where it improves clarity
+- preserve surface ownership:
+  - Base/Home: identity, momentum, payoff
+  - Quests: execution
+  - Arena/Rank: competitive systems
+  - Stats/Plan: review, numbers, planning support
+  - Account: identity and trust controls
+- improve evidence/status readability for competitive quests
+- keep widget tests focused on state, actions, and stable keys
 
-Success criteria:
-- reward-bearing business rules no longer depend on Flutter controllers as final authority
-- level/xp/stat/streak state converges across devices through backend-authored aggregates
-- recomputation of the whole profile is not the normal production write path
+Exit criteria:
+- core screens are easier to change without broad widget regressions
+- users can understand the next action without reading long explanatory panels
 
-## Production Readiness Program
-
-### Block 1: Release Identity and Environment Separation
+### Month 4 - Release Readiness
 
 Goal:
-- remove prototype signals and make release artifacts safe to ship
+- make the app safe for controlled external testing
 
 Deliverables:
-- definitive Android package/application id instead of example identity
-- explicit Firebase environment strategy (`staging` and `prod`) or a consciously documented single-project release policy
-- release signing and versioning discipline
-- real app branding package:
-  - app name
-  - launcher icon
-  - splash treatment
-  - store-safe metadata
-- release build path documented and repeatable
-
-Success criteria:
-- no production build ships with placeholder identity
-- Firebase target and release artifact are unambiguous before deployment
-- the app looks and installs like a product, not a dev shell
-
-### Block 2: Operational Hardening
-
-Goal:
-- trust critical flows under real-world usage, not only under local validation
-
-Deliverables:
-- real-device smoke-test matrix covering:
-  - login
-  - onboarding
-  - personal quest completion
-  - competitive quest start and verification
-  - rank/integrity refresh
-  - account access and logout
-  - session restoration after app restart
-- stronger automated protection for production-critical UI and backend flows
-- release-candidate validation discipline using:
-  - `docs/product/release-checklist.md`
-  - `docs/product/firebase-operations-dashboard.md`
-  - `docs/product/first-week-funnel.md`
-- Remote Config / feature-flag / kill-switch direction for risky competitive or live-service behavior
-- operational alerting expectations for auth, funnel drop, callable failure, and crash spikes
-
-Success criteria:
-- critical user journeys are validated both automatically and on a real device
-- release regressions are easier to detect before users report them
-- live operations can react without emergency code edits where possible
-
-### Block 3: Market Trust and Store Readiness
-
-Goal:
-- close the trust gaps that matter when strangers install the app
-
-Deliverables:
-- dedicated account surface for session and identity controls
-- privacy policy and terms links
-- support/contact path inside the product
-- account/data deletion policy and implementation plan
-- store-readiness package:
+- real support channel and response owner
+- real-device smoke pass for auth, onboarding, quests, competitive verification,
+  account, logout, restart, and session restore
+- staging and production install/login verification
+- Crashlytics and Analytics sanity check from a real build
+- store/trust package:
   - screenshots
-  - description
-  - onboarding copy review
-  - closed-test distribution plan
+  - listing copy
+  - privacy/support/deletion links
+  - closed-test instructions
 
-Success criteria:
-- the app has the minimum trust surface expected from a market-facing product
-- users can understand who they are signed in as, how to leave, and how to get help
-- the product is credible enough for staged external testing
+Exit criteria:
+- release candidate can be built, identified, validated, and distributed without
+  environment confusion
 
-## Current Build Priority
+### Month 5 - Competitive Verification V1
 
-The current implementation priority should be:
+Goal:
+- make Arena progress evidence-based without pretending to have perfect anti-cheat
 
-1. competitive rank loop stabilization
-2. tests for rank, exam, demotion, and weekly boss logic
-3. home/rank/stats polish around progression identity
-4. leaderboard and season depth
-5. guided growth and AI planner integration
+Deliverables:
+- duplicate `sourceActivityId` checks
+- visible backend decision details in competitive quest UI
+- provider adapter boundaries before real Health Connect or Strava integration
+- backend-owned quiz contract before AI reading quiz work
+- tests for accepted, rejected, duplicate, stale, and impossible evidence
 
-Current production priority above the roadmap queue:
+Exit criteria:
+- competitive progress depends on backend decisions and auditable evidence
+- mock evidence remains clearly non-production
+- real provider integration can start without redesigning the contract
 
-1. release identity and Firebase environment separation
-2. real-device smoke testing and release hardening
-3. market trust surfaces:
-   - account
-   - privacy/support
-   - store readiness
-4. only then resume broader progression and guided-growth expansion
+### Month 6 - Controlled Beta And Stabilization
 
-## Current Competitive Track
+Goal:
+- validate the product with a small external audience
 
-The current active product track is the competitive RPG layer:
+Deliverables:
+- internal release candidate
+- small controlled tester cohort
+- weekly review of crashes, funnel events, support, and failed callables
+- regression fixes before new features
+- launch decision based on stability, trust, and retention signals
 
-- rank maintenance and demotion
-- promotion exam flow
-- weekly rank history
-- seasonal rank summary
-- prestige and reputation signals
-- rank arena event read-model
-- sync metadata for remote competitive state
+Exit criteria:
+- Ascend is stable enough to continue toward store release or the remaining
+  blockers are explicit and bounded
 
-Near-term follow-up deliverables:
+## Product Requirements To Protect
 
-- stronger boss leaderboard and rank arena feel
-- backend-authoritative competitive rules
-- seasonal reset and season rewards
-- widget/integration coverage for competitive UI flows
-- seasonal reward track surfaced in Rank UI with reset pressure and unlock pacing
-- seasonal leaderboard surfaced in Rank UI with podium, bracket score, and clear-rate pressure
-- concrete seasonal reward package surfaced in Rank UI with badge/title/payoff instead of generic preview text
-- seasonal reward state mirrored to Firestore for future authoritative rewards, archives, and season history
-- seasonal reward claim state surfaced in Rank UI with real resgate flow and remote archive
-- seasonal claim upgraded toward an authoritative backend path with permanent title, badge, and visual legacy records
-- active seasonal legacy surfaced in Home and Rank so claimed seasons become visible identity, not just stored data
-- rank progression now moving toward a hybrid model:
-  - level gates upward eligibility
-  - weekly maintenance prevents or causes demotion
-  - peak rank enables accelerated reconquest instead of treating returning players like full beginners
-- rank UI reorganized around three user-facing layers instead of one long technical panel:
-  - Agora
-  - Temporada
-  - Legado
-- stats UI repositioned as support for numbers and planning, not as the main place to explain rank rules
-- competitive quest architecture split:
-  - personal quests stay flexible and low-friction
-  - official competitive templates now act as the trustworthy path into rank, boss, and season systems
-- lightweight verification track introduced for competitive quests:
-  - timer
-  - timer plus short reflection
-- competitive activity now has its own history so future anti-fraud systems can evolve without breaking the casual quest loop
-- competitive progression rule clarified:
-  - personal quests may still increase `Level`
-  - promotion, boss progress, and seasonal competitive standing only advance from validated competitive activity
-  - personal quests now belong to a lighter XP lane than official competitive templates
+P0 requirements:
+- account and session authority
+- onboarding into a first useful action
+- personal quest loop
+- competitive quest loop
+- visible progression and player identity
+- competitive rank and weekly pressure
+- trust/support/account surfaces
+- release operations
 
-Next hardening steps for quest integrity:
+P1 requirements:
+- seasonal and historical reads
+- planning and guidance
+- performance and accessibility polish
 
-- expand automated coverage for the new quest verification flow
-- add trust-scoring and suspicious-pattern detection before heavier proof systems
-- keep health/location/photo verification as later layers, not v1 defaults
+Reference:
+- `docs/product/requirements-baseline.md`
 
-Current anti-abuse layer now includes:
+## Architecture Direction
 
-- official competitive templates
-- lightweight competitive verification
-- level/rank trust split
-- lighter XP lane for personal quests
-- silent competitive trust score with suspicious-pattern tracking
+The production direction is:
+- frontend issues commands
+- backend validates and writes canonical facts
+- backend updates `users/{uid}/profile/current` and competitive read models
+- Firestore rules block direct client writes to sensitive read models
+- Isar remains local cache/offline support
 
-Current onboarding/product polish direction:
+Reference:
+- `docs/product/progression-architecture.md`
+- `docs/ai/architecture-map.md`
 
-- onboarding now needs to explain the first week through action, not theory
-- the first session should show:
-  - chosen focus
-  - starter kit preview
-  - what affects level
-  - what affects rank
-- the first week should feel guided before the app asks the user to understand deeper systems
-- after onboarding, Home and Quests should keep that guidance alive through:
-  - a compact first-week loop
-  - a visible next-payoff summary
-  - one obvious next action
+## Deferral Policy
 
-Current backend-authoritative follow-up:
+Defer work that:
+- adds feature breadth before release confidence
+- moves reward-bearing rules back into Flutter controllers
+- increases competitive stakes without stronger evidence
+- expands AI before core guidance is measurable
+- adds social or cosmetic systems before account, support, and smoke-test gaps close
 
-- promotion exam start should prefer a callable backend path
-- promotion confirmation should prefer a callable backend path
-- critical competitive collections should behave as backend-written read models
-- client fallback should shrink in the competitive layer instead of remaining the default
-- weekly boss remote claim should stay backend-only
-- seasonal bracket leaderboard should move toward backend-fed standings instead of only local boss podium reads
-- competitive snapshot sync should be computed from raw source payloads on the backend
-- competitive integrity sync should be computed from raw source payloads on the backend
-
-Current competitive trust direction:
-
-- trust score now starts to matter softly:
-  - prestige can be downgraded by weak integrity
-  - seasonal standing can be flagged as under review
-- hard restrictions should come later, after calibration against real player behavior
-
-Queued after the current backend-hardening phase:
-
-- surface global bracket rivalry more aggressively in Home and Rank
-- calibrate when trust score only signals versus when it actually limits standing or rewards
-- add a more ceremonial season closeout and reward reveal
-- deepen the daily return loop now that first-week guidance is in place
-
-Recent follow-through:
-
-- Home and Rank now expose a compact rivalry layer from the global bracket leaderboard
-- the product is starting to talk in terms of chase and pressure, not only placement and score
-- first-production telemetry now exists for the main funnel:
-  - auth entry
-  - onboarding completion
-  - starter kit application
-  - quest creation, start, and completion
-  - weekly boss claim
-  - promotion start and confirmation
-  - season reward claim
-- crash reporting is now part of the production baseline:
-  - Flutter framework errors
-  - async zone errors
-  - Riverpod provider failures
-  - signed-in user context attached through auth state
-- the first-week funnel is now explicitly documented in:
-  - `docs/product/first-week-funnel.md`
-- Firebase operational reading now has its own guide in:
-  - `docs/product/firebase-operations-dashboard.md`
-- release discipline now has its own guide in:
-  - `docs/product/release-checklist.md`
-- competitive quest authority now has a more serious production boundary:
-  - session start is registered in backend
-  - completion creates an authoritative competitive grant in backend
-  - sync paths can prefer server grant history over client-reported competitive dates
-- quest UX and sync follow-through were also tightened:
-  - the quest timer helper in Quests now refreshes live while a competitive session is running
-  - completed competitive quests no longer appear duplicated in both the active competitive section and the completed section
-  - competitive quest completion now triggers immediate competitive sync instead of waiting only for navigation debounce
-- the latest competitive authority rollout has now been operationalized:
-  - `functions` and `firestore.rules` were deployed to the active Firebase project
-  - backend authority coverage now includes session start, early rejection, valid completion grant, and duplicate-grant protection
-- account surface is now moving toward market-readiness instead of hiding session controls inside a stats-only action:
-  - a dedicated account screen now exists for identity and session management
-  - name editing, focus change, connected-account visibility, and logout now live behind that dedicated surface
-
-Recommended next production steps:
-
-- finish release identity work:
-  - replace prototype package identity
-  - define staging/prod Firebase policy
-  - lock release versioning/signing flow
-- run a real-device smoke test for:
-  - account entry
-  - name update
-  - focus change
-  - logout and session restore
-  - start competitive session
-  - early completion rejection
-  - valid completion after minimum time
-  - authoritative grant creation
-  - rank/integrity refresh after completion
-- add release-hardening coverage for:
-  - account screen flows
-  - login/logout/session restore
-  - verified competitive quest happy path in UI
-- define production trust surfaces:
-  - privacy policy
-  - support/contact path
-  - account/data deletion policy
-- decide whether personal XP should remain local indefinitely or move to a softer server-audited model later
+Accept work that:
+- reduces release risk
+- clarifies first-week action
+- improves backend authority
+- improves validation coverage
+- makes current screens easier to maintain without changing product behavior

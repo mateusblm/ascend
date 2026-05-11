@@ -223,6 +223,32 @@ Backlog:
 
 Turn the validated build into a releasable candidate for external testers.
 
+### Current stabilization package
+
+Status: `done_with_dependency_followup`
+
+Purpose:
+- make the repo understandable again before more implementation work
+- remove stale operational instructions
+- identify the small set of docs that future AI sessions should trust first
+- keep historical memory available without letting it override code or curated docs
+
+Completed on `2026-05-11`:
+- stale Android package guidance in `README.md` was corrected
+- validation blockers were recorded in `docs/product/execution-tracker.md`
+- `docs/ai/source-of-truth.md` was introduced as the entry map for future AI work
+- `docs/product/roadmap.md` was compacted into current strategy and six-month direction
+- `docs/ai/architecture-map.md` was compacted into current architecture, boundaries, risks, and refactor priorities
+- `docs/ai/competitive-verification-next-agent.md` was reclassified as `docs/ai/work-packages/competitive-verification-v1-next.md`
+- local validation prerequisites were resolved by the operator:
+  - Windows Developer Mode / symlink support
+  - Java on `PATH`
+  - Node 20 for Functions validation parity
+- `npm audit fix` was applied without `--force`, updating safe transitive dependencies in `functions/package-lock.json`
+
+Still required:
+- evaluate remaining `npm audit --force` recommendations in a dedicated dependency-upgrade pass rather than applying breaking changes blindly
+
 ### Product focus override
 
 Status: `active`
@@ -234,7 +260,7 @@ Decision:
 
 Reference:
 - `docs/product/competitive-verification-v1.md`
-- `docs/ai/competitive-verification-next-agent.md`
+- `docs/ai/work-packages/competitive-verification-v1-next.md`
 
 Implementation target:
 - add an evidence-based competitive verification contract

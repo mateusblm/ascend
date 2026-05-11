@@ -34,10 +34,11 @@ The script returns:
 
 ## Recommended Usage
 
-1. resolve context for the task
-2. read the base docs
-3. read only the top-ranked code notes and entities
-4. expand to source files only after that
+1. read `docs/ai/source-of-truth.md`
+2. resolve context for the task
+3. read the base docs
+4. read only the top-ranked code notes and entities
+5. expand to source files only after that
 
 ## Rule
 

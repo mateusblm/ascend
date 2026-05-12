@@ -70,25 +70,21 @@ without reintroducing client authority.
      competitive quest session/grant/evidence docs.
    - did not rewrite transaction bodies or alter callable contracts.
 
+8. Month 2 exit review.
+   - confirmed this package was behavior-preserving backend organization, not a
+     rule/product-behavior change.
+   - confirmed remaining dependency audit risk is separate from this refactor
+     and still requires a deliberate Firebase dependency upgrade pass.
+   - recorded final validation in `docs/product/execution-tracker.md`.
+   - confirmed the next track is Competitive Verification V1 product depth
+     unless release-readiness debt is intentionally pulled forward.
+
 ## Remaining Slices
 
-### Slice 2.8 - Month 2 Exit Review
+None for this work package.
 
-Close the Month 2 backend hardening track.
-
-Required output:
-- update `docs/product/execution-tracker.md`
-- update `docs/product/phase-backlog.md` if statuses changed
-- record remaining audit/security dependency follow-up separately from the
-  refactor
-- confirm whether the next track is UI maintainability or Competitive
-  Verification V1 product depth
-
-Validation:
-- `npm test`
-- `npm run test:rules`
-- `flutter analyze`
-- `flutter test` if the environment supports the full suite
+Archive or delete this brief after its durable facts are folded into
+`docs/ai/architecture-map.md` or another current-state doc.
 
 ## Guardrails
 

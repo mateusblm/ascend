@@ -362,6 +362,27 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening exit review:
+- Month 2 backend hardening is complete as a behavior-preserving refactor package.
+- no product rules were intentionally changed:
+  - XP/progression math unchanged
+  - rank maintenance and promotion rules unchanged
+  - competitive evidence acceptance/rejection rules unchanged
+  - season reward rules unchanged
+  - callable contracts unchanged
+  - Firestore rules unchanged
+- `functions/src/index.ts` is now primarily callable wiring plus remaining competitive integrity/rank evaluation that can be considered in a future pass if needed.
+- durable module homes now exist for shared validation/date helpers, competitive evidence, competitive rank helpers, competitive season helpers, profile progression, and quest inventory.
+- remaining audit/security dependency follow-up is still separate from this refactor: do not run `npm audit fix --force` blindly; handle Firebase package/tooling upgrades in a dedicated dependency-upgrade pass.
+- final validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+  - `flutter analyze`: no issues found
+  - `flutter test`: 73 tests passed
+- next implementation track: Competitive Verification V1 product depth, unless release-readiness debt is intentionally pulled forward first.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

@@ -276,6 +276,16 @@ Completed in the first implementation slice:
 - backend evidence audit collection
 - Firestore rule/test coverage for evidence audit read-only access
 
+Backend hardening completed on `2026-05-12`:
+- Functions code was reorganized without intentional product-rule changes.
+- shared validation/date helpers, competitive evidence, competitive rank helpers,
+  competitive season helpers, profile progression, and quest inventory now have
+  module homes outside `functions/src/index.ts`.
+- callable wiring was cleaned up with shared callable options and Firestore ref
+  helpers.
+- final validation passed for Functions, Firestore rules, `flutter analyze`, and
+  `flutter test`.
+
 Still pending after the first slice:
 - real provider adapters
 - AI reading quiz generation

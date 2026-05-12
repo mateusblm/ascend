@@ -330,6 +330,17 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- quest inventory validation and write shaping were extracted from `functions/src/index.ts` into `functions/src/quests/inventory.ts`.
+- the extracted module now owns quest category/template/status validation, single/stored quest validation, `buildQuestInventorySyncWrites`, and `buildQuestDocData`.
+- official competitive catalog ownership stayed in `index.ts`; the catalog is passed into the quest module explicitly to avoid circular coupling.
+- no Isar, Flutter repository, callable contract, or transaction behavior changed.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

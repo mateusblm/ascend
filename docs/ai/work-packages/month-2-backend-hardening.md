@@ -38,45 +38,22 @@ without reintroducing client authority.
      peak-rank comparison, and rank requirement helpers to
      `functions/src/competitive/rank.ts`.
 
+4. Profile progression module extraction.
+   - moved profile/progression helpers to `functions/src/profile/progression.ts`.
+   - promoted local-day parsing and unique timestamp-by-day projection into
+     `functions/src/shared/date.ts`.
+   - kept callable transaction bodies in `index.ts`.
+
+5. Quest inventory module extraction.
+   - moved quest source validation, single/stored quest validation, quest
+     document write shaping, and quest inventory sync write shaping into
+     `functions/src/quests/inventory.ts`.
+   - kept the official competitive catalog in `index.ts` and passed it into the
+     quest module as an explicit dependency.
+   - did not alter Isar models, Flutter repositories, callable contracts, or
+     transaction behavior.
+
 ## Remaining Slices
-
-### Slice 2.4 - Profile Progression Module
-
-Move pure profile/progression helpers out of `index.ts`.
-
-Candidate scope:
-- `playerMaxXpForLevel`
-- `progressionFromTotalXp`
-- `streakMetricsFromHistory`
-- `profileAggregateFromData`
-- `withProfileMetadata`
-- `applyXpRewardToProfile`
-- profile settings and attribute allocation payload validation only if it stays
-  small and low risk
-
-Do not move callable transaction bodies in this slice.
-
-Validation:
-- `npm test`
-- `npm run test:rules`
-
-### Slice 2.5 - Quest Inventory Module
-
-Move quest source validation and quest document write shaping out of `index.ts`.
-
-Candidate scope:
-- quest category/template/verification validators
-- `validateQuestInventorySourcePayload`
-- `validateSingleQuestSourcePayload`
-- `validateQuestFromStoredDoc`
-- `buildQuestInventorySyncWrites`
-- `buildQuestDocData`
-
-Do not alter Isar models or Flutter repositories in this slice.
-
-Validation:
-- `npm test`
-- `npm run test:rules`
 
 ### Slice 2.6 - Competitive Season Module
 

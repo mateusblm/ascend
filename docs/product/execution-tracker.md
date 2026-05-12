@@ -308,6 +308,16 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- pure competitive rank helpers were extracted from `functions/src/index.ts` into `functions/src/competitive/rank.ts`.
+- the extracted helpers cover rank ordering, adjacent-rank transitions, level-to-rank mapping, peak-rank comparison, and rank maintenance requirements.
+- no callable contract or transaction behavior changed.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

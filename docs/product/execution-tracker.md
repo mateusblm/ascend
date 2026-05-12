@@ -383,6 +383,16 @@ Month 2 backend hardening exit review:
   - `flutter test`: 73 tests passed
 - next implementation track: Competitive Verification V1 product depth, unless release-readiness debt is intentionally pulled forward first.
 
+Progress note recorded on: `2026-05-12`
+
+Competitive Verification V1 product-depth follow-up:
+- backend competitive completion now rejects reused evidence `sourceActivityId` values before writing a new competitive grant.
+- the duplicate check reads backend-owned `competitive_quest_grants` history and ignores only the current attempt ids, keeping Flutter out of reward authority.
+- resolver/test coverage now protects `duplicateSourceActivityId` rejection.
+- validation passed:
+  - `npm test` in `functions`: 15 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

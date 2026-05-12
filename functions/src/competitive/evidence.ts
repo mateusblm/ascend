@@ -314,6 +314,7 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
   session: CompetitiveQuestSessionRecord | null;
   grant: CompetitiveQuestGrantRecord | null;
   now: admin.firestore.Timestamp;
+  sourceActivityIdAlreadyUsed?: boolean;
 }) {
   const {quest, session, grant, now} = args;
 
@@ -362,6 +363,12 @@ export function resolveCompetitiveQuestCompletionVerification(args: {
     evidence: quest.evidence,
     now,
   });
+  if (args.sourceActivityIdAlreadyUsed) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Evidencia competitiva insuficiente: duplicateSourceActivityId.',
+    );
+  }
   if (decision.status !== 'accepted') {
     throw new HttpsError(
       'failed-precondition',

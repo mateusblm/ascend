@@ -244,6 +244,32 @@ test('rejects impossible running evidence before granting rank progress', () => 
   );
 });
 
+test('rejects reused source activity evidence before granting rank progress', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+
+  assert.throws(
+    () =>
+      resolveCompetitiveQuestCompletionVerification({
+        quest: buildQuest({
+          evidence: buildEvidence({
+            sourceActivityId: 'activity-1',
+          }),
+        }),
+        session: {
+          startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+        },
+        grant: null,
+        now,
+        sourceActivityIdAlreadyUsed: true,
+      }),
+    (error) => {
+      assert.equal(error.code, 'failed-precondition');
+      assert.match(error.message, /duplicateSourceActivityId/);
+      return true;
+    },
+  );
+});
+
 test('prevents duplicate grants by returning the existing verification result', () => {
   const now = timestamp('2026-04-21T15:45:00.000Z');
 

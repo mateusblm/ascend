@@ -2364,6 +2364,11 @@ export const verifyCompetitiveQuestCompletion = onCall(
       uid,
     ).doc(attemptId);
     const evidenceRef = competitiveQuestEvidenceDocRef(db, uid, attemptId);
+    const duplicateSourceActivityQuery = quest.evidence?.sourceActivityId == null
+      ? null
+      : competitiveQuestGrantsCollectionRef(db, uid)
+        .where('sourceActivityId', '==', quest.evidence.sourceActivityId)
+        .limit(3);
     const fallbackName = sanitizeDisplayName(request.auth.token.name);
 
     return db.runTransaction(async (transaction) => {
@@ -2374,6 +2379,7 @@ export const verifyCompetitiveQuestCompletion = onCall(
         legacyGrantSnap,
         profileSnap,
         questSnap,
+        duplicateSourceActivitySnap,
       ] = await Promise.all([
         transaction.get(sessionRef),
         transaction.get(grantRef),
@@ -2381,6 +2387,9 @@ export const verifyCompetitiveQuestCompletion = onCall(
         transaction.get(legacyGrantRef),
         transaction.get(profileRef),
         transaction.get(questRef),
+        duplicateSourceActivityQuery == null
+          ? Promise.resolve(null)
+          : transaction.get(duplicateSourceActivityQuery),
       ]);
       const scopedSession = sessionSnap.exists ? (sessionSnap.data() ?? null) : null;
       const scopedGrant = grantSnap.exists ? (grantSnap.data() ?? null) : null;
@@ -2400,11 +2409,17 @@ export const verifyCompetitiveQuestCompletion = onCall(
           })
         ? (legacyGrantSnap.data() ?? null)
         : null;
+      const sourceActivityIdAlreadyUsed = duplicateSourceActivitySnap == null
+        ? false
+        : duplicateSourceActivitySnap.docs.some((doc) =>
+          doc.id !== attemptId && doc.id !== quest.questId,
+        );
       const resolution = resolveCompetitiveQuestCompletionVerification({
         quest,
         session: scopedSession ?? legacySession,
         grant: scopedGrant ?? legacyGrant,
         now,
+        sourceActivityIdAlreadyUsed,
       });
       const currentProfile = profileAggregateFromData({
         data: profileSnap.data(),

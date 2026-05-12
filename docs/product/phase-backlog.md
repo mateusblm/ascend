@@ -286,10 +286,16 @@ Backend hardening completed on `2026-05-12`:
 - final validation passed for Functions, Firestore rules, `flutter analyze`, and
   `flutter test`.
 
+Competitive Verification V1 follow-up completed on `2026-05-12`:
+- backend competitive completion now checks prior grant history for reused
+  `sourceActivityId` values before writing a new grant.
+- duplicate source activity evidence is rejected with
+  `duplicateSourceActivityId`.
+- Functions coverage protects the duplicate-source rejection path.
+
 Still pending after the first slice:
 - real provider adapters
 - AI reading quiz generation
-- historical duplicate source-activity checks
 - richer evidence-status UI
 
 ### Workstreams

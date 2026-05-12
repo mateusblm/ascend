@@ -297,6 +297,17 @@ Month 2 backend hardening started:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- Competitive Verification V1 evidence validation, attempt-day helpers, session-start resolution, and completion verification were extracted from `functions/src/index.ts` into `functions/src/competitive/evidence.ts`.
+- the shared local-day key helper moved to `functions/src/shared/date.ts`.
+- `index.ts` remains the callable entrypoint and keeps compatibility re-exports for existing Functions tests.
+- no behavior change intended.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

@@ -352,6 +352,16 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- callable wiring cleanup centralized the Functions region options and repeated Firestore user reference helpers in `functions/src/index.ts`.
+- repeated refs for profile, quests, quest metadata, completions, weekly boss claims, attribute allocations, competitive progression, promotion exams, season rewards, season profile, integrity docs, and competitive quest session/grant/evidence docs now go through named helpers.
+- no transaction body, callable contract, reward calculation, or validation behavior changed.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

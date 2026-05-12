@@ -61,25 +61,16 @@ without reintroducing client authority.
    - did not change leaderboard reads, reward claim behavior, callable
      contracts, or transaction behavior.
 
+7. Callable wiring cleanup.
+   - added shared callable options for the Functions region.
+   - added shared user document/collection reference helpers.
+   - centralized repeated Firestore refs for profile, quests, completions,
+     weekly boss claims, attribute allocations, competitive progression,
+     promotion exams, season rewards, season profile, integrity docs, and
+     competitive quest session/grant/evidence docs.
+   - did not rewrite transaction bodies or alter callable contracts.
+
 ## Remaining Slices
-
-### Slice 2.7 - Callable Wiring Cleanup
-
-After the domain modules exist, reduce callable bodies only where it improves
-clarity without changing behavior.
-
-Candidate scope:
-- shared Firestore reference helpers
-- active-session assertion location
-- small service functions for repeated transaction write projections
-
-Avoid broad transaction rewrites unless a test first captures the behavior.
-
-Validation:
-- `npm test`
-- `npm run test:rules`
-- `flutter analyze` if Flutter-facing contracts or generated client assumptions
-  changed
 
 ### Slice 2.8 - Month 2 Exit Review
 

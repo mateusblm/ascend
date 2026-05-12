@@ -193,6 +193,9 @@ const COMPETITIVE_SYNC_SCHEMA_VERSION = 3;
 const PLAYER_PROFILE_SYNC_SCHEMA_VERSION = 1;
 const QUEST_INVENTORY_SYNC_SCHEMA_VERSION = 1;
 const ACTIVE_SESSION_LEASE_MS = 5 * 60 * 1000;
+const CALLABLE_OPTIONS = {
+  region: 'southamerica-east1',
+};
 type ServerRankStatus =
   | 'secure'
   | 'warning'
@@ -728,8 +731,20 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
   ];
 }
 
+function userDocRef(db: admin.firestore.Firestore, uid: string) {
+  return db.collection('users').doc(uid);
+}
+
+function userCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  collectionPath: string,
+) {
+  return userDocRef(db, uid).collection(collectionPath);
+}
+
 function activeSessionRef(db: admin.firestore.Firestore, uid: string) {
-  return db.collection('users').doc(uid).collection('session').doc('current');
+  return userCollectionRef(db, uid, 'session').doc('current');
 }
 
 function ensureActiveSessionPayload(payload: unknown) {
@@ -803,7 +818,7 @@ function validatePlayerProfileSourcePayload(source: unknown): ServerPlayerProfil
 }
 
 function profileDocRef(db: admin.firestore.Firestore, uid: string) {
-  return db.collection('users').doc(uid).collection('profile').doc('current');
+  return userCollectionRef(db, uid, 'profile').doc('current');
 }
 
 function questDocRef(
@@ -811,28 +826,126 @@ function questDocRef(
   uid: string,
   questId: string,
 ) {
-  return db.collection('users').doc(uid).collection('quests').doc(questId);
+  return userCollectionRef(db, uid, 'quests').doc(questId);
+}
+
+function questsCollectionRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'quests');
+}
+
+function questsMetaDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'quests_meta').doc('current');
 }
 
 function questCompletionsCollectionRef(
   db: admin.firestore.Firestore,
   uid: string,
 ) {
-  return db.collection('users').doc(uid).collection('quest_completions');
+  return userCollectionRef(db, uid, 'quest_completions');
 }
 
 function weeklyBossClaimsCollectionRef(
   db: admin.firestore.Firestore,
   uid: string,
 ) {
-  return db.collection('users').doc(uid).collection('weekly_boss_claims');
+  return userCollectionRef(db, uid, 'weekly_boss_claims');
 }
 
 function attributeAllocationsCollectionRef(
   db: admin.firestore.Firestore,
   uid: string,
 ) {
-  return db.collection('users').doc(uid).collection('attribute_allocations');
+  return userCollectionRef(db, uid, 'attribute_allocations');
+}
+
+function competitiveProgressionDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'progression').doc('current');
+}
+
+function competitiveProgressionHistoryDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  weekKey: string,
+) {
+  return userCollectionRef(db, uid, 'progression_history').doc(weekKey);
+}
+
+function competitiveProgressionHistoryCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+) {
+  return userCollectionRef(db, uid, 'progression_history');
+}
+
+function promotionExamDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'promotion_exam').doc('current');
+}
+
+function seasonRewardDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'season_rewards').doc('current');
+}
+
+function seasonRewardHistoryDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  seasonKey: string,
+) {
+  return userCollectionRef(db, uid, 'season_reward_history').doc(seasonKey);
+}
+
+function seasonLegacyDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  seasonKey: string,
+) {
+  return userCollectionRef(db, uid, 'season_legacy').doc(seasonKey);
+}
+
+function seasonProfileDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'season_profile').doc('current');
+}
+
+function competitiveIntegrityDocRef(db: admin.firestore.Firestore, uid: string) {
+  return userCollectionRef(db, uid, 'integrity').doc('current');
+}
+
+function competitiveIntegrityHistoryDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  weekKey: string,
+) {
+  return userCollectionRef(db, uid, 'integrity_history').doc(weekKey);
+}
+
+function competitiveQuestSessionDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  attemptId: string,
+) {
+  return userCollectionRef(db, uid, 'competitive_quest_sessions').doc(attemptId);
+}
+
+function competitiveQuestGrantDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  attemptId: string,
+) {
+  return userCollectionRef(db, uid, 'competitive_quest_grants').doc(attemptId);
+}
+
+function competitiveQuestGrantsCollectionRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+) {
+  return userCollectionRef(db, uid, 'competitive_quest_grants');
+}
+
+function competitiveQuestEvidenceDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  attemptId: string,
+) {
+  return userCollectionRef(db, uid, 'competitive_quest_evidence').doc(attemptId);
 }
 
 function validateProfileSettingsPayload(payload: unknown) {
@@ -1348,9 +1461,7 @@ function evaluateCompetitiveIntegrityFromSource(args: {
 }
 
 export const registerActiveSession = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1416,9 +1527,7 @@ export const registerActiveSession = onCall(
 );
 
 export const releaseActiveSession = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1451,9 +1560,7 @@ export const releaseActiveSession = onCall(
 );
 
 export const updateProfileSettings = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1516,9 +1623,7 @@ export const updateProfileSettings = onCall(
 );
 
 export const allocateAttributePoint = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1601,9 +1706,7 @@ export const allocateAttributePoint = onCall(
 );
 
 export const completePersonalQuest = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1761,9 +1864,7 @@ export const completePersonalQuest = onCall(
 );
 
 export const revokePersonalQuestCompletion = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1897,9 +1998,7 @@ export const revokePersonalQuestCompletion = onCall(
 );
 
 export const syncPlayerProfileFromSource = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -1923,12 +2022,7 @@ export const syncPlayerProfileFromSource = onCall(
       now,
     });
 
-    await db
-      .collection('users')
-      .doc(uid)
-      .collection('profile')
-      .doc('current')
-      .set(write, {merge: true});
+    await profileDocRef(db, uid).set(write, {merge: true});
 
     return {
       status: 'synced' as const,
@@ -1978,9 +2072,7 @@ async function loadWeeklyBossClaimsForUser(
 }
 
 export const syncQuestInventoryFromSource = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2004,9 +2096,9 @@ export const syncQuestInventoryFromSource = onCall(
       deviceLabel: session.deviceLabel,
       now,
     });
-    const questsCollectionRef = db.collection('users').doc(uid).collection('quests');
-    const metaDocRef = db.collection('users').doc(uid).collection('quests_meta').doc('current');
-    const previousSnap = await questsCollectionRef.get();
+    const questsRef = questsCollectionRef(db, uid);
+    const metaDocRef = questsMetaDocRef(db, uid);
+    const previousSnap = await questsRef.get();
     const nextIds = new Set(writes.map((entry) => entry.id));
     const batch = db.batch();
 
@@ -2017,7 +2109,7 @@ export const syncQuestInventoryFromSource = onCall(
     }
 
     for (const entry of writes) {
-      batch.set(questsCollectionRef.doc(entry.id), entry.data, {merge: true});
+      batch.set(questsRef.doc(entry.id), entry.data, {merge: true});
     }
 
     batch.set(
@@ -2044,9 +2136,7 @@ export const syncQuestInventoryFromSource = onCall(
 );
 
 export const claimWeeklyBoss = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2181,9 +2271,7 @@ export const claimWeeklyBoss = onCall(
 );
 
 export const startCompetitiveQuestSession = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2199,26 +2287,11 @@ export const startCompetitiveQuestSession = onCall(
     // Start must always scope to "today". A stale local verificationStartedAt from the
     // client should never resurrect an old competitive attempt.
     const dayKey = normalizedDateKey(now);
-    const sessionRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_sessions')
-      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
-    const grantRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
-      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
-    const legacySessionRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_sessions')
-      .doc(quest.questId);
-    const legacyGrantRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
-      .doc(quest.questId);
+    const attemptId = competitiveQuestAttemptDocId(quest.questId, dayKey);
+    const sessionRef = competitiveQuestSessionDocRef(db, uid, attemptId);
+    const grantRef = competitiveQuestGrantDocRef(db, uid, attemptId);
+    const legacySessionRef = competitiveQuestSessionDocRef(db, uid, quest.questId);
+    const legacyGrantRef = competitiveQuestGrantDocRef(db, uid, quest.questId);
 
     return db.runTransaction(async (transaction) => {
       const [sessionSnap, grantSnap, legacySessionSnap, legacyGrantSnap] = await Promise.all([
@@ -2265,9 +2338,7 @@ export const startCompetitiveQuestSession = onCall(
 );
 
 export const verifyCompetitiveQuestCompletion = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2281,37 +2352,18 @@ export const verifyCompetitiveQuestCompletion = onCall(
     const now = admin.firestore.Timestamp.now();
     await assertActiveSession(db, uid, session.deviceSessionId);
     const dayKey = competitiveQuestAttemptDayKey({quest, now});
-    const sessionRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_sessions')
-      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
-    const grantRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
-      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
-    const legacySessionRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_sessions')
-      .doc(quest.questId);
-    const legacyGrantRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
-      .doc(quest.questId);
+    const attemptId = competitiveQuestAttemptDocId(quest.questId, dayKey);
+    const sessionRef = competitiveQuestSessionDocRef(db, uid, attemptId);
+    const grantRef = competitiveQuestGrantDocRef(db, uid, attemptId);
+    const legacySessionRef = competitiveQuestSessionDocRef(db, uid, quest.questId);
+    const legacyGrantRef = competitiveQuestGrantDocRef(db, uid, quest.questId);
     const profileRef = profileDocRef(db, uid);
     const questRef = questDocRef(db, uid, quest.questId);
     const completionRef = questCompletionsCollectionRef(
       db,
       uid,
-    ).doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
-    const evidenceRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_evidence')
-      .doc(competitiveQuestAttemptDocId(quest.questId, dayKey));
+    ).doc(attemptId);
+    const evidenceRef = competitiveQuestEvidenceDocRef(db, uid, attemptId);
     const fallbackName = sanitizeDisplayName(request.auth.token.name);
 
     return db.runTransaction(async (transaction) => {
@@ -2554,9 +2606,7 @@ export const verifyCompetitiveQuestCompletion = onCall(
 );
 
 export const syncCompetitiveStateFromSource = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2568,19 +2618,13 @@ export const syncCompetitiveStateFromSource = onCall(
     const db = admin.firestore();
     const now = new Date();
 
-    const currentRef = db.collection('users').doc(uid).collection('progression').doc('current');
-    const examRef = db.collection('users').doc(uid).collection('promotion_exam').doc('current');
-    const seasonRewardRef = db.collection('users').doc(uid).collection('season_rewards').doc('current');
-    const competitiveGrantQuery = db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
+    const currentRef = competitiveProgressionDocRef(db, uid);
+    const examRef = promotionExamDocRef(db, uid);
+    const seasonRewardRef = seasonRewardDocRef(db, uid);
+    const competitiveGrantQuery = competitiveQuestGrantsCollectionRef(db, uid)
       .orderBy('completedAt', 'desc')
       .limit(180);
-    const historyQuery = db
-      .collection('users')
-      .doc(uid)
-      .collection('progression_history')
+    const historyQuery = competitiveProgressionHistoryCollectionRef(db, uid)
       .orderBy('updatedAt', 'desc')
       .limit(8);
 
@@ -2641,7 +2685,7 @@ export const syncCompetitiveStateFromSource = onCall(
     const batch = db.batch();
     batch.set(currentRef, serverSnapshot, {merge: true});
     batch.set(
-      db.collection('users').doc(uid).collection('progression_history').doc(serverSnapshot.weekKey),
+      competitiveProgressionHistoryDocRef(db, uid, serverSnapshot.weekKey),
       serverSnapshot,
       {merge: true},
     );
@@ -2650,7 +2694,7 @@ export const syncCompetitiveStateFromSource = onCall(
     }
     batch.set(seasonRewardRef, seasonReward, {merge: true});
     batch.set(
-      db.collection('users').doc(uid).collection('season_reward_history').doc(seasonReward.seasonKey),
+      seasonRewardHistoryDocRef(db, uid, seasonReward.seasonKey),
       seasonReward,
       {merge: true},
     );
@@ -2666,9 +2710,7 @@ export const syncCompetitiveStateFromSource = onCall(
 );
 
 export const syncCompetitiveIntegrityFromSource = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2679,10 +2721,7 @@ export const syncCompetitiveIntegrityFromSource = onCall(
     const uid = request.auth.uid;
     const db = admin.firestore();
     const now = new Date();
-    const competitiveGrantSnap = await db
-      .collection('users')
-      .doc(uid)
-      .collection('competitive_quest_grants')
+    const competitiveGrantSnap = await competitiveQuestGrantsCollectionRef(db, uid)
       .orderBy('completedAt', 'desc')
       .limit(180)
       .get();
@@ -2699,12 +2738,8 @@ export const syncCompetitiveIntegrityFromSource = onCall(
       },
       now,
     });
-    const currentRef = db.collection('users').doc(uid).collection('integrity').doc('current');
-    const historyRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('integrity_history')
-      .doc(integrity.weekKey);
+    const currentRef = competitiveIntegrityDocRef(db, uid);
+    const historyRef = competitiveIntegrityHistoryDocRef(db, uid, integrity.weekKey);
 
     const batch = db.batch();
     batch.set(currentRef, integrity, {merge: true});
@@ -2719,9 +2754,7 @@ export const syncCompetitiveIntegrityFromSource = onCall(
 );
 
 export const upsertCompetitiveProgression = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2733,17 +2766,13 @@ export const upsertCompetitiveProgression = onCall(
     const validatedSeasonReward = validateSeasonRewardPayload(payload.seasonReward);
     const uid = request.auth.uid;
     const db = admin.firestore();
-    const currentRef = db.collection('users').doc(uid).collection('progression').doc('current');
-    const historyRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('progression_history')
-      .doc(snapshot.weekKey);
-    const examRef = db.collection('users').doc(uid).collection('promotion_exam').doc('current');
-    const seasonRewardRef = db.collection('users').doc(uid).collection('season_rewards').doc('current');
+    const currentRef = competitiveProgressionDocRef(db, uid);
+    const historyRef = competitiveProgressionHistoryDocRef(db, uid, snapshot.weekKey);
+    const examRef = promotionExamDocRef(db, uid);
+    const seasonRewardRef = seasonRewardDocRef(db, uid);
     const seasonRewardHistoryRef = validatedSeasonReward == null
       ? null
-      : db.collection('users').doc(uid).collection('season_reward_history').doc(validatedSeasonReward.seasonKey);
+      : seasonRewardHistoryDocRef(db, uid, validatedSeasonReward.seasonKey);
 
     const batch = db.batch();
     batch.set(currentRef, snapshot, { merge: true });
@@ -2767,9 +2796,7 @@ export const upsertCompetitiveProgression = onCall(
 );
 
 export const upsertCompetitiveIntegrity = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2783,12 +2810,8 @@ export const upsertCompetitiveIntegrity = onCall(
 
     const uid = request.auth.uid;
     const db = admin.firestore();
-    const currentRef = db.collection('users').doc(uid).collection('integrity').doc('current');
-    const historyRef = db
-      .collection('users')
-      .doc(uid)
-      .collection('integrity_history')
-      .doc(integrity.weekKey);
+    const currentRef = competitiveIntegrityDocRef(db, uid);
+    const historyRef = competitiveIntegrityHistoryDocRef(db, uid, integrity.weekKey);
 
     const batch = db.batch();
     batch.set(currentRef, integrity, { merge: true });
@@ -2805,9 +2828,7 @@ export const upsertCompetitiveIntegrity = onCall(
 );
 
 export const startPromotionExam = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2825,7 +2846,7 @@ export const startPromotionExam = onCall(
 
     const uid = request.auth.uid;
     const db = admin.firestore();
-    const examRef = db.collection('users').doc(uid).collection('promotion_exam').doc('current');
+    const examRef = promotionExamDocRef(db, uid);
     const requirements = rankRequirements(targetRank);
 
     return db.runTransaction(async (transaction) => {
@@ -2870,9 +2891,7 @@ export const startPromotionExam = onCall(
 );
 
 export const confirmPromotion = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -2882,9 +2901,9 @@ export const confirmPromotion = onCall(
     const snapshot = validateSnapshotPayload(payload.snapshot);
     const uid = request.auth.uid;
     const db = admin.firestore();
-    const currentRef = db.collection('users').doc(uid).collection('progression').doc('current');
-    const historyRef = db.collection('users').doc(uid).collection('progression_history').doc(snapshot.weekKey);
-    const examRef = db.collection('users').doc(uid).collection('promotion_exam').doc('current');
+    const currentRef = competitiveProgressionDocRef(db, uid);
+    const historyRef = competitiveProgressionHistoryDocRef(db, uid, snapshot.weekKey);
+    const examRef = promotionExamDocRef(db, uid);
 
     return db.runTransaction(async (transaction) => {
       const examSnap = await transaction.get(examRef);
@@ -2980,9 +2999,7 @@ export const confirmPromotion = onCall(
 );
 
 export const getSeasonBracketLeaderboard = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -3055,9 +3072,7 @@ export const getSeasonBracketLeaderboard = onCall(
 );
 
 export const claimSeasonReward = onCall(
-  {
-    region: 'southamerica-east1',
-  },
+  CALLABLE_OPTIONS,
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
@@ -3069,8 +3084,8 @@ export const claimSeasonReward = onCall(
     const uid = request.auth.uid;
     const db = admin.firestore();
     const now = admin.firestore.Timestamp.now();
-    const rewardRef = db.collection('users').doc(uid).collection('season_rewards').doc('current');
-    const profileRef = db.collection('users').doc(uid).collection('season_profile').doc('current');
+    const rewardRef = seasonRewardDocRef(db, uid);
+    const profileRef = seasonProfileDocRef(db, uid);
 
     return db.runTransaction(async (transaction) => {
       const rewardSnap = await transaction.get(rewardRef);
@@ -3110,16 +3125,8 @@ export const claimSeasonReward = onCall(
         updatedAt: now,
       };
       const legacyReward = buildSeasonLegacyPayload(claimedReward, now);
-      const legacyRef = db
-        .collection('users')
-        .doc(uid)
-        .collection('season_legacy')
-        .doc(seasonReward.seasonKey);
-      const historyRef = db
-        .collection('users')
-        .doc(uid)
-        .collection('season_reward_history')
-        .doc(seasonReward.seasonKey);
+      const legacyRef = seasonLegacyDocRef(db, uid, seasonReward.seasonKey);
+      const historyRef = seasonRewardHistoryDocRef(db, uid, seasonReward.seasonKey);
       const profilePayload = buildSeasonProfilePayload(legacyReward);
 
       transaction.set(rewardRef, claimedReward, { merge: true });

@@ -341,6 +341,17 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- competitive season helpers were extracted from `functions/src/index.ts` into `functions/src/competitive/season.ts`.
+- the extracted module now owns week-key/current-week helpers, exam resolution, season reward calculation, legacy reward payload shaping, profile reward payload shaping, and cosmetic labels.
+- existing week-key format and Monday week-start behavior were preserved.
+- no leaderboard read, reward claim, callable contract, or transaction behavior changed.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

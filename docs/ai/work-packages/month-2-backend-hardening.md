@@ -53,24 +53,15 @@ without reintroducing client authority.
    - did not alter Isar models, Flutter repositories, callable contracts, or
      transaction behavior.
 
+6. Competitive season module extraction.
+   - moved week-key helpers, current-week projection, exam resolution, season
+     reward calculation, season legacy payload shaping, profile reward payload
+     shaping, and cosmetic labels into `functions/src/competitive/season.ts`.
+   - preserved the existing week-key format and Monday week-start behavior.
+   - did not change leaderboard reads, reward claim behavior, callable
+     contracts, or transaction behavior.
+
 ## Remaining Slices
-
-### Slice 2.6 - Competitive Season Module
-
-Move pure competitive season/reward helpers out of `index.ts`.
-
-Candidate scope:
-- week/season date helpers
-- season reward track and tier calculation
-- season score/band/standing helpers
-- `buildSeasonRewardFromHistory`
-- `resolveExamAfterSnapshot` if the imported rank helpers keep this clean
-
-Do not change leaderboard reads or reward claim behavior in this slice.
-
-Validation:
-- `npm test`
-- `npm run test:rules`
 
 ### Slice 2.7 - Callable Wiring Cleanup
 

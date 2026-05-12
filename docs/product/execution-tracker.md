@@ -318,6 +318,18 @@ Month 2 backend hardening follow-up:
   - `npm test` in `functions`: 14 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-12`
+
+Month 2 backend hardening follow-up:
+- a dedicated Month 2 backend hardening work-package checklist was added at `docs/ai/work-packages/month-2-backend-hardening.md`.
+- profile/progression helpers were extracted from `functions/src/index.ts` into `functions/src/profile/progression.ts`.
+- shared date helpers now include local-day parsing and unique timestamp-by-day projection in `functions/src/shared/date.ts`.
+- `index.ts` remains the callable entrypoint and keeps compatibility re-exports for existing Functions tests.
+- no callable contract or transaction behavior changed.
+- validation passed:
+  - `npm test` in `functions`: 14 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

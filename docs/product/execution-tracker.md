@@ -439,6 +439,20 @@ Competitive Verification V1 AI Reading Quiz Contract V1:
   - `npm test` in `functions`: 18 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-13`
+
+Competitive Verification V1 Flutter reading quiz flow:
+- Flutter now requests a backend-owned reading quiz attempt before completing
+  reading-comprehension competitive quests.
+- the quest screen collects ordered answers and submits `quizId` plus `answers`
+  with the evidence payload.
+- local Flutter pre-validation no longer requires a client `quizScore` for
+  backend-owned reading quiz submissions; backend evaluation remains the only
+  reward/rank authority.
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: 81 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

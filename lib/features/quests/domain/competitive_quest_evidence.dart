@@ -123,6 +123,7 @@ class QuestEvidence {
     this.distanceMeters,
     this.sourceActivityId,
     this.quizScore,
+    this.quizId,
     this.answers = const [],
     this.reflection,
   });
@@ -136,6 +137,7 @@ class QuestEvidence {
   final int? distanceMeters;
   final String? sourceActivityId;
   final int? quizScore;
+  final String? quizId;
   final List<String> answers;
   final String? reflection;
 
@@ -150,9 +152,32 @@ class QuestEvidence {
       if (distanceMeters != null) 'distanceMeters': distanceMeters,
       if (sourceActivityId != null) 'sourceActivityId': sourceActivityId,
       if (quizScore != null) 'quizScore': quizScore,
+      if (quizId != null) 'quizId': quizId,
       if (answers.isNotEmpty) 'answers': answers,
       if (reflection != null) 'reflection': reflection,
     };
+  }
+
+  QuestEvidence copyWith({
+    String? quizId,
+    List<String>? answers,
+    int? quizScore,
+    bool clearQuizScore = false,
+  }) {
+    return QuestEvidence(
+      questId: questId,
+      provider: provider,
+      type: type,
+      startedAt: startedAt,
+      completedAt: completedAt,
+      durationMinutes: durationMinutes,
+      distanceMeters: distanceMeters,
+      sourceActivityId: sourceActivityId,
+      quizScore: clearQuizScore ? null : quizScore ?? this.quizScore,
+      quizId: quizId ?? this.quizId,
+      answers: answers ?? this.answers,
+      reflection: reflection,
+    );
   }
 }
 
@@ -283,6 +308,8 @@ QuestEvidence mockEvidenceForQuest({
   required DateTime startedAt,
   DateTime? completedAt,
   String? reflection,
+  String? quizId,
+  List<String> quizAnswers = const [],
 }) {
   final end =
       completedAt ??
@@ -305,9 +332,12 @@ QuestEvidence mockEvidenceForQuest({
     quizScore: requirement.minimumQuizScore == 0
         ? null
         : requirement.minimumQuizScore,
+    quizId: quizId,
     answers: requirement.minimumQuizScore == 0
-        ? const []
-        : const ['Resposta validada em ambiente simulado.'],
+        ? quizAnswers
+        : quizAnswers.isEmpty
+        ? const ['Resposta validada em ambiente simulado.']
+        : quizAnswers,
     reflection: reflection,
   );
 }

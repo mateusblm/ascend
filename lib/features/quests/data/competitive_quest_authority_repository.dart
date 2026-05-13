@@ -39,6 +39,31 @@ class CompetitiveQuestVerificationResult {
   final Quest quest;
 }
 
+class ReadingQuizAttempt {
+  const ReadingQuizAttempt({
+    required this.quizId,
+    required this.questId,
+    required this.topic,
+    required this.minimumScore,
+    required this.expiresAt,
+    required this.questions,
+  });
+
+  final String quizId;
+  final String questId;
+  final String topic;
+  final int minimumScore;
+  final DateTime expiresAt;
+  final List<ReadingQuizQuestion> questions;
+}
+
+class ReadingQuizQuestion {
+  const ReadingQuizQuestion({required this.id, required this.prompt});
+
+  final String id;
+  final String prompt;
+}
+
 class CompetitiveQuestAuthorityRepository {
   CompetitiveQuestAuthorityRepository({
     FirebaseFunctions? functions,
@@ -150,6 +175,62 @@ class CompetitiveQuestAuthorityRepository {
         error,
         stackTrace,
         stage: 'verify_competitive_quest_completion',
+      );
+      rethrow;
+    }
+  }
+
+  Future<ReadingQuizAttempt> startReadingQuizAttempt({
+    required Quest quest,
+    required String topic,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable('startReadingQuizAttempt');
+      await _sessionRepository.registerActiveSession();
+      final template = officialTemplateForQuest(quest);
+      final response = await callable
+          .call(<String, dynamic>{
+            'deviceSessionId': await _sessionRepository.deviceSessionId(),
+            'deviceLabel': defaultTargetPlatform.name,
+            'questId': quest.id,
+            if (template != null) 'templateCatalogId': template.id,
+            'topic': topic,
+          })
+          .timeout(_rpcTimeout);
+      final data = response.data;
+      if (data is! Map) {
+        throw StateError('Resposta invalida ao iniciar quiz de leitura.');
+      }
+
+      final questionsRaw = data['questions'];
+      if (questionsRaw is! List) {
+        throw StateError('Payload de quiz de leitura incompleto.');
+      }
+
+      return ReadingQuizAttempt(
+        quizId: data['quizId'] as String,
+        questId: data['questId'] as String,
+        topic: data['topic'] as String,
+        minimumScore: data['minimumScore'] as int,
+        expiresAt: _dateTimeFromPayload(data['expiresAt']),
+        questions: questionsRaw
+            .whereType<Map>()
+            .map(
+              (question) => ReadingQuizQuestion(
+                id: question['id'] as String,
+                prompt: question['prompt'] as String,
+              ),
+            )
+            .toList(growable: false),
+      );
+    } catch (error, stackTrace) {
+      if (isActiveSessionConflictError(error)) {
+        throw const ActiveSessionConflictException();
+      }
+      _reportRecoverable(
+        error,
+        stackTrace,
+        stage: 'start_reading_quiz_attempt',
       );
       rethrow;
     }

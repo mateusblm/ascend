@@ -24,12 +24,12 @@ Implemented on `2026-05-13`:
 - Health Connect Adapter V1 behind `ASCEND_USE_HEALTH_CONNECT=true`
 - backend acceptance for `healthConnect` evidence on running/workout templates
 - backend-owned deterministic reading quiz contract for reading-comprehension evidence
+- Flutter UI flow for requesting and answering backend-owned reading quiz attempts
 
 Still future:
 - real Strava adapter
 - real AI reading quiz generation
 - Android native build and real-device smoke for Health Connect before release enablement
-- Flutter UI flow for requesting and answering backend-owned reading quiz attempts
 
 ## Product Problem
 

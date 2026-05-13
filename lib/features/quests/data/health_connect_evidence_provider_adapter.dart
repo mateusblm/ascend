@@ -82,6 +82,8 @@ class HealthConnectCompetitiveEvidenceProviderAdapter
     required DateTime startedAt,
     required DateTime completedAt,
     String? reflection,
+    String? quizId,
+    List<String> quizAnswers = const [],
   }) async {
     final session = await _gateway.readSessionEvidence(
       evidenceType: requirement.evidenceType,
@@ -98,6 +100,8 @@ class HealthConnectCompetitiveEvidenceProviderAdapter
       durationMinutes: session?.durationMinutes,
       distanceMeters: session?.distanceMeters,
       sourceActivityId: session?.sourceActivityId,
+      quizId: quizId,
+      answers: quizAnswers,
       reflection: reflection,
     );
   }

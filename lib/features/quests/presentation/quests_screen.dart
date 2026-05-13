@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/first_week_journey.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
@@ -911,10 +912,41 @@ class QuestsScreen extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
+    String? readingQuizId;
+    var readingQuizAnswers = const <String>[];
+    final requirement = officialTemplateForQuest(
+      quest,
+    )?.verificationRequirement;
+    final requiresReadingQuiz =
+        requirement?.evidenceType ==
+        CompetitiveEvidenceType.readingComprehension;
+    if (requiresReadingQuiz) {
+      ReadingQuizAttempt? attempt;
+      try {
+        attempt = await controller.startReadingQuizAttempt(quest.id);
+      } catch (_) {
+        if (!context.mounted) return;
+        _showRemoteFailure(context);
+        return;
+      }
+      if (!context.mounted) return;
+      if (attempt == null) {
+        _showRemoteFailure(context);
+        return;
+      }
+
+      final answers = await _openReadingQuizPrompt(context, attempt);
+      if (!context.mounted || answers == null) return;
+      readingQuizId = attempt.quizId;
+      readingQuizAnswers = answers;
+    }
+
     try {
       final result = await controller.completeCompetitiveQuest(
         quest.id,
         reflectionAnswer: reflectionAnswer,
+        readingQuizId: readingQuizId,
+        readingQuizAnswers: readingQuizAnswers,
         onLevelUp: (level) => _showLevelUpDialog(context, level),
       );
       if (!context.mounted) return;
@@ -1082,6 +1114,18 @@ class QuestsScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<List<String>?> _openReadingQuizPrompt(
+    BuildContext context,
+    ReadingQuizAttempt attempt,
+  ) {
+    return showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ReadingQuizPromptSheet(attempt: attempt),
     );
   }
 
@@ -1317,6 +1361,126 @@ class QuestsScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ReadingQuizPromptSheet extends StatefulWidget {
+  const _ReadingQuizPromptSheet({required this.attempt});
+
+  final ReadingQuizAttempt attempt;
+
+  @override
+  State<_ReadingQuizPromptSheet> createState() =>
+      _ReadingQuizPromptSheetState();
+}
+
+class _ReadingQuizPromptSheetState extends State<_ReadingQuizPromptSheet> {
+  late final List<TextEditingController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = [
+      for (final _ in widget.attempt.questions) TextEditingController(),
+    ];
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _submit() {
+    final answers = _controllers
+        .map((controller) => controller.text.trim())
+        .toList(growable: false);
+    if (answers.any((answer) => answer.isEmpty)) return;
+    Navigator.of(context).pop(answers);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundElevated,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Prova de leitura',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Responda com base no que voce leu. Nota minima: ${widget.attempt.minimumScore}%.',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              for (
+                var index = 0;
+                index < widget.attempt.questions.length;
+                index++
+              ) ...[
+                Text(
+                  widget.attempt.questions[index].prompt,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _controllers[index],
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Resposta ${index + 1}',
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _submit,
+                  child: const Text('Enviar respostas'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

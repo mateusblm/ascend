@@ -106,6 +106,25 @@ void main() {
       expect(decision.riskFlags, contains(CompetitiveRiskFlag.missingQuiz));
     });
 
+    test('serializes backend reading quiz submission fields', () {
+      final startedAt = DateTime(2026, 5, 13, 8);
+
+      final payload = QuestEvidence(
+        questId: 'reading-20-1',
+        provider: CompetitiveEvidenceProvider.mockEvidence,
+        type: CompetitiveEvidenceType.readingComprehension,
+        startedAt: startedAt,
+        completedAt: startedAt.add(const Duration(minutes: 20)),
+        durationMinutes: 20,
+        quizId: 'quiz-1',
+        answers: const ['ideia principal', 'acao pratica'],
+      ).toPayload();
+
+      expect(payload['quizId'], 'quiz-1');
+      expect(payload['answers'], const ['ideia principal', 'acao pratica']);
+      expect(payload.containsKey('quizScore'), isFalse);
+    });
+
     test(
       'builds deterministic mock evidence for non-device implementation',
       () {

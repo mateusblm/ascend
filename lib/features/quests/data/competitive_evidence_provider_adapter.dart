@@ -10,6 +10,8 @@ abstract interface class CompetitiveEvidenceProviderAdapter {
     required DateTime startedAt,
     required DateTime completedAt,
     String? reflection,
+    String? quizId,
+    List<String> quizAnswers = const [],
   });
 }
 
@@ -28,6 +30,8 @@ class MockCompetitiveEvidenceProviderAdapter
     required DateTime startedAt,
     required DateTime completedAt,
     String? reflection,
+    String? quizId,
+    List<String> quizAnswers = const [],
   }) async {
     return mockEvidenceForQuest(
       quest: quest,
@@ -35,6 +39,8 @@ class MockCompetitiveEvidenceProviderAdapter
       startedAt: startedAt,
       completedAt: completedAt,
       reflection: reflection,
+      quizId: quizId,
+      quizAnswers: quizAnswers,
     );
   }
 }

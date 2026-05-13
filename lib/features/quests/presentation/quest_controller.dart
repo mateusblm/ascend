@@ -539,6 +539,43 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     return QuestCompletionResult.success;
   }
 
+  Future<ReadingQuizAttempt?> startReadingQuizAttempt(
+    String id, {
+    String? topic,
+  }) async {
+    final quest = _findQuest(id);
+    if (quest == null || !quest.isCompetitive || quest.isCompleted) {
+      return null;
+    }
+    if (quest.requiresTimer &&
+        quest.verificationStatus != QuestVerificationStatus.inProgress) {
+      return null;
+    }
+
+    final requirement = officialTemplateForQuest(
+      quest,
+    )?.verificationRequirement;
+    if (requirement?.evidenceType !=
+        CompetitiveEvidenceType.readingComprehension) {
+      return null;
+    }
+
+    final authority = _competitiveAuthority;
+    if (authority == null) {
+      return null;
+    }
+
+    try {
+      return await authority.startReadingQuizAttempt(
+        quest: quest,
+        topic: topic ?? quest.title,
+      );
+    } on ActiveSessionConflictException {
+      unawaited(ref.read(authProvider.notifier).handleActiveSessionConflict());
+      return null;
+    }
+  }
+
   Future<QuestCompletionResult> toggleQuest(
     String id, {
     void Function(int level)? onLevelUp,
@@ -603,6 +640,8 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   Future<QuestCompletionResult> completeCompetitiveQuest(
     String id, {
     String? reflectionAnswer,
+    String? readingQuizId,
+    List<String> readingQuizAnswers = const [],
     void Function(int level)? onLevelUp,
   }) async {
     final quest = _findQuest(id);
@@ -672,31 +711,66 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return QuestCompletionResult.invalidFlow;
     }
 
+    final trimmedReadingQuizAnswers = readingQuizAnswers
+        .map((answer) => answer.trim())
+        .where((answer) => answer.isNotEmpty)
+        .toList(growable: false);
+    final isBackendReadingQuiz =
+        requirement.evidenceType ==
+            CompetitiveEvidenceType.readingComprehension &&
+        readingQuizId != null &&
+        trimmedReadingQuizAnswers.isNotEmpty &&
+        _competitiveAuthority != null;
+    if (requirement.evidenceType ==
+            CompetitiveEvidenceType.readingComprehension &&
+        !isBackendReadingQuiz &&
+        _competitiveAuthority != null) {
+      unawaited(
+        _analytics.logCompetitiveQuestBlocked(
+          reason: 'missing_backend_reading_quiz_submission',
+          verificationMode: quest.verificationMode.name,
+          templateType: quest.templateType.name,
+        ),
+      );
+      return QuestCompletionResult.insufficientEvidence;
+    }
+
     final evidence = await _evidenceProviderAdapter.buildEvidence(
       quest: quest,
       requirement: requirement,
       startedAt: quest.verificationStartedAt ?? now,
       completedAt: now,
       reflection: reflectionAnswer?.trim(),
+      quizId: readingQuizId,
+      quizAnswers: trimmedReadingQuizAnswers,
     );
-    final decision = evaluateCompetitiveQuestEvidence(
-      quest: quest,
-      requirement: requirement,
-      evidence: evidence,
-      now: now,
-    );
-    if (!decision.accepted) {
-      unawaited(
-        _analytics.logCompetitiveQuestBlocked(
-          reason:
-              'insufficient_evidence_${decision.status.name}_${decision.riskFlags.map((flag) => flag.name).join('_')}',
-          verificationMode: quest.verificationMode.name,
-          templateType: quest.templateType.name,
-        ),
+    final evidenceForSubmission = isBackendReadingQuiz
+        ? evidence.copyWith(
+            quizId: readingQuizId,
+            answers: trimmedReadingQuizAnswers,
+            clearQuizScore: true,
+          )
+        : evidence;
+    if (!isBackendReadingQuiz) {
+      final decision = evaluateCompetitiveQuestEvidence(
+        quest: quest,
+        requirement: requirement,
+        evidence: evidenceForSubmission,
+        now: now,
       );
-      return decision.status == VerificationDecisionStatus.rejected
-          ? QuestCompletionResult.evidenceRejected
-          : QuestCompletionResult.insufficientEvidence;
+      if (!decision.accepted) {
+        unawaited(
+          _analytics.logCompetitiveQuestBlocked(
+            reason:
+                'insufficient_evidence_${decision.status.name}_${decision.riskFlags.map((flag) => flag.name).join('_')}',
+            verificationMode: quest.verificationMode.name,
+            templateType: quest.templateType.name,
+          ),
+        );
+        return decision.status == VerificationDecisionStatus.rejected
+            ? QuestCompletionResult.evidenceRejected
+            : QuestCompletionResult.insufficientEvidence;
+      }
     }
 
     DateTime completedAt = now;
@@ -715,7 +789,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           quest: quest,
           uid: uid,
           fallbackName: fallbackName,
-          evidence: evidence,
+          evidence: evidenceForSubmission,
           reflectionAnswer: reflectionAnswer?.trim(),
         );
         completedAt = verification.completedAt;

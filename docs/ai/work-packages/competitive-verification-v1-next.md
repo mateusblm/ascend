@@ -75,6 +75,14 @@ AI Reading Quiz Contract V1 is implemented without a real AI provider:
 - real AI generation remains future adapter work; the contract now defines the
   authority boundary first.
 
+Flutter reading quiz flow is implemented:
+- reading-comprehension competitive quests request a backend quiz attempt before
+  completion.
+- Flutter collects ordered answers and submits `quizId` plus `answers` with the
+  evidence payload.
+- local pre-validation is skipped only for backend-owned quiz submissions; the
+  backend still decides score, reward, and rank progress.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
@@ -84,8 +92,7 @@ Continue `Competitive Verification V1`:
 1. Configure Android SDK locally and run a staging debug APK build.
 2. Run real-device Health Connect smoke with
    `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
-3. Wire Flutter reading quests to request/answer the backend quiz contract.
-4. Add real AI generation only after the deterministic contract flow is stable.
+3. Add real AI generation only after the deterministic contract flow is stable.
 
 ## Likely Files
 

@@ -329,10 +329,18 @@ Competitive Verification V1 follow-up completed on `2026-05-13`:
 - real AI generation remains future adapter work after the deterministic
   authority flow is wired in Flutter.
 
+Competitive Verification V1 follow-up completed on `2026-05-13`:
+- Flutter reading-comprehension quests now request a backend-owned quiz attempt
+  before completion.
+- the app collects ordered answers and submits `quizId` plus `answers` as
+  evidence, while backend scoring remains authoritative.
+- local Flutter evidence pre-validation no longer blocks backend-owned reading
+  quiz submissions, but does not grant local authority when backend authority is
+  active.
+
 Still pending after the current slice:
 - Android SDK setup and staging debug APK build for the native Health Connect code
 - real-device Health Connect permission/read smoke
-- Flutter flow for requesting/answering backend-owned reading quiz attempts
 - real AI reading quiz generation after the contract flow is stable
 
 ### Workstreams

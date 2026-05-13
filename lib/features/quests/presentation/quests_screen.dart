@@ -6,6 +6,7 @@ import 'package:ascend/features/profile/domain/first_week_journey.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/domain/weekly_insights.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
@@ -942,6 +943,12 @@ class QuestsScreen extends ConsumerWidget {
         'Ainda falta um pouco de tempo para essa sessão contar.',
       QuestCompletionResult.missingReflection =>
         'Escreva uma resposta curta para concluir essa quest.',
+      QuestCompletionResult.insufficientEvidence =>
+        'Evidencia recusada: faltou tempo, distancia ou resposta minima para a Arena.',
+      QuestCompletionResult.evidenceRejected =>
+        'Evidencia rejeitada: os dados enviados nao batem com uma validacao competitiva segura.',
+      QuestCompletionResult.duplicateEvidence =>
+        'Essa evidencia ja foi usada em outra validacao. Reinicie a sessao para gerar uma prova nova.',
     };
 
     ScaffoldMessenger.of(context)
@@ -977,12 +984,17 @@ class QuestsScreen extends ConsumerWidget {
       return 'Quest pessoal: ajuda no progresso geral, mas não entra no rank.';
     }
 
+    final template = officialTemplateForQuest(quest);
+    final evidenceSummary = template == null
+        ? 'Evidencia oficial indisponivel para este modelo.'
+        : 'Evidencia exigida: ${competitiveEvidenceRequirementSummary(template.verificationRequirement)}.';
+
     if (quest.verificationStatus == QuestVerificationStatus.inProgress &&
         quest.verificationStartedAt != null) {
       final elapsed = liveNow
           .difference(quest.verificationStartedAt!)
           .inMinutes;
-      return 'Sessão em andamento há ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min.';
+      return 'Sessao em andamento ha ${elapsed.clamp(0, 999)} min. Meta: ${quest.targetDurationMinutes} min. $evidenceSummary';
     }
 
     if (quest.isCompleted) {
@@ -990,11 +1002,11 @@ class QuestsScreen extends ConsumerWidget {
     }
 
     return switch (quest.verificationMode) {
-      QuestVerificationMode.manual => 'Pronta para validar.',
+      QuestVerificationMode.manual => 'Pronta para validar. $evidenceSummary',
       QuestVerificationMode.timer =>
-        'Inicie no app e envie evidencia simulada apos ${quest.targetDurationMinutes} min.',
+        'Inicie no app e envie evidencia simulada apos ${quest.targetDurationMinutes} min. $evidenceSummary',
       QuestVerificationMode.timerWithReflection =>
-        'Inicie no app, feche ${quest.targetDurationMinutes} min e responda para gerar prova.',
+        'Inicie no app, feche ${quest.targetDurationMinutes} min e responda para gerar prova. $evidenceSummary',
     };
   }
 

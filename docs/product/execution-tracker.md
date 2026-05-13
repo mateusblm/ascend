@@ -393,6 +393,16 @@ Competitive Verification V1 product-depth follow-up:
   - `npm test` in `functions`: 15 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
+Progress note recorded on: `2026-05-13`
+
+Competitive Verification V1 UI feedback follow-up:
+- competitive quest cards now show evidence requirements derived from the official quest template.
+- Flutter maps local/backend competitive verification failures into visible results for insufficient evidence, rejected evidence, and duplicate evidence.
+- no reward, rank, or authority rules were moved to Flutter.
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: 75 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

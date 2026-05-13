@@ -122,6 +122,9 @@ enum QuestCompletionResult {
   invalidFlow,
   timerStillRunning,
   missingReflection,
+  insufficientEvidence,
+  evidenceRejected,
+  duplicateEvidence,
 }
 
 class QuestNotifier extends StateNotifier<List<Quest>> {
@@ -663,12 +666,15 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     if (!decision.accepted) {
       unawaited(
         _analytics.logCompetitiveQuestBlocked(
-          reason: 'insufficient_evidence_${decision.status.name}',
+          reason:
+              'insufficient_evidence_${decision.status.name}_${decision.riskFlags.map((flag) => flag.name).join('_')}',
           verificationMode: quest.verificationMode.name,
           templateType: quest.templateType.name,
         ),
       );
-      return QuestCompletionResult.invalidFlow;
+      return decision.status == VerificationDecisionStatus.rejected
+          ? QuestCompletionResult.evidenceRejected
+          : QuestCompletionResult.insufficientEvidence;
     }
 
     DateTime completedAt = now;
@@ -705,6 +711,12 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           ref.read(authProvider.notifier).handleActiveSessionConflict(),
         );
         return QuestCompletionResult.invalidFlow;
+      } on FirebaseFunctionsException catch (error) {
+        final mappedResult = _competitiveVerificationFailureResult(error);
+        if (mappedResult != null) {
+          return mappedResult;
+        }
+        rethrow;
       }
     }
 
@@ -717,6 +729,27 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     );
     _applyCompletion(updatedQuest, onLevelUp: onLevelUp);
     return QuestCompletionResult.success;
+  }
+
+  QuestCompletionResult? _competitiveVerificationFailureResult(
+    FirebaseFunctionsException error,
+  ) {
+    final message = error.message ?? '';
+    if (error.code != 'failed-precondition') return null;
+
+    if (message.contains('duplicateSourceActivityId')) {
+      return QuestCompletionResult.duplicateEvidence;
+    }
+    if (message.contains('Evidencia competitiva insuficiente')) {
+      if (message.contains(CompetitiveRiskFlag.impossiblePace.name) ||
+          message.contains(CompetitiveRiskFlag.invalidProvider.name) ||
+          message.contains(CompetitiveRiskFlag.completedBeforeStart.name) ||
+          message.contains(CompetitiveRiskFlag.staleEvidence.name)) {
+        return QuestCompletionResult.evidenceRejected;
+      }
+      return QuestCompletionResult.insufficientEvidence;
+    }
+    return null;
   }
 
   int addSuggestedQuests(List<QuestSuggestion> suggestions) {

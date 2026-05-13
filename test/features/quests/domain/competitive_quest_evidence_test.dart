@@ -100,5 +100,31 @@ void main() {
         expect(evidence.sourceActivityId, isNotNull);
       },
     );
+
+    test('summarizes evidence requirements for competitive UI', () {
+      final template = officialCompetitiveQuestCatalog().firstWhere(
+        (template) => template.id == 'run-2k-controlled',
+      );
+
+      final summary = competitiveEvidenceRequirementSummary(
+        template.verificationRequirement,
+      );
+
+      expect(summary, contains('distancia registrada'));
+      expect(summary, contains('10 min'));
+      expect(summary, contains('2000 m'));
+      expect(summary, contains('fonte: simulada'));
+    });
+
+    test('translates risk flags into user-facing evidence details', () {
+      expect(
+        competitiveRiskFlagUserMessage(CompetitiveRiskFlag.impossiblePace),
+        'ritmo impossivel',
+      );
+      expect(
+        competitiveRiskFlagUserMessage(CompetitiveRiskFlag.durationTooShort),
+        'duracao abaixo do minimo',
+      );
+    });
   });
 }

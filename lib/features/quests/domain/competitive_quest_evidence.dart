@@ -30,6 +30,60 @@ enum CompetitiveRiskFlag {
   staleEvidence,
 }
 
+String competitiveEvidenceRequirementSummary(
+  CompetitiveVerificationRequirement requirement,
+) {
+  final parts = <String>[];
+
+  parts.add(switch (requirement.evidenceType) {
+    CompetitiveEvidenceType.timedFocus => 'timer de foco',
+    CompetitiveEvidenceType.runningDistance => 'distancia registrada',
+    CompetitiveEvidenceType.readingComprehension => 'leitura com resposta',
+    CompetitiveEvidenceType.workoutSession => 'sessao de treino',
+    CompetitiveEvidenceType.studySession => 'sessao de estudo',
+  });
+
+  if (requirement.minimumDurationMinutes > 0) {
+    parts.add('${requirement.minimumDurationMinutes} min');
+  }
+  if (requirement.minimumDistanceMeters > 0) {
+    parts.add('${requirement.minimumDistanceMeters} m');
+  }
+  if (requirement.minimumQuizScore > 0) {
+    parts.add('resposta minima ${requirement.minimumQuizScore}%');
+  }
+
+  final providers = requirement.allowedProviders
+      .map(_competitiveEvidenceProviderLabel)
+      .join(', ');
+  parts.add('fonte: $providers');
+
+  return parts.join(' | ');
+}
+
+String competitiveRiskFlagUserMessage(CompetitiveRiskFlag flag) {
+  return switch (flag) {
+    CompetitiveRiskFlag.missingDuration => 'duracao ausente',
+    CompetitiveRiskFlag.missingDistance => 'distancia ausente',
+    CompetitiveRiskFlag.missingQuiz => 'resposta minima ausente',
+    CompetitiveRiskFlag.durationTooShort => 'duracao abaixo do minimo',
+    CompetitiveRiskFlag.distanceTooShort => 'distancia abaixo do minimo',
+    CompetitiveRiskFlag.impossiblePace => 'ritmo impossivel',
+    CompetitiveRiskFlag.unusuallyFastPace => 'ritmo acima do esperado',
+    CompetitiveRiskFlag.invalidProvider => 'fonte de evidencia invalida',
+    CompetitiveRiskFlag.completedBeforeStart => 'fim antes do inicio',
+    CompetitiveRiskFlag.staleEvidence => 'evidencia antiga',
+  };
+}
+
+String _competitiveEvidenceProviderLabel(CompetitiveEvidenceProvider provider) {
+  return switch (provider) {
+    CompetitiveEvidenceProvider.manual => 'manual',
+    CompetitiveEvidenceProvider.appTimer => 'timer do app',
+    CompetitiveEvidenceProvider.mockEvidence => 'simulada',
+  };
+}
+
 class CompetitiveVerificationRequirement {
   const CompetitiveVerificationRequirement({
     required this.evidenceType,

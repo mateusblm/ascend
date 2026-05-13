@@ -35,16 +35,23 @@ Backend duplicate protection is implemented:
   `duplicateSourceActivityId`.
 - the check intentionally uses backend grant history, not client state.
 
+Competitive evidence UI feedback is implemented:
+- competitive quest cards show the expected evidence requirement from the
+  official template.
+- local/backend evidence rejections map to user-visible completion results:
+  insufficient evidence, rejected evidence, and duplicate evidence.
+- Flutter still only renders feedback; backend remains the reward/rank
+  authority.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
 
 Continue `Competitive Verification V1`:
 
-1. Add visible evidence decision details in competitive quest UI.
-2. Add provider adapter boundary interfaces.
-3. Add Health Connect or Strava only after adapter tests exist.
-4. Add AI reading quiz only after quiz contract is backend-owned.
+1. Add provider adapter boundary interfaces.
+2. Add Health Connect or Strava only after adapter tests exist.
+3. Add AI reading quiz only after quiz contract is backend-owned.
 
 ## Likely Files
 

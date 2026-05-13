@@ -293,10 +293,18 @@ Competitive Verification V1 follow-up completed on `2026-05-12`:
   `duplicateSourceActivityId`.
 - Functions coverage protects the duplicate-source rejection path.
 
-Still pending after the first slice:
+Competitive Verification V1 follow-up completed on `2026-05-13`:
+- competitive quest cards now expose the expected evidence requirement from
+  the official template.
+- competitive completion feedback now distinguishes insufficient evidence,
+  rejected evidence, and duplicate evidence instead of collapsing all of them
+  into a generic invalid flow.
+- Flutter remains a rendering/submission surface only; reward and rank-bearing
+  decisions stay backend-owned.
+
+Still pending after the current slice:
 - real provider adapters
 - AI reading quiz generation
-- richer evidence-status UI
 
 ### Workstreams
 

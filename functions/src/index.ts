@@ -588,7 +588,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
     minimumDurationMinutes: 10,
     minimumDistanceMeters: 2000,
     minimumQuizScore: 0,
-    allowedProviders: ['mockEvidence'],
+    allowedProviders: ['healthConnect', 'mockEvidence'],
   };
   const run5k: ServerCompetitiveVerificationRequirement = {
     evidenceType: 'runningDistance',
@@ -596,7 +596,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
     minimumDurationMinutes: 20,
     minimumDistanceMeters: 5000,
     minimumQuizScore: 0,
-    allowedProviders: ['mockEvidence'],
+    allowedProviders: ['healthConnect', 'mockEvidence'],
   };
   const workout20: ServerCompetitiveVerificationRequirement = {
     evidenceType: 'workoutSession',
@@ -604,7 +604,7 @@ function competitiveQuestDefinitions(): ServerCompetitiveQuestDefinition[] {
     minimumDurationMinutes: 20,
     minimumDistanceMeters: 0,
     minimumQuizScore: 0,
-    allowedProviders: ['appTimer', 'mockEvidence'],
+    allowedProviders: ['healthConnect', 'appTimer', 'mockEvidence'],
   };
 
   return [

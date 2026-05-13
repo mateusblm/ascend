@@ -413,6 +413,21 @@ Competitive Verification V1 provider-boundary follow-up:
   - `flutter analyze`: no issues found
   - `flutter test`: 76 tests passed
 
+Progress note recorded on: `2026-05-13`
+
+Competitive Verification V1 Health Connect Adapter V1:
+- Android Health Connect integration was added behind `ASCEND_USE_HEALTH_CONNECT=true`.
+- Flutter can map Health Connect exercise sessions into `QuestEvidence` with duration, distance, and source session id.
+- backend verification accepts `healthConnect` evidence for running/workout templates while keeping reward/rank authority server-side.
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: 79 tests passed
+  - `npm test` in `functions`: 16 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+- unresolved validation gap:
+  - Android native build could not run because this workstation has no Android SDK configured.
+  - run staging debug APK build and real-device Health Connect smoke before enabling the flag for release.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

@@ -31,6 +31,32 @@ void main() {
       expect(decision.riskFlags, isEmpty);
     });
 
+    test('accepts valid running evidence from Health Connect', () {
+      final template = officialCompetitiveQuestCatalog().firstWhere(
+        (template) => template.id == 'run-2k-controlled',
+      );
+      final startedAt = DateTime(2026, 4, 21, 8);
+      final quest = template.toQuest();
+
+      final decision = evaluateCompetitiveQuestEvidence(
+        quest: quest,
+        requirement: template.verificationRequirement,
+        evidence: QuestEvidence(
+          questId: quest.id,
+          provider: CompetitiveEvidenceProvider.healthConnect,
+          type: CompetitiveEvidenceType.runningDistance,
+          startedAt: startedAt,
+          completedAt: startedAt.add(const Duration(minutes: 12)),
+          durationMinutes: 12,
+          distanceMeters: 2200,
+          sourceActivityId: 'health-session-1',
+        ),
+      );
+
+      expect(decision.status, VerificationDecisionStatus.accepted);
+      expect(decision.confidenceScore, 85);
+    });
+
     test('rejects impossible running pace', () {
       final template = officialCompetitiveQuestCatalog().firstWhere(
         (template) => template.id == 'run-2k-controlled',
@@ -113,7 +139,8 @@ void main() {
       expect(summary, contains('distancia registrada'));
       expect(summary, contains('10 min'));
       expect(summary, contains('2000 m'));
-      expect(summary, contains('fonte: simulada'));
+      expect(summary, contains('Health Connect'));
+      expect(summary, contains('simulada'));
     });
 
     test('translates risk flags into user-facing evidence details', () {

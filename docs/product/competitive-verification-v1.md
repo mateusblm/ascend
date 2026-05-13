@@ -17,12 +17,17 @@ Implemented on `2026-04-25`:
 - Firestore read-only client rules for evidence audit records
 - domain, backend, and rules tests for valid evidence, missing evidence, impossible pace, and read/write boundaries
 
+Implemented on `2026-05-13`:
+- duplicate `sourceActivityId` backend rejection
+- visible competitive evidence requirements and rejection feedback in Flutter
+- provider adapter boundary for Flutter evidence sources
+- Health Connect Adapter V1 behind `ASCEND_USE_HEALTH_CONNECT=true`
+- backend acceptance for `healthConnect` evidence on running/workout templates
+
 Still future:
-- real Health Connect adapter
 - real Strava adapter
 - real AI reading quiz generation
-- full UI for manual/provider evidence details
-- duplicate source-activity checks against historical provider ids
+- Android native build and real-device smoke for Health Connect before release enablement
 
 ## Product Problem
 
@@ -70,13 +75,13 @@ V1 implementation should include:
 - `manual`: low-trust fallback for non-rank or low-rank quests.
 - `appTimer`: current in-app timer path, formalized as evidence.
 - `mockEvidence`: deterministic provider for tests and development.
+- `healthConnect`: Android exercise sessions, duration, distance, and source session id, gated behind feature flag until native build and device smoke pass.
 
 Later adapters:
-- `healthConnect`: Android exercise sessions, route data only when permission and user consent allow it.
 - `strava`: OAuth activity import and webhook-based refresh.
 - `aiReadingQuiz`: generated comprehension check from user-declared book/topic.
 
-Do not start V1 by integrating Health Connect, Strava, or AI. Build the contract, evaluator, catalog, and tests first.
+Health Connect is present as a gated adapter. Do not enable it for release until Android native build and real-device permission/read smoke pass.
 
 ## Domain Model Sketch
 
@@ -258,11 +263,13 @@ Flutter tests:
 4. Wire backend callable tests around evaluator decisions.
 5. Update Flutter repository/controller to submit evidence and render decisions.
 6. Add UI keys for primary competitive actions and decision surfaces.
-7. Only then evaluate Health Connect, Strava, and AI reading quiz adapters.
+7. Add provider adapter boundary.
+8. Add Health Connect behind a feature flag.
+9. Validate Android native build and real-device Health Connect smoke.
+10. Only then evaluate Strava and AI reading quiz adapters.
 
 ## Out Of Scope For V1
 
-- real Health Connect integration
 - real Strava OAuth
 - real AI-generated reading quiz
 - full location tracking

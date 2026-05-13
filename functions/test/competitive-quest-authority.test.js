@@ -181,6 +181,45 @@ test('verifies a valid competitive quest completion and prepares the grant write
   assert.equal(result.sessionWrite.status, 'verified');
 });
 
+test('verifies valid Health Connect running evidence', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+
+  const result = resolveCompetitiveQuestCompletionVerification({
+    quest: buildQuest({
+      title: 'Corrida controlada de 2 km',
+      templateType: 'runningSession',
+      verificationMode: 'timer',
+      targetDurationMinutes: 10,
+      xpReward: 35,
+      rewardAttribute: 'agility',
+      verificationRequirement: {
+        evidenceType: 'runningDistance',
+        minimumTrustTier: 2,
+        minimumDurationMinutes: 10,
+        minimumDistanceMeters: 2000,
+        minimumQuizScore: 0,
+        allowedProviders: ['healthConnect', 'mockEvidence'],
+      },
+      evidence: buildEvidence({
+        provider: 'healthConnect',
+        type: 'runningDistance',
+        durationMinutes: 12,
+        distanceMeters: 2200,
+        sourceActivityId: 'health-session-1',
+      }),
+    }),
+    session: {
+      startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+    },
+    grant: null,
+    now,
+  });
+
+  assert.equal(result.status, 'verified');
+  assert.equal(result.grantWrite.evidenceProvider, 'healthConnect');
+  assert.equal(result.grantWrite.confidenceScore, 85);
+});
+
 test('rejects competitive quest completion when evidence is missing', () => {
   const now = timestamp('2026-04-21T15:30:00.000Z');
 

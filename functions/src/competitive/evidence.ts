@@ -59,7 +59,9 @@ export type CompetitiveQuestForVerification = {
 
 export function ensureEvidenceProvider(value: unknown, field: string): string {
   const provider = ensureString(value, field, 32);
-  if (!['manual', 'appTimer', 'mockEvidence'].includes(provider)) {
+  if (
+    !['manual', 'appTimer', 'mockEvidence', 'healthConnect'].includes(provider)
+  ) {
     throw new HttpsError('invalid-argument', `${field} invalido.`);
   }
   return provider;
@@ -226,7 +228,9 @@ export function evaluateCompetitiveQuestEvidence(args: {
     ? 35
     : evidence.provider === 'appTimer'
       ? 65
-      : 75;
+      : evidence.provider === 'healthConnect'
+        ? 85
+        : 75;
   const confidenceScore = riskFlags.includes('unusuallyFastPace')
     ? Math.max(0, baseConfidence - 25)
     : baseConfidence;

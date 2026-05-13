@@ -51,14 +51,29 @@ Provider adapter boundary is implemented:
 - `QuestNotifier` depends on the adapter interface instead of constructing mock
   evidence directly.
 
+Health Connect Adapter V1 is implemented behind a feature flag:
+- `HealthConnectCompetitiveEvidenceProviderAdapter` reads Android exercise
+  sessions through a Flutter MethodChannel.
+- Android integration follows the official Health Connect setup:
+  `connect-client:1.2.0-alpha04`, Health Connect manifest permissions,
+  availability checks, permission request flow, and `ExerciseSessionRecord` /
+  `DistanceRecord` reads.
+- Backend and Flutter accept `healthConnect` evidence for running and workout
+  templates only.
+- The app still defaults to mock evidence unless
+  `--dart-define=ASCEND_USE_HEALTH_CONNECT=true` is supplied.
+- Android native compilation and real-device smoke are still pending because the
+  current workstation has no Android SDK configured.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
 
 Continue `Competitive Verification V1`:
 
-1. Add a first real device/provider adapter behind the existing interface.
-2. Add Health Connect or Strava smoke/contract tests before using it for release.
+1. Configure Android SDK locally and run a staging debug APK build.
+2. Run real-device Health Connect smoke with
+   `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
 3. Add AI reading quiz only after quiz contract is backend-owned.
 
 ## Likely Files

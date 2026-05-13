@@ -8,7 +8,12 @@ enum CompetitiveEvidenceType {
   studySession,
 }
 
-enum CompetitiveEvidenceProvider { manual, appTimer, mockEvidence }
+enum CompetitiveEvidenceProvider {
+  manual,
+  appTimer,
+  mockEvidence,
+  healthConnect,
+}
 
 enum VerificationDecisionStatus {
   accepted,
@@ -81,6 +86,7 @@ String _competitiveEvidenceProviderLabel(CompetitiveEvidenceProvider provider) {
     CompetitiveEvidenceProvider.manual => 'manual',
     CompetitiveEvidenceProvider.appTimer => 'timer do app',
     CompetitiveEvidenceProvider.mockEvidence => 'simulada',
+    CompetitiveEvidenceProvider.healthConnect => 'Health Connect',
   };
 }
 
@@ -255,6 +261,7 @@ VerificationDecision evaluateCompetitiveQuestEvidence({
     CompetitiveEvidenceProvider.manual => 35,
     CompetitiveEvidenceProvider.appTimer => 65,
     CompetitiveEvidenceProvider.mockEvidence => 75,
+    CompetitiveEvidenceProvider.healthConnect => 85,
   };
   final adjustedConfidence =
       flags.contains(CompetitiveRiskFlag.unusuallyFastPace)

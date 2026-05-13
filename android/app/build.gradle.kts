@@ -19,6 +19,8 @@ dependencies {
   // When using the BoM, don't specify versions in Firebase dependencies
 
   implementation("com.google.firebase:firebase-analytics")
+  implementation("androidx.health.connect:connect-client:1.2.0-alpha04")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
 
   // Add the dependencies for any other desired Firebase products

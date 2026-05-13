@@ -10,6 +10,7 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/data/competitive_evidence_provider_adapter.dart';
+import 'package:ascend/features/quests/data/health_connect_evidence_provider_adapter.dart';
 import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
@@ -19,6 +20,7 @@ import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 
@@ -32,6 +34,12 @@ final competitiveQuestAuthorityRepositoryProvider =
 
 final competitiveEvidenceProviderAdapterProvider =
     Provider<CompetitiveEvidenceProviderAdapter>((ref) {
+      const useHealthConnect = bool.fromEnvironment(
+        'ASCEND_USE_HEALTH_CONNECT',
+      );
+      if (useHealthConnect && defaultTargetPlatform == TargetPlatform.android) {
+        return const HealthConnectCompetitiveEvidenceProviderAdapter();
+      }
       return const MockCompetitiveEvidenceProviderAdapter();
     });
 

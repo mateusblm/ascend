@@ -133,7 +133,10 @@ const _run2kRequirement = CompetitiveVerificationRequirement(
   minimumTrustTier: 2,
   minimumDurationMinutes: 10,
   minimumDistanceMeters: 2000,
-  allowedProviders: [CompetitiveEvidenceProvider.mockEvidence],
+  allowedProviders: [
+    CompetitiveEvidenceProvider.healthConnect,
+    CompetitiveEvidenceProvider.mockEvidence,
+  ],
 );
 
 const _run5kRequirement = CompetitiveVerificationRequirement(
@@ -141,7 +144,10 @@ const _run5kRequirement = CompetitiveVerificationRequirement(
   minimumTrustTier: 3,
   minimumDurationMinutes: 20,
   minimumDistanceMeters: 5000,
-  allowedProviders: [CompetitiveEvidenceProvider.mockEvidence],
+  allowedProviders: [
+    CompetitiveEvidenceProvider.healthConnect,
+    CompetitiveEvidenceProvider.mockEvidence,
+  ],
 );
 
 const _workout20Requirement = CompetitiveVerificationRequirement(
@@ -149,6 +155,7 @@ const _workout20Requirement = CompetitiveVerificationRequirement(
   minimumTrustTier: 2,
   minimumDurationMinutes: 20,
   allowedProviders: [
+    CompetitiveEvidenceProvider.healthConnect,
     CompetitiveEvidenceProvider.appTimer,
     CompetitiveEvidenceProvider.mockEvidence,
   ],

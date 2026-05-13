@@ -310,8 +310,19 @@ Competitive Verification V1 follow-up completed on `2026-05-13`:
 - adapter coverage exists before adding real Health Connect, Strava, or GPS
   integrations.
 
+Competitive Verification V1 follow-up completed on `2026-05-13`:
+- Health Connect Adapter V1 was added behind
+  `ASCEND_USE_HEALTH_CONNECT=true`.
+- Android reads exercise session duration, distance, and session id through
+  Health Connect for running/workout evidence.
+- backend competitive verification now accepts `healthConnect` as an allowed
+  provider for running and workout templates.
+- the default app path remains mock/dev evidence until Android native build and
+  real-device smoke pass.
+
 Still pending after the current slice:
-- first real provider adapter behind the tested boundary
+- Android SDK setup and staging debug APK build for the native Health Connect code
+- real-device Health Connect permission/read smoke
 - AI reading quiz generation
 
 ### Workstreams

@@ -9,6 +9,7 @@ import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
+import 'package:ascend/features/quests/data/competitive_evidence_provider_adapter.dart';
 import 'package:ascend/features/quests/data/competitive_quest_authority_repository.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
@@ -29,6 +30,11 @@ final competitiveQuestAuthorityRepositoryProvider =
       );
     });
 
+final competitiveEvidenceProviderAdapterProvider =
+    Provider<CompetitiveEvidenceProviderAdapter>((ref) {
+      return const MockCompetitiveEvidenceProviderAdapter();
+    });
+
 final questSyncRepositoryProvider = Provider<QuestSyncRepository>((ref) {
   return QuestSyncRepository(
     FirebaseFirestore.instance,
@@ -42,6 +48,9 @@ final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
     ref.watch(isarProvider),
     analytics: ref.read(analyticsProvider),
     competitiveAuthority: ref.read(competitiveQuestAuthorityRepositoryProvider),
+    evidenceProviderAdapter: ref.read(
+      competitiveEvidenceProviderAdapterProvider,
+    ),
     auth: FirebaseAuth.instance,
     questSyncRepository: ref.read(questSyncRepositoryProvider),
     enableCloudSync: true,
@@ -133,11 +142,15 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     this._isar, {
     AppAnalytics? analytics,
     CompetitiveQuestAuthorityRepository? competitiveAuthority,
+    CompetitiveEvidenceProviderAdapter? evidenceProviderAdapter,
     FirebaseAuth? auth,
     QuestSyncRepository? questSyncRepository,
     bool enableCloudSync = false,
   }) : _analytics = analytics ?? const NoopAppAnalytics(),
        _competitiveAuthority = competitiveAuthority,
+       _evidenceProviderAdapter =
+           evidenceProviderAdapter ??
+           const MockCompetitiveEvidenceProviderAdapter(),
        _auth = enableCloudSync ? (auth ?? FirebaseAuth.instance) : auth,
        _questSyncRepository = questSyncRepository,
        super([]) {
@@ -152,6 +165,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   final Isar _isar;
   final AppAnalytics _analytics;
   final CompetitiveQuestAuthorityRepository? _competitiveAuthority;
+  final CompetitiveEvidenceProviderAdapter _evidenceProviderAdapter;
   final FirebaseAuth? _auth;
   final QuestSyncRepository? _questSyncRepository;
   StreamSubscription<User?>? _authSubscription;
@@ -650,7 +664,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       return QuestCompletionResult.invalidFlow;
     }
 
-    final evidence = mockEvidenceForQuest(
+    final evidence = await _evidenceProviderAdapter.buildEvidence(
       quest: quest,
       requirement: requirement,
       startedAt: quest.verificationStartedAt ?? now,

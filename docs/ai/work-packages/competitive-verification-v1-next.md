@@ -43,14 +43,22 @@ Competitive evidence UI feedback is implemented:
 - Flutter still only renders feedback; backend remains the reward/rank
   authority.
 
+Provider adapter boundary is implemented:
+- `CompetitiveEvidenceProviderAdapter` defines the Flutter-side evidence source
+  contract.
+- `MockCompetitiveEvidenceProviderAdapter` wraps the existing deterministic mock
+  evidence implementation for development/tests.
+- `QuestNotifier` depends on the adapter interface instead of constructing mock
+  evidence directly.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
 
 Continue `Competitive Verification V1`:
 
-1. Add provider adapter boundary interfaces.
-2. Add Health Connect or Strava only after adapter tests exist.
+1. Add a first real device/provider adapter behind the existing interface.
+2. Add Health Connect or Strava smoke/contract tests before using it for release.
 3. Add AI reading quiz only after quiz contract is backend-owned.
 
 ## Likely Files
@@ -58,6 +66,7 @@ Continue `Competitive Verification V1`:
 Start by reading:
 - `lib/features/quests/domain/competitive_quest_template.dart`
 - `lib/features/quests/domain/competitive_quest_evidence.dart`
+- `lib/features/quests/data/competitive_evidence_provider_adapter.dart`
 - `lib/features/quests/domain/quest_model.dart`
 - `lib/features/quests/presentation/quest_controller.dart`
 - `lib/features/quests/presentation/quests_screen.dart`

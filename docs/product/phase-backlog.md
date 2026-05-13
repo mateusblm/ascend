@@ -302,8 +302,16 @@ Competitive Verification V1 follow-up completed on `2026-05-13`:
 - Flutter remains a rendering/submission surface only; reward and rank-bearing
   decisions stay backend-owned.
 
+Competitive Verification V1 follow-up completed on `2026-05-13`:
+- Flutter now has a `CompetitiveEvidenceProviderAdapter` boundary for evidence
+  sources.
+- the existing deterministic mock evidence provider is wrapped behind that
+  boundary instead of being constructed directly in the quest controller.
+- adapter coverage exists before adding real Health Connect, Strava, or GPS
+  integrations.
+
 Still pending after the current slice:
-- real provider adapters
+- first real provider adapter behind the tested boundary
 - AI reading quiz generation
 
 ### Workstreams

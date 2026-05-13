@@ -403,6 +403,16 @@ Competitive Verification V1 UI feedback follow-up:
   - `flutter analyze`: no issues found
   - `flutter test`: 75 tests passed
 
+Progress note recorded on: `2026-05-13`
+
+Competitive Verification V1 provider-boundary follow-up:
+- Flutter now has a `CompetitiveEvidenceProviderAdapter` interface for evidence sources.
+- the current mock evidence implementation is behind the adapter and remains development/test-only.
+- `QuestNotifier` no longer constructs mock evidence directly.
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: 76 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

@@ -12,6 +12,13 @@ import {
   validateQuestEvidencePayload,
 } from './competitive/evidence';
 import {
+  buildDeterministicReadingQuizAttempt,
+  evaluateReadingQuizSubmission,
+  readingQuizAttemptFromData,
+  readingQuizAttemptWrite,
+  validateReadingQuizSubmission,
+} from './competitive/readingQuiz';
+import {
   higherRank,
   playerRankForLevel,
   rankAfter,
@@ -82,6 +89,11 @@ export {
 export { buildPlayerProfileSyncWrite } from './profile/progression';
 export { buildQuestInventorySyncWrites } from './quests/inventory';
 export { parseTimestampInput } from './shared/validation';
+export {
+  buildDeterministicReadingQuizAttempt,
+  evaluateReadingQuizSubmission,
+  validateReadingQuizSubmission,
+} from './competitive/readingQuiz';
 
 admin.initializeApp();
 
@@ -178,6 +190,14 @@ type CompetitiveQuestSessionPayload = {
   verificationStartedAt?: unknown;
   reflectionAnswer?: unknown;
   evidence?: unknown;
+};
+
+type StartReadingQuizPayload = {
+  deviceSessionId?: unknown;
+  deviceLabel?: unknown;
+  questId?: unknown;
+  templateCatalogId?: unknown;
+  topic?: unknown;
 };
 
 type ValidatedSeasonReward = NonNullable<
@@ -948,6 +968,14 @@ function competitiveQuestEvidenceDocRef(
   return userCollectionRef(db, uid, 'competitive_quest_evidence').doc(attemptId);
 }
 
+function readingQuizAttemptDocRef(
+  db: admin.firestore.Firestore,
+  uid: string,
+  quizId: string,
+) {
+  return userCollectionRef(db, uid, 'reading_quiz_attempts').doc(quizId);
+}
+
 function validateProfileSettingsPayload(payload: unknown) {
   if (!payload || typeof payload !== 'object') {
     throw new HttpsError('invalid-argument', 'Payload de perfil invalido.');
@@ -963,6 +991,28 @@ function validateProfileSettingsPayload(payload: unknown) {
       'hasCompletedOnboarding',
     ),
     lastResetDate: ensureTimestamp(data.lastResetDate, 'lastResetDate'),
+  };
+}
+
+function validateStartReadingQuizPayload(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    throw new HttpsError('invalid-argument', 'Payload de quiz invalido.');
+  }
+
+  const data = payload as Record<string, unknown>;
+  const questId = ensureString(data.questId, 'questId', 120);
+  const templateCatalogId = data.templateCatalogId == null
+    ? null
+    : ensureString(data.templateCatalogId, 'templateCatalogId', 120);
+  const topic = data.topic == null
+    ? 'leitura'
+    : ensureString(data.topic, 'topic', 120);
+
+  return {
+    session: ensureActiveSessionPayload(payload),
+    questId,
+    templateCatalogId,
+    topic,
   };
 }
 
@@ -2337,6 +2387,62 @@ export const startCompetitiveQuestSession = onCall(
   },
 );
 
+export const startReadingQuizAttempt = onCall(
+  CALLABLE_OPTIONS,
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');
+    }
+
+    const payload = validateStartReadingQuizPayload(request.data ?? {});
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    const now = admin.firestore.Timestamp.now();
+    await assertActiveSession(db, uid, payload.session.deviceSessionId);
+
+    const template = competitiveQuestDefinitions().find((definition) =>
+      definition.id === payload.templateCatalogId ||
+      definition.id === payload.questId.split('-').slice(0, -1).join('-'),
+    );
+    if (
+      !template ||
+      template.verificationRequirement.evidenceType !== 'readingComprehension'
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Quiz de leitura indisponivel para essa quest.',
+      );
+    }
+
+    const attempt = buildDeterministicReadingQuizAttempt({
+      questId: payload.questId,
+      topic: payload.topic,
+      minimumScore: template.verificationRequirement.minimumQuizScore,
+      now,
+    });
+
+    await readingQuizAttemptDocRef(db, uid, attempt.quizId).set({
+      ...readingQuizAttemptWrite(attempt),
+      deviceSessionId: payload.session.deviceSessionId,
+      deviceLabel: payload.session.deviceLabel,
+      updatedAt: now,
+    });
+
+    return {
+      quizId: attempt.quizId,
+      questId: attempt.questId,
+      topic: attempt.topic,
+      minimumScore: attempt.minimumScore,
+      issuedAt: attempt.issuedAt.toDate().toISOString(),
+      expiresAt: attempt.expiresAt.toDate().toISOString(),
+      questions: attempt.questions.map((question) => ({
+        id: question.id,
+        prompt: question.prompt,
+      })),
+    };
+  },
+);
+
 export const verifyCompetitiveQuestCompletion = onCall(
   CALLABLE_OPTIONS,
   async (request) => {
@@ -2369,6 +2475,12 @@ export const verifyCompetitiveQuestCompletion = onCall(
       : competitiveQuestGrantsCollectionRef(db, uid)
         .where('sourceActivityId', '==', quest.evidence.sourceActivityId)
         .limit(3);
+    const quizSubmission = quest.evidence?.type === 'readingComprehension'
+      ? validateReadingQuizSubmission(quest.evidence)
+      : null;
+    const quizAttemptRef = quizSubmission == null
+      ? null
+      : readingQuizAttemptDocRef(db, uid, quizSubmission.quizId);
     const fallbackName = sanitizeDisplayName(request.auth.token.name);
 
     return db.runTransaction(async (transaction) => {
@@ -2380,6 +2492,7 @@ export const verifyCompetitiveQuestCompletion = onCall(
         profileSnap,
         questSnap,
         duplicateSourceActivitySnap,
+        quizAttemptSnap,
       ] = await Promise.all([
         transaction.get(sessionRef),
         transaction.get(grantRef),
@@ -2390,6 +2503,9 @@ export const verifyCompetitiveQuestCompletion = onCall(
         duplicateSourceActivityQuery == null
           ? Promise.resolve(null)
           : transaction.get(duplicateSourceActivityQuery),
+        quizAttemptRef == null
+          ? Promise.resolve(null)
+          : transaction.get(quizAttemptRef),
       ]);
       const scopedSession = sessionSnap.exists ? (sessionSnap.data() ?? null) : null;
       const scopedGrant = grantSnap.exists ? (grantSnap.data() ?? null) : null;
@@ -2414,8 +2530,25 @@ export const verifyCompetitiveQuestCompletion = onCall(
         : duplicateSourceActivitySnap.docs.some((doc) =>
           doc.id !== attemptId && doc.id !== quest.questId,
         );
+      const readingQuizEvaluation = evaluateReadingQuizSubmission({
+        attempt: readingQuizAttemptFromData(quizAttemptSnap?.data()),
+        questId: quest.questId,
+        submission: quizSubmission,
+        now,
+      });
+      const verifiedQuestPayload = quizSubmission == null || quest.evidence == null
+        ? quest
+        : {
+          ...quest,
+          readingQuizEvaluation,
+          evidence: {
+            ...quest.evidence,
+            quizScore: readingQuizEvaluation.score,
+            quizId: readingQuizEvaluation.quizId,
+          },
+        };
       const resolution = resolveCompetitiveQuestCompletionVerification({
-        quest,
+        quest: verifiedQuestPayload,
         session: scopedSession ?? legacySession,
         grant: scopedGrant ?? legacyGrant,
         now,
@@ -2565,14 +2698,18 @@ export const verifyCompetitiveQuestCompletion = onCall(
           questId: quest.questId,
           title: quest.title,
           templateType: quest.templateType,
-          evidenceType: quest.evidence?.type ?? null,
-          evidenceProvider: quest.evidence?.provider ?? null,
-          startedAt: quest.evidence?.startedAt ?? null,
-          completedAt: quest.evidence?.completedAt ?? null,
-          durationMinutes: quest.evidence?.durationMinutes ?? null,
-          distanceMeters: quest.evidence?.distanceMeters ?? null,
-          sourceActivityId: quest.evidence?.sourceActivityId ?? null,
-          quizScore: quest.evidence?.quizScore ?? null,
+          evidenceType: verifiedQuestPayload.evidence?.type ?? null,
+          evidenceProvider: verifiedQuestPayload.evidence?.provider ?? null,
+          startedAt: verifiedQuestPayload.evidence?.startedAt ?? null,
+          completedAt: verifiedQuestPayload.evidence?.completedAt ?? null,
+          durationMinutes: verifiedQuestPayload.evidence?.durationMinutes ?? null,
+          distanceMeters: verifiedQuestPayload.evidence?.distanceMeters ?? null,
+          sourceActivityId: verifiedQuestPayload.evidence?.sourceActivityId ?? null,
+          quizId: verifiedQuestPayload.evidence?.quizId ?? null,
+          quizScore: verifiedQuestPayload.evidence?.quizScore ?? null,
+          quizRiskFlags: quizSubmission == null
+            ? []
+            : readingQuizEvaluation.riskFlags,
           confidenceScore: resolution.decision.confidenceScore,
           riskFlags: resolution.decision.riskFlags,
           status: resolution.decision.status,

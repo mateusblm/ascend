@@ -113,6 +113,11 @@ service cloud.firestore {
         allow read: if isSignedIn() && request.auth.uid == userId;
         allow create, update, delete: if false;
       }
+
+      match /reading_quiz_attempts/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        allow create, update, delete: if false;
+      }
     }
   }
 }

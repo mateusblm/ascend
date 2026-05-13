@@ -3,7 +3,9 @@ const assert = require('node:assert/strict');
 const admin = require('firebase-admin');
 
 const {
+  buildDeterministicReadingQuizAttempt,
   competitiveQuestAttemptDayKey,
+  evaluateReadingQuizSubmission,
   matchesCompetitiveAttemptDay,
   parseTimestampInput,
   resolveCompetitiveQuestSessionStart,
@@ -141,27 +143,7 @@ test('verifies a valid competitive quest completion and prepares the grant write
 
   const result = resolveCompetitiveQuestCompletionVerification({
     quest: buildQuest({
-      title: 'Revisao de treino de 15 minutos',
-      templateType: 'readingSession',
-      verificationMode: 'timerWithReflection',
-      targetDurationMinutes: 15,
-      xpReward: 25,
-      rewardAttribute: 'intelligence',
-      verificationRequirement: {
-        evidenceType: 'readingComprehension',
-        minimumTrustTier: 2,
-        minimumDurationMinutes: 15,
-        minimumDistanceMeters: 0,
-        minimumQuizScore: 70,
-        allowedProviders: ['mockEvidence'],
-      },
-      reflectionAnswer: 'Resumo curto da sessao.',
-      evidence: buildEvidence({
-        type: 'readingComprehension',
-        durationMinutes: 30,
-        quizScore: 80,
-        answers: ['Resumo curto da sessao.'],
-      }),
+      evidence: buildEvidence(),
     }),
     session: {
       startedAt: timestamp('2026-04-21T15:00:00.000Z'),
@@ -175,10 +157,146 @@ test('verifies a valid competitive quest completion and prepares the grant write
   assert.ok(result.grantWrite);
   assert.ok(result.sessionWrite);
   assert.equal(result.grantWrite.dayKey, '2026-04-21');
-  assert.equal(result.grantWrite.evidenceType, 'readingComprehension');
+  assert.equal(result.grantWrite.evidenceType, 'timedFocus');
   assert.equal(result.grantWrite.confidenceScore, 75);
   assert.equal(result.grantWrite.completedAt.toMillis(), now.toMillis());
   assert.equal(result.sessionWrite.status, 'verified');
+});
+
+test('evaluates backend-owned reading quiz answers before accepting reading evidence', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+  const quest = buildQuest({
+    questId: 'reading-20-123',
+    title: 'Leitura de 20 minutos',
+    templateType: 'readingSession',
+    verificationMode: 'timerWithReflection',
+    targetDurationMinutes: 20,
+    xpReward: 30,
+    rewardAttribute: 'intelligence',
+    verificationRequirement: {
+      evidenceType: 'readingComprehension',
+      minimumTrustTier: 2,
+      minimumDurationMinutes: 20,
+      minimumDistanceMeters: 0,
+      minimumQuizScore: 70,
+      allowedProviders: ['mockEvidence'],
+    },
+    reflectionAnswer: 'Resumo curto da sessao.',
+    evidence: buildEvidence({
+      questId: 'reading-20-123',
+      type: 'readingComprehension',
+      durationMinutes: 30,
+      answers: [
+        'A ideia principal ficou clara.',
+        'A acao pratica e revisar amanha.',
+      ],
+    }),
+  });
+  const attempt = buildDeterministicReadingQuizAttempt({
+    questId: quest.questId,
+    topic: quest.title,
+    minimumScore: quest.verificationRequirement.minimumQuizScore,
+    now: timestamp('2026-04-21T15:05:00.000Z'),
+  });
+  const submission = {
+    quizId: attempt.quizId,
+    answers: ['ideia principal', 'acao pratica'],
+  };
+  const readingQuizEvaluation = evaluateReadingQuizSubmission({
+    attempt,
+    questId: quest.questId,
+    submission,
+    now,
+  });
+
+  const result = resolveCompetitiveQuestCompletionVerification({
+    quest: {
+      ...quest,
+      readingQuizEvaluation,
+      evidence: {
+        ...quest.evidence,
+        quizId: readingQuizEvaluation.quizId,
+        quizScore: readingQuizEvaluation.score,
+      },
+    },
+    session: {
+      startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+    },
+    grant: null,
+    now,
+  });
+
+  assert.equal(readingQuizEvaluation.score, 100);
+  assert.equal(result.status, 'verified');
+  assert.equal(result.grantWrite.confidenceScore, 75);
+});
+
+test('rejects reading evidence when backend-owned quiz score is too low', () => {
+  const now = timestamp('2026-04-21T15:30:00.000Z');
+  const quest = buildQuest({
+    questId: 'reading-20-123',
+    title: 'Leitura de 20 minutos',
+    templateType: 'readingSession',
+    verificationMode: 'timerWithReflection',
+    targetDurationMinutes: 20,
+    xpReward: 30,
+    rewardAttribute: 'intelligence',
+    verificationRequirement: {
+      evidenceType: 'readingComprehension',
+      minimumTrustTier: 2,
+      minimumDurationMinutes: 20,
+      minimumDistanceMeters: 0,
+      minimumQuizScore: 70,
+      allowedProviders: ['mockEvidence'],
+    },
+    reflectionAnswer: 'Resumo curto da sessao.',
+    evidence: buildEvidence({
+      questId: 'reading-20-123',
+      type: 'readingComprehension',
+      durationMinutes: 30,
+      answers: ['resposta vaga'],
+    }),
+  });
+  const attempt = buildDeterministicReadingQuizAttempt({
+    questId: quest.questId,
+    topic: quest.title,
+    minimumScore: quest.verificationRequirement.minimumQuizScore,
+    now: timestamp('2026-04-21T15:05:00.000Z'),
+  });
+  const readingQuizEvaluation = evaluateReadingQuizSubmission({
+    attempt,
+    questId: quest.questId,
+    submission: {
+      quizId: attempt.quizId,
+      answers: ['resposta vaga'],
+    },
+    now,
+  });
+
+  assert.throws(
+    () =>
+      resolveCompetitiveQuestCompletionVerification({
+        quest: {
+          ...quest,
+          readingQuizEvaluation,
+          evidence: {
+            ...quest.evidence,
+            quizId: readingQuizEvaluation.quizId,
+            quizScore: readingQuizEvaluation.score,
+          },
+        },
+        session: {
+          startedAt: timestamp('2026-04-21T15:00:00.000Z'),
+        },
+        grant: null,
+        now,
+      }),
+    (error) => {
+      assert.equal(error.code, 'failed-precondition');
+      assert.match(error.message, /lowQuizScore/);
+      return true;
+    },
+  );
 });
 
 test('verifies valid Health Connect running evidence', () => {

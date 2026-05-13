@@ -320,10 +320,20 @@ Competitive Verification V1 follow-up completed on `2026-05-13`:
 - the default app path remains mock/dev evidence until Android native build and
   real-device smoke pass.
 
+Competitive Verification V1 follow-up completed on `2026-05-13`:
+- AI Reading Quiz Contract V1 was added without binding to a real AI provider.
+- backend can issue deterministic reading quiz attempts and score submitted
+  answers before accepting reading-comprehension evidence.
+- reading quiz attempts are backend-written and client read-only in Firestore
+  rules.
+- real AI generation remains future adapter work after the deterministic
+  authority flow is wired in Flutter.
+
 Still pending after the current slice:
 - Android SDK setup and staging debug APK build for the native Health Connect code
 - real-device Health Connect permission/read smoke
-- AI reading quiz generation
+- Flutter flow for requesting/answering backend-owned reading quiz attempts
+- real AI reading quiz generation after the contract flow is stable
 
 ### Workstreams
 

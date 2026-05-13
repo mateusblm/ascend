@@ -428,6 +428,17 @@ Competitive Verification V1 Health Connect Adapter V1:
   - Android native build could not run because this workstation has no Android SDK configured.
   - run staging debug APK build and real-device Health Connect smoke before enabling the flag for release.
 
+Progress note recorded on: `2026-05-13`
+
+Competitive Verification V1 AI Reading Quiz Contract V1:
+- backend now owns deterministic reading quiz attempt issuance and evaluation.
+- competitive reading-comprehension evidence must include a backend-issued quiz attempt before it can grant reward/rank progress.
+- Firestore rules allow users to read their own quiz attempts but block direct client writes.
+- real AI generation remains intentionally unbound; it can be added later behind the contract.
+- validation passed:
+  - `npm test` in `functions`: 18 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

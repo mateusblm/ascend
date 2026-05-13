@@ -7,6 +7,7 @@ import {
   ensureStringArray,
   ensureTimestamp,
 } from '../shared/validation';
+import { ReadingQuizEvaluation } from './readingQuiz';
 
 export type ServerCompetitiveVerificationRequirement = {
   evidenceType: string;
@@ -27,6 +28,7 @@ export type ServerQuestEvidence = {
   distanceMeters: number | null;
   sourceActivityId: string | null;
   quizScore: number | null;
+  quizId: string | null;
   answers: string[];
   reflection: string | null;
 };
@@ -55,6 +57,7 @@ export type CompetitiveQuestForVerification = {
   reflectionAnswer: string | null;
   verificationRequirement: ServerCompetitiveVerificationRequirement;
   evidence: ServerQuestEvidence | null;
+  readingQuizEvaluation?: ReadingQuizEvaluation | null;
 };
 
 export function ensureEvidenceProvider(value: unknown, field: string): string {
@@ -116,6 +119,9 @@ export function validateQuestEvidencePayload(
       ? null
       : ensureString(data.sourceActivityId, 'evidence.sourceActivityId', 160),
     quizScore: ensureNonNegativeIntOrNull(data.quizScore, 'evidence.quizScore'),
+    quizId: data.quizId == null
+      ? null
+      : ensureString(data.quizId, 'evidence.quizId', 160),
     answers: data.answers == null
       ? []
       : ensureStringArray(data.answers, 'evidence.answers', 500),
@@ -182,12 +188,20 @@ export function evaluateCompetitiveQuestEvidence(args: {
     }
   }
 
-  if (
-    requirement.minimumQuizScore > 0 &&
-    (evidence.quizScore == null ||
-      evidence.quizScore < requirement.minimumQuizScore)
-  ) {
-    riskFlags.push('missingQuiz');
+  if (requirement.minimumQuizScore > 0) {
+    const quizEvaluation = quest.readingQuizEvaluation ?? null;
+    if (quest.verificationRequirement.evidenceType === 'readingComprehension') {
+      if (!quizEvaluation) {
+        riskFlags.push('missingQuizAttempt');
+      } else {
+        riskFlags.push(...quizEvaluation.riskFlags);
+      }
+    } else if (
+      evidence.quizScore == null ||
+      evidence.quizScore < requirement.minimumQuizScore
+    ) {
+      riskFlags.push('missingQuiz');
+    }
   }
 
   if (
@@ -201,7 +215,10 @@ export function evaluateCompetitiveQuestEvidence(args: {
     riskFlags.includes('invalidProvider') ||
     riskFlags.includes('completedBeforeStart') ||
     riskFlags.includes('impossiblePace') ||
-    riskFlags.includes('staleEvidence')
+    riskFlags.includes('staleEvidence') ||
+    riskFlags.includes('quizQuestMismatch') ||
+    riskFlags.includes('quizIdMismatch') ||
+    riskFlags.includes('staleQuiz')
   ) {
     return {
       status: 'rejected' as const,
@@ -215,7 +232,11 @@ export function evaluateCompetitiveQuestEvidence(args: {
     riskFlags.includes('durationTooShort') ||
     riskFlags.includes('missingDistance') ||
     riskFlags.includes('distanceTooShort') ||
-    riskFlags.includes('missingQuiz')
+    riskFlags.includes('missingQuiz') ||
+    riskFlags.includes('missingQuizAttempt') ||
+    riskFlags.includes('missingQuizSubmission') ||
+    riskFlags.includes('missingQuizAnswer') ||
+    riskFlags.includes('lowQuizScore')
   ) {
     return {
       status: 'insufficientEvidence' as const,

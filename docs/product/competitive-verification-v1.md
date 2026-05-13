@@ -23,11 +23,13 @@ Implemented on `2026-05-13`:
 - provider adapter boundary for Flutter evidence sources
 - Health Connect Adapter V1 behind `ASCEND_USE_HEALTH_CONNECT=true`
 - backend acceptance for `healthConnect` evidence on running/workout templates
+- backend-owned deterministic reading quiz contract for reading-comprehension evidence
 
 Still future:
 - real Strava adapter
 - real AI reading quiz generation
 - Android native build and real-device smoke for Health Connect before release enablement
+- Flutter UI flow for requesting and answering backend-owned reading quiz attempts
 
 ## Product Problem
 
@@ -76,12 +78,14 @@ V1 implementation should include:
 - `appTimer`: current in-app timer path, formalized as evidence.
 - `mockEvidence`: deterministic provider for tests and development.
 - `healthConnect`: Android exercise sessions, duration, distance, and source session id, gated behind feature flag until native build and device smoke pass.
+- `backendReadingQuiz`: deterministic backend-owned quiz attempt and scoring contract for reading-comprehension quests.
 
 Later adapters:
 - `strava`: OAuth activity import and webhook-based refresh.
 - `aiReadingQuiz`: generated comprehension check from user-declared book/topic.
 
 Health Connect is present as a gated adapter. Do not enable it for release until Android native build and real-device permission/read smoke pass.
+AI reading generation is intentionally not bound yet; the backend quiz contract owns scoring first, and IA can later replace deterministic question generation behind that boundary.
 
 ## Domain Model Sketch
 
@@ -266,7 +270,9 @@ Flutter tests:
 7. Add provider adapter boundary.
 8. Add Health Connect behind a feature flag.
 9. Validate Android native build and real-device Health Connect smoke.
-10. Only then evaluate Strava and AI reading quiz adapters.
+10. Add backend-owned reading quiz contract.
+11. Wire Flutter reading quests to request and answer quiz attempts.
+12. Only then evaluate Strava and AI reading quiz adapters.
 
 ## Out Of Scope For V1
 

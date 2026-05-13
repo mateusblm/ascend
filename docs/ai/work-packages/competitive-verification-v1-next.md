@@ -65,6 +65,16 @@ Health Connect Adapter V1 is implemented behind a feature flag:
 - Android native compilation and real-device smoke are still pending because the
   current workstation has no Android SDK configured.
 
+AI Reading Quiz Contract V1 is implemented without a real AI provider:
+- backend can issue deterministic reading quiz attempts through
+  `startReadingQuizAttempt`.
+- competitive reading evidence now needs a backend-owned quiz attempt/evaluation
+  before reward/rank progress is accepted.
+- quiz attempts are readable by the owner but cannot be written directly by the
+  client.
+- real AI generation remains future adapter work; the contract now defines the
+  authority boundary first.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
@@ -74,7 +84,8 @@ Continue `Competitive Verification V1`:
 1. Configure Android SDK locally and run a staging debug APK build.
 2. Run real-device Health Connect smoke with
    `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
-3. Add AI reading quiz only after quiz contract is backend-owned.
+3. Wire Flutter reading quests to request/answer the backend quiz contract.
+4. Add real AI generation only after the deterministic contract flow is stable.
 
 ## Likely Files
 

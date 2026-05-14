@@ -467,6 +467,8 @@ Competitive Verification V1 reading quiz AI adapter boundary:
 - Gemini is now the concrete provider implementation, using REST
   `generateContent`, structured JSON output, `GEMINI_API_KEY`, and default model
   `gemini-2.5-flash-lite`.
+- `startReadingQuizAttempt` returns non-secret generator metadata for smoke and
+  debugging.
 - validation passed:
   - `npm run build` in `functions`: passed
   - `npm test` in `functions`: 23 tests passed

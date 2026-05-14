@@ -2446,6 +2446,7 @@ export const startReadingQuizAttempt = onCall(
       questId: attempt.questId,
       topic: attempt.topic,
       minimumScore: attempt.minimumScore,
+      generator: attempt.generator,
       issuedAt: attempt.issuedAt.toDate().toISOString(),
       expiresAt: attempt.expiresAt.toDate().toISOString(),
       questions: attempt.questions.map((question) => ({

@@ -105,6 +105,9 @@ GEMINI_READING_QUIZ_MODEL=gemini-2.5-flash-lite
 
 `GEMINI_READING_QUIZ_MODEL` is optional; the default is `gemini-2.5-flash-lite`.
 
+`startReadingQuizAttempt` returns a non-secret `generator` field so staging
+smoke can confirm whether the active path is deterministic or Gemini-backed.
+
 ## Domain Model Sketch
 
 Suggested names can change, but the concepts should remain.

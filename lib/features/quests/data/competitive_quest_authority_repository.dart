@@ -45,6 +45,7 @@ class ReadingQuizAttempt {
     required this.questId,
     required this.topic,
     required this.minimumScore,
+    required this.generator,
     required this.expiresAt,
     required this.questions,
   });
@@ -53,6 +54,7 @@ class ReadingQuizAttempt {
   final String questId;
   final String topic;
   final int minimumScore;
+  final String generator;
   final DateTime expiresAt;
   final List<ReadingQuizQuestion> questions;
 }
@@ -212,6 +214,7 @@ class CompetitiveQuestAuthorityRepository {
         questId: data['questId'] as String,
         topic: data['topic'] as String,
         minimumScore: data['minimumScore'] as int,
+        generator: data['generator'] as String? ?? 'unknown',
         expiresAt: _dateTimeFromPayload(data['expiresAt']),
         questions: questionsRaw
             .whereType<Map>()

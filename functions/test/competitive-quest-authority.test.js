@@ -7,6 +7,7 @@ const {
   createReadingQuizGenerator,
   competitiveQuestAttemptDayKey,
   evaluateReadingQuizSubmission,
+  GeminiReadingQuizQuestionProvider,
   matchesCompetitiveAttemptDay,
   parseTimestampInput,
   resolveCompetitiveQuestSessionStart,
@@ -304,6 +305,89 @@ test('fails closed when AI reading quiz generation is enabled without provider',
     (error) => {
       assert.equal(error.code, 'failed-precondition');
       assert.match(error.message, /IA nao configurado/);
+      return true;
+    },
+  );
+});
+
+test('Gemini provider maps structured output into reading quiz questions', async () => {
+  const calls = [];
+  const provider = new GeminiReadingQuizQuestionProvider({
+    apiKey: 'test-key',
+    fetchFn: async (url, init) => {
+      calls.push({url, init});
+      return {
+        ok: true,
+        async json() {
+          return {
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text: JSON.stringify({
+                        questions: [
+                          {
+                            id: 'main-argument',
+                            prompt: 'Qual argumento central do texto?',
+                            acceptedAnswer: 'argumento central',
+                          },
+                          {
+                            id: 'next-action',
+                            prompt: 'Qual acao pratica voce tirou?',
+                            acceptedAnswer: 'acao pratica',
+                          },
+                        ],
+                      }),
+                    },
+                  ],
+                },
+              },
+            ],
+          };
+        },
+      };
+    },
+  });
+
+  const questions = await provider.generateQuestions({
+    questId: 'reading-20-123',
+    topic: 'Habitos Atomicos',
+    minimumScore: 70,
+    now: timestamp('2026-04-21T15:05:00.000Z'),
+  });
+
+  assert.equal(questions.length, 2);
+  assert.equal(questions[0].id, 'main-argument');
+  assert.equal(questions[1].acceptedAnswer, 'acao pratica');
+  assert.match(calls[0].url, /gemini-2\.5-flash-lite:generateContent$/);
+  const body = JSON.parse(calls[0].init.body);
+  assert.equal(body.generationConfig.responseMimeType, 'application/json');
+  assert.equal(body.generationConfig.responseJsonSchema.required[0], 'questions');
+});
+
+test('Gemini provider fails when the API returns an error', async () => {
+  const provider = new GeminiReadingQuizQuestionProvider({
+    apiKey: 'test-key',
+    fetchFn: async () => ({
+      ok: false,
+      async json() {
+        return {};
+      },
+    }),
+  });
+
+  await assert.rejects(
+    () =>
+      provider.generateQuestions({
+        questId: 'reading-20-123',
+        topic: 'Habitos Atomicos',
+        minimumScore: 70,
+        now: timestamp('2026-04-21T15:05:00.000Z'),
+      }),
+    (error) => {
+      assert.equal(error.code, 'unavailable');
+      assert.match(error.message, /Gemini/);
       return true;
     },
   );

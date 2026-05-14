@@ -91,6 +91,14 @@ Reading quiz AI adapter boundary is implemented:
   supplied.
 - no provider SDK, API key, or network call is coupled to the core callable yet.
 
+Gemini reading quiz provider is implemented:
+- `GeminiReadingQuizQuestionProvider` calls Gemini REST `generateContent`
+  directly with structured JSON output.
+- default model is `gemini-2.5-flash-lite`.
+- required secret/env var: `GEMINI_API_KEY`.
+- optional env var: `GEMINI_READING_QUIZ_MODEL`.
+- `startReadingQuizAttempt` binds the Firebase secret `GEMINI_API_KEY`.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
@@ -100,8 +108,8 @@ Continue `Competitive Verification V1`:
 1. Configure Android SDK locally and run a staging debug APK build.
 2. Run real-device Health Connect smoke with
    `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
-3. Choose/configure the real AI provider and implement the provider-backed
-   `AiReadingQuizQuestionProvider`.
+3. Configure `GEMINI_API_KEY` and smoke-test
+   `ASCEND_READING_QUIZ_GENERATOR=ai` against non-sensitive test topics.
 
 ## Likely Files
 

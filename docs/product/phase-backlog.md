@@ -346,13 +346,16 @@ Competitive Verification V1 follow-up completed on `2026-05-14`:
 - an `AiReadingQuizGenerator` boundary exists behind
   `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed until a concrete provider
   is supplied.
-- no real provider SDK, API key, prompt, or network call is hardcoded into the
-  competitive verification callable.
+- Gemini is now the concrete provider implementation using REST
+  `generateContent`, structured JSON output, `GEMINI_API_KEY`, and default model
+  `gemini-2.5-flash-lite`.
+- no API key is hardcoded into the competitive verification callable.
 
 Still pending after the current slice:
 - Android SDK setup and staging debug APK build for the native Health Connect code
 - real-device Health Connect permission/read smoke
-- choose/configure a real AI provider and implement its question provider
+- configure `GEMINI_API_KEY` and smoke-test AI quiz generation with
+  non-sensitive test topics
 
 ### Workstreams
 

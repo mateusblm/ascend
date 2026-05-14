@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import {
   competitiveQuestAttemptDayKey,
@@ -99,6 +100,7 @@ export {
   AiReadingQuizGenerator,
   createReadingQuizGenerator,
   DeterministicReadingQuizGenerator,
+  GeminiReadingQuizQuestionProvider,
 } from './competitive/readingQuizGenerator';
 
 admin.initializeApp();
@@ -219,6 +221,7 @@ const COMPETITIVE_SYNC_SCHEMA_VERSION = 3;
 const PLAYER_PROFILE_SYNC_SCHEMA_VERSION = 1;
 const QUEST_INVENTORY_SYNC_SCHEMA_VERSION = 1;
 const ACTIVE_SESSION_LEASE_MS = 5 * 60 * 1000;
+const GEMINI_API_KEY_SECRET = defineSecret('GEMINI_API_KEY');
 const CALLABLE_OPTIONS = {
   region: 'southamerica-east1',
 };
@@ -2394,7 +2397,10 @@ export const startCompetitiveQuestSession = onCall(
 );
 
 export const startReadingQuizAttempt = onCall(
-  CALLABLE_OPTIONS,
+  {
+    ...CALLABLE_OPTIONS,
+    secrets: [GEMINI_API_KEY_SECRET],
+  },
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Usuario nao autenticado.');

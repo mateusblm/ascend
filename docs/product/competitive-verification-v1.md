@@ -31,10 +31,12 @@ Implemented on `2026-05-14`:
   quiz generation
 - fail-closed `AiReadingQuizGenerator` adapter shape behind
   `ASCEND_READING_QUIZ_GENERATOR=ai`
+- Gemini provider for reading quiz generation through REST `generateContent`
+  with structured JSON output
 
 Still future:
 - real Strava adapter
-- real AI provider integration for reading quiz generation
+- real Gemini smoke with `GEMINI_API_KEY` configured outside source control
 - Android native build and real-device smoke for Health Connect before release enablement
 
 ## Product Problem
@@ -91,7 +93,17 @@ Later adapters:
 - `aiReadingQuiz`: generated comprehension check from user-declared book/topic.
 
 Health Connect is present as a gated adapter. Do not enable it for release until Android native build and real-device permission/read smoke pass.
-AI reading generation now has a backend adapter boundary but no real provider bound yet. Deterministic generation remains the default. If `ASCEND_READING_QUIZ_GENERATOR=ai` is enabled without a provider, the backend fails closed instead of falling back silently.
+AI reading generation now has a backend adapter boundary and a Gemini provider. Deterministic generation remains the default. If `ASCEND_READING_QUIZ_GENERATOR=ai` is enabled without `GEMINI_API_KEY`, the backend fails closed instead of falling back silently.
+
+Runtime configuration:
+
+```text
+ASCEND_READING_QUIZ_GENERATOR=ai
+GEMINI_API_KEY=<configured as local env var or Firebase secret>
+GEMINI_READING_QUIZ_MODEL=gemini-2.5-flash-lite
+```
+
+`GEMINI_READING_QUIZ_MODEL` is optional; the default is `gemini-2.5-flash-lite`.
 
 ## Domain Model Sketch
 

@@ -101,6 +101,24 @@ flutter run --flavor staging --dart-define=ASCEND_SUPPORT_EMAIL=support@your-dom
 
 If no define is provided, the app falls back to the placeholder `support@ascend.app`.
 
+## Backend AI Configuration
+
+Reading quiz AI generation is disabled by default. The backend uses deterministic
+quiz generation unless explicitly configured.
+
+```powershell
+# Local Functions shell/test environment only; do not commit the key.
+$env:ASCEND_READING_QUIZ_GENERATOR="ai"
+$env:GEMINI_API_KEY="<local-api-key>"
+$env:GEMINI_READING_QUIZ_MODEL="gemini-2.5-flash-lite"
+
+# Firebase deployed Functions secret.
+firebase functions:secrets:set GEMINI_API_KEY
+```
+
+`GEMINI_READING_QUIZ_MODEL` is optional. If omitted, Functions use
+`gemini-2.5-flash-lite`.
+
 ## Current Constraints
 
 - the current Firebase project is shared by staging and production by explicit decision for the current validation phase

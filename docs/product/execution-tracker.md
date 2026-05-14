@@ -464,9 +464,12 @@ Competitive Verification V1 reading quiz AI adapter boundary:
 - `AiReadingQuizGenerator` supports provider-backed question generation behind
   `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed when no real provider is
   supplied.
+- Gemini is now the concrete provider implementation, using REST
+  `generateContent`, structured JSON output, `GEMINI_API_KEY`, and default model
+  `gemini-2.5-flash-lite`.
 - validation passed:
   - `npm run build` in `functions`: passed
-  - `npm test` in `functions`: 21 tests passed
+  - `npm test` in `functions`: 23 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
 
 Planned completion note:

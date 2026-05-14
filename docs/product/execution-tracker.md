@@ -473,6 +473,14 @@ Competitive Verification V1 reading quiz AI adapter boundary:
   - `npm run build` in `functions`: passed
   - `npm test` in `functions`: 23 tests passed
   - `npm run test:rules` in `functions`: 7 tests passed
+- deployed:
+  - `firebase deploy --only functions:startReadingQuizAttempt --project ascend-b7c20`
+  - Firebase loaded `functions/.env.ascend-b7c20` and updated
+    `startReadingQuizAttempt(southamerica-east1)`
+- follow-up:
+  - deploy warned that Cloud Functions Node.js 20 runtime was deprecated on
+    `2026-04-30` and is scheduled for decommission on `2026-10-30`; plan a
+    runtime upgrade pass before release.
 
 Planned completion note:
 - record release identity/environment readiness

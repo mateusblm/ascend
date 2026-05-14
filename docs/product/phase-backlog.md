@@ -356,6 +356,8 @@ Still pending after the current slice:
 - real-device Health Connect permission/read smoke
 - configure `GEMINI_API_KEY` and smoke-test AI quiz generation with
   non-sensitive test topics
+- plan Cloud Functions runtime upgrade before `2026-10-30` because deploy now
+  warns Node.js 20 is deprecated for Cloud Functions
 
 ### Workstreams
 

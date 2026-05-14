@@ -13,6 +13,7 @@ export type ReadingQuizAttempt = {
   questId: string;
   topic: string;
   minimumScore: number;
+  generator: string;
   questions: ReadingQuizQuestion[];
   issuedAt: admin.firestore.Timestamp;
   expiresAt: admin.firestore.Timestamp;
@@ -46,6 +47,7 @@ export function buildDeterministicReadingQuizAttempt(args: {
     questId: args.questId,
     topic: normalizedTopic,
     minimumScore: args.minimumScore,
+    generator: 'deterministic_contract_v1',
     issuedAt: args.now,
     expiresAt: admin.firestore.Timestamp.fromMillis(
       args.now.toMillis() + quizLifetimeMillis,
@@ -171,6 +173,9 @@ export function readingQuizAttemptFromData(
     questId: data.questId,
     topic: data.topic,
     minimumScore: data.minimumScore,
+    generator: typeof data.generator === 'string'
+      ? data.generator
+      : 'deterministic_contract_v1',
     questions,
     issuedAt: data.issuedAt,
     expiresAt: data.expiresAt,
@@ -183,10 +188,10 @@ export function readingQuizAttemptWrite(attempt: ReadingQuizAttempt) {
     questId: attempt.questId,
     topic: attempt.topic,
     minimumScore: attempt.minimumScore,
+    generator: attempt.generator,
     questions: attempt.questions,
     issuedAt: attempt.issuedAt,
     expiresAt: attempt.expiresAt,
-    generator: 'deterministic_contract_v1',
   };
 }
 

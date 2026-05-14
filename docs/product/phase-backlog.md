@@ -338,10 +338,21 @@ Competitive Verification V1 follow-up completed on `2026-05-13`:
   quiz submissions, but does not grant local authority when backend authority is
   active.
 
+Competitive Verification V1 follow-up completed on `2026-05-14`:
+- backend reading quiz generation now goes through a `ReadingQuizGenerator`
+  adapter boundary.
+- deterministic quiz generation remains the default and preserves the existing
+  callable contract.
+- an `AiReadingQuizGenerator` boundary exists behind
+  `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed until a concrete provider
+  is supplied.
+- no real provider SDK, API key, prompt, or network call is hardcoded into the
+  competitive verification callable.
+
 Still pending after the current slice:
 - Android SDK setup and staging debug APK build for the native Health Connect code
 - real-device Health Connect permission/read smoke
-- real AI reading quiz generation after the contract flow is stable
+- choose/configure a real AI provider and implement its question provider
 
 ### Workstreams
 

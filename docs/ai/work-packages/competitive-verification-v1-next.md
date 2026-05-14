@@ -83,6 +83,14 @@ Flutter reading quiz flow is implemented:
 - local pre-validation is skipped only for backend-owned quiz submissions; the
   backend still decides score, reward, and rank progress.
 
+Reading quiz AI adapter boundary is implemented:
+- `ReadingQuizGenerator` is the backend-side generation boundary.
+- deterministic generation remains the default provider.
+- `AiReadingQuizGenerator` is available behind
+  `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed until a real provider is
+  supplied.
+- no provider SDK, API key, or network call is coupled to the core callable yet.
+
 Do not reimplement this from scratch. Continue from the current code.
 
 ## Next Package
@@ -92,7 +100,8 @@ Continue `Competitive Verification V1`:
 1. Configure Android SDK locally and run a staging debug APK build.
 2. Run real-device Health Connect smoke with
    `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
-3. Add real AI generation only after the deterministic contract flow is stable.
+3. Choose/configure the real AI provider and implement the provider-backed
+   `AiReadingQuizQuestionProvider`.
 
 ## Likely Files
 

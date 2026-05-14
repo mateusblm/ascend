@@ -18,6 +18,7 @@ import {
   readingQuizAttemptWrite,
   validateReadingQuizSubmission,
 } from './competitive/readingQuiz';
+import { createReadingQuizGenerator } from './competitive/readingQuizGenerator';
 import {
   higherRank,
   playerRankForLevel,
@@ -94,6 +95,11 @@ export {
   evaluateReadingQuizSubmission,
   validateReadingQuizSubmission,
 } from './competitive/readingQuiz';
+export {
+  AiReadingQuizGenerator,
+  createReadingQuizGenerator,
+  DeterministicReadingQuizGenerator,
+} from './competitive/readingQuizGenerator';
 
 admin.initializeApp();
 
@@ -2414,7 +2420,8 @@ export const startReadingQuizAttempt = onCall(
       );
     }
 
-    const attempt = buildDeterministicReadingQuizAttempt({
+    const quizGenerator = createReadingQuizGenerator();
+    const attempt = await quizGenerator.generateAttempt({
       questId: payload.questId,
       topic: payload.topic,
       minimumScore: template.verificationRequirement.minimumQuizScore,

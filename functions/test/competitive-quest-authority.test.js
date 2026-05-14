@@ -4,6 +4,7 @@ const admin = require('firebase-admin');
 
 const {
   buildDeterministicReadingQuizAttempt,
+  createReadingQuizGenerator,
   competitiveQuestAttemptDayKey,
   evaluateReadingQuizSubmission,
   matchesCompetitiveAttemptDay,
@@ -229,6 +230,83 @@ test('evaluates backend-owned reading quiz answers before accepting reading evid
   assert.equal(readingQuizEvaluation.score, 100);
   assert.equal(result.status, 'verified');
   assert.equal(result.grantWrite.confidenceScore, 75);
+});
+
+test('uses deterministic reading quiz generator by default', async () => {
+  const generator = createReadingQuizGenerator({
+    env: {},
+  });
+
+  const attempt = await generator.generateAttempt({
+    questId: 'reading-20-123',
+    topic: 'Habitos Atomicos',
+    minimumScore: 70,
+    now: timestamp('2026-04-21T15:05:00.000Z'),
+  });
+
+  assert.equal(generator.name, 'deterministic');
+  assert.equal(attempt.generator, 'deterministic_contract_v1');
+  assert.equal(attempt.questions.length, 2);
+  assert.match(attempt.questions[0].prompt, /Habitos Atomicos/);
+});
+
+test('supports provider-backed AI reading quiz generation behind adapter', async () => {
+  const generator = createReadingQuizGenerator({
+    env: {
+      ASCEND_READING_QUIZ_GENERATOR: 'ai',
+    },
+    aiProvider: {
+      async generateQuestions() {
+        return [
+          {
+            id: 'thesis',
+            prompt: 'Qual tese central do texto?',
+            acceptedAnswer: 'tese central',
+          },
+          {
+            id: 'application',
+            prompt: 'Qual aplicacao pratica voce encontrou?',
+            acceptedAnswer: 'aplicacao pratica',
+          },
+        ];
+      },
+    },
+  });
+
+  const attempt = await generator.generateAttempt({
+    questId: 'reading-20-123',
+    topic: 'Habitos Atomicos',
+    minimumScore: 70,
+    now: timestamp('2026-04-21T15:05:00.000Z'),
+  });
+
+  assert.equal(generator.name, 'ai');
+  assert.equal(attempt.generator, 'ai_adapter_v1');
+  assert.equal(attempt.questions[0].id, 'thesis');
+  assert.equal(attempt.questions[1].acceptedAnswer, 'aplicacao pratica');
+});
+
+test('fails closed when AI reading quiz generation is enabled without provider', async () => {
+  const generator = createReadingQuizGenerator({
+    env: {
+      ASCEND_READING_QUIZ_GENERATOR: 'ai',
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      generator.generateAttempt({
+        questId: 'reading-20-123',
+        topic: 'Habitos Atomicos',
+        minimumScore: 70,
+        now: timestamp('2026-04-21T15:05:00.000Z'),
+      }),
+    (error) => {
+      assert.equal(error.code, 'failed-precondition');
+      assert.match(error.message, /IA nao configurado/);
+      return true;
+    },
+  );
 });
 
 test('rejects reading evidence when backend-owned quiz score is too low', () => {

@@ -453,6 +453,22 @@ Competitive Verification V1 Flutter reading quiz flow:
   - `flutter analyze`: no issues found
   - `flutter test`: 81 tests passed
 
+Progress note recorded on: `2026-05-14`
+
+Competitive Verification V1 reading quiz AI adapter boundary:
+- backend reading quiz generation now depends on a `ReadingQuizGenerator`
+  interface instead of calling the deterministic builder directly from the
+  callable.
+- deterministic generation remains the default provider and keeps the Flutter
+  contract unchanged.
+- `AiReadingQuizGenerator` supports provider-backed question generation behind
+  `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed when no real provider is
+  supplied.
+- validation passed:
+  - `npm run build` in `functions`: passed
+  - `npm test` in `functions`: 21 tests passed
+  - `npm run test:rules` in `functions`: 7 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

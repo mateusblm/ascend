@@ -26,9 +26,15 @@ Implemented on `2026-05-13`:
 - backend-owned deterministic reading quiz contract for reading-comprehension evidence
 - Flutter UI flow for requesting and answering backend-owned reading quiz attempts
 
+Implemented on `2026-05-14`:
+- backend-side `ReadingQuizGenerator` boundary for deterministic and future AI
+  quiz generation
+- fail-closed `AiReadingQuizGenerator` adapter shape behind
+  `ASCEND_READING_QUIZ_GENERATOR=ai`
+
 Still future:
 - real Strava adapter
-- real AI reading quiz generation
+- real AI provider integration for reading quiz generation
 - Android native build and real-device smoke for Health Connect before release enablement
 
 ## Product Problem
@@ -85,7 +91,7 @@ Later adapters:
 - `aiReadingQuiz`: generated comprehension check from user-declared book/topic.
 
 Health Connect is present as a gated adapter. Do not enable it for release until Android native build and real-device permission/read smoke pass.
-AI reading generation is intentionally not bound yet; the backend quiz contract owns scoring first, and IA can later replace deterministic question generation behind that boundary.
+AI reading generation now has a backend adapter boundary but no real provider bound yet. Deterministic generation remains the default. If `ASCEND_READING_QUIZ_GENERATOR=ai` is enabled without a provider, the backend fails closed instead of falling back silently.
 
 ## Domain Model Sketch
 

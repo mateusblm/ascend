@@ -94,6 +94,7 @@ Later adapters:
 
 Health Connect is present as a gated adapter. Do not enable it for release until Android native build and real-device permission/read smoke pass.
 AI reading generation now has a backend adapter boundary and a Gemini provider. Deterministic generation remains the default. If `ASCEND_READING_QUIZ_GENERATOR=ai` is enabled without `GEMINI_API_KEY`, the backend fails closed instead of falling back silently.
+Android `minSdk` is now 26 because `androidx.health.connect:connect-client:1.1.0` declares API 26 as its minimum.
 
 Runtime configuration:
 

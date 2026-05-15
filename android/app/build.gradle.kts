@@ -19,7 +19,7 @@ dependencies {
   // When using the BoM, don't specify versions in Firebase dependencies
 
   implementation("com.google.firebase:firebase-analytics")
-  implementation("androidx.health.connect:connect-client:1.2.0-alpha04")
+  implementation("androidx.health.connect:connect-client:1.1.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
 
@@ -53,7 +53,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ascend.mobile"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

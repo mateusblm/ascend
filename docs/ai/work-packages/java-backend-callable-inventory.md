@@ -1077,7 +1077,11 @@ Status:
 - callable inventory created
 - first Java migration candidate selected
 - first endpoint contract drafted
+- Java auth base implemented locally
+- `GET /api/v1/me` implemented locally
+- `GET /api/v1/season-leaderboard` implemented locally
+- Java tests and package pass locally
 
 Next phase:
-- create Maven/Spring Boot backend skeleton under `backend/`
-
+- deploy Java backend to Cloud Run staging and compare the Java leaderboard
+  response against the current TypeScript callable

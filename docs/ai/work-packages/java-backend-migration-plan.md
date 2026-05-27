@@ -807,11 +807,13 @@ Pending tasks:
 - create `backend/` Maven skeleton: completed
 - add `/health`: completed
 - validate `backend/` with Maven: completed after installing Apache Maven 3.9.16
+- add Firebase Auth validation endpoint: completed locally with `GET /api/v1/me`
+- choose first read-only endpoint: completed with `getSeasonBracketLeaderboard`
+- document first endpoint contract: completed in `java-backend-callable-inventory.md`
+- implement first Java endpoint: completed locally with
+  `GET /api/v1/season-leaderboard`
 - deploy Cloud Run staging service
-- add Firebase Auth validation endpoint
-- choose first read-only endpoint
-- document first endpoint contract
-- implement first Java endpoint behind staging-only config
+- wire Flutter staging/debug config to Java endpoint after Cloud Run deploy
 
 ## Status
 
@@ -821,5 +823,12 @@ Current status:
 - Java backend skeleton created under `backend/`
 - `/health` endpoint created
 - Maven validation completed with Apache Maven 3.9.16
+- Firebase Auth token filter created for `/api/v1/**`
+- protected `/api/v1/me` endpoint created and tested
+- Java `GET /api/v1/season-leaderboard` endpoint created and tested as the
+  first migrated read-only endpoint
+- local validation passed:
+  - `mvn test`
+  - `mvn package`
 - current TypeScript backend remains authoritative
 - Maven is the selected Java dependency/build tool

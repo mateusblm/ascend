@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "331143433117-4avsqef5a1htb599dgfukdeqv0ge5uom.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ascend.mobile",
+            "certificate_hash": "c123a0e6972a6238458bd84e46a3e5b05c85fa4b"
+          }
+        },
+        {
           "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -37,6 +45,13 @@
             {
               "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "331143433117-ahbv01fale82t8bc2ljens73sjic294p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ascend.mobile"
+              }
             }
           ]
         }
@@ -50,6 +65,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "331143433117-27pe10uvmfvh7k18slk67f4qkurfrcd7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ascend.mobile.staging",
+            "certificate_hash": "f33ff2f57d0acc9d85ef54e7f86fc2ad3df8ea1c"
+          }
+        },
         {
           "client_id": "331143433117-smroqrlnp5e2s851ijhbfpf6r0miakrl.apps.googleusercontent.com",
           "client_type": 1,
@@ -74,6 +97,13 @@
             {
               "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "331143433117-ahbv01fale82t8bc2ljens73sjic294p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ascend.mobile"
+              }
             }
           ]
         }
@@ -111,6 +141,13 @@
             {
               "client_id": "331143433117-4vdnd4s9rqfl5jc64tosijlfif2ub6ti.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "331143433117-ahbv01fale82t8bc2ljens73sjic294p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ascend.mobile"
+              }
             }
           ]
         }

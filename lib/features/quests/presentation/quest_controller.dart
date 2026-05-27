@@ -232,11 +232,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     }
 
     final repository = _questSyncRepository;
-    final remoteInitialized = repository == null
-        ? false
-        : await repository.hasInitializedSnapshot(user.uid);
+    if (repository == null) {
+      return;
+    }
 
-    _remoteQuestSubscription = repository?.watchQuests(user.uid).listen((
+    final remoteInitialized = await _hasInitializedRemoteSnapshot(
+      repository,
+      user.uid,
+    );
+
+    _remoteQuestSubscription = repository.watchQuests(user.uid).listen((
       remoteQuests,
     ) {
       if (remoteQuests.isNotEmpty) {
@@ -257,13 +262,42 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       if (shouldUploadQuestCacheWhenRemoteMissing(state)) {
         unawaited(_pushRemoteQuests(state));
       }
-    });
+    }, onError: _handleRemoteQuestStreamError);
+  }
+
+  Future<bool> _hasInitializedRemoteSnapshot(
+    QuestSyncRepository repository,
+    String uid,
+  ) async {
+    try {
+      return await repository.hasInitializedSnapshot(uid);
+    } catch (error, stackTrace) {
+      _logQuestSyncIssue('hasInitializedSnapshot', error, stackTrace);
+      return false;
+    }
+  }
+
+  void _handleRemoteQuestStreamError(Object error, StackTrace stackTrace) {
+    _logQuestSyncIssue('watchQuests', error, stackTrace);
+  }
+
+  void _logQuestSyncIssue(
+    String stage,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    if (kDebugMode) {
+      debugPrint('Quest sync fallback at $stage: $error');
+    }
   }
 
   void _applyRemoteQuests(List<Quest> remoteQuests) {
     _isApplyingRemoteSnapshot = true;
-    _replaceLocalState(remoteQuests, syncRemote: false);
-    _isApplyingRemoteSnapshot = false;
+    try {
+      _replaceLocalState(remoteQuests, syncRemote: false);
+    } finally {
+      _isApplyingRemoteSnapshot = false;
+    }
   }
 
   List<Quest> _loadCachedQuestsForUid(String uid) {
@@ -303,9 +337,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
 
   void _replaceLocalState(List<Quest> quests, {bool syncRemote = true}) {
     final uid = _activeUid;
-    final normalized = quests
-        .map((quest) => quest.copyWith(ownerUid: uid ?? quest.ownerUid))
-        .toList(growable: false);
+    final normalizedById = <String, Quest>{};
+    for (final quest in quests) {
+      normalizedById[quest.id] = quest.copyWith(
+        ownerUid: uid ?? quest.ownerUid,
+      );
+    }
+    final normalized = normalizedById.values.toList(growable: false);
     final byId = <String, Quest>{
       for (final quest in _isar.quests.where().findAllSync())
         if (uid == null || quest.ownerUid == uid) quest.id: quest,

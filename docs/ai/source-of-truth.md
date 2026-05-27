@@ -74,6 +74,7 @@ Current handling:
 These documents are useful for a specific work package and should be archived,
 deleted, or folded into durable docs once their package is complete:
 - `docs/ai/work-packages/competitive-verification-v1-next.md`
+- `docs/ai/work-packages/java-backend-migration-plan.md`
 
 Do not treat work-package briefs as permanent architecture.
 

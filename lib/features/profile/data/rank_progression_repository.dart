@@ -29,7 +29,7 @@ class RankProgressionRepository {
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   static const int syncSchemaVersion = 3;
-  static const Duration _rpcTimeout = Duration(seconds: 4);
+  static const Duration _rpcTimeout = Duration(seconds: 12);
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;

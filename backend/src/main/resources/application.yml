@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: ascend-backend
+
+server:
+  port: ${PORT:8080}

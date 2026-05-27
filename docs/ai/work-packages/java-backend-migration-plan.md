@@ -806,8 +806,7 @@ Pending tasks:
 - create callable inventory: `completed in java-backend-callable-inventory.md`
 - create `backend/` Maven skeleton: completed
 - add `/health`: completed
-- validate `backend/` with Maven: pending because `mvn` is not available in the
-  current Windows PATH
+- validate `backend/` with Maven: completed after installing Apache Maven 3.9.16
 - deploy Cloud Run staging service
 - add Firebase Auth validation endpoint
 - choose first read-only endpoint
@@ -821,7 +820,6 @@ Current status:
 - callable inventory created
 - Java backend skeleton created under `backend/`
 - `/health` endpoint created
-- Maven validation pending because `mvn` is not installed or not on PATH in the
-  current environment
+- Maven validation completed with Apache Maven 3.9.16
 - current TypeScript backend remains authoritative
 - Maven is the selected Java dependency/build tool

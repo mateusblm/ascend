@@ -10,6 +10,7 @@ import static app.ascend.backend.quests.ValidadorPayloadInventarioQuest.requireI
 import static app.ascend.backend.quests.ValidadorPayloadInventarioQuest.requireLowerAllowed;
 import static app.ascend.backend.quests.ValidadorPayloadInventarioQuest.requireString;
 
+import app.ascend.backend.compartilhado.ExcecaoApi;
 import com.google.cloud.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Converte o payload REST nao confiavel em dados de dominio normalizados.
@@ -53,12 +53,17 @@ public class ValidadorRequisicaoInventarioQuest {
       "verified"
   );
 
-  private final CatalogoQuestCompetitiva competitiveQuestCatalog;
+  private final CatalogoQuestCompetitiva catalogoQuestCompetitiva;
 
-  public ValidadorRequisicaoInventarioQuest(CatalogoQuestCompetitiva competitiveQuestCatalog) {
-    this.competitiveQuestCatalog = competitiveQuestCatalog;
+  public ValidadorRequisicaoInventarioQuest(CatalogoQuestCompetitiva catalogoQuestCompetitiva) {
+    this.catalogoQuestCompetitiva = catalogoQuestCompetitiva;
   }
 
+  /**
+   * Valida a requisicao completa e normaliza os dados antes de qualquer escrita
+   * no Firestore. O cliente pode sugerir quests, mas o backend sempre revalida
+   * limites, enums, XP e templates competitivos oficiais.
+   */
   public DadosRequisicaoInventarioQuest validar(RequisicaoSincronizacaoInventarioQuest request) {
     if (request == null) {
       throw badRequest("invalid_session_payload");
@@ -187,6 +192,7 @@ public class ValidadorRequisicaoInventarioQuest {
       Timestamp verifiedAt,
       boolean isCompleted
   ) {
+    // Quests pessoais ficam na faixa leve de XP e sempre usam verificacao manual.
     int xpReward = Math.max(
         8,
         Math.min(15, requireInt(quest.xpReward(), prefix + ".xpReward", 0))
@@ -237,7 +243,7 @@ public class ValidadorRequisicaoInventarioQuest {
       Set<String> templatesCompetitivosAtivosVistos
   ) {
     int xpReward = requireInt(quest.xpReward(), prefix + ".xpReward", 0);
-    DefinicaoQuestCompetitiva definicaoCompativel = competitiveQuestCatalog
+    DefinicaoQuestCompetitiva definicaoCompativel = catalogoQuestCompetitiva
         .buscarCompativel(
             title,
             templateType,
@@ -249,9 +255,10 @@ public class ValidadorRequisicaoInventarioQuest {
         .orElseThrow(() -> badRequest("invalid_quest"));
 
     if (!isCompleted && !templatesCompetitivosAtivosVistos.add(definicaoCompativel.templateType())) {
-      throw new ResponseStatusException(
+      throw new ExcecaoApi(
           HttpStatus.PRECONDITION_FAILED,
-          "duplicate_competitive_template"
+          "duplicate_competitive_template",
+          "Template competitivo ativo duplicado."
       );
     }
 

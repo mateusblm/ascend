@@ -1,11 +1,11 @@
 package app.ascend.backend.quests;
 
+import app.ascend.backend.compartilhado.ExcecaoApi;
 import com.google.cloud.Timestamp;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Helpers pequenos para validar payloads nao confiaveis do inventario de quests.
@@ -125,8 +125,8 @@ final class ValidadorPayloadInventarioQuest {
     throw badRequest("invalid_" + field);
   }
 
-  static ResponseStatusException badRequest(String reason) {
-    return new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
+  static ExcecaoApi badRequest(String codigo) {
+    return new ExcecaoApi(HttpStatus.BAD_REQUEST, codigo, "Payload do inventario de quests invalido.");
   }
 
   private static Timestamp parseInstant(String value, String field) {

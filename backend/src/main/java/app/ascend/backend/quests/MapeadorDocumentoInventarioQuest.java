@@ -16,6 +16,10 @@ public class MapeadorDocumentoInventarioQuest {
   static final int SYNC_SCHEMA_VERSION = 1;
   static final String SYNC_SOURCE = "callable_session_audited";
 
+  /**
+   * Cria as escritas de quest preservando a ordem recebida apos validacao.
+   * A ordem e gravada para manter a lista remota reconstituivel no Flutter.
+   */
   public List<EscritaInventarioQuest> paraEscritas(
       List<QuestInventarioValidada> quests,
       String idSessaoDispositivo,
@@ -32,6 +36,10 @@ public class MapeadorDocumentoInventarioQuest {
     return escritas;
   }
 
+  /**
+   * Cria o documento de metadados que marca o inventario como inicializado e
+   * registra qual sessao de dispositivo produziu a sincronizacao.
+   */
   public Map<String, Object> paraDocumentoMeta(
       int questCount,
       String idSessaoDispositivo,

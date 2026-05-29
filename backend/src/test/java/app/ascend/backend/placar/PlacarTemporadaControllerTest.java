@@ -80,6 +80,7 @@ class PlacarTemporadaControllerTest {
             .param("seasonKey", "2026-05")
             .param("rankBracket", "X"))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.error", is("invalid_rank_bracket")));
+        .andExpect(jsonPath("$.error", is("invalid_rank_bracket")))
+        .andExpect(jsonPath("$.message", is("Faixa de rank invalida.")));
   }
 }

@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import app.ascend.backend.compartilhado.ExcecaoApi;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class PlacarTemporadaServiceTest {
@@ -61,8 +61,9 @@ class PlacarTemporadaServiceTest {
 
     assertThatThrownBy(() ->
         service.buscarPlacarPorTemporadaEFaixa("user-1", "2026-05", "X", 5)
-    ).isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("invalid_rank_bracket");
+    ).isInstanceOfSatisfying(ExcecaoApi.class, error ->
+        assertThat(error.codigo()).isEqualTo("invalid_rank_bracket")
+    );
   }
 
   @Test
@@ -71,7 +72,8 @@ class PlacarTemporadaServiceTest {
 
     assertThatThrownBy(() ->
         service.buscarPlacarPorTemporadaEFaixa("user-1", "", "E", 5)
-    ).isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("invalid_season_key");
+    ).isInstanceOfSatisfying(ExcecaoApi.class, error ->
+        assertThat(error.codigo()).isEqualTo("invalid_season_key")
+    );
   }
 }

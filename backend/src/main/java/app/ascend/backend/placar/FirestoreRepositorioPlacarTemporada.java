@@ -32,9 +32,9 @@ public class FirestoreRepositorioPlacarTemporada implements RepositorioPlacarTem
           .toList();
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Interrupted while reading season leaderboard.", error);
+      throw new IllegalStateException("Leitura do placar da temporada interrompida.", error);
     } catch (Exception error) {
-      throw new IllegalStateException("Unable to read season leaderboard.", error);
+      throw new IllegalStateException("Nao foi possivel ler o placar da temporada.", error);
     }
   }
 

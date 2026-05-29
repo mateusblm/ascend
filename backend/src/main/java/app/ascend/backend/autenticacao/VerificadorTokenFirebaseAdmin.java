@@ -14,7 +14,7 @@ public class VerificadorTokenFirebaseAdmin implements VerificadorTokenFirebaseAu
       FirebaseToken token = FirebaseAuth.getInstance().verifyIdToken(idToken);
       return new UsuarioAutenticado(token.getUid(), token.getEmail());
     } catch (FirebaseAuthException error) {
-      throw new TokenFirebaseInvalidoException("Invalid Firebase ID token.", error);
+      throw new TokenFirebaseInvalidoException("Token Firebase invalido.", error);
     }
   }
 }

@@ -109,6 +109,11 @@ public class CatalogoQuestCompetitiva {
       )
   );
 
+  /**
+   * Busca uma definicao competitiva que corresponda exatamente ao template
+   * enviado pelo cliente. Qualquer divergencia indica tentativa de alterar
+   * recompensa, duracao, atributo ou modo de verificacao.
+   */
   public Optional<DefinicaoQuestCompetitiva> buscarCompativel(
       String title,
       String templateType,

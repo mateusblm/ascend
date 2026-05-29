@@ -33,7 +33,8 @@ class MinhaContaControllerTest {
   void meRejectsMissingToken() throws Exception {
     mockMvc.perform(get("/api/v1/me"))
         .andExpect(status().isUnauthorized())
-        .andExpect(jsonPath("$.error", is("unauthenticated")));
+        .andExpect(jsonPath("$.error", is("unauthenticated")))
+        .andExpect(jsonPath("$.message", is("Autenticacao obrigatoria.")));
   }
 
   @Test

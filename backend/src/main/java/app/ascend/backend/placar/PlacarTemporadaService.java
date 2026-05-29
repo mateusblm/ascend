@@ -1,12 +1,12 @@
 package app.ascend.backend.placar;
 
+import app.ascend.backend.compartilhado.ExcecaoApi;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PlacarTemporadaService {
@@ -19,6 +19,11 @@ public class PlacarTemporadaService {
     this.repositorio = repositorio;
   }
 
+  /**
+   * Monta o placar da temporada para a faixa de rank pedida. A ordenacao replica
+   * o callable TypeScript: maior pontuacao primeiro, depois semanas seguras e,
+   * por ultimo, atualizacao mais antiga. Outros jogadores permanecem anonimos.
+   */
   public RespostaPlacarTemporada buscarPlacarPorTemporadaEFaixa(
       String uidAtual,
       String chaveTemporada,
@@ -55,7 +60,11 @@ public class PlacarTemporadaService {
   private String validarChaveTemporada(String value) {
     String trimmed = value == null ? "" : value.trim();
     if (trimmed.isEmpty() || trimmed.length() > 24) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_season_key");
+      throw new ExcecaoApi(
+          HttpStatus.BAD_REQUEST,
+          "invalid_season_key",
+          "Chave da temporada invalida."
+      );
     }
     return trimmed;
   }
@@ -65,7 +74,11 @@ public class PlacarTemporadaService {
         ? ""
         : value.trim().toUpperCase(Locale.ROOT);
     if (!VALID_RANKS.contains(normalized)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid_rank_bracket");
+      throw new ExcecaoApi(
+          HttpStatus.BAD_REQUEST,
+          "invalid_rank_bracket",
+          "Faixa de rank invalida."
+      );
     }
     return normalized;
   }

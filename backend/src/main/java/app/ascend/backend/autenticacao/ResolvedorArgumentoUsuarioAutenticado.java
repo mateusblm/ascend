@@ -25,7 +25,7 @@ public class ResolvedorArgumentoUsuarioAutenticado implements HandlerMethodArgum
   ) {
     HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
     if (request == null) {
-      throw new IllegalStateException("HTTP request unavailable.");
+      throw new IllegalStateException("Requisicao HTTP indisponivel.");
     }
     Object user = request.getAttribute(FiltroAutenticacao.AUTHENTICATED_USER_ATTRIBUTE);
     if (user instanceof UsuarioAutenticado authenticatedUser) {

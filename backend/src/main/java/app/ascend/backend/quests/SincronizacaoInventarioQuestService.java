@@ -29,6 +29,11 @@ public class SincronizacaoInventarioQuestService {
     this.mapeadorDocumento = mapeadorDocumento;
   }
 
+  /**
+   * Sincroniza o inventario inteiro de quests do usuario. O metodo exige sessao
+   * ativa, grava somente dados normalizados pelo backend e remove documentos que
+   * nao aparecem no proximo inventario enviado pelo cliente.
+   */
   public RespostaSincronizacaoInventarioQuest sincronizarInventario(
       String uid,
       RequisicaoSincronizacaoInventarioQuest request

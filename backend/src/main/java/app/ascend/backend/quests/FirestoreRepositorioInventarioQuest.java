@@ -38,9 +38,9 @@ public class FirestoreRepositorioInventarioQuest implements RepositorioInventari
       return Optional.of(new RegistroSessaoAtiva(sessionId, timestamp));
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Interrupted while reading active session.", error);
+      throw new IllegalStateException("Leitura da sessao ativa interrompida.", error);
     } catch (Exception error) {
-      throw new IllegalStateException("Unable to read active session.", error);
+      throw new IllegalStateException("Nao foi possivel ler a sessao ativa.", error);
     }
   }
 
@@ -57,9 +57,9 @@ public class FirestoreRepositorioInventarioQuest implements RepositorioInventari
           .collect(Collectors.toSet());
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Interrupted while reading quests.", error);
+      throw new IllegalStateException("Leitura das quests interrompida.", error);
     } catch (Exception error) {
-      throw new IllegalStateException("Unable to read quests.", error);
+      throw new IllegalStateException("Nao foi possivel ler as quests.", error);
     }
   }
 
@@ -89,9 +89,9 @@ public class FirestoreRepositorioInventarioQuest implements RepositorioInventari
       batch.commit().get();
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Interrupted while syncing quest inventory.", error);
+      throw new IllegalStateException("Sincronizacao do inventario de quests interrompida.", error);
     } catch (Exception error) {
-      throw new IllegalStateException("Unable to sync quest inventory.", error);
+      throw new IllegalStateException("Nao foi possivel sincronizar o inventario de quests.", error);
     }
   }
 

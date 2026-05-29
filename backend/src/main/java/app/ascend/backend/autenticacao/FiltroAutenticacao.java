@@ -56,6 +56,8 @@ public class FiltroAutenticacao extends OncePerRequestFilter {
   private void escritaUnauthorized(HttpServletResponse response) throws IOException {
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    response.getWriter().write("{\"error\":\"unauthenticated\"}");
+    response.getWriter().write(
+        "{\"error\":\"unauthenticated\",\"message\":\"Autenticacao obrigatoria.\"}"
+    );
   }
 }

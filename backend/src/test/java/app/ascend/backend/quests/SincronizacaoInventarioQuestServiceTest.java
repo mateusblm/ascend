@@ -3,13 +3,13 @@ package app.ascend.backend.quests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import app.ascend.backend.compartilhado.ExcecaoApi;
 import com.google.cloud.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.server.ResponseStatusException;
 
 class SincronizacaoInventarioQuestServiceTest {
 
@@ -68,8 +68,9 @@ class SincronizacaoInventarioQuestServiceTest {
             "Notebook",
             new FonteInventarioQuest(List.of(focusOne, focusTwo))
         )))
-        .isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("duplicate_competitive_template");
+        .isInstanceOfSatisfying(ExcecaoApi.class, error ->
+            assertThat(error.codigo()).isEqualTo("duplicate_competitive_template")
+        );
   }
 
   @Test
@@ -100,8 +101,9 @@ class SincronizacaoInventarioQuestServiceTest {
             null,
             new FonteInventarioQuest(List.of())
         )))
-        .isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("active_session_conflict");
+        .isInstanceOfSatisfying(ExcecaoApi.class, error ->
+            assertThat(error.codigo()).isEqualTo("active_session_conflict")
+        );
   }
 
   @Test
@@ -114,8 +116,9 @@ class SincronizacaoInventarioQuestServiceTest {
             null,
             new FonteInventarioQuest(List.of())
         )))
-        .isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("active_session_missing");
+        .isInstanceOfSatisfying(ExcecaoApi.class, error ->
+            assertThat(error.codigo()).isEqualTo("active_session_missing")
+        );
   }
 
   private RepositorioInventarioQuestEmMemoria repositorioComSessaoAtiva() {

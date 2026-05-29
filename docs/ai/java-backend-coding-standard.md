@@ -97,6 +97,9 @@ novamente em um contexto, prefira aproximar a estrutura fisica desse modelo.
 
 - Adicione Javadocs concisos em novas classes de dominio, services, validators,
   mappers, guards e repositories.
+- Adicione Javadocs em todo metodo publico que concentra regra de negocio
+  importante, especialmente regras de XP, recompensa, rank, sessao,
+  sincronizacao e validacao de payload nao confiavel.
 - Escreva Javadocs e comentarios em portugues.
 - Comente apenas intencao de negocio ou compatibilidade nao obvia com o backend
   TypeScript.
@@ -109,6 +112,10 @@ novamente em um contexto, prefira aproximar a estrutura fisica desse modelo.
 - Payloads invalidos devem usar `400` com codigo `error` estavel.
 - Pre-condicoes de negocio devem usar `409` ou `412` com codigo `error`
   estavel.
+- Toda resposta de erro exposta ao Flutter deve incluir uma mensagem humana em
+  portugues no campo `message`.
+- Use `ExcecaoApi` para regras de negocio que precisam combinar status HTTP,
+  codigo estavel e mensagem humana em portugues.
 - Nao exponha stack traces ou mensagens cruas de excecao ao Flutter.
 
 ## Regras De Teste

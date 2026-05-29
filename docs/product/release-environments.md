@@ -119,6 +119,35 @@ firebase functions:secrets:set GEMINI_API_KEY
 `GEMINI_READING_QUIZ_MODEL` is optional. If omitted, Functions use
 `gemini-2.5-flash-lite`.
 
+## Java Backend Staging
+
+Cloud Run staging service:
+
+- service: `ascend-backend-staging`
+- project: `ascend-b7c20`
+- region: `southamerica-east1`
+- URL: `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
+
+Current smoke status, recorded on `2026-05-28`:
+
+- `GET /health` returns `200`
+- `GET /api/v1/me` without a Firebase ID token returns `401`
+- `GET /api/v1/season-leaderboard` without a Firebase ID token returns `401`
+
+Before Flutter staging/debug routes traffic to Java, complete authenticated
+smoke with a real Firebase ID token and compare the Java leaderboard response
+against the current TypeScript callable.
+
+Flutter staging/debug can opt into the Java leaderboard endpoint with:
+
+```powershell
+flutter run --flavor staging --dart-define=ASCEND_JAVA_BACKEND_URL=https://ascend-backend-staging-331143433117.southamerica-east1.run.app
+```
+
+If `ASCEND_JAVA_BACKEND_URL` is omitted, Flutter keeps using Firebase Functions.
+The current Java route only covers the season leaderboard read endpoint and
+falls back to the TypeScript callable if the Java request fails.
+
 ## Current Constraints
 
 - the current Firebase project is shared by staging and production by explicit decision for the current validation phase

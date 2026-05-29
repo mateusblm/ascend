@@ -386,6 +386,9 @@ Domain:
 Current TS callable:
 - `syncQuestInventoryFromSource`
 
+Java endpoint:
+- `POST /api/v1/quests/inventory:sync`
+
 Known Flutter callers:
 - `lib/features/quests/data/quest_sync_repository.dart`
 - `lib/features/quests/presentation/quest_controller.dart`
@@ -396,7 +399,8 @@ Request:
 - `source.quests`
 
 Response:
-- expected status/sync metadata
+- `status: synced`
+- `questCount`
 
 Firestore:
 - reads/writes `users/{uid}/quests/{questId}`
@@ -409,22 +413,27 @@ Behavior:
 - validates quest ids, enum values, XP, verification fields, and inventory shape
 - writes normalized quest documents
 - marks inventory as initialized
+- rejects duplicated active competitive templates by `templateType`
 
 Risk:
 - medium
 
 Java migration priority:
-- first write endpoint after read-only migration
+- completed locally as the first write endpoint after read-only migration
 
 Tests required:
-- valid inventory
-- empty inventory
-- duplicate quest ids
-- invalid quest ids
-- invalid enum values
-- invalid XP
-- initialized metadata write
-- active session conflict
+- valid inventory: covered
+- empty inventory: covered through service/controller path
+- invalid quest ids: still needs explicit fixture
+- invalid enum values: still needs explicit fixture
+- invalid XP: covered through personal XP normalization, still needs rejection fixture
+- initialized metadata write: covered
+- active session conflict: covered
+- duplicate active competitive template: covered
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a non-session Java error occurs.
 
 ### claimWeeklyBoss
 
@@ -1081,7 +1090,22 @@ Status:
 - `GET /api/v1/me` implemented locally
 - `GET /api/v1/season-leaderboard` implemented locally
 - Java tests and package pass locally
+- Cloud Run staging deploy helper created at
+  `tools/backend/deploy-cloud-run-staging.ps1`
+- Cloud Run staging service deployed at
+  `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
+- unauthenticated smoke checks passed for `/health`, `/api/v1/me`, and
+  `/api/v1/season-leaderboard`
+- Flutter season leaderboard routing can opt into Java with
+  `ASCEND_JAVA_BACKEND_URL`, while the default remains Firebase Functions
+- `POST /api/v1/quests/inventory:sync` implemented and deployed to Cloud Run
+  staging
+- Flutter quest inventory sync can opt into Java with `ASCEND_JAVA_BACKEND_URL`,
+  while the default remains Firebase Functions
+- full Flutter test suite and Java backend test suite pass locally
+- unauthenticated Cloud Run smoke checks passed for `/health`, `/api/v1/me`,
+  and `/api/v1/quests/inventory:sync`
 
 Next phase:
-- deploy Java backend to Cloud Run staging and compare the Java leaderboard
-  response against the current TypeScript callable
+- run an authenticated test-account walkthrough against the Java quest inventory
+  route

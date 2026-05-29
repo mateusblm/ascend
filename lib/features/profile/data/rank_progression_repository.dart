@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:ascend/core/analytics/analytics_service.dart';
+import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/promotion_exam.dart';
@@ -20,11 +22,17 @@ class RankProgressionRepository {
     this._firestore,
     this._auth, {
     FirebaseFunctions? functions,
+    JavaBackendClient? javaBackendClient,
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
   }) : _functions =
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _javaBackendClient =
+           javaBackendClient ??
+           (JavaBackendConfig.isEnabled
+               ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
+               : null),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
@@ -34,6 +42,7 @@ class RankProgressionRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final FirebaseFunctions _functions;
+  final JavaBackendClient? _javaBackendClient;
   final AppAnalytics _analytics;
   final AppCrashReporter _crashReporter;
   final Map<String, String> _lastSyncedFingerprintByUser = <String, String>{};
@@ -238,6 +247,29 @@ class RankProgressionRepository {
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return const <RankSeasonLeaderboardEntry>[];
+
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      try {
+        final idToken = await _auth.currentUser?.getIdToken();
+        if (idToken != null && idToken.isNotEmpty) {
+          return await javaBackendClient
+              .fetchSeasonBracketLeaderboard(
+                idToken: idToken,
+                seasonKey: seasonKey,
+                rankBracket: rankBracket,
+                limit: limit,
+              )
+              .timeout(_rpcTimeout);
+        }
+      } catch (error, stackTrace) {
+        _reportRecoverable(
+          error,
+          stackTrace,
+          stage: 'fetch_season_bracket_leaderboard_java',
+        );
+      }
+    }
 
     try {
       final callable = _functions.httpsCallable('getSeasonBracketLeaderboard');

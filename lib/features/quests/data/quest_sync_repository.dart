@@ -1,9 +1,12 @@
+import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
   return quests.isNotEmpty;
@@ -69,14 +72,24 @@ class QuestSyncRepository {
   QuestSyncRepository(
     this._firestore, {
     FirebaseFunctions? functions,
+    FirebaseAuth? auth,
+    JavaBackendClient? javaBackendClient,
     required ActiveSessionRepository sessionRepository,
   }) : _functions =
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _auth = auth ?? FirebaseAuth.instance,
+       _javaBackendClient =
+           javaBackendClient ??
+           (JavaBackendConfig.isEnabled
+               ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
+               : null),
        _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
+  final FirebaseAuth _auth;
+  final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
 
   Future<bool> hasInitializedSnapshot(String uid) async {
@@ -103,11 +116,28 @@ class QuestSyncRepository {
     final callable = _functions.httpsCallable('syncQuestInventoryFromSource');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final sourceQuests = quests.map(_questSourceFor).toList(growable: false);
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null) {
+        try {
+          await javaBackendClient.syncQuestInventory(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            quests: sourceQuests,
+          );
+          return;
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+        }
+      }
+
       await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
-        'source': <String, dynamic>{
-          'quests': quests.map(_questSourceFor).toList(growable: false),
-        },
+        'deviceSessionId': deviceSessionId,
+        'source': <String, dynamic>{'quests': sourceQuests},
       });
     } catch (error) {
       if (isActiveSessionConflictError(error)) {

@@ -443,6 +443,13 @@ Exit criteria:
 Goal:
 - migrate quest inventory sync without changing quest rules.
 
+Current state:
+- implemented locally in Java as `POST /api/v1/quests/inventory:sync`
+- Flutter can route `QuestSyncRepository.replaceQuests` to Java when
+  `ASCEND_JAVA_BACKEND_URL` is provided
+- Firebase Functions remain the default and fallback path
+- Cloud Run staging deploy for this endpoint is complete
+
 Candidates:
 - `syncQuestInventoryFromSource`
 
@@ -793,6 +800,7 @@ When a future AI session works on this migration:
    - `docs/ai/architecture-map.md`
    - `docs/product/progression-architecture.md`
    - `docs/product/competitive-verification-v1.md`
+   - `docs/ai/java-backend-coding-standard.md`
 4. Inspect the current TypeScript function before writing Java.
 5. Add tests before switching Flutter.
 6. Keep changes small enough for a Java reviewer to understand.
@@ -812,8 +820,19 @@ Pending tasks:
 - document first endpoint contract: completed in `java-backend-callable-inventory.md`
 - implement first Java endpoint: completed locally with
   `GET /api/v1/season-leaderboard`
-- deploy Cloud Run staging service
-- wire Flutter staging/debug config to Java endpoint after Cloud Run deploy
+- create Cloud Run staging deploy helper: completed with
+  `tools/backend/deploy-cloud-run-staging.ps1`
+- deploy Cloud Run staging service: completed for `ascend-backend-staging`
+- run unauthenticated Cloud Run smoke checks: completed
+- run authenticated Cloud Run smoke checks with a Firebase ID token
+- wire Flutter staging/debug config to Java endpoint after Cloud Run deploy:
+  completed for the season leaderboard and quest inventory sync, gated by
+  `ASCEND_JAVA_BACKEND_URL`
+- implement quest inventory sync in Java: completed locally with
+  `POST /api/v1/quests/inventory:sync`
+- deploy quest inventory sync to Cloud Run staging: completed
+- run authenticated quest inventory sync smoke with a Firebase ID token and
+  active device session
 
 ## Status
 
@@ -827,8 +846,30 @@ Current status:
 - protected `/api/v1/me` endpoint created and tested
 - Java `GET /api/v1/season-leaderboard` endpoint created and tested as the
   first migrated read-only endpoint
+- Java `POST /api/v1/quests/inventory:sync` endpoint created and tested as the
+  first migrated quest write endpoint
+- Cloud Run staging deploy helper created for `ascend-backend-staging`
+- Cloud Run staging service deployed:
+  - `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
+- unauthenticated smoke checks passed:
+  - `/health` returns `200`
+  - `/api/v1/me` returns `401` without a Firebase ID token
+  - `/api/v1/season-leaderboard` returns `401` without a Firebase ID token
+  - `/api/v1/quests/inventory:sync` returns `401` without a Firebase ID token
+- Flutter staging/debug can route the season leaderboard read to Java with:
+  - `--dart-define=ASCEND_JAVA_BACKEND_URL=https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
+- Flutter staging/debug can route quest inventory sync to Java with the same
+  `ASCEND_JAVA_BACKEND_URL`, with fallback to the TypeScript callable on
+  non-session Java errors
+- Flutter keeps Firebase Functions as the default when the Java URL is omitted
 - local validation passed:
   - `mvn test`
   - `mvn package`
+  - `flutter analyze`
+  - `flutter test`
+  - `flutter test test/features/profile/data/java_backend_client_test.dart`
+- current blocker:
+  - authenticated Cloud Run smoke requires a real Firebase ID token from a test
+    user before this route should be enabled outside staging/debug validation
 - current TypeScript backend remains authoritative
 - Maven is the selected Java dependency/build tool

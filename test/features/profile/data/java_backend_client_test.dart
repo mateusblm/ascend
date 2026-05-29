@@ -1,0 +1,132 @@
+import 'dart:convert';
+
+import 'package:ascend/features/profile/data/java_backend_client.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+void main() {
+  test(
+    'fetchSeasonBracketLeaderboard sends Firebase token and parses entries',
+    () async {
+      late Uri requestedUri;
+      late Map<String, String> requestedHeaders;
+      final client = JavaBackendClient(
+        baseUrl: 'https://backend.example.com',
+        httpClient: MockClient((request) async {
+          requestedUri = request.url;
+          requestedHeaders = request.headers;
+          return http.Response(
+            '''
+          {
+            "status": "ok",
+            "seasonKey": "2026-05",
+            "rankBracket": "E",
+            "entries": [
+              {
+                "position": 1,
+                "displayName": "VOCE",
+                "detail": "Seguro | 42 pts",
+                "isPlayer": true
+              }
+            ]
+          }
+          ''',
+            200,
+            headers: <String, String>{'content-type': 'application/json'},
+          );
+        }),
+      );
+
+      final entries = await client.fetchSeasonBracketLeaderboard(
+        idToken: 'id-token',
+        seasonKey: '2026-05',
+        rankBracket: 'E',
+        limit: 5,
+      );
+
+      expect(requestedUri.path, '/api/v1/season-leaderboard');
+      expect(requestedUri.queryParameters['seasonKey'], '2026-05');
+      expect(requestedUri.queryParameters['rankBracket'], 'E');
+      expect(requestedUri.queryParameters['limit'], '5');
+      expect(requestedHeaders['Authorization'], 'Bearer id-token');
+      expect(entries, hasLength(1));
+      expect(entries.single.position, 1);
+      expect(entries.single.displayName, 'VOCE');
+      expect(entries.single.detail, 'Seguro | 42 pts');
+      expect(entries.single.isPlayer, isTrue);
+    },
+  );
+
+  test('fetchSeasonBracketLeaderboard fails on non-ok response', () async {
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        return http.Response('{"error":"unauthenticated"}', 401);
+      }),
+    );
+
+    expect(
+      () => client.fetchSeasonBracketLeaderboard(
+        idToken: 'id-token',
+        seasonKey: '2026-05',
+        rankBracket: 'E',
+        limit: 5,
+      ),
+      throwsA(isA<JavaBackendException>()),
+    );
+  });
+
+  test('syncQuestInventory posts Firebase token and quest source', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"status":"synced","questCount":1}', 200);
+      }),
+    );
+
+    await client.syncQuestInventory(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      quests: const <Map<String, dynamic>>[
+        <String, dynamic>{'id': 'quest-1', 'title': 'Treinar'},
+      ],
+    );
+
+    expect(requestedUri.path, '/base/api/v1/quests/inventory:sync');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect(requestedHeaders['Content-Type'], 'application/json');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect((requestedBody['source'] as Map)['quests'], hasLength(1));
+  });
+
+  test('syncQuestInventory preserves Java error code', () async {
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        return http.Response('{"error":"active_session_conflict"}', 412);
+      }),
+    );
+
+    await expectLater(
+      () => client.syncQuestInventory(
+        idToken: 'id-token',
+        deviceSessionId: 'device-1',
+        quests: const <Map<String, dynamic>>[],
+      ),
+      throwsA(
+        isA<JavaBackendException>().having(
+          (error) => error.isActiveSessionConflict,
+          'isActiveSessionConflict',
+          isTrue,
+        ),
+      ),
+    );
+  });
+}

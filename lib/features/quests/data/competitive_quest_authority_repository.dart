@@ -343,11 +343,18 @@ class CompetitiveQuestAuthorityRepository {
       'questId': quest.id,
       if (template != null) 'templateCatalogId': template.id,
       'title': quest.title,
+      'category': quest.category.name,
       'templateType': quest.templateType.name,
       'verificationMode': quest.verificationMode.name,
+      'verificationStatus': quest.verificationStatus.name,
       'targetDurationMinutes': quest.targetDurationMinutes,
       'xpReward': quest.xpReward,
       'rewardAttribute': quest.rewardAttribute.name,
+      'isCompleted': quest.isCompleted,
+      if (quest.reflectionPrompt != null)
+        'reflectionPrompt': quest.reflectionPrompt,
+      if (quest.reflectionAnswer != null)
+        'reflectionAnswer': quest.reflectionAnswer,
       if (includeVerificationStartedAt && quest.verificationStartedAt != null)
         'verificationStartedAt': quest.verificationStartedAt!.toIso8601String(),
     };

@@ -110,7 +110,10 @@ void main() {
     final client = JavaBackendClient(
       baseUrl: 'https://backend.example.com',
       httpClient: MockClient((request) async {
-        return http.Response('{"error":"active_session_conflict"}', 412);
+        return http.Response(
+          '{"error":"active_session_conflict","message":"Sessao ativa em outro dispositivo."}',
+          412,
+        );
       }),
     );
 
@@ -125,6 +128,21 @@ void main() {
           (error) => error.isActiveSessionConflict,
           'isActiveSessionConflict',
           isTrue,
+        ),
+      ),
+    );
+
+    await expectLater(
+      () => client.syncQuestInventory(
+        idToken: 'id-token',
+        deviceSessionId: 'device-1',
+        quests: const <Map<String, dynamic>>[],
+      ),
+      throwsA(
+        isA<JavaBackendException>().having(
+          (error) => error.toString(),
+          'message',
+          contains('Sessao ativa em outro dispositivo.'),
         ),
       ),
     );

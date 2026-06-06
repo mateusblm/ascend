@@ -219,16 +219,24 @@ class JavaBackendClient {
 
   JavaBackendException _exceptionFromResponse(http.Response response) {
     String? errorCode;
+    String? errorMessage;
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map) {
         errorCode = decoded['error'] as String?;
+        errorMessage = decoded['message'] as String?;
       }
     } catch (_) {
       // The status code is enough for fallback decisions.
     }
+    final detail = [
+      if (errorCode != null && errorCode.isNotEmpty) errorCode,
+      if (errorMessage != null && errorMessage.isNotEmpty) errorMessage,
+    ].join(': ');
     return JavaBackendException(
-      'Java backend returned ${response.statusCode}.',
+      detail.isEmpty
+          ? 'Java backend returned ${response.statusCode}.'
+          : 'Java backend returned ${response.statusCode}: $detail',
       statusCode: response.statusCode,
       errorCode: errorCode,
     );

@@ -182,6 +182,28 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> startPromotionExam({
+    required String idToken,
+    required Map<String, dynamic> snapshot,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/competitive/promotion/exam:start',
+      idToken: idToken,
+      body: <String, Object?>{'snapshot': snapshot},
+    );
+  }
+
+  Future<Map<String, dynamic>> confirmPromotion({
+    required String idToken,
+    required Map<String, dynamic> snapshot,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/competitive/promotion:confirm',
+      idToken: idToken,
+      body: <String, Object?>{'snapshot': snapshot},
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

@@ -663,6 +663,12 @@ Exit criteria:
 - no invalid promotion
 - history/read models remain compatible with Flutter
 
+Progress:
+- Java-first promotion exam start/confirm is implemented with Spring Boot
+  endpoints, Portuguese domain errors, Firebase-authenticated HTTP calls from
+  Flutter, and idempotent statuses for in-progress/promoted exams.
+- Season reward claim and legacy reward writes remain the next Phase 10 slice.
+
 ## Phase 11 - AI Reading Quiz Migration
 
 Goal:

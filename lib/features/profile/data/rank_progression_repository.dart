@@ -489,7 +489,8 @@ class RankProgressionRepository {
               'isCompetitive': quest.isCompetitive,
               'countsTowardCompetitive': quest.countsTowardCompetitive,
               'isCompleted': quest.isCompleted,
-              'completedAt': quest.completedAt?.toIso8601String(),
+              if (quest.completedAt != null)
+                'completedAt': quest.completedAt!.toIso8601String(),
             },
           )
           .toList(growable: false),
@@ -1012,6 +1013,23 @@ class RankProgressionRepository {
   Future<String> _startPromotionExamRemotely(
     CompetitiveRankSnapshot snapshot,
   ) async {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        final response = await javaBackendClient
+            .startPromotionExam(
+              idToken: idToken,
+              snapshot: _rankSnapshotPayloadForJava(snapshot),
+            )
+            .timeout(_rpcTimeout);
+        final status = response['status'];
+        if (status is String) {
+          return status;
+        }
+      }
+    }
+
     final callable = _functions.httpsCallable('startPromotionExam');
     final response = await callable
         .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
@@ -1026,6 +1044,23 @@ class RankProgressionRepository {
   Future<String> _confirmPromotionRemotely(
     CompetitiveRankSnapshot snapshot,
   ) async {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        final response = await javaBackendClient
+            .confirmPromotion(
+              idToken: idToken,
+              snapshot: _rankSnapshotPayloadForJava(snapshot),
+            )
+            .timeout(_rpcTimeout);
+        final status = response['status'];
+        if (status is String) {
+          return status;
+        }
+      }
+    }
+
     final callable = _functions.httpsCallable('confirmPromotion');
     final response = await callable
         .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
@@ -1035,6 +1070,36 @@ class RankProgressionRepository {
       return data['status'] as String;
     }
     return 'promoted';
+  }
+
+  Map<String, dynamic> _rankSnapshotPayloadForJava(
+    CompetitiveRankSnapshot snapshot,
+  ) {
+    return <String, dynamic>{
+      'currentRank': snapshot.currentRank,
+      'peakRank': snapshot.peakRank,
+      'highestEligibleRank': snapshot.highestEligibleRank,
+      'weekKey': snapshot.weekKey,
+      'activeDays': snapshot.activeDays,
+      'requiredActiveDays': snapshot.requiredActiveDays,
+      'requiresBossClear': snapshot.requiresBossClear,
+      'bossCompleted': snapshot.bossCompleted,
+      'status': snapshot.status.name,
+      'demotionStrikes': snapshot.demotionStrikes,
+      'promotionReady': snapshot.promotionReady,
+      if (snapshot.promotionTargetRank != null)
+        'promotionTargetRank': snapshot.promotionTargetRank,
+      'targetRequiredLevel': snapshot.targetRequiredLevel,
+      'targetLevelGateMet': snapshot.targetLevelGateMet,
+      if (snapshot.advancementMode != null)
+        'advancementMode': snapshot.advancementMode!.name,
+      'eventType': snapshot.eventType.name,
+      'summary': snapshot.summary,
+      'detail': snapshot.detail,
+      'syncSchemaVersion': snapshot.syncSchemaVersion,
+      'syncSource': snapshot.syncSource,
+      'updatedAt': snapshot.updatedAt.toUtc().toIso8601String(),
+    };
   }
 
   RankAdvancementMode _promotionModeFor({

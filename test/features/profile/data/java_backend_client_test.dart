@@ -357,4 +357,60 @@ void main() {
     expect(requestedBody['reflectionAnswer'], 'Resumo curto.');
     expect(response['status'], 'verified');
   });
+
+  test('startPromotionExam posts promotion snapshot command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"status":"started","targetRank":"C"}', 200);
+      }),
+    );
+
+    final response = await client.startPromotionExam(
+      idToken: 'id-token',
+      snapshot: const <String, dynamic>{
+        'currentRank': 'D',
+        'promotionReady': true,
+        'promotionTargetRank': 'C',
+      },
+    );
+
+    expect(requestedUri.path, '/base/api/v1/competitive/promotion/exam:start');
+    expect((requestedBody['snapshot'] as Map)['currentRank'], 'D');
+    expect((requestedBody['snapshot'] as Map)['promotionTargetRank'], 'C');
+    expect(response['status'], 'started');
+  });
+
+  test('confirmPromotion posts promotion confirmation command', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"status":"promoted","currentRank":"C"}', 200);
+      }),
+    );
+
+    final response = await client.confirmPromotion(
+      idToken: 'id-token',
+      snapshot: const <String, dynamic>{
+        'currentRank': 'D',
+        'weekKey': '2026W0608',
+        'promotionTargetRank': 'C',
+      },
+    );
+
+    expect(requestedUri.path, '/api/v1/competitive/promotion:confirm');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect((requestedBody['snapshot'] as Map)['weekKey'], '2026W0608');
+    expect(response['status'], 'promoted');
+  });
 }

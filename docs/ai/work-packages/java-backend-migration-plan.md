@@ -541,11 +541,14 @@ Risk:
 - high, because these influence rank trust and competitive feedback.
 
 Steps:
-1. Freeze contracts.
-2. Create fixture set from TS tests.
-3. Port rank evaluation logic.
-4. Port integrity evaluation logic.
-5. Add golden parity tests:
+1. Freeze contracts: started from current TypeScript callables and Flutter
+   read-model contracts.
+2. Create fixture set from TS tests: started locally in Java service tests.
+3. Port rank evaluation logic: started in Java with pure domain calculator.
+4. Port integrity evaluation logic: started in Java with pure domain
+   calculator.
+5. Add golden parity tests: started with rank promotion, demotion, and
+   integrity suspicious-pattern fixtures.
 
 ```text
 given fixture A
@@ -565,6 +568,13 @@ Exit criteria:
 - Java and TS produce the same snapshots for known cases
 - staging UI rank/integrity does not regress
 - no competitive authority switches without parity
+
+Current status:
+- Java package `app.ascend.backend.competitivo` now contains a side-effect-free
+  competitive state calculator for rank and integrity snapshots.
+- The first Phase 8 slice intentionally does not expose an endpoint, write
+  Firestore, grant XP, or switch Flutter authority.
+- Local Java validation passed with `mvn test` and `mvn package` on 2026-06-06.
 
 ## Phase 9 - Competitive Evidence Migration
 

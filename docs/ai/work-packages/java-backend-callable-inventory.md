@@ -1115,6 +1115,8 @@ Next phase:
   `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain the fallback path
 - Authenticated staging smoke confirmed normal personal quest completion grants
   XP and attribute reward through Java on 2026-06-06
+- Authenticated staging smoke confirmed normal personal quest revoke/rollback
+  works through Java on 2026-06-06
 - Competitive quest completion is not being used as a Java parity target yet
   because its current baseline appears to be a pre-existing TypeScript/product
   behavior issue

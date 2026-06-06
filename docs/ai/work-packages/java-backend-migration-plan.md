@@ -499,8 +499,7 @@ Steps:
    - completion snapshot: completed locally in Java.
 3. Port XP grant logic exactly: completed for personal quests.
 4. Port pre-reward snapshot handling exactly: completed locally in Java.
-5. Port revoke behavior exactly: implemented locally; needs explicit manual
-   rollback smoke if not covered in the next walkthrough.
+5. Port revoke behavior exactly: completed and manually validated in staging.
 6. Preserve active session conflict behavior: completed.
 7. Add tests for:
    - first completion grants XP: completed
@@ -511,17 +510,17 @@ Steps:
    - attribute changes: completed
    - active session conflict: completed
 8. Run staging with a test account: completed for personal quest completion,
-   XP, and attribute reward on 2026-06-06.
-9. Compare Firestore documents before and after: pending for explicit revoke
-   rollback smoke.
+   XP, attribute reward, and revoke rollback on 2026-06-06.
+9. Compare Firestore documents before and after: completed through manual
+   staging revoke rollback smoke on 2026-06-06.
 
 Exit criteria:
 - personal quest loop works from Flutter through Java: completion validated on
   staging for normal quests on 2026-06-06
 - no double rewards: covered by Java service test; pending manual duplicate
   completion smoke if desired
-- revoke remains safe: implemented and covered by Java service test; pending
-  manual rollback smoke
+- revoke remains safe: implemented, covered by Java service test, and manually
+  validated in staging on 2026-06-06
 - TS rollback still available: completed via Firebase Functions fallback when
   `ASCEND_JAVA_BACKEND_URL` is omitted or non-session Java errors occur
 
@@ -871,6 +870,8 @@ Current status:
   non-session Java errors
 - Authenticated staging smoke confirmed normal personal quest completion through
   Java grants XP and attribute reward correctly on 2026-06-06
+- Authenticated staging smoke confirmed normal personal quest revoke/rollback
+  through Java works correctly on 2026-06-06
 - Competitive quest completion is intentionally not a Phase 7 focus because its
   baseline behavior appears pre-existing outside this Java migration
 - Cloud Run staging deploy helper created for `ascend-backend-staging`

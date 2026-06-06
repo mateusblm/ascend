@@ -23,4 +23,12 @@ public class EstadoCompetitivoController {
   ) {
     return service.prever(request);
   }
+
+  @PostMapping("/state:sync")
+  public RespostaSincronizacaoEstadoCompetitivo sincronizarEstadoCompetitivo(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoSincronizacaoEstadoCompetitivo request
+  ) {
+    return service.sincronizar(user.uid(), request);
+  }
 }

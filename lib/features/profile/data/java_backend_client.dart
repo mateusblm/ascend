@@ -131,6 +131,21 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> syncCompetitiveState({
+    required String idToken,
+    Map<String, dynamic>? rankSource,
+    Map<String, dynamic>? integritySource,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/competitive/state:sync',
+      idToken: idToken,
+      body: <String, Object?>{
+        if (rankSource != null) 'rankSource': rankSource,
+        if (integritySource != null) 'integritySource': integritySource,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

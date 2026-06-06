@@ -560,12 +560,11 @@ Java must return snapshot X
 7. Preserve `syncSource`.
 8. Preserve demotion/promotion flags.
 9. Preserve trust labels and risk details.
-10. Run Java in shadow mode if possible: started with authenticated preview
-    endpoint.
-    - Flutter still uses TS result
-    - Java result can be called/logged/compared manually
-    - Flutter calls Java preview when `ASCEND_JAVA_BACKEND_URL` is configured
-      and ignores shadow failures/divergences for user-facing behavior
+10. Move Java from shadow to authority for the read-model slice:
+    - Java preview remains available for manual comparison
+    - Java `state:sync` now writes rank/integrity read-models when configured
+    - Flutter uses Java first when `ASCEND_JAVA_BACKEND_URL` is configured
+    - Firebase/TS remains fallback when Java is unavailable
 
 Exit criteria:
 - Java and TS produce the same snapshots for known cases
@@ -577,10 +576,15 @@ Current status:
   competitive state calculator for rank and integrity snapshots.
 - Java exposes authenticated `POST /api/v1/competitive/state:preview` for
   shadow comparison.
-- Flutter can call the preview endpoint from rank/integrity sync paths without
-  changing the TS/Firebase result used by the app.
-- The Phase 8 preview intentionally does not write Firestore, grant XP, promote,
-  demote, or switch Flutter authority.
+- Java exposes authenticated `POST /api/v1/competitive/state:sync` for
+  authoritative rank/integrity read-model sync.
+- Flutter uses Java sync from rank/integrity sync paths when
+  `ASCEND_JAVA_BACKEND_URL` is configured, falling back to Firebase/TS on Java
+  failure.
+- The Phase 8 sync writes only `progression/current`,
+  `progression_history/{weekKey}`, `integrity/current`, and
+  `integrity_history/{weekKey}`. It does not grant XP, validate competitive
+  evidence, start promotion exams, claim boss rewards, or write season rewards.
 - Local validation passed with Java `mvn test`, Java `mvn package`, Flutter
   `flutter analyze`, and focused Java backend client tests on 2026-06-06.
 

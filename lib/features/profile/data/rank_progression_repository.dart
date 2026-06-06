@@ -16,7 +16,6 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 
 class RankProgressionRepository {
   RankProgressionRepository(
@@ -196,6 +195,26 @@ class RankProgressionRepository {
       player: player,
     ).copyWith(syncSchemaVersion: syncSchemaVersion, syncSource: 'client');
 
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      try {
+        final javaSnapshot = await _syncCompetitiveStateWithJava(
+          javaBackendClient: javaBackendClient,
+          player: player,
+        );
+        if (javaSnapshot != null) {
+          _lastSyncedFingerprintByUser[uid] = _fingerprintFor(javaSnapshot);
+          return javaSnapshot;
+        }
+      } catch (error, stackTrace) {
+        _reportRecoverable(
+          error,
+          stackTrace,
+          stage: 'sync_competitive_state_java',
+        );
+      }
+    }
+
     try {
       final remoteSnapshot = await _syncCompetitiveStateFromSourceRemotely(
         player,
@@ -205,13 +224,6 @@ class RankProgressionRepository {
       }
 
       _lastSyncedFingerprintByUser[uid] = _fingerprintFor(remoteSnapshot);
-      unawaited(
-        _runCompetitiveShadowPreview(
-          player: player,
-          remoteSnapshot: remoteSnapshot,
-          stage: 'competitive_rank_shadow_preview',
-        ),
-      );
       return remoteSnapshot;
     } catch (error, stackTrace) {
       _reportRecoverable(
@@ -243,6 +255,30 @@ class RankProgressionRepository {
       return null;
     }
 
+    return CompetitiveRankSnapshot.fromFirestore(
+      snapshotData.cast<String, dynamic>(),
+    );
+  }
+
+  Future<CompetitiveRankSnapshot?> _syncCompetitiveStateWithJava({
+    required JavaBackendClient javaBackendClient,
+    required Player player,
+  }) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      return null;
+    }
+
+    final response = await javaBackendClient
+        .syncCompetitiveState(
+          idToken: idToken,
+          rankSource: _competitiveSourceFor(player),
+        )
+        .timeout(_rpcTimeout);
+    final snapshotData = response['rankSnapshot'];
+    if (snapshotData is! Map) {
+      return null;
+    }
     return CompetitiveRankSnapshot.fromFirestore(
       snapshotData.cast<String, dynamic>(),
     );
@@ -327,21 +363,31 @@ class RankProgressionRepository {
       quests: quests,
     );
 
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      try {
+        final javaIntegrity = await _syncCompetitiveIntegrityWithJava(
+          javaBackendClient: javaBackendClient,
+          player: player,
+          quests: quests,
+        );
+        if (javaIntegrity != null) {
+          return javaIntegrity;
+        }
+      } catch (error, stackTrace) {
+        _reportRecoverable(
+          error,
+          stackTrace,
+          stage: 'sync_competitive_integrity_java',
+        );
+      }
+    }
+
     try {
       final remoteIntegrity = await _syncCompetitiveIntegrityFromSourceRemotely(
         player: player,
         quests: quests,
       );
-      if (remoteIntegrity != null) {
-        unawaited(
-          _runCompetitiveShadowPreview(
-            player: player,
-            quests: quests,
-            remoteIntegrity: remoteIntegrity,
-            stage: 'competitive_integrity_shadow_preview',
-          ),
-        );
-      }
       return remoteIntegrity ?? localFallback;
     } catch (error, stackTrace) {
       _reportRecoverable(
@@ -384,6 +430,34 @@ class RankProgressionRepository {
     );
   }
 
+  Future<CompetitiveIntegritySnapshot?> _syncCompetitiveIntegrityWithJava({
+    required JavaBackendClient javaBackendClient,
+    required Player player,
+    required List<Quest> quests,
+  }) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      return null;
+    }
+
+    final response = await javaBackendClient
+        .syncCompetitiveState(
+          idToken: idToken,
+          integritySource: _competitiveIntegritySourceFor(
+            player: player,
+            quests: quests,
+          ),
+        )
+        .timeout(_rpcTimeout);
+    final integrityData = response['integritySnapshot'];
+    if (integrityData is! Map) {
+      return null;
+    }
+    return CompetitiveIntegritySnapshot.fromFirestore(
+      integrityData.cast<String, dynamic>(),
+    );
+  }
+
   Map<String, dynamic> _competitiveSourceFor(Player player) {
     return <String, dynamic>{
       'playerLevel': player.level,
@@ -420,92 +494,6 @@ class RankProgressionRepository {
           )
           .toList(growable: false),
     };
-  }
-
-  Future<void> _runCompetitiveShadowPreview({
-    required Player player,
-    List<Quest> quests = const <Quest>[],
-    CompetitiveRankSnapshot? remoteSnapshot,
-    CompetitiveIntegritySnapshot? remoteIntegrity,
-    required String stage,
-  }) async {
-    final javaBackendClient = _javaBackendClient;
-    final currentUser = _auth.currentUser;
-    if (javaBackendClient == null || currentUser == null) {
-      return;
-    }
-
-    try {
-      final idToken = await currentUser.getIdToken();
-      if (idToken == null || idToken.isEmpty) {
-        return;
-      }
-
-      final response = await javaBackendClient
-          .previewCompetitiveState(
-            idToken: idToken,
-            rankSource: _competitiveSourceFor(player),
-            integritySource: _competitiveIntegritySourceFor(
-              player: player,
-              quests: quests,
-            ),
-          )
-          .timeout(_rpcTimeout);
-      _compareCompetitiveShadowPreview(
-        response: response,
-        remoteSnapshot: remoteSnapshot,
-        remoteIntegrity: remoteIntegrity,
-        stage: stage,
-      );
-    } catch (error, stackTrace) {
-      _reportRecoverable(error, stackTrace, stage: stage);
-    }
-  }
-
-  void _compareCompetitiveShadowPreview({
-    required Map<String, dynamic> response,
-    CompetitiveRankSnapshot? remoteSnapshot,
-    CompetitiveIntegritySnapshot? remoteIntegrity,
-    required String stage,
-  }) {
-    final rankSnapshot = response['rankSnapshot'];
-    if (remoteSnapshot != null && rankSnapshot is Map) {
-      final javaStatus = rankSnapshot['status'] as String?;
-      final javaRank = rankSnapshot['currentRank'] as String?;
-      if (javaStatus != remoteSnapshot.status.name ||
-          javaRank != remoteSnapshot.currentRank) {
-        _reportShadowDivergence(
-          stage: stage,
-          message:
-              'Rank Java=$javaRank/$javaStatus Firebase=${remoteSnapshot.currentRank}/${remoteSnapshot.status.name}',
-        );
-      }
-    }
-
-    final integritySnapshot = response['integritySnapshot'];
-    if (remoteIntegrity != null && integritySnapshot is Map) {
-      final javaTrustBand = integritySnapshot['trustBand'] as String?;
-      final javaTrustScore = (integritySnapshot['trustScore'] as num?)?.toInt();
-      if (javaTrustBand != remoteIntegrity.trustBand.name ||
-          javaTrustScore != remoteIntegrity.trustScore) {
-        _reportShadowDivergence(
-          stage: stage,
-          message:
-              'Integridade Java=$javaTrustBand/$javaTrustScore Firebase=${remoteIntegrity.trustBand.name}/${remoteIntegrity.trustScore}',
-        );
-      }
-    }
-  }
-
-  void _reportShadowDivergence({
-    required String stage,
-    required String message,
-  }) {
-    final error = StateError('Divergencia shadow competitiva: $message');
-    if (kDebugMode) {
-      debugPrint('[CompetitiveShadow] $stage: $message');
-    }
-    _reportRecoverable(error, StackTrace.current, stage: stage);
   }
 
   Future<void> syncPromotionExam(CompetitiveRankSnapshot snapshot) async {

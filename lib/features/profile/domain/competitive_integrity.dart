@@ -82,8 +82,7 @@ class CompetitiveIntegritySnapshot {
       competitiveQuestCompletionsToday:
           (data['competitiveQuestCompletionsToday'] as num?)?.toInt() ?? 0,
       personalXpToday: (data['personalXpToday'] as num?)?.toInt() ?? 0,
-      competitiveXpToday:
-          (data['competitiveXpToday'] as num?)?.toInt() ?? 0,
+      competitiveXpToday: (data['competitiveXpToday'] as num?)?.toInt() ?? 0,
       suspiciousPatternCount:
           (data['suspiciousPatternCount'] as num?)?.toInt() ?? 0,
       summary: data['summary'] as String? ?? '',
@@ -105,13 +104,18 @@ CompetitiveIntegritySnapshot evaluateCompetitiveIntegrity({
   final currentDate = now ?? DateTime.now();
   final today = DateTime(currentDate.year, currentDate.month, currentDate.day);
   final weekKey = _weekKeyFor(currentDate);
-  final activeWeekDates = _currentWeekDates(player.activityHistory, currentDate);
+  final activeWeekDates = _currentWeekDates(
+    player.activityHistory,
+    currentDate,
+  );
   final competitiveWeekDates = _currentWeekDates(
     player.competitiveActivityHistory,
     currentDate,
   );
   final todayCompletedQuests = quests
-      .where((quest) => quest.isCompleted && _isSameDay(quest.completedAt, today))
+      .where(
+        (quest) => quest.isCompleted && _isSameDay(quest.completedAt, today),
+      )
       .toList();
   final personalCompletedToday = todayCompletedQuests
       .where((quest) => !quest.isCompetitive)
@@ -186,7 +190,8 @@ int _trustScore({
   var score = 78;
   score += weeklyCompetitiveDays * 4;
   score += (competitiveQuestCompletionsToday * 3).clamp(0, 12);
-  score += weeklyCompetitiveDays > 0 && weeklyCompetitiveDays >= weeklyActiveDays
+  score +=
+      weeklyCompetitiveDays > 0 && weeklyCompetitiveDays >= weeklyActiveDays
       ? 6
       : 0;
   score -= (personalQuestCompletionsToday - 3).clamp(0, 10) * 4;
@@ -227,11 +232,12 @@ int _suspiciousPatternCount({
     count += 1;
   }
 
-  final orderedTimes = personalCompletedToday
-      .map((quest) => quest.completedAt)
-      .whereType<DateTime>()
-      .toList()
-    ..sort();
+  final orderedTimes =
+      personalCompletedToday
+          .map((quest) => quest.completedAt)
+          .whereType<DateTime>()
+          .toList()
+        ..sort();
   var burstPairs = 0;
   for (var index = 1; index < orderedTimes.length; index++) {
     final gap = orderedTimes[index].difference(orderedTimes[index - 1]);
@@ -323,5 +329,6 @@ String _weekKeyFor(DateTime value) {
 DateTime _readTimestamp(Object? value) {
   if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
   return DateTime.now();
 }

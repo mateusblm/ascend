@@ -230,4 +230,40 @@ void main() {
     expect(response['status'], 'preview');
     expect((response['rankSnapshot'] as Map)['currentRank'], 'E');
   });
+
+  test('syncCompetitiveState posts authoritative rank source', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('''
+          {
+            "status": "synced",
+            "rankSnapshot": {
+              "currentRank": "E",
+              "status": "secure",
+              "updatedAt": "2026-06-06T12:00:00Z"
+            }
+          }
+          ''', 200);
+      }),
+    );
+
+    final response = await client.syncCompetitiveState(
+      idToken: 'id-token',
+      rankSource: const <String, dynamic>{
+        'playerLevel': 1,
+        'competitiveActivityHistory': <String>[],
+      },
+    );
+
+    expect(requestedUri.path, '/api/v1/competitive/state:sync');
+    expect((requestedBody['rankSource'] as Map)['playerLevel'], 1);
+    expect(requestedBody.containsKey('integritySource'), isFalse);
+    expect(response['status'], 'synced');
+    expect((response['rankSnapshot'] as Map)['currentRank'], 'E');
+  });
 }

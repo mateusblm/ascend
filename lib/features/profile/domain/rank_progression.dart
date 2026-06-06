@@ -120,9 +120,10 @@ class CompetitiveRankSnapshot {
   factory CompetitiveRankSnapshot.fromFirestore(Map<String, dynamic> data) {
     return CompetitiveRankSnapshot(
       currentRank: (data['currentRank'] as String? ?? 'E').trim().toUpperCase(),
-      peakRank: (data['peakRank'] as String? ?? data['currentRank'] as String? ?? 'E')
-          .trim()
-          .toUpperCase(),
+      peakRank:
+          (data['peakRank'] as String? ?? data['currentRank'] as String? ?? 'E')
+              .trim()
+              .toUpperCase(),
       highestEligibleRank:
           (data['highestEligibleRank'] as String? ??
                   data['currentRank'] as String? ??
@@ -280,15 +281,12 @@ CompetitiveRankSnapshot evaluateCompetitiveRank({
       (!currentRule.requiresBossClear || currentBossCompleted);
   final nextBoss = nextRank == null ? null : weeklyBossForRank(nextRank);
   final nextBossCompleted =
-      nextBoss?.isCompleted(
-        player,
-        competitiveOnly: true,
-        now: currentDate,
-      ) ??
+      nextBoss?.isCompleted(player, competitiveOnly: true, now: currentDate) ??
       false;
   final targetRequiredLevel = nextRule?.minimumLevel ?? player.level;
-  final targetLevelGateMet =
-      nextRule == null ? true : player.level >= nextRule.minimumLevel;
+  final targetLevelGateMet = nextRule == null
+      ? true
+      : player.level >= nextRule.minimumLevel;
   final advancementMode = nextRank == null
       ? null
       : (_rankOrder(nextRank) <= _rankOrder(peakRank)
@@ -521,8 +519,8 @@ String _detailForStatus({
   final levelLine = nextRank == null
       ? 'Voce ja esta no topo do sistema.'
       : targetLevelGateMet
-          ? 'Seu level ja libera a tentativa do rank $nextRank.'
-          : 'Seu level atual ainda nao libera o rank $nextRank. Necessario: level $targetRequiredLevel.';
+      ? 'Seu level ja libera a tentativa do rank $nextRank.'
+      : 'Seu level atual ainda nao libera o rank $nextRank. Necessario: level $targetRequiredLevel.';
   final reconquestLine = _rankOrder(currentRank) < _rankOrder(peakRank)
       ? 'Seu pico historico e $peakRank. O sistema abriu uma rota de reconquista acelerada.'
       : 'Seu teto atual por level chega ate o rank $highestEligibleRank.';
@@ -566,5 +564,6 @@ String _weekKeyFor(DateTime value) {
 DateTime _readTimestamp(Object? value) {
   if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
   return DateTime.now();
 }

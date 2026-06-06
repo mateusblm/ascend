@@ -2,6 +2,7 @@ package app.ascend.backend.competitivo;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -119,5 +120,56 @@ class EstadoCompetitivoControllerTest {
         .andExpect(jsonPath("$.rankSnapshot.syncSource", is("backend")))
         .andExpect(jsonPath("$.integritySnapshot.trustBand", is("high")))
         .andExpect(jsonPath("$.integritySnapshot.syncSchemaVersion", is(3)));
+  }
+
+  @Test
+  void sincronizarEstadoCompetitivoRetornaContratoPublico() throws Exception {
+    when(tokenVerifier.verificar("valid-token"))
+        .thenReturn(new UsuarioAutenticado("user-1", "user@example.com"));
+    when(service.sincronizar(eq("user-1"), any()))
+        .thenReturn(new RespostaSincronizacaoEstadoCompetitivo(
+            "synced",
+            new SnapshotRankCompetitivo(
+                "E",
+                "E",
+                "E",
+                "2026W0608",
+                3,
+                3,
+                false,
+                true,
+                "secure",
+                0,
+                false,
+                "D",
+                5,
+                false,
+                "ascension",
+                "routine",
+                "Rank E estabilizado.",
+                "Detalhe",
+                3,
+                "backend",
+                Instant.parse("2026-06-10T12:00:00Z")
+            ),
+            null
+        ));
+
+    mockMvc.perform(post("/api/v1/competitive/state:sync")
+            .header("Authorization", "Bearer valid-token")
+            .contentType("application/json")
+            .content("""
+                {
+                  "rankSource": {
+                    "playerLevel": 1,
+                    "activityHistory": [],
+                    "competitiveActivityHistory": []
+                  }
+                }
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status", is("synced")))
+        .andExpect(jsonPath("$.rankSnapshot.currentRank", is("E")))
+        .andExpect(jsonPath("$.rankSnapshot.syncSource", is("backend")));
   }
 }

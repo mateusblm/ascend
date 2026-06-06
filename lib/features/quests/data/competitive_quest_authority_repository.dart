@@ -123,7 +123,7 @@ class CompetitiveQuestAuthorityRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
-          // Keep Cloud Functions as fallback while the competitive flow is migrating.
+          rethrow;
         }
       }
 
@@ -199,7 +199,7 @@ class CompetitiveQuestAuthorityRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
-          // Non-session failures fall back to the legacy callable during Phase 9.
+          rethrow;
         }
       }
 

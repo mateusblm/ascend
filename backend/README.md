@@ -41,16 +41,18 @@ Use Docker para subir o backend Java sem instalar Java, Maven ou gcloud na
 maquina. O login do Google Cloud tambem roda em container e grava a credencial
 em um volume Docker local.
 
-Primeiro, autentique uma vez por maquina:
-
-```powershell
-.\tools\backend\start-local-docker.ps1 -Login
-```
-
-Nas proximas vezes, suba apenas o backend:
+Suba o backend pela raiz do repositorio:
 
 ```powershell
 .\tools\backend\start-local-docker.ps1
+```
+
+Na primeira execucao, ou quando a credencial local do volume Docker nao existir,
+o script roda o login do Google Cloud automaticamente. Para forcar um novo
+login:
+
+```powershell
+.\tools\backend\start-local-docker.ps1 -Login
 ```
 
 Isso sobe o servico em:

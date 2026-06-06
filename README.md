@@ -88,14 +88,11 @@ npm run test:rules
 Java backend local via Docker:
 
 ```powershell
-.\tools\backend\start-local-docker.ps1 -Login
-```
-
-Depois do primeiro login na maquina, use apenas:
-
-```powershell
 .\tools\backend\start-local-docker.ps1
 ```
+
+O script roda o login do Google Cloud em container automaticamente quando a
+credencial ainda nao existe. Use `-Login` para forcar um novo login.
 
 Then run Flutter against the local Java backend:
 

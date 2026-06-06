@@ -564,6 +564,8 @@ Java must return snapshot X
     endpoint.
     - Flutter still uses TS result
     - Java result can be called/logged/compared manually
+    - Flutter calls Java preview when `ASCEND_JAVA_BACKEND_URL` is configured
+      and ignores shadow failures/divergences for user-facing behavior
 
 Exit criteria:
 - Java and TS produce the same snapshots for known cases
@@ -575,9 +577,12 @@ Current status:
   competitive state calculator for rank and integrity snapshots.
 - Java exposes authenticated `POST /api/v1/competitive/state:preview` for
   shadow comparison.
+- Flutter can call the preview endpoint from rank/integrity sync paths without
+  changing the TS/Firebase result used by the app.
 - The Phase 8 preview intentionally does not write Firestore, grant XP, promote,
   demote, or switch Flutter authority.
-- Local Java validation passed with `mvn test` and `mvn package` on 2026-06-06.
+- Local validation passed with Java `mvn test`, Java `mvn package`, Flutter
+  `flutter analyze`, and focused Java backend client tests on 2026-06-06.
 
 ## Phase 9 - Competitive Evidence Migration
 

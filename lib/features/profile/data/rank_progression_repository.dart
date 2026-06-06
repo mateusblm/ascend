@@ -16,6 +16,7 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class RankProgressionRepository {
   RankProgressionRepository(
@@ -204,6 +205,13 @@ class RankProgressionRepository {
       }
 
       _lastSyncedFingerprintByUser[uid] = _fingerprintFor(remoteSnapshot);
+      unawaited(
+        _runCompetitiveShadowPreview(
+          player: player,
+          remoteSnapshot: remoteSnapshot,
+          stage: 'competitive_rank_shadow_preview',
+        ),
+      );
       return remoteSnapshot;
     } catch (error, stackTrace) {
       _reportRecoverable(
@@ -324,6 +332,16 @@ class RankProgressionRepository {
         player: player,
         quests: quests,
       );
+      if (remoteIntegrity != null) {
+        unawaited(
+          _runCompetitiveShadowPreview(
+            player: player,
+            quests: quests,
+            remoteIntegrity: remoteIntegrity,
+            stage: 'competitive_integrity_shadow_preview',
+          ),
+        );
+      }
       return remoteIntegrity ?? localFallback;
     } catch (error, stackTrace) {
       _reportRecoverable(
@@ -402,6 +420,92 @@ class RankProgressionRepository {
           )
           .toList(growable: false),
     };
+  }
+
+  Future<void> _runCompetitiveShadowPreview({
+    required Player player,
+    List<Quest> quests = const <Quest>[],
+    CompetitiveRankSnapshot? remoteSnapshot,
+    CompetitiveIntegritySnapshot? remoteIntegrity,
+    required String stage,
+  }) async {
+    final javaBackendClient = _javaBackendClient;
+    final currentUser = _auth.currentUser;
+    if (javaBackendClient == null || currentUser == null) {
+      return;
+    }
+
+    try {
+      final idToken = await currentUser.getIdToken();
+      if (idToken == null || idToken.isEmpty) {
+        return;
+      }
+
+      final response = await javaBackendClient
+          .previewCompetitiveState(
+            idToken: idToken,
+            rankSource: _competitiveSourceFor(player),
+            integritySource: _competitiveIntegritySourceFor(
+              player: player,
+              quests: quests,
+            ),
+          )
+          .timeout(_rpcTimeout);
+      _compareCompetitiveShadowPreview(
+        response: response,
+        remoteSnapshot: remoteSnapshot,
+        remoteIntegrity: remoteIntegrity,
+        stage: stage,
+      );
+    } catch (error, stackTrace) {
+      _reportRecoverable(error, stackTrace, stage: stage);
+    }
+  }
+
+  void _compareCompetitiveShadowPreview({
+    required Map<String, dynamic> response,
+    CompetitiveRankSnapshot? remoteSnapshot,
+    CompetitiveIntegritySnapshot? remoteIntegrity,
+    required String stage,
+  }) {
+    final rankSnapshot = response['rankSnapshot'];
+    if (remoteSnapshot != null && rankSnapshot is Map) {
+      final javaStatus = rankSnapshot['status'] as String?;
+      final javaRank = rankSnapshot['currentRank'] as String?;
+      if (javaStatus != remoteSnapshot.status.name ||
+          javaRank != remoteSnapshot.currentRank) {
+        _reportShadowDivergence(
+          stage: stage,
+          message:
+              'Rank Java=$javaRank/$javaStatus Firebase=${remoteSnapshot.currentRank}/${remoteSnapshot.status.name}',
+        );
+      }
+    }
+
+    final integritySnapshot = response['integritySnapshot'];
+    if (remoteIntegrity != null && integritySnapshot is Map) {
+      final javaTrustBand = integritySnapshot['trustBand'] as String?;
+      final javaTrustScore = (integritySnapshot['trustScore'] as num?)?.toInt();
+      if (javaTrustBand != remoteIntegrity.trustBand.name ||
+          javaTrustScore != remoteIntegrity.trustScore) {
+        _reportShadowDivergence(
+          stage: stage,
+          message:
+              'Integridade Java=$javaTrustBand/$javaTrustScore Firebase=${remoteIntegrity.trustBand.name}/${remoteIntegrity.trustScore}',
+        );
+      }
+    }
+  }
+
+  void _reportShadowDivergence({
+    required String stage,
+    required String message,
+  }) {
+    final error = StateError('Divergencia shadow competitiva: $message');
+    if (kDebugMode) {
+      debugPrint('[CompetitiveShadow] $stage: $message');
+    }
+    _reportRecoverable(error, StackTrace.current, stage: stage);
   }
 
   Future<void> syncPromotionExam(CompetitiveRankSnapshot snapshot) async {

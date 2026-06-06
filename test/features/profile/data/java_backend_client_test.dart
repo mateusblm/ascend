@@ -130,34 +130,37 @@ void main() {
     );
   });
 
-  test('completePersonalQuest posts quest command and returns payload', () async {
-    late Uri requestedUri;
-    late Map<String, dynamic> requestedBody;
-    final client = JavaBackendClient(
-      baseUrl: 'https://backend.example.com/base',
-      httpClient: MockClient((request) async {
-        requestedUri = request.url;
-        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response(
-          '{"status":"completed","questId":"quest-1","profile":{},"quest":{}}',
-          200,
-        );
-      }),
-    );
+  test(
+    'completePersonalQuest posts quest command and returns payload',
+    () async {
+      late Uri requestedUri;
+      late Map<String, dynamic> requestedBody;
+      final client = JavaBackendClient(
+        baseUrl: 'https://backend.example.com/base',
+        httpClient: MockClient((request) async {
+          requestedUri = request.url;
+          requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(
+            '{"status":"completed","questId":"quest-1","profile":{},"quest":{}}',
+            200,
+          );
+        }),
+      );
 
-    final response = await client.completePersonalQuest(
-      idToken: 'id-token',
-      deviceSessionId: 'device-1',
-      questId: 'quest-1',
-      quest: const <String, dynamic>{'id': 'quest-1'},
-    );
+      final response = await client.completePersonalQuest(
+        idToken: 'id-token',
+        deviceSessionId: 'device-1',
+        questId: 'quest-1',
+        quest: const <String, dynamic>{'id': 'quest-1'},
+      );
 
-    expect(requestedUri.path, '/base/api/v1/quests/personal:complete');
-    expect(requestedBody['deviceSessionId'], 'device-1');
-    expect(requestedBody['questId'], 'quest-1');
-    expect((requestedBody['quest'] as Map)['id'], 'quest-1');
-    expect(response['status'], 'completed');
-  });
+      expect(requestedUri.path, '/base/api/v1/quests/personal:complete');
+      expect(requestedBody['deviceSessionId'], 'device-1');
+      expect(requestedBody['questId'], 'quest-1');
+      expect((requestedBody['quest'] as Map)['id'], 'quest-1');
+      expect(response['status'], 'completed');
+    },
+  );
 
   test('revokePersonalQuestCompletion posts revoke command', () async {
     late Uri requestedUri;
@@ -184,5 +187,47 @@ void main() {
     expect(requestedBody['deviceSessionId'], 'device-1');
     expect(requestedBody['questId'], 'quest-1');
     expect(response['status'], 'revoked');
+  });
+
+  test('previewCompetitiveState posts shadow payload', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('''
+          {
+            "status": "preview",
+            "rankSnapshot": {"currentRank": "E"},
+            "integritySnapshot": {"trustBand": "stable"}
+          }
+          ''', 200);
+      }),
+    );
+
+    final response = await client.previewCompetitiveState(
+      idToken: 'id-token',
+      rankSource: const <String, dynamic>{
+        'playerLevel': 1,
+        'competitiveActivityHistory': <String>[],
+      },
+      integritySource: const <String, dynamic>{
+        'activityHistory': <String>[],
+        'competitiveActivityHistory': <String>[],
+        'quests': <Map<String, dynamic>>[],
+      },
+    );
+
+    expect(requestedUri.path, '/base/api/v1/competitive/state:preview');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect(requestedHeaders['Content-Type'], 'application/json');
+    expect((requestedBody['rankSource'] as Map)['playerLevel'], 1);
+    expect((requestedBody['integritySource'] as Map)['quests'], isEmpty);
+    expect(response['status'], 'preview');
+    expect((response['rankSnapshot'] as Map)['currentRank'], 'E');
   });
 }

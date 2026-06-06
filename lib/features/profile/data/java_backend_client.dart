@@ -116,6 +116,21 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> previewCompetitiveState({
+    required String idToken,
+    required Map<String, dynamic> rankSource,
+    required Map<String, dynamic> integritySource,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/competitive/state:preview',
+      idToken: idToken,
+      body: <String, Object?>{
+        'rankSource': rankSource,
+        'integritySource': integritySource,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

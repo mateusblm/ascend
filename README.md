@@ -85,6 +85,24 @@ npm test
 npm run test:rules
 ```
 
+Java backend local via Docker:
+
+```powershell
+.\tools\backend\start-local-docker.ps1 -Login
+```
+
+Depois do primeiro login na maquina, use apenas:
+
+```powershell
+.\tools\backend\start-local-docker.ps1
+```
+
+Then run Flutter against the local Java backend:
+
+```powershell
+flutter run --dart-define=ASCEND_JAVA_BACKEND_URL=http://localhost:8080
+```
+
 ## Release Identity
 
 Android no longer uses `com.example.ascend` as the release identity.

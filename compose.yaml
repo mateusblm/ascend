@@ -1,0 +1,39 @@
+services:
+  gcloud-auth:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+    profiles:
+      - auth
+    command: >
+      sh -lc "gcloud auth application-default login --no-launch-browser
+      && gcloud auth application-default set-quota-project $${GOOGLE_CLOUD_PROJECT}"
+    environment:
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-ascend-b7c20}
+    volumes:
+      - type: volume
+        source: gcloud-config
+        target: /root/.config/gcloud
+
+  ascend-backend:
+    image: maven:3.9.9-eclipse-temurin-21
+    working_dir: /workspace/backend
+    command: mvn spring-boot:run
+    ports:
+      - "${ASCEND_BACKEND_PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      GOOGLE_APPLICATION_CREDENTIALS: /root/.config/gcloud/application_default_credentials.json
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-ascend-b7c20}
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: maven-cache
+        target: /root/.m2
+      - type: volume
+        source: gcloud-config
+        target: /root/.config/gcloud
+
+volumes:
+  gcloud-config:
+  maven-cache:

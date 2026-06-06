@@ -35,6 +35,55 @@ Expected response:
 {"status":"ok","service":"ascend-backend"}
 ```
 
+## Local Docker
+
+Use Docker para subir o backend Java sem instalar Java, Maven ou gcloud na
+maquina. O login do Google Cloud tambem roda em container e grava a credencial
+em um volume Docker local.
+
+Primeiro, autentique uma vez por maquina:
+
+```powershell
+.\tools\backend\start-local-docker.ps1 -Login
+```
+
+Nas proximas vezes, suba apenas o backend:
+
+```powershell
+.\tools\backend\start-local-docker.ps1
+```
+
+Isso sobe o servico em:
+
+```text
+http://localhost:8080
+```
+
+Para usar outra porta:
+
+```powershell
+.\tools\backend\start-local-docker.ps1 -Port 8081
+```
+
+Se precisar trocar o projeto Google Cloud:
+
+```powershell
+.\tools\backend\start-local-docker.ps1 -ProjectId ascend-b7c20 -Login
+.\tools\backend\start-local-docker.ps1 -ProjectId ascend-b7c20
+```
+
+Com o backend local no Docker, rode o Flutter apontando para ele:
+
+```powershell
+flutter run --dart-define=ASCEND_JAVA_BACKEND_URL=http://localhost:8080
+```
+
+No Android emulator, use o host especial do emulador:
+
+```powershell
+flutter run --dart-define=ASCEND_JAVA_BACKEND_URL=http://10.0.2.2:8080
+```
+
 ## Cloud Run Staging Deploy
 
 The staging service target is:

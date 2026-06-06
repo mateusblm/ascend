@@ -560,9 +560,10 @@ Java must return snapshot X
 7. Preserve `syncSource`.
 8. Preserve demotion/promotion flags.
 9. Preserve trust labels and risk details.
-10. Run Java in shadow mode if possible:
+10. Run Java in shadow mode if possible: started with authenticated preview
+    endpoint.
     - Flutter still uses TS result
-    - Java result is logged/compared manually
+    - Java result can be called/logged/compared manually
 
 Exit criteria:
 - Java and TS produce the same snapshots for known cases
@@ -572,8 +573,10 @@ Exit criteria:
 Current status:
 - Java package `app.ascend.backend.competitivo` now contains a side-effect-free
   competitive state calculator for rank and integrity snapshots.
-- The first Phase 8 slice intentionally does not expose an endpoint, write
-  Firestore, grant XP, or switch Flutter authority.
+- Java exposes authenticated `POST /api/v1/competitive/state:preview` for
+  shadow comparison.
+- The Phase 8 preview intentionally does not write Firestore, grant XP, promote,
+  demote, or switch Flutter authority.
 - Local Java validation passed with `mvn test` and `mvn package` on 2026-06-06.
 
 ## Phase 9 - Competitive Evidence Migration

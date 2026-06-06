@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CalculadoraEstadoCompetitivo {
 
   static final int VERSAO_SCHEMA_SINCRONIZACAO = 3;

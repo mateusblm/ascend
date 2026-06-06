@@ -204,6 +204,17 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> claimSeasonReward({
+    required String idToken,
+    required String seasonKey,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/season-rewards/current:claim',
+      idToken: idToken,
+      body: <String, Object?>{'seasonKey': seasonKey},
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

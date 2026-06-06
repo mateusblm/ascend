@@ -999,6 +999,23 @@ class RankProgressionRepository {
   Future<String> _claimSeasonRewardRemotely(
     SeasonRewardSnapshot currentReward,
   ) async {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient != null) {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken != null && idToken.isNotEmpty) {
+        final response = await javaBackendClient
+            .claimSeasonReward(
+              idToken: idToken,
+              seasonKey: currentReward.seasonKey,
+            )
+            .timeout(_rpcTimeout);
+        final status = response['status'];
+        if (status is String) {
+          return status;
+        }
+      }
+    }
+
     final callable = _functions.httpsCallable('claimSeasonReward');
     final response = await callable
         .call(<String, dynamic>{'seasonKey': currentReward.seasonKey})

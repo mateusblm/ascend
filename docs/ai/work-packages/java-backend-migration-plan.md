@@ -667,7 +667,16 @@ Progress:
 - Java-first promotion exam start/confirm is implemented with Spring Boot
   endpoints, Portuguese domain errors, Firebase-authenticated HTTP calls from
   Flutter, and idempotent statuses for in-progress/promoted exams.
-- Season reward claim and legacy reward writes remain the next Phase 10 slice.
+- Java-first season reward claim is implemented with transactional writes for
+  the current reward, reward history, season legacy, and active season profile.
+- Flutter tries Java first for promotion and season reward flows when
+  `ASCEND_JAVA_BACKEND_URL` is configured, with Firebase Functions remaining as
+  fallback when the Java backend URL is absent.
+
+Status:
+- Phase 10 implementation is complete. Remaining work is staging smoke with a
+  test account that has a ready-to-claim season reward and a passed promotion
+  exam.
 
 ## Phase 11 - AI Reading Quiz Migration
 

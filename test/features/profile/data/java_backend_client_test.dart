@@ -413,4 +413,32 @@ void main() {
     expect((requestedBody['snapshot'] as Map)['weekKey'], '2026W0608');
     expect(response['status'], 'promoted');
   });
+
+  test('claimSeasonReward posts season reward claim command', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"claimed","seasonKey":"2026-06","rewardName":"Pacote","activeTitleLabel":"VIGIA"}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.claimSeasonReward(
+      idToken: 'id-token',
+      seasonKey: '2026-06',
+    );
+
+    expect(requestedUri.path, '/base/api/v1/season-rewards/current:claim');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect(requestedBody['seasonKey'], '2026-06');
+    expect(response['status'], 'claimed');
+  });
 }

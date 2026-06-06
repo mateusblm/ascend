@@ -15,6 +15,8 @@ Current status:
 - `POST /api/v1/competitive/promotion/exam:start` and
   `POST /api/v1/competitive/promotion:confirm` are implemented for Java-first
   promotion exam start and promotion confirmation.
+- `POST /api/v1/season-rewards/current:claim` is implemented for Java-first
+  season reward claim, legacy reward write, and active season profile update.
 - TypeScript Functions remain authoritative.
 
 ## Local Commands
@@ -143,6 +145,7 @@ Invoke-RestMethod "$serviceUrl/api/v1/me" -Headers @{ Authorization = "Bearer <F
 Invoke-RestMethod "$serviceUrl/api/v1/season-leaderboard?seasonKey=<season>&rankBracket=E" -Headers @{ Authorization = "Bearer <Firebase ID token>" }
 Invoke-RestMethod "$serviceUrl/api/v1/quests/inventory:sync" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","source":{"quests":[]}}'
 Invoke-RestMethod "$serviceUrl/api/v1/competitive/promotion/exam:start" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"snapshot":{"currentRank":"D","peakRank":"D","highestEligibleRank":"C","weekKey":"2026W0608","activeDays":5,"requiredActiveDays":4,"requiresBossClear":false,"bossCompleted":true,"status":"promotionReady","demotionStrikes":0,"promotionReady":true,"promotionTargetRank":"C","targetRequiredLevel":10,"targetLevelGateMet":true,"advancementMode":"ascension","eventType":"promotionUnlocked","summary":"Exame de promocao pronto para o rank C.","detail":"Smoke manual.","syncSchemaVersion":3,"syncSource":"backend","updatedAt":"2026-06-06T12:00:00Z"}}'
+Invoke-RestMethod "$serviceUrl/api/v1/season-rewards/current:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"seasonKey":"<season>"}'
 ```
 
 Keep Cloud Run public at the IAM layer for now (`--allow-unauthenticated`) so

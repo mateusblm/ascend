@@ -266,4 +266,74 @@ void main() {
     expect(response['status'], 'synced');
     expect((response['rankSnapshot'] as Map)['currentRank'], 'E');
   });
+
+  test('startCompetitiveQuestSession posts quest session command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"started","startedAt":"2026-06-06T12:00:00Z"}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.startCompetitiveQuestSession(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      quest: const <String, dynamic>{'id': 'competitive-1'},
+    );
+
+    expect(requestedUri.path, '/api/v1/quests/competitive:session:start');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['questId'], 'competitive-1');
+    expect((requestedBody['quest'] as Map)['id'], 'competitive-1');
+    expect(response['status'], 'started');
+  });
+
+  test('verifyCompetitiveQuestCompletion posts evidence command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '''
+          {
+            "status": "verified",
+            "completedAt": "2026-06-06T12:30:00Z",
+            "profile": {"level": 1},
+            "questId": "competitive-1",
+            "quest": {"isCompleted": true}
+          }
+          ''',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.verifyCompetitiveQuestCompletion(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      quest: const <String, dynamic>{'id': 'competitive-1'},
+      evidence: const <String, dynamic>{
+        'questId': 'competitive-1',
+        'provider': 'mockEvidence',
+      },
+      reflectionAnswer: 'Resumo curto.',
+    );
+
+    expect(requestedUri.path, '/base/api/v1/quests/competitive:verify');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['questId'], 'competitive-1');
+    expect((requestedBody['evidence'] as Map)['provider'], 'mockEvidence');
+    expect(requestedBody['reflectionAnswer'], 'Resumo curto.');
+    expect(response['status'], 'verified');
+  });
 }

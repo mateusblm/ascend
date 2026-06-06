@@ -146,6 +146,42 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> startCompetitiveQuestSession({
+    required String idToken,
+    required String deviceSessionId,
+    required Map<String, dynamic> quest,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/quests/competitive:session:start',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        'questId': quest['id'],
+        'quest': quest,
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyCompetitiveQuestCompletion({
+    required String idToken,
+    required String deviceSessionId,
+    required Map<String, dynamic> quest,
+    required Map<String, dynamic> evidence,
+    String? reflectionAnswer,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/quests/competitive:verify',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        'questId': quest['id'],
+        'quest': quest,
+        'evidence': evidence,
+        if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

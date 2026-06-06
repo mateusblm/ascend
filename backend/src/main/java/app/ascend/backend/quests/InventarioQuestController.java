@@ -12,13 +12,16 @@ public class InventarioQuestController {
 
   private final SincronizacaoInventarioQuestService service;
   private final MutacaoQuestPessoalService mutacaoQuestPessoalService;
+  private final MutacaoQuestCompetitivaService mutacaoQuestCompetitivaService;
 
   public InventarioQuestController(
       SincronizacaoInventarioQuestService service,
-      MutacaoQuestPessoalService mutacaoQuestPessoalService
+      MutacaoQuestPessoalService mutacaoQuestPessoalService,
+      MutacaoQuestCompetitivaService mutacaoQuestCompetitivaService
   ) {
     this.service = service;
     this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
+    this.mutacaoQuestCompetitivaService = mutacaoQuestCompetitivaService;
   }
 
   @PostMapping("/inventory:sync")
@@ -43,5 +46,21 @@ public class InventarioQuestController {
       @RequestBody RequisicaoMutacaoQuestPessoal request
   ) {
     return mutacaoQuestPessoalService.revogar(user.uid(), user.email(), request);
+  }
+
+  @PostMapping("/competitive:session:start")
+  public RespostaInicioQuestCompetitiva iniciarSessaoCompetitiva(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoQuestCompetitiva request
+  ) {
+    return mutacaoQuestCompetitivaService.iniciarSessao(user.uid(), request);
+  }
+
+  @PostMapping("/competitive:verify")
+  public RespostaVerificacaoQuestCompetitiva verificarQuestCompetitiva(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoQuestCompetitiva request
+  ) {
+    return mutacaoQuestCompetitivaService.verificarConclusao(user.uid(), user.email(), request);
   }
 }

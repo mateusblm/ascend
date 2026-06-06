@@ -619,6 +619,21 @@ Exit criteria:
 - backend remains final decision maker
 - mock evidence remains non-production-safe and clearly flagged
 
+Current status:
+- Java now exposes authenticated competitive session and verification endpoints:
+  - `POST /api/v1/quests/competitive:session:start`
+  - `POST /api/v1/quests/competitive:verify`
+- Java validates official competitive templates, evidence provider/type,
+  minimum duration, minimum distance, stale evidence, impossible pace, and
+  duplicate `sourceActivityId`.
+- Java verification writes the competitive session, grant, evidence audit,
+  quest document, quest completion document, and profile aggregate in one
+  transactional command.
+- Flutter tries Java first when `ASCEND_JAVA_BACKEND_URL` is configured and
+  falls back to Firebase Functions for non-session Java failures.
+- Backend-owned reading quiz attempts remain on Firebase Functions until the
+  quiz contract is migrated in Phase 11; Java avoids taking over that path yet.
+
 ## Phase 10 - Promotion And Season Rewards Migration
 
 Goal:

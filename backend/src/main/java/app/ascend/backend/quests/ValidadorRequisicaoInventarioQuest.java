@@ -124,6 +124,55 @@ public class ValidadorRequisicaoInventarioQuest {
     return validada;
   }
 
+  /**
+   * Valida uma quest competitiva enviada em comando de sessao/verificacao. O
+   * cliente informa o estado visual, mas o backend revalida o template oficial
+   * antes de aceitar qualquer evidencia rank-bearing.
+   */
+  public QuestInventarioValidada validarQuestCompetitivaDoComando(
+      String questId,
+      QuestFonteInventario quest
+  ) {
+    QuestFonteInventario questComIdCanonico = new QuestFonteInventario(
+        questId,
+        quest.title(),
+        quest.rewardAttribute(),
+        quest.xpReward(),
+        quest.category(),
+        quest.templateType(),
+        quest.verificationMode(),
+        quest.verificationStatus(),
+        quest.targetDurationMinutes(),
+        quest.reflectionPrompt(),
+        quest.reflectionAnswer(),
+        quest.verificationStartedAt(),
+        quest.completedAt(),
+        quest.verifiedAt(),
+        quest.isCompleted(),
+        quest.preRewardLevel(),
+        quest.preRewardXp(),
+        quest.preRewardMaxXp(),
+        quest.preRewardStatPoints(),
+        quest.preRewardStrength(),
+        quest.preRewardIntelligence(),
+        quest.preRewardVitality(),
+        quest.preRewardAgility()
+    );
+    if (quest.id() instanceof String idEnviado && !idEnviado.trim().equals(questId)) {
+      throw badRequest("invalid_quest_id");
+    }
+    QuestInventarioValidada validada = validarFonte(new FonteInventarioQuest(List.of(questComIdCanonico)))
+        .getFirst();
+    if (!"competitive".equals(validada.category())) {
+      throw new ExcecaoApi(
+          HttpStatus.PRECONDITION_FAILED,
+          "competitive_quest_required",
+          "Apenas quests competitivas usam este comando."
+      );
+    }
+    return validada;
+  }
+
   private List<QuestInventarioValidada> validarFonte(FonteInventarioQuest fonte) {
     if (fonte == null || fonte.quests() == null || fonte.quests().size() > MAX_QUESTS_PER_USER) {
       throw badRequest("invalid_quests");

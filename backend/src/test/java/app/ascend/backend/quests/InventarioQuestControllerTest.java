@@ -43,6 +43,9 @@ class InventarioQuestControllerTest {
   @MockitoBean
   private MutacaoQuestPessoalService mutacaoQuestPessoalService;
 
+  @MockitoBean
+  private MutacaoQuestCompetitivaService mutacaoQuestCompetitivaService;
+
   @Test
   void sincronizarInventarioRequerAutenticacao() throws Exception {
     mockMvc.perform(post("/api/v1/quests/inventory:sync")

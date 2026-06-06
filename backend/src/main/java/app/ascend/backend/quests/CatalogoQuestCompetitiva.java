@@ -17,7 +17,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           10,
           35,
-          "agility"
+          "agility",
+          "runningDistance",
+          2,
+          10,
+          2000,
+          0,
+          List.of("healthConnect", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Corrida ranqueada de 5 km",
@@ -25,7 +31,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           20,
           55,
-          "vitality"
+          "vitality",
+          "runningDistance",
+          3,
+          20,
+          5000,
+          0,
+          List.of("healthConnect", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Treino corporal de 20 minutos",
@@ -33,7 +45,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           20,
           35,
-          "strength"
+          "strength",
+          "workoutSession",
+          2,
+          20,
+          0,
+          0,
+          List.of("healthConnect", "appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Sessao de foco de 25 minutos",
@@ -41,7 +59,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           25,
           30,
-          "agility"
+          "agility",
+          "timedFocus",
+          2,
+          25,
+          0,
+          0,
+          List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Leitura de 20 minutos",
@@ -49,7 +73,13 @@ public class CatalogoQuestCompetitiva {
           "timerWithReflection",
           20,
           30,
-          "intelligence"
+          "intelligence",
+          "readingComprehension",
+          2,
+          20,
+          0,
+          70,
+          List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Estudo profundo de 30 minutos",
@@ -57,7 +87,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           30,
           35,
-          "intelligence"
+          "intelligence",
+          "studySession",
+          2,
+          30,
+          0,
+          0,
+          List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Revisao de treino de 15 minutos",
@@ -65,7 +101,13 @@ public class CatalogoQuestCompetitiva {
           "timerWithReflection",
           15,
           25,
-          "intelligence"
+          "intelligence",
+          "readingComprehension",
+          2,
+          15,
+          0,
+          70,
+          List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Sessao de foco de 20 minutos",
@@ -73,7 +115,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           20,
           25,
-          "vitality"
+          "vitality",
+          "timedFocus",
+          2,
+          20,
+          0,
+          0,
+          List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Leitura ou revisao de 15 minutos",
@@ -81,7 +129,13 @@ public class CatalogoQuestCompetitiva {
           "timerWithReflection",
           15,
           25,
-          "intelligence"
+          "intelligence",
+          "readingComprehension",
+          2,
+          15,
+          0,
+          70,
+          List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Bloco de foco de 30 minutos",
@@ -89,7 +143,13 @@ public class CatalogoQuestCompetitiva {
           "timer",
           30,
           35,
-          "agility"
+          "agility",
+          "timedFocus",
+          2,
+          30,
+          0,
+          0,
+          List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Revisao de 20 minutos",
@@ -97,7 +157,13 @@ public class CatalogoQuestCompetitiva {
           "timerWithReflection",
           20,
           30,
-          "intelligence"
+          "intelligence",
+          "studySession",
+          2,
+          20,
+          0,
+          70,
+          List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
           "Revisao ativa de 20 minutos",
@@ -105,7 +171,13 @@ public class CatalogoQuestCompetitiva {
           "timerWithReflection",
           20,
           30,
-          "intelligence"
+          "intelligence",
+          "studySession",
+          2,
+          20,
+          0,
+          70,
+          List.of("mockEvidence")
       )
   );
 

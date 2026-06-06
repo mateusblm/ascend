@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 class RepositorioInventarioQuestEmMemoria
-    implements RepositorioInventarioQuest, RepositorioMutacaoQuestPessoal {
+    implements RepositorioInventarioQuest, RepositorioMutacaoQuestPessoal, RepositorioQuestCompetitiva {
 
   RegistroSessaoAtiva activeSession;
   Set<String> idsQuestsAtuais = new HashSet<>();
@@ -25,6 +25,14 @@ class RepositorioInventarioQuestEmMemoria
   Map<String, Object> questSalva;
   Map<String, Object> conclusaoSalva;
   boolean conclusaoExcluida;
+  Map<String, Object> sessao = Map.of();
+  boolean sessaoExiste;
+  Map<String, Object> concessao = Map.of();
+  boolean concessaoExiste;
+  boolean sourceActivityIdJaUsado;
+  Map<String, Object> sessaoSalva;
+  Map<String, Object> concessaoSalva;
+  Map<String, Object> auditoriaEvidenciaSalva;
 
   @Override
   public Optional<RegistroSessaoAtiva> buscarSessaoAtiva(String uid) {
@@ -83,6 +91,55 @@ class RepositorioInventarioQuestEmMemoria
       conclusoes = conclusoes.stream()
           .filter(data -> !questId.equals(data.get("questId")))
           .toList();
+    }
+    return escrita.resposta();
+  }
+
+  @Override
+  public Object executarMutacaoCompetitiva(
+      String uid,
+      String questId,
+      String attemptId,
+      String sourceActivityId,
+      Function<ContextoQuestCompetitiva, EscritaQuestCompetitiva> mutacao
+  ) {
+    EscritaQuestCompetitiva escrita = mutacao.apply(new ContextoQuestCompetitiva(
+        perfil,
+        quest,
+        questExiste,
+        sessao,
+        sessaoExiste,
+        concessao,
+        concessaoExiste,
+        sourceActivityIdJaUsado,
+        conclusoes,
+        quest.get("orderIndex") instanceof Number orderIndex ? orderIndex.intValue() : 0
+    ));
+    perfilSalvo = escrita.perfil();
+    questSalva = escrita.quest();
+    sessaoSalva = escrita.sessao();
+    concessaoSalva = escrita.concessao();
+    conclusaoSalva = escrita.conclusao();
+    auditoriaEvidenciaSalva = escrita.auditoriaEvidencia();
+    if (perfilSalvo != null) {
+      perfil = perfilSalvo;
+    }
+    if (questSalva != null) {
+      quest = questSalva;
+      questExiste = true;
+    }
+    if (sessaoSalva != null) {
+      sessao = sessaoSalva;
+      sessaoExiste = true;
+    }
+    if (concessaoSalva != null) {
+      concessao = concessaoSalva;
+      concessaoExiste = true;
+    }
+    if (conclusaoSalva != null) {
+      conclusaoExiste = true;
+      conclusoes = new ArrayList<>(conclusoes);
+      conclusoes.add(conclusaoSalva);
     }
     return escrita.resposta();
   }

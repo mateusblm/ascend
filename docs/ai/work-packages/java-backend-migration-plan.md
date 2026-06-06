@@ -855,6 +855,9 @@ Current status:
 - Phase 7 personal quest authority started locally with Java REST endpoints:
   - `POST /api/v1/quests/personal:complete`
   - `POST /api/v1/quests/personal:revoke`
+- Flutter staging/debug can route personal quest complete/revoke to Java with
+  `ASCEND_JAVA_BACKEND_URL`, while retaining Firebase Functions fallback on
+  non-session Java errors
 - Cloud Run staging deploy helper created for `ascend-backend-staging`
 - Cloud Run staging service deployed:
   - `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`

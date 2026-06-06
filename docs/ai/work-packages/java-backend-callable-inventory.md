@@ -1110,4 +1110,6 @@ Next phase:
 - Phase 6 quest inventory route passed authenticated local Docker and Cloud Run
   staging walkthroughs on 2026-06-06
 - Phase 7 personal quest authority has started locally with Java endpoints for
-  complete/revoke; Flutter routing is not switched yet
+  complete/revoke
+- Flutter personal quest complete/revoke can opt into Java with
+  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain the fallback path

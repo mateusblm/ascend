@@ -129,4 +129,60 @@ void main() {
       ),
     );
   });
+
+  test('completePersonalQuest posts quest command and returns payload', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"completed","questId":"quest-1","profile":{},"quest":{}}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.completePersonalQuest(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      questId: 'quest-1',
+      quest: const <String, dynamic>{'id': 'quest-1'},
+    );
+
+    expect(requestedUri.path, '/base/api/v1/quests/personal:complete');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['questId'], 'quest-1');
+    expect((requestedBody['quest'] as Map)['id'], 'quest-1');
+    expect(response['status'], 'completed');
+  });
+
+  test('revokePersonalQuestCompletion posts revoke command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"revoked","questId":"quest-1","profile":{},"quest":{}}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.revokePersonalQuestCompletion(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      questId: 'quest-1',
+    );
+
+    expect(requestedUri.path, '/api/v1/quests/personal:revoke');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['questId'], 'quest-1');
+    expect(response['status'], 'revoked');
+  });
 }

@@ -155,10 +155,35 @@ class QuestSyncRepository {
     final callable = _functions.httpsCallable('completePersonalQuest');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final questSource = _questSourceFor(quest);
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null) {
+        try {
+          final response = await javaBackendClient.completePersonalQuest(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            questId: quest.id,
+            quest: questSource,
+          );
+          return _personalQuestMutationFromResponse(
+            response,
+            uid: uid,
+            fallbackName: fallbackName,
+            fallbackQuestId: quest.id,
+          );
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+        }
+      }
+
       final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'deviceSessionId': deviceSessionId,
         'questId': quest.id,
-        'quest': _questSourceFor(quest),
+        'quest': questSource,
       });
       return _personalQuestMutationFromResponse(
         response.data,
@@ -182,8 +207,31 @@ class QuestSyncRepository {
     final callable = _functions.httpsCallable('revokePersonalQuestCompletion');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null) {
+        try {
+          final response = await javaBackendClient.revokePersonalQuestCompletion(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            questId: quest.id,
+          );
+          return _personalQuestMutationFromResponse(
+            response,
+            uid: uid,
+            fallbackName: fallbackName,
+            fallbackQuestId: quest.id,
+          );
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+        }
+      }
+
       final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'deviceSessionId': deviceSessionId,
         'questId': quest.id,
       });
       return _personalQuestMutationFromResponse(

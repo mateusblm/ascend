@@ -285,7 +285,10 @@ void main() {
     final response = await client.startCompetitiveQuestSession(
       idToken: 'id-token',
       deviceSessionId: 'device-1',
-      quest: const <String, dynamic>{'id': 'competitive-1'},
+      quest: const <String, dynamic>{
+        'id': 'competitive-1',
+        'questId': 'competitive-1',
+      },
     );
 
     expect(requestedUri.path, '/api/v1/quests/competitive:session:start');
@@ -303,8 +306,7 @@ void main() {
       httpClient: MockClient((request) async {
         requestedUri = request.url;
         requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response(
-          '''
+        return http.Response('''
           {
             "status": "verified",
             "completedAt": "2026-06-06T12:30:00Z",
@@ -312,16 +314,17 @@ void main() {
             "questId": "competitive-1",
             "quest": {"isCompleted": true}
           }
-          ''',
-          200,
-        );
+          ''', 200);
       }),
     );
 
     final response = await client.verifyCompetitiveQuestCompletion(
       idToken: 'id-token',
       deviceSessionId: 'device-1',
-      quest: const <String, dynamic>{'id': 'competitive-1'},
+      quest: const <String, dynamic>{
+        'id': 'competitive-1',
+        'questId': 'competitive-1',
+      },
       evidence: const <String, dynamic>{
         'questId': 'competitive-1',
         'provider': 'mockEvidence',

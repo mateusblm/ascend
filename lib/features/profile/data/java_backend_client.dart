@@ -156,7 +156,7 @@ class JavaBackendClient {
       idToken: idToken,
       body: <String, Object?>{
         'deviceSessionId': deviceSessionId,
-        'questId': quest['id'],
+        'questId': quest['questId'] ?? quest['id'],
         'quest': quest,
       },
     );
@@ -174,7 +174,7 @@ class JavaBackendClient {
       idToken: idToken,
       body: <String, Object?>{
         'deviceSessionId': deviceSessionId,
-        'questId': quest['id'],
+        'questId': quest['questId'] ?? quest['id'],
         'quest': quest,
         'evidence': evidence,
         if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,

@@ -337,6 +337,7 @@ class CompetitiveQuestAuthorityRepository {
   }) async {
     final template = officialTemplateForQuest(quest);
     return <String, dynamic>{
+      'id': quest.id,
       'deviceSessionId': await _sessionRepository.deviceSessionId(),
       'deviceLabel': defaultTargetPlatform.name,
       'questId': quest.id,

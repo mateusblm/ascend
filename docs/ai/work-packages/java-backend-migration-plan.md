@@ -491,32 +491,43 @@ Risk:
 - high, because these affect XP, profile, completion state, and undo.
 
 Steps:
-1. Freeze contracts.
+1. Freeze contracts: completed.
 2. Create shared Java domain model for:
    - Player
    - Quest
    - AttributeType
-   - completion snapshot
-3. Port XP grant logic exactly.
-4. Port pre-reward snapshot handling exactly.
-5. Port revoke behavior exactly.
-6. Preserve active session conflict behavior.
+   - completion snapshot: completed locally in Java.
+3. Port XP grant logic exactly: completed for personal quests.
+4. Port pre-reward snapshot handling exactly: completed locally in Java.
+5. Port revoke behavior exactly: implemented locally; needs explicit manual
+   rollback smoke if not covered in the next walkthrough.
+6. Preserve active session conflict behavior: completed.
 7. Add tests for:
-   - first completion grants XP
-   - duplicate completion does not double-grant
-   - revoke restores pre-reward snapshot
-   - revoke without completion is safe
-   - level-up boundaries
-   - attribute changes
-   - active session conflict
-8. Run staging with a test account.
-9. Compare Firestore documents before and after.
+   - first completion grants XP: completed
+   - duplicate completion does not double-grant: completed
+   - revoke restores pre-reward snapshot: completed
+   - revoke without completion is safe: pending
+   - level-up boundaries: completed through first-completion level-up fixture
+   - attribute changes: completed
+   - active session conflict: completed
+8. Run staging with a test account: completed for personal quest completion,
+   XP, and attribute reward on 2026-06-06.
+9. Compare Firestore documents before and after: pending for explicit revoke
+   rollback smoke.
 
 Exit criteria:
-- personal quest loop works from Flutter through Java
-- no double rewards
-- revoke remains safe
-- TS rollback still available
+- personal quest loop works from Flutter through Java: completion validated on
+  staging for normal quests on 2026-06-06
+- no double rewards: covered by Java service test; pending manual duplicate
+  completion smoke if desired
+- revoke remains safe: implemented and covered by Java service test; pending
+  manual rollback smoke
+- TS rollback still available: completed via Firebase Functions fallback when
+  `ASCEND_JAVA_BACKEND_URL` is omitted or non-session Java errors occur
+
+Competitive quest completion remains out of scope for Phase 7 validation. It is
+tracked separately because current behavior was not considered reliable enough
+in the TypeScript path to use as a clean migration parity target.
 
 ## Phase 8 - Competitive State And Integrity Migration
 
@@ -858,6 +869,10 @@ Current status:
 - Flutter staging/debug can route personal quest complete/revoke to Java with
   `ASCEND_JAVA_BACKEND_URL`, while retaining Firebase Functions fallback on
   non-session Java errors
+- Authenticated staging smoke confirmed normal personal quest completion through
+  Java grants XP and attribute reward correctly on 2026-06-06
+- Competitive quest completion is intentionally not a Phase 7 focus because its
+  baseline behavior appears pre-existing outside this Java migration
 - Cloud Run staging deploy helper created for `ascend-backend-staging`
 - Cloud Run staging service deployed:
   - `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`

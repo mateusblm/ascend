@@ -75,6 +75,55 @@ public class ValidadorRequisicaoInventarioQuest {
     );
   }
 
+  /**
+   * Valida uma unica quest pessoal enviada como sugestao pelo Flutter em um
+   * comando de conclusao. O backend exige que o id do corpo bata com o id do
+   * comando e aplica a mesma normalizacao usada no sync de inventario.
+   */
+  public QuestInventarioValidada validarQuestPessoalDoComando(
+      String questId,
+      QuestFonteInventario quest
+  ) {
+    QuestFonteInventario questComIdCanonico = new QuestFonteInventario(
+        questId,
+        quest.title(),
+        quest.rewardAttribute(),
+        quest.xpReward(),
+        quest.category(),
+        quest.templateType(),
+        quest.verificationMode(),
+        quest.verificationStatus(),
+        quest.targetDurationMinutes(),
+        quest.reflectionPrompt(),
+        quest.reflectionAnswer(),
+        quest.verificationStartedAt(),
+        quest.completedAt(),
+        quest.verifiedAt(),
+        quest.isCompleted(),
+        quest.preRewardLevel(),
+        quest.preRewardXp(),
+        quest.preRewardMaxXp(),
+        quest.preRewardStatPoints(),
+        quest.preRewardStrength(),
+        quest.preRewardIntelligence(),
+        quest.preRewardVitality(),
+        quest.preRewardAgility()
+    );
+    if (quest.id() instanceof String idEnviado && !idEnviado.trim().equals(questId)) {
+      throw badRequest("invalid_quest_id");
+    }
+    QuestInventarioValidada validada = validarFonte(new FonteInventarioQuest(List.of(questComIdCanonico)))
+        .getFirst();
+    if (!"personal".equals(validada.category())) {
+      throw new ExcecaoApi(
+          HttpStatus.PRECONDITION_FAILED,
+          "personal_quest_required",
+          "Apenas quests pessoais usam este comando."
+      );
+    }
+    return validada;
+  }
+
   private List<QuestInventarioValidada> validarFonte(FonteInventarioQuest fonte) {
     if (fonte == null || fonte.quests() == null || fonte.quests().size() > MAX_QUESTS_PER_USER) {
       throw badRequest("invalid_quests");

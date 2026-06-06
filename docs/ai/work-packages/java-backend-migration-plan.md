@@ -449,6 +449,8 @@ Current state:
   `ASCEND_JAVA_BACKEND_URL` is provided
 - Firebase Functions remain the default and fallback path
 - Cloud Run staging deploy for this endpoint is complete
+- authenticated local Docker smoke passed on 2026-06-06
+- authenticated Cloud Run staging smoke passed on 2026-06-06
 
 Candidates:
 - `syncQuestInventoryFromSource`
@@ -472,9 +474,9 @@ Steps:
 7. Switch staging only.
 
 Exit criteria:
-- local quest cache still syncs
-- remote inventory remains readable by Flutter
-- no XP/reward is granted by this endpoint
+- local quest cache still syncs: completed
+- remote inventory remains readable by Flutter: completed
+- no XP/reward is granted by this endpoint: completed
 
 ## Phase 7 - Personal Quest Authority Migration
 
@@ -848,6 +850,11 @@ Current status:
   first migrated read-only endpoint
 - Java `POST /api/v1/quests/inventory:sync` endpoint created and tested as the
   first migrated quest write endpoint
+- Phase 6 quest inventory migration validated locally and on Cloud Run staging
+  with authenticated Flutter smoke on 2026-06-06
+- Phase 7 personal quest authority started locally with Java REST endpoints:
+  - `POST /api/v1/quests/personal:complete`
+  - `POST /api/v1/quests/personal:revoke`
 - Cloud Run staging deploy helper created for `ascend-backend-staging`
 - Cloud Run staging service deployed:
   - `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`

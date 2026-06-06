@@ -11,9 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class InventarioQuestController {
 
   private final SincronizacaoInventarioQuestService service;
+  private final MutacaoQuestPessoalService mutacaoQuestPessoalService;
 
-  public InventarioQuestController(SincronizacaoInventarioQuestService service) {
+  public InventarioQuestController(
+      SincronizacaoInventarioQuestService service,
+      MutacaoQuestPessoalService mutacaoQuestPessoalService
+  ) {
     this.service = service;
+    this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
   }
 
   @PostMapping("/inventory:sync")
@@ -22,5 +27,21 @@ public class InventarioQuestController {
       @RequestBody RequisicaoSincronizacaoInventarioQuest request
   ) {
     return service.sincronizarInventario(user.uid(), request);
+  }
+
+  @PostMapping("/personal:complete")
+  public RespostaMutacaoQuestPessoal concluirQuestPessoal(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoMutacaoQuestPessoal request
+  ) {
+    return mutacaoQuestPessoalService.concluir(user.uid(), user.email(), request);
+  }
+
+  @PostMapping("/personal:revoke")
+  public RespostaMutacaoQuestPessoal revogarQuestPessoal(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoMutacaoQuestPessoal request
+  ) {
+    return mutacaoQuestPessoalService.revogar(user.uid(), user.email(), request);
   }
 }

@@ -1107,5 +1107,7 @@ Status:
   and `/api/v1/quests/inventory:sync`
 
 Next phase:
-- run an authenticated test-account walkthrough against the Java quest inventory
-  route
+- Phase 6 quest inventory route passed authenticated local Docker and Cloud Run
+  staging walkthroughs on 2026-06-06
+- Phase 7 personal quest authority has started locally with Java endpoints for
+  complete/revoke; Flutter routing is not switched yet

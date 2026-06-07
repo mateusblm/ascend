@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-record PerfilUsuario(
+public record PerfilUsuario(
     String name,
     int level,
     int xp,
@@ -29,7 +29,7 @@ record PerfilUsuario(
     int authoritativeAllocatedStatPoints
 ) {
 
-  static PerfilUsuario deDocumento(Map<String, Object> data, String fallbackName) {
+  public static PerfilUsuario deDocumento(Map<String, Object> data, String fallbackName) {
     Map<?, ?> attributes = data.get("attributes") instanceof Map<?, ?> raw ? raw : Map.of();
     int maxXp = Math.max(1, inteiro(data.get("maxXp"), 100));
     int xp = Math.max(0, Math.min(maxXp, inteiro(data.get("xp"), 0)));
@@ -64,7 +64,7 @@ record PerfilUsuario(
     );
   }
 
-  Map<String, Object> paraDocumento(
+  public Map<String, Object> paraDocumento(
       String idSessaoDispositivo,
       String rotuloDispositivo,
       Timestamp updatedAt
@@ -96,6 +96,61 @@ record PerfilUsuario(
     data.put("activeDeviceLabel", rotuloDispositivo);
     data.put("updatedAt", updatedAt);
     return data;
+  }
+
+  /**
+   * Aplica a recompensa autoritativa do boss semanal ao mesmo agregado usado
+   * pelo restante da progressao. O XP pode subir varios niveis em uma unica
+   * chamada e cada level up concede 5 pontos livres, preservando os pontos
+   * extras especificos do boss semanal.
+   */
+  public PerfilUsuario aplicarRecompensaBossSemanal(
+      int recompensaXp,
+      int recompensaPontosAtributo,
+      Timestamp reivindicadoEm
+  ) {
+    int xpAtual = xp + Math.max(0, recompensaXp);
+    int levelAtual = level;
+    int maxXpAtual = Math.max(1, maxXp);
+    int pontosAtuais = statPoints + Math.max(0, recompensaPontosAtributo);
+
+    while (xpAtual >= maxXpAtual) {
+      xpAtual -= maxXpAtual;
+      levelAtual += 1;
+      pontosAtuais += 5;
+      maxXpAtual = maxXpParaLevel(levelAtual);
+    }
+
+    return new PerfilUsuario(
+        name,
+        levelAtual,
+        xpAtual,
+        maxXpAtual,
+        pontosAtuais,
+        attributes,
+        lastResetDate,
+        currentStreak,
+        bestStreak,
+        lastQuestCompletionDate,
+        activityHistory,
+        lastCompetitiveQuestCompletionDate,
+        competitiveActivityHistory,
+        primaryFocus,
+        hasCompletedOnboarding,
+        reivindicadoEm,
+        authoritativeQuestXp,
+        authoritativeWeeklyBossXp + Math.max(0, recompensaXp),
+        authoritativeWeeklyBossStatPoints + Math.max(0, recompensaPontosAtributo),
+        authoritativeAllocatedStatPoints
+    );
+  }
+
+  private int maxXpParaLevel(int level) {
+    int current = 100;
+    for (int index = 1; index < level; index++) {
+      current = (int) Math.floor(current * 1.2);
+    }
+    return current;
   }
 
   private static int inteiro(Object value, int fallback) {

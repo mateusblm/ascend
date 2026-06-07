@@ -276,6 +276,29 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> claimWeeklyBoss({
+    required String idToken,
+    required String deviceSessionId,
+    String? deviceLabel,
+    required String bossId,
+    required String displayName,
+    required String photoUrl,
+    required String rankAtCompletion,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/weekly-boss:claim',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        if (deviceLabel != null) 'deviceLabel': deviceLabel,
+        'bossId': bossId,
+        'displayName': displayName,
+        'photoUrl': photoUrl,
+        'rankAtCompletion': rankAtCompletion,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

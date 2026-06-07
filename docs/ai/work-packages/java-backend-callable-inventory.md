@@ -471,6 +471,9 @@ Domain:
 Current TS callable:
 - `claimWeeklyBoss`
 
+Java endpoint:
+- `POST /api/v1/weekly-boss:claim`
+
 Known Flutter callers:
 - `lib/features/weekly_boss/data/weekly_boss_repository.dart`
 - `lib/features/profile/presentation/home_screen.dart`
@@ -484,7 +487,8 @@ Request:
 - `rankAtCompletion`
 
 Response:
-- expected claim status/profile/boss reward payload
+- `status`: `claimed` or `already_completed`
+- `profile`: authoritative profile snapshot
 
 Firestore:
 - reads weekly boss definition
@@ -502,7 +506,21 @@ Risk:
 - high
 
 Java migration priority:
-- after personal quest and competitive state are stable
+- implemented after active session/profile authority.
+
+Tests required:
+- successful Java claim: covered
+- duplicate claim idempotency: covered
+- rank mismatch: covered
+- inactive/expired event window: expired window covered
+- authenticated route contract: covered
+- Flutter Java client payload: covered
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a recoverable Java/server failure occurs.
+- Business-rule failures from Java do not fall back, preserving authoritative
+  behavior.
 
 Tests required:
 - valid claim

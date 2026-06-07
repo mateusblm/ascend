@@ -566,4 +566,36 @@ void main() {
     expect(requestedBody['attribute'], 'strength');
     expect(response['status'], 'allocated');
   });
+
+  test('claimWeeklyBoss posts weekly boss command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"claimed","profile":{"level":2,"statPoints":7}}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.claimWeeklyBoss(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      bossId: 'weekly-c',
+      displayName: 'Hunter',
+      photoUrl: '',
+      rankAtCompletion: 'C',
+    );
+
+    expect(requestedUri.path, '/base/api/v1/weekly-boss:claim');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['bossId'], 'weekly-c');
+    expect(requestedBody['displayName'], 'Hunter');
+    expect(requestedBody['rankAtCompletion'], 'C');
+    expect(response['status'], 'claimed');
+  });
 }

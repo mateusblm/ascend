@@ -842,7 +842,46 @@ Status:
 - implementation complete locally.
 - remaining work is full validation, deploy, and staging smoke.
 
-## Phase 15 - TypeScript Decommission
+## Phase 15 - Weekly Boss Authority Migration
+
+Goal:
+- migrate weekly boss claim authority to Java before the final TypeScript
+  decommission window.
+
+Candidate:
+- `claimWeeklyBoss`
+
+Risk:
+- high, because it grants XP/stat points and writes the public completion
+  leaderboard.
+
+Progress:
+- Java exposes authenticated endpoint:
+  - `POST /api/v1/weekly-boss:claim`
+- Java validates the active device session before reward-bearing writes.
+- Java reads the boss definition, validates active window/rank, applies the XP
+  and stat-point reward once, writes `weekly_bosses/{bossId}/completions/{uid}`,
+  writes `users/{uid}/weekly_boss_claims/{bossId}`, updates `profile/current`,
+  and increments `completedCount`.
+- Duplicate claim/completion records return `already_completed` without
+  duplicating XP or leaderboard writes.
+- Flutter routes weekly boss claim to Java when `ASCEND_JAVA_BACKEND_URL` is
+  configured and falls back to TypeScript only for recoverable Java/server
+  failures.
+- Java business-rule failures such as active-session conflict, rank mismatch,
+  inactive boss, or expired event window do not fall back to TypeScript.
+
+Validation:
+- Java service tests cover successful claim, idempotent duplicate claim, rank
+  mismatch, and expired window.
+- Java controller tests cover authentication and response contract.
+- Dart Java backend client tests cover the HTTP command payload.
+
+Status:
+- implementation complete locally.
+- remaining work is full validation, deploy, and staging smoke.
+
+## Phase 16 - TypeScript Decommission
 
 Status:
 - decommission is not active yet.

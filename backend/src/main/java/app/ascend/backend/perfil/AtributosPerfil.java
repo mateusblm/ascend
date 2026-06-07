@@ -3,14 +3,14 @@ package app.ascend.backend.perfil;
 import java.util.HashMap;
 import java.util.Map;
 
-record AtributosPerfil(
+public record AtributosPerfil(
     int strength,
     int intelligence,
     int vitality,
     int agility
 ) {
 
-  AtributosPerfil incrementar(String atributo) {
+  public AtributosPerfil incrementar(String atributo) {
     return switch (atributo) {
       case "strength" -> new AtributosPerfil(strength + 1, intelligence, vitality, agility);
       case "intelligence" -> new AtributosPerfil(strength, intelligence + 1, vitality, agility);
@@ -20,7 +20,7 @@ record AtributosPerfil(
     };
   }
 
-  Map<String, Object> paraDocumento() {
+  public Map<String, Object> paraDocumento() {
     Map<String, Object> data = new HashMap<>();
     data.put("strength", strength);
     data.put("intelligence", intelligence);

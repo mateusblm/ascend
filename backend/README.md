@@ -28,6 +28,9 @@ Current status:
 - `POST /api/v1/profile/settings:update` and
   `POST /api/v1/profile/attributes:allocate` are implemented for Java-first
   profile settings and attribute allocation authority.
+- `POST /api/v1/weekly-boss:claim` is implemented for Java-first weekly boss
+  claim authority, including profile reward, completion leaderboard, user claim
+  record, and idempotent duplicate handling.
 - TypeScript Functions remain deployed for fallback and unmigrated callables.
 
 ## Local Commands
@@ -162,6 +165,7 @@ Invoke-RestMethod "$serviceUrl/api/v1/season-rewards/current:claim" -Method Post
 Invoke-RestMethod "$serviceUrl/api/v1/reading-quiz:attempt" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","questId":"reading-20-<id>","templateCatalogId":"reading-20","topic":"leitura"}'
 Invoke-RestMethod "$serviceUrl/api/v1/profile/settings:update" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","name":"Jogador","primaryFocus":"study","hasCompletedOnboarding":true,"lastResetDate":"2026-06-07T00:00:00Z"}'
 Invoke-RestMethod "$serviceUrl/api/v1/profile/attributes:allocate" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","attribute":"strength"}'
+Invoke-RestMethod "$serviceUrl/api/v1/weekly-boss:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","bossId":"<weekly boss id>","displayName":"Jogador","photoUrl":"","rankAtCompletion":"E"}'
 ```
 
 Keep Cloud Run public at the IAM layer for now (`--allow-unauthenticated`) so

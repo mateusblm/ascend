@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
-enum ClaimWeeklyBossRemoteResult {
-  claimed,
-  alreadyCompleted,
-}
+enum ClaimWeeklyBossRemoteResult { claimed, alreadyCompleted }
 
 class ClaimWeeklyBossCommandResult {
   const ClaimWeeklyBossCommandResult({
@@ -30,49 +30,59 @@ class WeeklyBossRepository {
   WeeklyBossRepository(
     this._firestore, {
     FirebaseFunctions? functions,
+    FirebaseAuth? auth,
+    JavaBackendClient? javaBackendClient,
     ActiveSessionRepository? sessionRepository,
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
   }) : _functions =
-           functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _sessionRepository =
-           sessionRepository ?? ActiveSessionRepository(),
+           functions ??
+           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
+       _auth = auth ?? FirebaseAuth.instance,
+       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
   final ActiveSessionRepository _sessionRepository;
+  final FirebaseAuth _auth;
+  final JavaBackendClient? _javaBackendClient;
   final AppAnalytics _analytics;
   final AppCrashReporter _crashReporter;
 
   Stream<RemoteWeeklyBoss?> watchActiveBossForRank(String rank) {
     final normalizedRank = _normalizeRank(rank);
-    return _firestore
-        .collection('weekly_bosses')
-        .limit(50)
-        .snapshots()
-        .map((snapshot) {
-          final now = DateTime.now();
-          final bosses = snapshot.docs
+    return _firestore.collection('weekly_bosses').limit(50).snapshots().map((
+      snapshot,
+    ) {
+      final now = DateTime.now();
+      final bosses =
+          snapshot.docs
               .map(RemoteWeeklyBoss.fromFirestore)
               .where((boss) => _normalizeRank(boss.rank) == normalizedRank)
-              .where((boss) => boss.isActive && _isWithinActiveWindow(now, boss))
+              .where(
+                (boss) => boss.isActive && _isWithinActiveWindow(now, boss),
+              )
               .toList()
             ..sort((a, b) => a.endsAt.compareTo(b.endsAt));
 
-          if (kDebugMode) {
-            debugPrint(
-              '[WeeklyBossRepository] rank=$normalizedRank activeNow=${bosses.length} ids=${bosses.map((boss) => boss.id).join(',')}',
-            );
-          }
+      if (kDebugMode) {
+        debugPrint(
+          '[WeeklyBossRepository] rank=$normalizedRank activeNow=${bosses.length} ids=${bosses.map((boss) => boss.id).join(',')}',
+        );
+      }
 
-          if (bosses.isEmpty) return null;
-          return bosses.first;
-        });
+      if (bosses.isEmpty) return null;
+      return bosses.first;
+    });
   }
 
-  Stream<List<WeeklyBossCompletion>> watchTopCompletions(String bossId, {int limit = 5}) {
+  Stream<List<WeeklyBossCompletion>> watchTopCompletions(
+    String bossId, {
+    int limit = 5,
+  }) {
     return _firestore
         .collection('weekly_bosses')
         .doc(bossId)
@@ -93,64 +103,115 @@ class WeeklyBossRepository {
     required String photoUrl,
     required String rankAtCompletion,
   }) async {
+    await _sessionRepository.registerActiveSession();
+    final deviceSessionId = await _sessionRepository.deviceSessionId();
+    final javaClient = _javaBackendClient;
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (javaClient != null && idToken != null && idToken.isNotEmpty) {
+      try {
+        final payload = await javaClient.claimWeeklyBoss(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          bossId: bossId,
+          displayName: displayName,
+          photoUrl: photoUrl,
+          rankAtCompletion: rankAtCompletion,
+        );
+        return _parseClaimPayload(
+          payload,
+          bossId: bossId,
+          uid: uid,
+          fallbackName: fallbackName,
+          rankAtCompletion: rankAtCompletion,
+          source: 'java',
+        );
+      } on JavaBackendException catch (error, stackTrace) {
+        _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss_java');
+        if (error.isActiveSessionConflict) {
+          throw ActiveSessionConflictException();
+        }
+        if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+          rethrow;
+        }
+      }
+    }
+
     try {
       final callable = _functions.httpsCallable('claimWeeklyBoss');
-      await _sessionRepository.registerActiveSession();
       final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'deviceSessionId': deviceSessionId,
         'bossId': bossId,
         'displayName': displayName,
         'photoUrl': photoUrl,
         'rankAtCompletion': rankAtCompletion,
       });
 
-      final payload = response.data;
-      if (payload is! Map) {
-        throw StateError('Resposta invalida da callable claimWeeklyBoss.');
-      }
-
-      final status = payload['status'] as String?;
-      final profile = payload['profile'];
-      if (profile is! Map) {
-        throw StateError('Perfil remoto ausente no claim do boss semanal.');
-      }
-      final player = parsePlayerProfileData(
-        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+      return _parseClaimPayload(
+        response.data,
+        bossId: bossId,
         uid: uid,
         fallbackName: fallbackName,
+        rankAtCompletion: rankAtCompletion,
+        source: 'firebase',
       );
-      if (status == 'claimed') {
-        unawaited(
-          _analytics.logWeeklyBossClaimed(
-            bossId: bossId,
-            rank: rankAtCompletion,
-            status: status!,
-          ),
-        );
-        return ClaimWeeklyBossCommandResult(
-          status: ClaimWeeklyBossRemoteResult.claimed,
-          player: player,
-        );
-      }
-      if (status == 'already_completed') {
-        unawaited(
-          _analytics.logWeeklyBossClaimed(
-            bossId: bossId,
-            rank: rankAtCompletion,
-            status: status!,
-          ),
-        );
-        return ClaimWeeklyBossCommandResult(
-          status: ClaimWeeklyBossRemoteResult.alreadyCompleted,
-          player: player,
-        );
-      }
-
-      throw StateError('Status desconhecido retornado pela callable: $status');
     } on FirebaseFunctionsException catch (error, stackTrace) {
       _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss');
       rethrow;
     }
+  }
+
+  ClaimWeeklyBossCommandResult _parseClaimPayload(
+    Object? payload, {
+    required String bossId,
+    required String uid,
+    required String fallbackName,
+    required String rankAtCompletion,
+    required String source,
+  }) {
+    if (payload is! Map) {
+      throw StateError('Resposta invalida do claimWeeklyBoss ($source).');
+    }
+
+    final status = payload['status'] as String?;
+    final profile = payload['profile'];
+    if (profile is! Map) {
+      throw StateError('Perfil remoto ausente no claim do boss semanal.');
+    }
+    final player = parsePlayerProfileData(
+      Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+      uid: uid,
+      fallbackName: fallbackName,
+    );
+    if (status == 'claimed') {
+      unawaited(
+        _analytics.logWeeklyBossClaimed(
+          bossId: bossId,
+          rank: rankAtCompletion,
+          status: status!,
+        ),
+      );
+      return ClaimWeeklyBossCommandResult(
+        status: ClaimWeeklyBossRemoteResult.claimed,
+        player: player,
+      );
+    }
+    if (status == 'already_completed') {
+      unawaited(
+        _analytics.logWeeklyBossClaimed(
+          bossId: bossId,
+          rank: rankAtCompletion,
+          status: status!,
+        ),
+      );
+      return ClaimWeeklyBossCommandResult(
+        status: ClaimWeeklyBossRemoteResult.alreadyCompleted,
+        player: player,
+      );
+    }
+
+    throw StateError(
+      'Status desconhecido retornado pelo claimWeeklyBoss: $status',
+    );
   }
 
   void _reportRecoverable(

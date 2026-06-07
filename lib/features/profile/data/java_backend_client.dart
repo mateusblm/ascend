@@ -215,6 +215,27 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> startReadingQuizAttempt({
+    required String idToken,
+    required String deviceSessionId,
+    required String deviceLabel,
+    required String questId,
+    String? templateCatalogId,
+    required String topic,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/reading-quiz:attempt',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        'deviceLabel': deviceLabel,
+        'questId': questId,
+        if (templateCatalogId != null) 'templateCatalogId': templateCatalogId,
+        'topic': topic,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

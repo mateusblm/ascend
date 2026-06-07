@@ -441,4 +441,44 @@ void main() {
     expect(requestedBody['seasonKey'], '2026-06');
     expect(response['status'], 'claimed');
   });
+
+  test('startReadingQuizAttempt posts reading quiz command', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('''
+          {
+            "quizId": "quiz-1",
+            "questId": "reading-20-123",
+            "topic": "Livro",
+            "minimumScore": 70,
+            "generator": "deterministic_contract_v1",
+            "expiresAt": "2026-06-07T12:00:00Z",
+            "questions": [{"id": "main-idea", "prompt": "Qual foi a ideia principal?"}]
+          }
+          ''', 200);
+      }),
+    );
+
+    final response = await client.startReadingQuizAttempt(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      deviceLabel: 'android',
+      questId: 'reading-20-123',
+      templateCatalogId: 'reading-20',
+      topic: 'Livro',
+    );
+
+    expect(requestedUri.path, '/api/v1/reading-quiz:attempt');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['templateCatalogId'], 'reading-20');
+    expect(response['quizId'], 'quiz-1');
+  });
 }

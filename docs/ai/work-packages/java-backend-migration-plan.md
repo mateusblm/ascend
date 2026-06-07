@@ -704,6 +704,25 @@ Exit criteria:
 - Flutter quiz flow remains unchanged
 - provider failures do not crash quest flow
 
+Progress:
+- Java-first reading quiz attempt creation is implemented at
+  `POST /api/v1/reading-quiz:attempt`.
+- The default generator is deterministic and preserves the legacy safe-topic
+  behavior and public response shape used by Flutter.
+- A Gemini-backed provider boundary exists behind
+  `ASCEND_READING_QUIZ_GENERATOR=ai`; it reads `GEMINI_API_KEY` from the
+  environment first, then from Secret Manager.
+- Flutter tries Java first when `ASCEND_JAVA_BACKEND_URL` is configured and
+  falls back to the TypeScript callable on recoverable Java/provider failures.
+- Reading quiz answer evaluation remains on the legacy verification path until
+  the competitive verification contract is migrated, so the user flow stays
+  compatible during Phase 11.
+
+Status:
+- Phase 11 implementation is complete locally. Remaining work is staging smoke
+  with an authenticated reading quest and later migration of quiz evaluation
+  inside competitive completion verification.
+
 ## Phase 12 - Flutter Routing And Backend Client Cleanup
 
 Goal:
@@ -939,6 +958,9 @@ Current status:
 - Flutter staging/debug can route quest inventory sync to Java with the same
   `ASCEND_JAVA_BACKEND_URL`, with fallback to the TypeScript callable on
   non-session Java errors
+- Flutter staging/debug can route reading quiz attempt creation to Java with the
+  same `ASCEND_JAVA_BACKEND_URL`, while preserving Firebase Functions fallback
+  on recoverable Java/provider errors
 - Flutter keeps Firebase Functions as the default when the Java URL is omitted
 - local validation passed:
   - `mvn test`

@@ -275,9 +275,34 @@ class CompetitiveQuestAuthorityRepository {
     required String topic,
   }) async {
     try {
-      final callable = _functions.httpsCallable('startReadingQuizAttempt');
       await _sessionRepository.registerActiveSession();
       final template = officialTemplateForQuest(quest);
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _currentIdToken();
+      if (javaBackendClient != null && idToken != null) {
+        try {
+          final response = await javaBackendClient.startReadingQuizAttempt(
+            idToken: idToken,
+            deviceSessionId: await _sessionRepository.deviceSessionId(),
+            deviceLabel: defaultTargetPlatform.name,
+            questId: quest.id,
+            templateCatalogId: template?.id,
+            topic: topic,
+          );
+          return _readingQuizAttemptFromResponse(response);
+        } on JavaBackendException catch (error, stackTrace) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+          _reportRecoverable(
+            error,
+            stackTrace,
+            stage: 'start_reading_quiz_attempt_java',
+          );
+        }
+      }
+
+      final callable = _functions.httpsCallable('startReadingQuizAttempt');
       final response = await callable
           .call(<String, dynamic>{
             'deviceSessionId': await _sessionRepository.deviceSessionId(),
@@ -292,27 +317,8 @@ class CompetitiveQuestAuthorityRepository {
         throw StateError('Resposta invalida ao iniciar quiz de leitura.');
       }
 
-      final questionsRaw = data['questions'];
-      if (questionsRaw is! List) {
-        throw StateError('Payload de quiz de leitura incompleto.');
-      }
-
-      return ReadingQuizAttempt(
-        quizId: data['quizId'] as String,
-        questId: data['questId'] as String,
-        topic: data['topic'] as String,
-        minimumScore: data['minimumScore'] as int,
-        generator: data['generator'] as String? ?? 'unknown',
-        expiresAt: _dateTimeFromPayload(data['expiresAt']),
-        questions: questionsRaw
-            .whereType<Map>()
-            .map(
-              (question) => ReadingQuizQuestion(
-                id: question['id'] as String,
-                prompt: question['prompt'] as String,
-              ),
-            )
-            .toList(growable: false),
+      return _readingQuizAttemptFromResponse(
+        Map<String, dynamic>.from(data.cast<Object?, Object?>()),
       );
     } catch (error, stackTrace) {
       if (isActiveSessionConflictError(error)) {
@@ -325,6 +331,33 @@ class CompetitiveQuestAuthorityRepository {
       );
       rethrow;
     }
+  }
+
+  ReadingQuizAttempt _readingQuizAttemptFromResponse(
+    Map<String, dynamic> data,
+  ) {
+    final questionsRaw = data['questions'];
+    if (questionsRaw is! List) {
+      throw StateError('Payload de quiz de leitura incompleto.');
+    }
+
+    return ReadingQuizAttempt(
+      quizId: data['quizId'] as String,
+      questId: data['questId'] as String,
+      topic: data['topic'] as String,
+      minimumScore: (data['minimumScore'] as num).toInt(),
+      generator: data['generator'] as String? ?? 'unknown',
+      expiresAt: _dateTimeFromPayload(data['expiresAt']),
+      questions: questionsRaw
+          .whereType<Map>()
+          .map(
+            (question) => ReadingQuizQuestion(
+              id: question['id'] as String,
+              prompt: question['prompt'] as String,
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 
   Future<String?> _currentIdToken() async {

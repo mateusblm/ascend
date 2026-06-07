@@ -17,6 +17,9 @@ Current status:
   promotion exam start and promotion confirmation.
 - `POST /api/v1/season-rewards/current:claim` is implemented for Java-first
   season reward claim, legacy reward write, and active season profile update.
+- `POST /api/v1/reading-quiz:attempt` is implemented for Java-first reading
+  quiz attempt creation, with deterministic generation by default and optional
+  Gemini generation through Secret Manager or environment configuration.
 - TypeScript Functions remain authoritative.
 
 ## Local Commands
@@ -146,6 +149,7 @@ Invoke-RestMethod "$serviceUrl/api/v1/season-leaderboard?seasonKey=<season>&rank
 Invoke-RestMethod "$serviceUrl/api/v1/quests/inventory:sync" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","source":{"quests":[]}}'
 Invoke-RestMethod "$serviceUrl/api/v1/competitive/promotion/exam:start" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"snapshot":{"currentRank":"D","peakRank":"D","highestEligibleRank":"C","weekKey":"2026W0608","activeDays":5,"requiredActiveDays":4,"requiresBossClear":false,"bossCompleted":true,"status":"promotionReady","demotionStrikes":0,"promotionReady":true,"promotionTargetRank":"C","targetRequiredLevel":10,"targetLevelGateMet":true,"advancementMode":"ascension","eventType":"promotionUnlocked","summary":"Exame de promocao pronto para o rank C.","detail":"Smoke manual.","syncSchemaVersion":3,"syncSource":"backend","updatedAt":"2026-06-06T12:00:00Z"}}'
 Invoke-RestMethod "$serviceUrl/api/v1/season-rewards/current:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"seasonKey":"<season>"}'
+Invoke-RestMethod "$serviceUrl/api/v1/reading-quiz:attempt" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","questId":"reading-20-<id>","templateCatalogId":"reading-20","topic":"leitura"}'
 ```
 
 Keep Cloud Run public at the IAM layer for now (`--allow-unauthenticated`) so

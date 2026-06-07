@@ -570,11 +570,12 @@ Risk:
 - medium
 
 Java migration priority:
-- after core quest/evidence authority
+- migrated in Phase 11 for attempt creation; quiz answer evaluation remains
+  tied to competitive completion verification until that contract moves to Java
 
 Tests required:
 - deterministic provider
-- AI provider disabled/fallback
+- AI provider boundary/fallback
 - invalid topic
 - active session conflict
 - response shape compatible with Flutter

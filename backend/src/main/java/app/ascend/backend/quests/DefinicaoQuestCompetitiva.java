@@ -3,6 +3,7 @@ package app.ascend.backend.quests;
 import java.util.List;
 
 public record DefinicaoQuestCompetitiva(
+    String id,
     String title,
     String templateType,
     String verificationMode,

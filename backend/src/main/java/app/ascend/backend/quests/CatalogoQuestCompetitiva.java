@@ -12,6 +12,7 @@ public class CatalogoQuestCompetitiva {
 
   private static final List<DefinicaoQuestCompetitiva> DEFINITIONS = List.of(
       new DefinicaoQuestCompetitiva(
+          "run-2k-controlled",
           "Corrida controlada de 2 km",
           "runningSession",
           "timer",
@@ -26,6 +27,7 @@ public class CatalogoQuestCompetitiva {
           List.of("healthConnect", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "run-5k-ranked",
           "Corrida ranqueada de 5 km",
           "runningSession",
           "timer",
@@ -40,6 +42,7 @@ public class CatalogoQuestCompetitiva {
           List.of("healthConnect", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "bodyweight-20",
           "Treino corporal de 20 minutos",
           "workoutSession",
           "timer",
@@ -54,6 +57,7 @@ public class CatalogoQuestCompetitiva {
           List.of("healthConnect", "appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "focus-25",
           "Sessao de foco de 25 minutos",
           "focusSession",
           "timer",
@@ -68,6 +72,7 @@ public class CatalogoQuestCompetitiva {
           List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "reading-20",
           "Leitura de 20 minutos",
           "readingSession",
           "timerWithReflection",
@@ -82,6 +87,7 @@ public class CatalogoQuestCompetitiva {
           List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "study-30",
           "Estudo profundo de 30 minutos",
           "studySession",
           "timer",
@@ -96,6 +102,7 @@ public class CatalogoQuestCompetitiva {
           List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "reading-15-training",
           "Revisao de treino de 15 minutos",
           "readingSession",
           "timerWithReflection",
@@ -110,6 +117,7 @@ public class CatalogoQuestCompetitiva {
           List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "focus-20",
           "Sessao de foco de 20 minutos",
           "focusSession",
           "timer",
@@ -124,6 +132,7 @@ public class CatalogoQuestCompetitiva {
           List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "reading-15",
           "Leitura ou revisao de 15 minutos",
           "readingSession",
           "timerWithReflection",
@@ -138,6 +147,7 @@ public class CatalogoQuestCompetitiva {
           List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "focus-30",
           "Bloco de foco de 30 minutos",
           "focusSession",
           "timer",
@@ -152,6 +162,7 @@ public class CatalogoQuestCompetitiva {
           List.of("appTimer", "mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "study-20",
           "Revisao de 20 minutos",
           "studySession",
           "timerWithReflection",
@@ -166,6 +177,7 @@ public class CatalogoQuestCompetitiva {
           List.of("mockEvidence")
       ),
       new DefinicaoQuestCompetitiva(
+          "study-20-recall",
           "Revisao ativa de 20 minutos",
           "studySession",
           "timerWithReflection",
@@ -202,6 +214,24 @@ public class CatalogoQuestCompetitiva {
             && definition.targetDurationMinutes() == targetDurationMinutes
             && definition.xpReward() == xpReward
             && definition.rewardAttribute().equals(rewardAttribute))
+        .findFirst();
+  }
+
+  /**
+   * Resolve o template oficial pelo ID explicito enviado pelo app ou pelo
+   * prefixo do ID da quest gerado no Flutter. Usado por comandos que precisam
+   * da regra do template antes de receber o payload completo da quest.
+   */
+  public Optional<DefinicaoQuestCompetitiva> buscarPorIdOuQuestId(
+      String templateCatalogId,
+      String questId
+  ) {
+    String idTemplate = templateCatalogId == null ? "" : templateCatalogId.trim();
+    String idQuest = questId == null ? "" : questId.trim();
+    return DEFINITIONS
+        .stream()
+        .filter(definition -> definition.id().equals(idTemplate)
+            || idQuest.startsWith(definition.id() + "-"))
         .findFirst();
   }
 }

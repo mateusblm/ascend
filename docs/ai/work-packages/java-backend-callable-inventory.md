@@ -80,14 +80,21 @@ Risk:
 - high
 
 Java migration priority:
-- later, after read endpoint and Java auth are proven
+- implemented as session authority migration before TypeScript decommission
 
 Tests required before migration:
-- missing auth
-- valid registration
-- same session renewal
-- different active session conflict
-- expired previous session replacement
+- missing auth: covered by Java controller test
+- valid registration: covered by Java service/client tests
+- same session renewal: covered by Java service test
+- different active session conflict: covered by Java service/client tests
+- expired previous session replacement: covered by Java service test
+
+Java endpoint:
+- `POST /api/v1/session/active:register`
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a recoverable Java/server error occurs.
 
 Rollback:
 - keep Flutter using current callable until all session-sensitive endpoints have
@@ -123,13 +130,20 @@ Risk:
 - medium
 
 Java migration priority:
-- migrate with `registerActiveSession`, not independently
+- implemented with `registerActiveSession`
 
 Tests required:
-- missing auth
-- release own session
-- ignore non-current session
-- idempotent release
+- missing auth: covered by Java controller test through session endpoints
+- release own session: covered by Java service/client tests
+- ignore non-current session: covered by Java service test
+- idempotent release: covered by Java service behavior
+
+Java endpoint:
+- `POST /api/v1/session/active:release`
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a recoverable Java/server error occurs.
 
 ### updateProfileSettings
 
@@ -1131,6 +1145,9 @@ Next phase:
 - Flutter personal quest complete/revoke can opt into Java with
   `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain the fallback path
 - Flutter profile settings and attribute allocation can opt into Java with
+  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain fallback for
+  recoverable Java/server errors
+- Flutter active session register/release can opt into Java with
   `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain fallback for
   recoverable Java/server errors
 - Authenticated staging smoke confirmed normal personal quest completion grants

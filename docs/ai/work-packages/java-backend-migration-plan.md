@@ -803,7 +803,51 @@ Status:
 - implementation complete locally.
 - remaining work is full validation, deploy, and staging smoke.
 
-## Phase 14 - TypeScript Decommission
+## Phase 14 - Active Session Authority Migration
+
+Goal:
+- migrate active device session registration and release to Java before
+  removing TypeScript Functions from sensitive write paths.
+
+Candidates:
+- `registerActiveSession`
+- `releaseActiveSession`
+
+Risk:
+- high, because all reward-bearing and profile-bearing writes depend on active
+  device ownership.
+
+Progress:
+- Java exposes authenticated endpoints:
+  - `POST /api/v1/session/active:register`
+  - `POST /api/v1/session/active:release`
+- Java preserves the 5-minute lease rule from TypeScript:
+  - same `deviceSessionId` renews the active session
+  - another device is rejected while the current lease is not expired
+  - another device can register after the previous lease expires
+  - release deletes only when the caller owns the current session
+- Flutter `ActiveSessionRepository` routes register/release to Java when
+  `ASCEND_JAVA_BACKEND_URL` is configured.
+- Firebase Functions remain fallback for recoverable Java/server failures.
+- Java business-rule failures such as `active_session_conflict` do not fall
+  back to TypeScript.
+
+Validation:
+- Java service tests cover new registration, same-session renewal, conflict,
+  expired-session takeover, and idempotent release.
+- Java controller tests cover authentication and response contracts.
+- Dart client tests cover register/release HTTP payloads and conflict parsing.
+
+Status:
+- implementation complete locally.
+- remaining work is full validation, deploy, and staging smoke.
+
+## Phase 15 - TypeScript Decommission
+
+Status:
+- decommission is not active yet.
+- this phase is now reserved for the final removal window after remaining
+  product behavior has Java parity.
 
 Goal:
 - remove TypeScript Functions only when Java is fully authoritative.
@@ -929,7 +973,7 @@ Week 9:
   Phase 11
 
 Week 10:
-  Phase 12, Phase 13 planning
+  Phase 12, Phase 13 and Phase 14
 ```
 
 The timeline can expand if product release work has higher priority.
@@ -1028,6 +1072,8 @@ Current status:
 - Flutter staging/debug can route profile settings and attribute allocation to
   Java; Firebase Functions remain fallback only for recoverable Java/server
   failures
+- Flutter staging/debug can route active session register/release to Java;
+  Firebase Functions remain fallback only for recoverable Java/server failures
 - Java backend routing in Flutter is centralized through `BackendRouteSelector`
 - Flutter keeps Firebase Functions as the default when the Java URL is omitted
 - local validation passed:

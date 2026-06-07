@@ -8,6 +8,9 @@ Current status:
 - `/health` is implemented.
 - Firebase Auth validation is implemented for `/api/v1/**`.
 - `GET /api/v1/me` is implemented.
+- `POST /api/v1/session/active:register` and
+  `POST /api/v1/session/active:release` are implemented for Java-first active
+  device session authority.
 - `GET /api/v1/season-leaderboard` is implemented as the first read-only
   migration candidate.
 - `POST /api/v1/quests/inventory:sync` is implemented as the first quest write
@@ -150,6 +153,8 @@ Smoke checks after deploy:
 ```powershell
 Invoke-RestMethod "$serviceUrl/health"
 Invoke-RestMethod "$serviceUrl/api/v1/me" -Headers @{ Authorization = "Bearer <Firebase ID token>" }
+Invoke-RestMethod "$serviceUrl/api/v1/session/active:register" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<device session id>","deviceLabel":"android"}'
+Invoke-RestMethod "$serviceUrl/api/v1/session/active:release" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<device session id>","deviceLabel":"android"}'
 Invoke-RestMethod "$serviceUrl/api/v1/season-leaderboard?seasonKey=<season>&rankBracket=E" -Headers @{ Authorization = "Bearer <Firebase ID token>" }
 Invoke-RestMethod "$serviceUrl/api/v1/quests/inventory:sync" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","source":{"quests":[]}}'
 Invoke-RestMethod "$serviceUrl/api/v1/competitive/promotion/exam:start" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"snapshot":{"currentRank":"D","peakRank":"D","highestEligibleRank":"C","weekKey":"2026W0608","activeDays":5,"requiredActiveDays":4,"requiresBossClear":false,"bossCompleted":true,"status":"promotionReady","demotionStrikes":0,"promotionReady":true,"promotionTargetRank":"C","targetRequiredLevel":10,"targetLevelGateMet":true,"advancementMode":"ascension","eventType":"promotionUnlocked","summary":"Exame de promocao pronto para o rank C.","detail":"Smoke manual.","syncSchemaVersion":3,"syncSource":"backend","updatedAt":"2026-06-06T12:00:00Z"}}'

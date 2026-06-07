@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -175,30 +174,6 @@ void main() {
     expect((requestedBody['source'] as Map)['name'], 'Hunter');
     expect(response['status'], 'synced');
   });
-
-  test(
-    'backend route selector does not fallback on business rule failures',
-    () {
-      const businessError = JavaBackendException(
-        'Java backend returned 412: lowQuizScore',
-        statusCode: 412,
-        errorCode: 'competitive_evidence_insufficient',
-      );
-      const serverError = JavaBackendException(
-        'Java backend returned 503.',
-        statusCode: 503,
-      );
-
-      expect(
-        BackendRouteSelector.shouldFallbackToFirebase(businessError),
-        isFalse,
-      );
-      expect(
-        BackendRouteSelector.shouldFallbackToFirebase(serverError),
-        isTrue,
-      );
-    },
-  );
 
   test(
     'completePersonalQuest posts quest command and returns payload',

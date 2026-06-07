@@ -27,7 +27,8 @@ Operational source of truth:
 - Riverpod with `StateNotifierProvider`
 - Isar as local cache/offline persistence
 - Firebase Auth with Google Sign-In
-- Firestore and Cloud Functions for account and progression authority
+- Java Spring Boot on Cloud Run for account and progression authority
+- Firestore for canonical facts, aggregates, and read models
 - Firebase Analytics and Crashlytics through project wrappers
 - Google Fonts and custom dark Material theme
 
@@ -50,10 +51,6 @@ lib/
 |   |-- weekly_boss/
 |   `-- main_navigation_screen.dart
 `-- main.dart
-
-functions/
-|-- src/
-`-- test/
 
 docs/
 |-- ai/
@@ -79,10 +76,9 @@ flutter analyze
 flutter test
 dart run build_runner build --delete-conflicting-outputs
 
-cd functions
-npm ci
-npm test
-npm run test:rules
+cd backend
+mvn test
+mvn package
 ```
 
 Java backend local via Docker:
@@ -129,8 +125,7 @@ Firebase apps, signing, or build flavors.
 Known environment prerequisites:
 - Flutter tests with plugins require Windows Developer Mode or symlink support.
 - Firestore rules emulator requires Java available on `PATH`.
-- Functions are configured for Node 20; avoid validating production readiness on
-  a mismatched Node runtime without recording the mismatch.
+- Java backend validation requires Maven and Java 21, or the Docker helper.
 
 If validation cannot run because of environment setup, record the blocker in the
 change summary instead of treating the suite as passed.

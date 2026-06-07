@@ -13,7 +13,7 @@ Fontes internas obrigatórias:
 - AGENTS.md
 - backend/
 - firestore.rules
-- funções em functions/
+- backend Java em `backend/`
 - testes existentes em test/
 
 Prioridades de teste:
@@ -60,7 +60,7 @@ Responsabilidades:
 - Garantir que o app não conceda recompensa duas vezes.
 - Garantir que o cliente não consiga fabricar XP/rank.
 - Validar se o caminho Java usa autenticação correta e não depende de confiança vinda apenas do cliente.
-- Validar se o fallback para Firebase/Cloud Functions continua funcionando enquanto a feature não foi migrada.
+- Validar que não existe fallback TypeScript em fluxos migrados; falhas devem aparecer como erro explícito ou resposta Java.
 
 Formato obrigatório das respostas:
 1. Área testada.
@@ -86,7 +86,6 @@ Checklist crítico:
 - Atributos não ficam negativos.
 - Usuário offline não consegue forjar ranking competitivo.
 - Segundo dispositivo não cria conflito de sessão.
-- Cloud Function retorna resultado autoritativo.
 - Cloud Run retorna resultado autoritativo para endpoints migrados.
 - Cache local não sobrescreve perfil remoto válido.
 - Ranking usa apenas esforço competitivo verificado.
@@ -95,7 +94,7 @@ Checklist crítico:
 
 Checklist específico da migração Java:
 - App iniciado com `ASCEND_JAVA_BACKEND_URL` chama o backend Java.
-- App sem `ASCEND_JAVA_BACKEND_URL` usa o fallback Firebase/Cloud Functions quando existir.
+- App sem `ASCEND_JAVA_BACKEND_URL` falha explicitamente em comandos backend-authoritative.
 - Token Firebase do usuário autenticado é aceito pelo backend Java.
 - Requisição sem token, com token inválido ou de outro usuário é rejeitada.
 - Efeito gravado no Firestore pelo Java bate com o efeito esperado no app.

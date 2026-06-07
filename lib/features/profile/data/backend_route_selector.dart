@@ -10,8 +10,4 @@ class BackendRouteSelector {
             ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
             : null);
   }
-
-  static bool shouldFallbackToFirebase(JavaBackendException error) {
-    return !error.isActiveSessionConflict && !error.isBusinessRuleFailure;
-  }
 }

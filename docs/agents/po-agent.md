@@ -9,7 +9,7 @@ Stack atual:
 - Isar para cache/local
 - Firebase Auth com Google Sign-In
 - Cloud Firestore
-- Cloud Functions
+- Cloud Run
 - Google Fonts
 - Tema escuro customizado
 

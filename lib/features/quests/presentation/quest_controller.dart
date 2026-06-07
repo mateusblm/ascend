@@ -7,6 +7,7 @@ import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
 import 'package:ascend/features/quests/data/competitive_evidence_provider_adapter.dart';
@@ -18,7 +19,6 @@ import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/domain/quest_suggestion.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +27,6 @@ import 'package:isar/isar.dart';
 final competitiveQuestAuthorityRepositoryProvider =
     Provider<CompetitiveQuestAuthorityRepository>((ref) {
       return CompetitiveQuestAuthorityRepository(
-        functions: FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
         crashReporter: ref.read(crashReportingProvider),
       );
     });
@@ -281,11 +280,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _logQuestSyncIssue('watchQuests', error, stackTrace);
   }
 
-  void _logQuestSyncIssue(
-    String stage,
-    Object error,
-    StackTrace stackTrace,
-  ) {
+  void _logQuestSyncIssue(String stage, Object error, StackTrace stackTrace) {
     if (kDebugMode) {
       debugPrint('Quest sync fallback at $stage: $error');
     }
@@ -552,9 +547,8 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           ref.read(authProvider.notifier).handleActiveSessionConflict(),
         );
         return QuestCompletionResult.invalidFlow;
-      } on FirebaseFunctionsException catch (error) {
-        if (error.code == 'failed-precondition' &&
-            error.message?.contains('sessao ainda nao foi iniciada') == true) {
+      } on JavaBackendException catch (error) {
+        if (error.errorCode == 'competitive_session_not_started') {
           _persistQuestUpdate(quest.copyWith(clearVerificationProgress: true));
           return QuestCompletionResult.invalidFlow;
         }
@@ -845,7 +839,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           ref.read(authProvider.notifier).handleActiveSessionConflict(),
         );
         return QuestCompletionResult.invalidFlow;
-      } on FirebaseFunctionsException catch (error) {
+      } on JavaBackendException catch (error) {
         final mappedResult = _competitiveVerificationFailureResult(error);
         if (mappedResult != null) {
           return mappedResult;
@@ -866,15 +860,17 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }
 
   QuestCompletionResult? _competitiveVerificationFailureResult(
-    FirebaseFunctionsException error,
+    JavaBackendException error,
   ) {
-    final message = error.message ?? '';
-    if (error.code != 'failed-precondition') return null;
+    final message = error.message;
+    if (error.statusCode != 412) return null;
 
-    if (message.contains('duplicateSourceActivityId')) {
+    if (error.errorCode == 'duplicate_source_activity_id' ||
+        message.contains('duplicateSourceActivityId')) {
       return QuestCompletionResult.duplicateEvidence;
     }
-    if (message.contains('Evidencia competitiva insuficiente')) {
+    if (error.errorCode == 'competitive_evidence_insufficient' ||
+        message.contains('Evidencia competitiva insuficiente')) {
       if (message.contains(CompetitiveRiskFlag.impossiblePace.name) ||
           message.contains(CompetitiveRiskFlag.invalidProvider.name) ||
           message.contains(CompetitiveRiskFlag.completedBeforeStart.name) ||

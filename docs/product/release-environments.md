@@ -107,16 +107,12 @@ Reading quiz AI generation is disabled by default. The backend uses deterministi
 quiz generation unless explicitly configured.
 
 ```powershell
-# Local Functions shell/test environment only; do not commit the key.
 $env:ASCEND_READING_QUIZ_GENERATOR="ai"
 $env:GEMINI_API_KEY="<local-api-key>"
 $env:GEMINI_READING_QUIZ_MODEL="gemini-2.5-flash-lite"
-
-# Firebase deployed Functions secret.
-firebase functions:secrets:set GEMINI_API_KEY
 ```
 
-`GEMINI_READING_QUIZ_MODEL` is optional. If omitted, Functions use
+`GEMINI_READING_QUIZ_MODEL` is optional. If omitted, the Java backend uses
 `gemini-2.5-flash-lite`.
 
 ## Java Backend Staging
@@ -134,19 +130,14 @@ Current smoke status, recorded on `2026-05-28`:
 - `GET /api/v1/me` without a Firebase ID token returns `401`
 - `GET /api/v1/season-leaderboard` without a Firebase ID token returns `401`
 
-Before Flutter staging/debug routes traffic to Java, complete authenticated
-smoke with a real Firebase ID token and compare the Java leaderboard response
-against the current TypeScript callable.
-
-Flutter staging/debug can opt into the Java leaderboard endpoint with:
+Flutter staging/debug must be started with the Java backend URL:
 
 ```powershell
 flutter run --flavor staging --dart-define=ASCEND_JAVA_BACKEND_URL=https://ascend-backend-staging-331143433117.southamerica-east1.run.app
 ```
 
-If `ASCEND_JAVA_BACKEND_URL` is omitted, Flutter keeps using Firebase Functions.
-The current Java route only covers the season leaderboard read endpoint and
-falls back to the TypeScript callable if the Java request fails.
+If `ASCEND_JAVA_BACKEND_URL` is omitted, backend-authoritative commands fail
+explicitly instead of falling back to TypeScript Functions.
 
 ## Current Constraints
 

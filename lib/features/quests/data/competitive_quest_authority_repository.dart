@@ -10,7 +10,6 @@ import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_evidence.dart';
 import 'package:ascend/features/quests/domain/competitive_quest_template.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -71,22 +70,15 @@ class ReadingQuizQuestion {
 
 class CompetitiveQuestAuthorityRepository {
   CompetitiveQuestAuthorityRepository({
-    FirebaseFunctions? functions,
     FirebaseAuth? auth,
     JavaBackendClient? javaBackendClient,
     ActiveSessionRepository? sessionRepository,
     AppCrashReporter? crashReporter,
-  }) : _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _auth = auth ?? FirebaseAuth.instance,
+  }) : _auth = auth ?? FirebaseAuth.instance,
        _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
-  static const Duration _rpcTimeout = Duration(seconds: 6);
-
-  final FirebaseFunctions _functions;
   final FirebaseAuth _auth;
   final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
@@ -97,53 +89,32 @@ class CompetitiveQuestAuthorityRepository {
   }) async {
     try {
       await _sessionRepository.registerActiveSession();
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _currentIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          final response = await javaBackendClient.startCompetitiveQuestSession(
-            idToken: idToken,
-            deviceSessionId: await _sessionRepository.deviceSessionId(),
-            quest: await _questPayload(
-              quest,
-              includeVerificationStartedAt: false,
-            ),
-          );
-          return CompetitiveQuestSessionStartResult(
-            status: response['status'] == 'already_started'
-                ? CompetitiveQuestSessionStartStatus.alreadyStarted
-                : CompetitiveQuestSessionStartStatus.started,
-            startedAt: _dateTimeFromPayload(response['startedAt']),
-          );
-        } on JavaBackendException catch (error) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
-        }
-      }
-
-      final callable = _functions.httpsCallable('startCompetitiveQuestSession');
-      final response = await callable
-          .call(await _questPayload(quest, includeVerificationStartedAt: false))
-          .timeout(_rpcTimeout);
-      final data = response.data;
-      if (data is! Map) {
-        throw StateError('Resposta invalida ao iniciar sessao competitiva.');
-      }
-
-      final startedAtRaw = data['startedAt'];
-      final startedAt = _dateTimeFromPayload(startedAtRaw);
-      final status = data['status'] == 'already_started'
-          ? CompetitiveQuestSessionStartStatus.alreadyStarted
-          : CompetitiveQuestSessionStartStatus.started;
-
-      return CompetitiveQuestSessionStartResult(
-        status: status,
-        startedAt: startedAt,
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'iniciar sessao competitiva',
       );
+      final idToken = await _idTokenObrigatorio('iniciar sessao competitiva');
+
+      try {
+        final response = await javaBackendClient.startCompetitiveQuestSession(
+          idToken: idToken,
+          deviceSessionId: await _sessionRepository.deviceSessionId(),
+          quest: await _questPayload(
+            quest,
+            includeVerificationStartedAt: false,
+          ),
+        );
+        return CompetitiveQuestSessionStartResult(
+          status: response['status'] == 'already_started'
+              ? CompetitiveQuestSessionStartStatus.alreadyStarted
+              : CompetitiveQuestSessionStartStatus.started,
+          startedAt: _dateTimeFromPayload(response['startedAt']),
+        );
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
+        }
+        rethrow;
+      }
     } catch (error, stackTrace) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -166,58 +137,35 @@ class CompetitiveQuestAuthorityRepository {
   }) async {
     try {
       await _sessionRepository.registerActiveSession();
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _currentIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          final response = await javaBackendClient
-              .verifyCompetitiveQuestCompletion(
-                idToken: idToken,
-                deviceSessionId: await _sessionRepository.deviceSessionId(),
-                quest: await _questPayload(
-                  quest,
-                  includeVerificationStartedAt: true,
-                ),
-                evidence: evidence.toPayload(),
-                reflectionAnswer: reflectionAnswer,
-              );
-          return _verificationResultFromResponse(
-            response,
-            uid: uid,
-            fallbackName: fallbackName,
-            fallbackQuestId: quest.id,
-          );
-        } on JavaBackendException catch (error) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'validar quest competitiva',
+      );
+      final idToken = await _idTokenObrigatorio('validar quest competitiva');
+
+      try {
+        final response = await javaBackendClient
+            .verifyCompetitiveQuestCompletion(
+              idToken: idToken,
+              deviceSessionId: await _sessionRepository.deviceSessionId(),
+              quest: await _questPayload(
+                quest,
+                includeVerificationStartedAt: true,
+              ),
+              evidence: evidence.toPayload(),
+              reflectionAnswer: reflectionAnswer,
+            );
+        return _verificationResultFromResponse(
+          response,
+          uid: uid,
+          fallbackName: fallbackName,
+          fallbackQuestId: quest.id,
+        );
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
         }
+        rethrow;
       }
-
-      final callable = _functions.httpsCallable(
-        'verifyCompetitiveQuestCompletion',
-      );
-      final response = await callable
-          .call(<String, dynamic>{
-            ...await _questPayload(quest, includeVerificationStartedAt: true),
-            'evidence': evidence.toPayload(),
-            if (reflectionAnswer != null) 'reflectionAnswer': reflectionAnswer,
-          })
-          .timeout(_rpcTimeout);
-      final data = response.data;
-      if (data is! Map) {
-        throw StateError('Resposta invalida ao validar quest competitiva.');
-      }
-
-      return _verificationResultFromResponse(
-        Map<String, dynamic>.from(data.cast<Object?, Object?>()),
-        uid: uid,
-        fallbackName: fallbackName,
-        fallbackQuestId: quest.id,
-      );
     } catch (error, stackTrace) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -271,52 +219,27 @@ class CompetitiveQuestAuthorityRepository {
     try {
       await _sessionRepository.registerActiveSession();
       final template = officialTemplateForQuest(quest);
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _currentIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          final response = await javaBackendClient.startReadingQuizAttempt(
-            idToken: idToken,
-            deviceSessionId: await _sessionRepository.deviceSessionId(),
-            deviceLabel: defaultTargetPlatform.name,
-            questId: quest.id,
-            templateCatalogId: template?.id,
-            topic: topic,
-          );
-          return _readingQuizAttemptFromResponse(response);
-        } on JavaBackendException catch (error, stackTrace) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
-          _reportRecoverable(
-            error,
-            stackTrace,
-            stage: 'start_reading_quiz_attempt_java',
-          );
-        }
-      }
-
-      final callable = _functions.httpsCallable('startReadingQuizAttempt');
-      final response = await callable
-          .call(<String, dynamic>{
-            'deviceSessionId': await _sessionRepository.deviceSessionId(),
-            'deviceLabel': defaultTargetPlatform.name,
-            'questId': quest.id,
-            if (template != null) 'templateCatalogId': template.id,
-            'topic': topic,
-          })
-          .timeout(_rpcTimeout);
-      final data = response.data;
-      if (data is! Map) {
-        throw StateError('Resposta invalida ao iniciar quiz de leitura.');
-      }
-
-      return _readingQuizAttemptFromResponse(
-        Map<String, dynamic>.from(data.cast<Object?, Object?>()),
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'iniciar quiz de leitura',
       );
+      final idToken = await _idTokenObrigatorio('iniciar quiz de leitura');
+
+      try {
+        final response = await javaBackendClient.startReadingQuizAttempt(
+          idToken: idToken,
+          deviceSessionId: await _sessionRepository.deviceSessionId(),
+          deviceLabel: defaultTargetPlatform.name,
+          questId: quest.id,
+          templateCatalogId: template?.id,
+          topic: topic,
+        );
+        return _readingQuizAttemptFromResponse(response);
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
+        }
+        rethrow;
+      }
     } catch (error, stackTrace) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -357,10 +280,6 @@ class CompetitiveQuestAuthorityRepository {
     );
   }
 
-  Future<String?> _currentIdToken() async {
-    return _auth.currentUser?.getIdToken();
-  }
-
   Future<Map<String, dynamic>> _questPayload(
     Quest quest, {
     required bool includeVerificationStartedAt,
@@ -388,6 +307,22 @@ class CompetitiveQuestAuthorityRepository {
       if (includeVerificationStartedAt && quest.verificationStartedAt != null)
         'verificationStartedAt': quest.verificationStartedAt!.toIso8601String(),
     };
+  }
+
+  JavaBackendClient _javaBackendClientObrigatorio(String acao) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
+    return javaBackendClient;
+  }
+
+  Future<String> _idTokenObrigatorio(String acao) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Token Firebase ausente para $acao.');
+    }
+    return idToken;
   }
 
   DateTime _dateTimeFromPayload(Object? raw) {

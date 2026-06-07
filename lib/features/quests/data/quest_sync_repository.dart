@@ -5,7 +5,6 @@ import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
@@ -71,19 +70,14 @@ Quest parseQuestSyncData(
 class QuestSyncRepository {
   QuestSyncRepository(
     this._firestore, {
-    FirebaseFunctions? functions,
     FirebaseAuth? auth,
     JavaBackendClient? javaBackendClient,
     required ActiveSessionRepository sessionRepository,
-  }) : _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _auth = auth ?? FirebaseAuth.instance,
+  }) : _auth = auth ?? FirebaseAuth.instance,
        _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
   final FirebaseAuth _auth;
   final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
@@ -109,35 +103,29 @@ class QuestSyncRepository {
     required String uid,
     required List<Quest> quests,
   }) async {
-    final callable = _functions.httpsCallable('syncQuestInventoryFromSource');
     try {
       await _sessionRepository.registerActiveSession();
       final deviceSessionId = await _sessionRepository.deviceSessionId();
       final sourceQuests = quests.map(_questSourceFor).toList(growable: false);
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          await javaBackendClient.syncQuestInventory(
-            idToken: idToken,
-            deviceSessionId: deviceSessionId,
-            quests: sourceQuests,
-          );
-          return;
-        } on JavaBackendException catch (error) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
-        }
-      }
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'sincronizar inventario de quests',
+      );
+      final idToken = await _idTokenObrigatorio(
+        'sincronizar inventario de quests',
+      );
 
-      await callable.call(<String, dynamic>{
-        'deviceSessionId': deviceSessionId,
-        'source': <String, dynamic>{'quests': sourceQuests},
-      });
+      try {
+        await javaBackendClient.syncQuestInventory(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          quests: sourceQuests,
+        );
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
+        }
+        rethrow;
+      }
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -151,48 +139,34 @@ class QuestSyncRepository {
     required String fallbackName,
     required Quest quest,
   }) async {
-    final callable = _functions.httpsCallable('completePersonalQuest');
     try {
       await _sessionRepository.registerActiveSession();
       final deviceSessionId = await _sessionRepository.deviceSessionId();
       final questSource = _questSourceFor(quest);
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          final response = await javaBackendClient.completePersonalQuest(
-            idToken: idToken,
-            deviceSessionId: deviceSessionId,
-            questId: quest.id,
-            quest: questSource,
-          );
-          return _personalQuestMutationFromResponse(
-            response,
-            uid: uid,
-            fallbackName: fallbackName,
-            fallbackQuestId: quest.id,
-          );
-        } on JavaBackendException catch (error) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
-        }
-      }
-
-      final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': deviceSessionId,
-        'questId': quest.id,
-        'quest': questSource,
-      });
-      return _personalQuestMutationFromResponse(
-        response.data,
-        uid: uid,
-        fallbackName: fallbackName,
-        fallbackQuestId: quest.id,
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'concluir quest pessoal',
       );
+      final idToken = await _idTokenObrigatorio('concluir quest pessoal');
+
+      try {
+        final response = await javaBackendClient.completePersonalQuest(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          questId: quest.id,
+          quest: questSource,
+        );
+        return _personalQuestMutationFromResponse(
+          response,
+          uid: uid,
+          fallbackName: fallbackName,
+          fallbackQuestId: quest.id,
+        );
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
+        }
+        rethrow;
+      }
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -206,46 +180,34 @@ class QuestSyncRepository {
     required String fallbackName,
     required Quest quest,
   }) async {
-    final callable = _functions.httpsCallable('revokePersonalQuestCompletion');
     try {
       await _sessionRepository.registerActiveSession();
       final deviceSessionId = await _sessionRepository.deviceSessionId();
-      final javaBackendClient = _javaBackendClient;
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (javaBackendClient != null && idToken != null) {
-        try {
-          final response = await javaBackendClient
-              .revokePersonalQuestCompletion(
-                idToken: idToken,
-                deviceSessionId: deviceSessionId,
-                questId: quest.id,
-              );
-          return _personalQuestMutationFromResponse(
-            response,
-            uid: uid,
-            fallbackName: fallbackName,
-            fallbackQuestId: quest.id,
-          );
-        } on JavaBackendException catch (error) {
-          if (error.isActiveSessionConflict) {
-            throw const ActiveSessionConflictException();
-          }
-          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-            rethrow;
-          }
-        }
-      }
-
-      final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': deviceSessionId,
-        'questId': quest.id,
-      });
-      return _personalQuestMutationFromResponse(
-        response.data,
-        uid: uid,
-        fallbackName: fallbackName,
-        fallbackQuestId: quest.id,
+      final javaBackendClient = _javaBackendClientObrigatorio(
+        'revogar conclusao de quest pessoal',
       );
+      final idToken = await _idTokenObrigatorio(
+        'revogar conclusao de quest pessoal',
+      );
+
+      try {
+        final response = await javaBackendClient.revokePersonalQuestCompletion(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          questId: quest.id,
+        );
+        return _personalQuestMutationFromResponse(
+          response,
+          uid: uid,
+          fallbackName: fallbackName,
+          fallbackQuestId: quest.id,
+        );
+      } on JavaBackendException catch (error) {
+        if (error.isActiveSessionConflict) {
+          throw const ActiveSessionConflictException();
+        }
+        rethrow;
+      }
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
         throw const ActiveSessionConflictException();
@@ -264,6 +226,22 @@ class QuestSyncRepository {
         .doc(uid)
         .collection('quests_meta')
         .doc('current');
+  }
+
+  JavaBackendClient _javaBackendClientObrigatorio(String acao) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
+    return javaBackendClient;
+  }
+
+  Future<String> _idTokenObrigatorio(String acao) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Token Firebase ausente para $acao.');
+    }
+    return idToken;
   }
 }
 

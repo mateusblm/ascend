@@ -14,21 +14,16 @@ import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/season_reward_snapshot.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RankProgressionRepository {
   RankProgressionRepository(
     this._firestore,
     this._auth, {
-    FirebaseFunctions? functions,
     JavaBackendClient? javaBackendClient,
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
-  }) : _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
+  }) : _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
@@ -37,7 +32,6 @@ class RankProgressionRepository {
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final FirebaseFunctions _functions;
   final JavaBackendClient? _javaBackendClient;
   final AppAnalytics _analytics;
   final AppCrashReporter _crashReporter;
@@ -192,69 +186,32 @@ class RankProgressionRepository {
     ).copyWith(syncSchemaVersion: syncSchemaVersion, syncSource: 'client');
 
     final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      try {
-        final javaSnapshot = await _syncCompetitiveStateWithJava(
-          javaBackendClient: javaBackendClient,
-          player: player,
-        );
-        if (javaSnapshot != null) {
-          _lastSyncedFingerprintByUser[uid] = _fingerprintFor(javaSnapshot);
-          return javaSnapshot;
-        }
-      } catch (error, stackTrace) {
-        _reportRecoverable(
-          error,
-          stackTrace,
-          stage: 'sync_competitive_state_java',
-        );
-      }
+    if (javaBackendClient == null) {
+      return localFallback;
     }
 
     try {
-      final remoteSnapshot = await _syncCompetitiveStateFromSourceRemotely(
-        player,
+      final javaSnapshot = await _syncCompetitiveStateWithJava(
+        javaBackendClient: javaBackendClient,
+        player: player,
       );
-      if (remoteSnapshot == null) {
-        return localFallback;
+      if (javaSnapshot != null) {
+        _lastSyncedFingerprintByUser[uid] = _fingerprintFor(javaSnapshot);
+        return javaSnapshot;
       }
-
-      _lastSyncedFingerprintByUser[uid] = _fingerprintFor(remoteSnapshot);
-      return remoteSnapshot;
     } catch (error, stackTrace) {
       _reportRecoverable(
         error,
         stackTrace,
-        stage: 'sync_competitive_state_from_source',
+        stage: 'sync_competitive_state_java',
       );
-      return localFallback;
     }
+
+    return localFallback;
   }
 
   Future<CompetitiveRankSnapshot?> syncSnapshot(Player player) =>
       syncCompetitiveState(player);
-
-  Future<CompetitiveRankSnapshot?> _syncCompetitiveStateFromSourceRemotely(
-    Player player,
-  ) async {
-    final callable = _functions.httpsCallable('syncCompetitiveStateFromSource');
-    final response = await callable
-        .call(<String, dynamic>{'source': _competitiveSourceFor(player)})
-        .timeout(_rpcTimeout);
-    final data = response.data;
-    if (data is! Map) {
-      return null;
-    }
-
-    final snapshotData = data['snapshot'];
-    if (snapshotData is! Map) {
-      return null;
-    }
-
-    return CompetitiveRankSnapshot.fromFirestore(
-      snapshotData.cast<String, dynamic>(),
-    );
-  }
 
   Future<CompetitiveRankSnapshot?> _syncCompetitiveStateWithJava({
     required JavaBackendClient javaBackendClient,
@@ -289,59 +246,26 @@ class RankProgressionRepository {
     if (uid == null) return const <RankSeasonLeaderboardEntry>[];
 
     final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      try {
-        final idToken = await _auth.currentUser?.getIdToken();
-        if (idToken != null && idToken.isNotEmpty) {
-          return await javaBackendClient
-              .fetchSeasonBracketLeaderboard(
-                idToken: idToken,
-                seasonKey: seasonKey,
-                rankBracket: rankBracket,
-                limit: limit,
-              )
-              .timeout(_rpcTimeout);
-        }
-      } catch (error, stackTrace) {
-        _reportRecoverable(
-          error,
-          stackTrace,
-          stage: 'fetch_season_bracket_leaderboard_java',
-        );
-      }
-    }
+    if (javaBackendClient == null) return const <RankSeasonLeaderboardEntry>[];
 
     try {
-      final callable = _functions.httpsCallable('getSeasonBracketLeaderboard');
-      final response = await callable
-          .call(<String, dynamic>{
-            'seasonKey': seasonKey,
-            'rankBracket': rankBracket,
-            'limit': limit,
-          })
-          .timeout(_rpcTimeout);
-      final data = response.data;
-      if (data is! Map || data['entries'] is! List) {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null || idToken.isEmpty) {
         return const <RankSeasonLeaderboardEntry>[];
       }
-
-      return (data['entries'] as List)
-          .whereType<Map>()
-          .map((entry) {
-            final map = entry.cast<String, dynamic>();
-            return RankSeasonLeaderboardEntry(
-              position: (map['position'] as num?)?.toInt() ?? 0,
-              displayName: map['displayName'] as String? ?? 'HUNTER',
-              detail: map['detail'] as String? ?? '',
-              isPlayer: map['isPlayer'] as bool? ?? false,
-            );
-          })
-          .toList(growable: false);
+      return await javaBackendClient
+          .fetchSeasonBracketLeaderboard(
+            idToken: idToken,
+            seasonKey: seasonKey,
+            rankBracket: rankBracket,
+            limit: limit,
+          )
+          .timeout(_rpcTimeout);
     } catch (error, stackTrace) {
       _reportRecoverable(
         error,
         stackTrace,
-        stage: 'fetch_season_bracket_leaderboard',
+        stage: 'fetch_season_bracket_leaderboard_java',
       );
       return const <RankSeasonLeaderboardEntry>[];
     }
@@ -360,70 +284,28 @@ class RankProgressionRepository {
     );
 
     final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      try {
-        final javaIntegrity = await _syncCompetitiveIntegrityWithJava(
-          javaBackendClient: javaBackendClient,
-          player: player,
-          quests: quests,
-        );
-        if (javaIntegrity != null) {
-          return javaIntegrity;
-        }
-      } catch (error, stackTrace) {
-        _reportRecoverable(
-          error,
-          stackTrace,
-          stage: 'sync_competitive_integrity_java',
-        );
-      }
+    if (javaBackendClient == null) {
+      return localFallback;
     }
 
     try {
-      final remoteIntegrity = await _syncCompetitiveIntegrityFromSourceRemotely(
+      final javaIntegrity = await _syncCompetitiveIntegrityWithJava(
+        javaBackendClient: javaBackendClient,
         player: player,
         quests: quests,
       );
-      return remoteIntegrity ?? localFallback;
+      if (javaIntegrity != null) {
+        return javaIntegrity;
+      }
     } catch (error, stackTrace) {
       _reportRecoverable(
         error,
         stackTrace,
-        stage: 'sync_competitive_integrity_from_source',
+        stage: 'sync_competitive_integrity_java',
       );
-      return localFallback;
-    }
-  }
-
-  Future<CompetitiveIntegritySnapshot?>
-  _syncCompetitiveIntegrityFromSourceRemotely({
-    required Player player,
-    required List<Quest> quests,
-  }) async {
-    final callable = _functions.httpsCallable(
-      'syncCompetitiveIntegrityFromSource',
-    );
-    final response = await callable
-        .call(<String, dynamic>{
-          'source': _competitiveIntegritySourceFor(
-            player: player,
-            quests: quests,
-          ),
-        })
-        .timeout(_rpcTimeout);
-    final data = response.data;
-    if (data is! Map) {
-      return null;
     }
 
-    final integrityData = data['integrity'];
-    if (integrityData is! Map) {
-      return null;
-    }
-
-    return CompetitiveIntegritySnapshot.fromFirestore(
-      integrityData.cast<String, dynamic>(),
-    );
+    return localFallback;
   }
 
   Future<CompetitiveIntegritySnapshot?> _syncCompetitiveIntegrityWithJava({
@@ -888,30 +770,18 @@ class RankProgressionRepository {
   Future<String> _claimSeasonRewardRemotely(
     SeasonRewardSnapshot currentReward,
   ) async {
-    final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (idToken != null && idToken.isNotEmpty) {
-        final response = await javaBackendClient
-            .claimSeasonReward(
-              idToken: idToken,
-              seasonKey: currentReward.seasonKey,
-            )
-            .timeout(_rpcTimeout);
-        final status = response['status'];
-        if (status is String) {
-          return status;
-        }
-      }
-    }
-
-    final callable = _functions.httpsCallable('claimSeasonReward');
-    final response = await callable
-        .call(<String, dynamic>{'seasonKey': currentReward.seasonKey})
+    final javaBackendClient = _javaBackendClientObrigatorio(
+      'resgatar recompensa da temporada',
+    );
+    final idToken = await _idTokenObrigatorio(
+      'resgatar recompensa da temporada',
+    );
+    final response = await javaBackendClient
+        .claimSeasonReward(idToken: idToken, seasonKey: currentReward.seasonKey)
         .timeout(_rpcTimeout);
-    final data = response.data;
-    if (data is Map && data['status'] is String) {
-      return data['status'] as String;
+    final status = response['status'];
+    if (status is String) {
+      return status;
     }
     return 'claimed';
   }
@@ -919,30 +789,19 @@ class RankProgressionRepository {
   Future<String> _startPromotionExamRemotely(
     CompetitiveRankSnapshot snapshot,
   ) async {
-    final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (idToken != null && idToken.isNotEmpty) {
-        final response = await javaBackendClient
-            .startPromotionExam(
-              idToken: idToken,
-              snapshot: _rankSnapshotPayloadForJava(snapshot),
-            )
-            .timeout(_rpcTimeout);
-        final status = response['status'];
-        if (status is String) {
-          return status;
-        }
-      }
-    }
-
-    final callable = _functions.httpsCallable('startPromotionExam');
-    final response = await callable
-        .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
+    final javaBackendClient = _javaBackendClientObrigatorio(
+      'iniciar exame de promocao',
+    );
+    final idToken = await _idTokenObrigatorio('iniciar exame de promocao');
+    final response = await javaBackendClient
+        .startPromotionExam(
+          idToken: idToken,
+          snapshot: _rankSnapshotPayloadForJava(snapshot),
+        )
         .timeout(_rpcTimeout);
-    final data = response.data;
-    if (data is Map && data['status'] is String) {
-      return data['status'] as String;
+    final status = response['status'];
+    if (status is String) {
+      return status;
     }
     return 'started';
   }
@@ -950,32 +809,37 @@ class RankProgressionRepository {
   Future<String> _confirmPromotionRemotely(
     CompetitiveRankSnapshot snapshot,
   ) async {
-    final javaBackendClient = _javaBackendClient;
-    if (javaBackendClient != null) {
-      final idToken = await _auth.currentUser?.getIdToken();
-      if (idToken != null && idToken.isNotEmpty) {
-        final response = await javaBackendClient
-            .confirmPromotion(
-              idToken: idToken,
-              snapshot: _rankSnapshotPayloadForJava(snapshot),
-            )
-            .timeout(_rpcTimeout);
-        final status = response['status'];
-        if (status is String) {
-          return status;
-        }
-      }
-    }
-
-    final callable = _functions.httpsCallable('confirmPromotion');
-    final response = await callable
-        .call(<String, dynamic>{'snapshot': snapshot.toFirestore()})
+    final javaBackendClient = _javaBackendClientObrigatorio(
+      'confirmar promocao',
+    );
+    final idToken = await _idTokenObrigatorio('confirmar promocao');
+    final response = await javaBackendClient
+        .confirmPromotion(
+          idToken: idToken,
+          snapshot: _rankSnapshotPayloadForJava(snapshot),
+        )
         .timeout(_rpcTimeout);
-    final data = response.data;
-    if (data is Map && data['status'] is String) {
-      return data['status'] as String;
+    final status = response['status'];
+    if (status is String) {
+      return status;
     }
     return 'promoted';
+  }
+
+  JavaBackendClient _javaBackendClientObrigatorio(String acao) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
+    return javaBackendClient;
+  }
+
+  Future<String> _idTokenObrigatorio(String acao) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Token Firebase ausente para $acao.');
+    }
+    return idToken;
   }
 
   Map<String, dynamic> _rankSnapshotPayloadForJava(

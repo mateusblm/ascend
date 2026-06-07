@@ -1,7 +1,7 @@
 # Ascend Java Backend
 
-Spring Boot backend created for the planned migration from Firebase Functions
-TypeScript to Java on Cloud Run.
+Spring Boot backend for Ascend's authoritative account, quest, progression,
+rank, reward, and anti-abuse commands on Cloud Run.
 
 Current status:
 - Maven project skeleton exists.
@@ -34,7 +34,8 @@ Current status:
 - `POST /api/v1/weekly-boss:claim` is implemented for Java-first weekly boss
   claim authority, including profile reward, completion leaderboard, user claim
   record, and idempotent duplicate handling.
-- TypeScript Functions remain deployed for fallback and unmigrated callables.
+- Flutter no longer uses TypeScript Functions fallback. The local TypeScript
+  `functions/` project has been removed from this repository.
 
 ## Local Commands
 
@@ -180,11 +181,10 @@ still require Firebase ID tokens and reject unauthenticated requests.
 
 Before migrating any endpoint:
 - read `docs/ai/work-packages/java-backend-migration-plan.md`
-- read `docs/ai/work-packages/java-backend-callable-inventory.md`
 - read `docs/ai/java-backend-coding-standard.md`
-- inspect the current TypeScript callable
 - add Java tests
-- keep Flutter routing behind staging/debug config until parity is proven
+- keep reward-bearing rules in the Java backend and return backend-authored
+  results to Flutter
 
 ## Environment
 

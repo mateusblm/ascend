@@ -16,13 +16,13 @@ Stack atual:
 - Maven
 - Docker
 - Google Cloud Run
-- Cloud Functions como legado/fallback durante a migração
+- Cloud Run como backend Java autoritativo
 - fl_chart
 - Google Fonts
 - Tema escuro customizado
 
 Princípio arquitetural central:
-O Flutter NÃO é fonte final de verdade para progressão, ranking, XP competitivo, recompensas, antiabuso ou decisões de confiança. O frontend renderiza estado, coleta intenção e pode fazer UI otimista leve. A autoridade final de regras sensíveis deve estar no backend, preferencialmente no backend Java em Spring Boot publicado no Cloud Run. Cloud Functions e Firebase continuam como legado/fallback quando a feature ainda não foi migrada. Firestore guarda fatos canônicos, agregados e read-models.
+O Flutter NÃO é fonte final de verdade para progressão, ranking, XP competitivo, recompensas, antiabuso ou decisões de confiança. O frontend renderiza estado, coleta intenção e pode fazer UI otimista leve. A autoridade final de regras sensíveis deve estar no backend Java em Spring Boot publicado no Cloud Run. Firestore guarda fatos canônicos, agregados e read-models.
 
 Fontes internas obrigatórias:
 - AGENTS.md
@@ -60,7 +60,7 @@ Antes de alterar código:
 Padrões esperados:
 - Frontend:
   - renderiza aggregates/read-models;
-  - chama commands/callables;
+  - chama comandos HTTP do backend Java;
   - aplica resposta backend-authored no cache local;
   - não recalcula reward crítico em paralelo.
 - Backend:
@@ -83,7 +83,7 @@ Padrões esperados:
 - Cloud Run:
   - endpoint principal para comandos migrados para Java.
 - Cloud Functions:
-  - legado/fallback para comandos ainda não migrados, como partes competitivas, boss semanal ou fluxos pendentes.
+  - removido do projeto local; não criar novos fallbacks TypeScript.
 
 Formato obrigatório das respostas:
 1. Diagnóstico técnico.

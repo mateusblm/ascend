@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Guide future AI sessions through a controlled migration from the current
-Firebase Functions TypeScript backend to a Java backend using Maven,
+Guide future AI sessions through the controlled migration from the original
+Firebase Functions TypeScript backend to the Java backend using Maven,
 Spring Boot, and Cloud Run.
 
-This is a migration plan, not an active architecture change. Until a step is
-explicitly completed and validated, the current TypeScript backend remains the
-production source of truth.
+This document is now both the migration history and the operational cleanup
+checklist. The Java backend is the active source of authority for migrated
+product behavior; TypeScript Functions are no longer part of the local project.
 
 ## Decision
 
@@ -20,15 +20,15 @@ Target backend stack:
 - Auth: Firebase Auth ID token validation in the Java service
 - Database: Firestore remains the canonical database
 - Secrets: Google Secret Manager
-- Existing backend: Firebase Functions TypeScript remains active during the
-  migration
+- Legacy backend: Firebase Functions TypeScript was used as the migration
+  reference and has been removed from the local repository.
 
 Do not start a new Ascend project. Keep:
 - Flutter app
 - Firebase project
 - Firestore data model unless a migration is explicitly approved
 - existing docs, tests, and product direction
-- TypeScript Functions as the behavioral reference until Java reaches parity
+- migration history and tests as the behavioral reference after Java parity
 
 ## Non-Goals
 
@@ -38,25 +38,25 @@ Do not use this migration to:
   decision
 - move reward-bearing authority back into Flutter
 - replace Firebase Auth or Firestore
-- remove TypeScript Functions before Java parity is proven
+- reintroduce TypeScript Functions after Java parity is proven
 - rewrite all backend code in one large step
 
 ## Migration Principles
 
 1. Preserve behavior before improving behavior.
 2. Migrate one callable or endpoint at a time.
-3. Keep rollback available for every migrated endpoint.
+3. Keep rollback available while a flow is being migrated.
 4. Add tests before switching Flutter to the Java endpoint.
 5. Document every contract before implementation.
 6. Treat XP, rank, rewards, evidence, sessions, and account state as sensitive.
 7. Prefer small Java services/classes with clear names over clever abstractions.
-8. Keep TypeScript and Java results comparable during the transition.
+8. Keep historical TypeScript behavior documented when it explains Java parity.
 
 ## Current Backend Reference
 
-Current backend location:
-- `functions/src/`
-- `functions/test/`
+Original backend reference:
+- `functions/src/` was removed after Java parity.
+- `functions/test/` was removed after Java parity.
 
 Important current callable groups:
 - account/session authority
@@ -71,8 +71,8 @@ Important current callable groups:
 - leaderboard reads
 - reading quiz generation
 
-Before migrating any function, inspect the current TypeScript implementation
-and tests for that exact behavior.
+For historical parity questions, inspect the Git history for the removed
+TypeScript implementation and tests.
 
 ## Target Repository Layout
 
@@ -445,9 +445,9 @@ Goal:
 
 Current state:
 - implemented locally in Java as `POST /api/v1/quests/inventory:sync`
-- Flutter can route `QuestSyncRepository.replaceQuests` to Java when
-  `ASCEND_JAVA_BACKEND_URL` is provided
-- Firebase Functions remain the default and fallback path
+- `QuestSyncRepository.replaceQuests` requires the Java backend URL and
+  Firebase ID token for remote sync.
+- Firebase Functions are no longer a local fallback path.
 - Cloud Run staging deploy for this endpoint is complete
 - authenticated local Docker smoke passed on 2026-06-06
 - authenticated Cloud Run staging smoke passed on 2026-06-06
@@ -521,8 +521,9 @@ Exit criteria:
   completion smoke if desired
 - revoke remains safe: implemented, covered by Java service test, and manually
   validated in staging on 2026-06-06
-- TS rollback still available: completed via Firebase Functions fallback when
-  `ASCEND_JAVA_BACKEND_URL` is omitted or non-session Java errors occur
+- TS rollback archived: Firebase Functions fallback was removed after Java
+  parity. Rollback now means reverting repository history or restoring a
+  previous deployment deliberately.
 
 Competitive quest completion remains out of scope for Phase 7 validation. It is
 tracked separately because current behavior was not considered reliable enough
@@ -629,10 +630,9 @@ Current status:
 - Java verification writes the competitive session, grant, evidence audit,
   quest document, quest completion document, and profile aggregate in one
   transactional command.
-- Flutter tries Java first when `ASCEND_JAVA_BACKEND_URL` is configured and
-  falls back to Firebase Functions for non-session Java failures.
-- Backend-owned reading quiz attempts remain on Firebase Functions until the
-  quiz contract is migrated in Phase 11; Java avoids taking over that path yet.
+- Flutter routes competitive session and verification commands to Java.
+- Backend-owned reading quiz attempts have also been migrated to Java in Phase
+  11, so this path no longer depends on Firebase Functions.
 
 ## Phase 10 - Promotion And Season Rewards Migration
 
@@ -669,9 +669,9 @@ Progress:
   Flutter, and idempotent statuses for in-progress/promoted exams.
 - Java-first season reward claim is implemented with transactional writes for
   the current reward, reward history, season legacy, and active season profile.
-- Flutter tries Java first for promotion and season reward flows when
-  `ASCEND_JAVA_BACKEND_URL` is configured, with Firebase Functions remaining as
-  fallback when the Java backend URL is absent.
+- Flutter routes promotion and season reward flows to Java. Missing Java backend
+  configuration is an explicit development/configuration error, not a
+  TypeScript fallback.
 
 Status:
 - Phase 10 implementation is complete. Remaining work is staging smoke with a
@@ -696,7 +696,7 @@ Steps:
 4. Preserve safe topic handling.
 5. Preserve structured quiz response.
 6. Add tests with mock provider.
-7. Add failure fallback.
+7. Add controlled provider failure handling without TypeScript fallback.
 8. Stage with non-sensitive topic only.
 
 Exit criteria:
@@ -712,8 +712,9 @@ Progress:
 - A Gemini-backed provider boundary exists behind
   `ASCEND_READING_QUIZ_GENERATOR=ai`; it reads `GEMINI_API_KEY` from the
   environment first, then from Secret Manager.
-- Flutter tries Java first when `ASCEND_JAVA_BACKEND_URL` is configured and
-  falls back to the TypeScript callable on recoverable Java/provider failures.
+- Flutter routes reading quiz attempt creation to Java when the backend URL is
+  configured. Provider failures are handled by the Java boundary, not by a
+  TypeScript callable fallback.
 - Java evaluates reading quiz submissions during
   `POST /api/v1/quests/competitive:verify` by loading the backend-owned attempt,
   calculating the score, and storing `quizRiskFlags` in evidence audit docs.
@@ -729,7 +730,7 @@ Goal:
 
 Steps:
 1. Add a Java backend client abstraction in Flutter.
-2. Keep TS callable clients available until migration ends.
+2. Keep TS callable clients available only until migration ends.
 3. Route per feature, not globally all at once.
 4. Use staging/debug flags first.
 5. Document environment variables or build-time config.
@@ -747,9 +748,8 @@ Progress:
   Java clients independently.
 - Java business-rule failures such as active-session conflict or insufficient
   competitive evidence no longer silently fall back to Firebase Functions.
-- Competitive reading verification now routes to Java when configured; Firebase
-  remains fallback only for recoverable Java/server failures or when the Java
-  URL is omitted.
+- Competitive reading verification routes to Java. Firebase Functions fallback
+  has been removed.
 
 Status:
 - Phase 12 implementation is complete locally. Remaining work is staging smoke
@@ -758,16 +758,14 @@ Status:
 ## Phase 13 - Profile Authority Migration
 
 Status:
-- decommission is not active yet.
-- this phase exists before TypeScript decommission because
-  `updateProfileSettings` and `allocateAttributePoint` were still active in
-  TypeScript after Phases 11 and 12.
-- do not remove TypeScript Functions until session, profile repair, weekly
-  boss, and any remaining migration/repair callables are explicitly resolved.
+- completed before TypeScript decommission.
+- `updateProfileSettings` and `allocateAttributePoint` now route through Java.
+- TypeScript Functions were removed after session, profile repair, weekly boss,
+  and remaining migration/repair callables were resolved.
 
 Goal:
-- migrate profile settings and attribute allocation to Java while keeping
-  Firebase Functions as fallback for recoverable Java failures.
+- migrate profile settings and attribute allocation to Java with Java as the
+  only remote authority.
 
 Candidates:
 - `updateProfileSettings`
@@ -789,10 +787,9 @@ Progress:
   valid attribute, increments `authoritativeAllocatedStatPoints`, and writes
   `users/{uid}/attribute_allocations/{docId}`.
 - Flutter routes these operations to Java when `ASCEND_JAVA_BACKEND_URL` is
-  configured and falls back to TypeScript only for recoverable Java/server
-  failures.
+  configured.
 - Java business-rule failures such as active-session conflict or no stat points
-  do not fall back to TypeScript.
+  are surfaced without TypeScript fallback.
 
 Validation:
 - Java service tests cover streak reset, attribute allocation audit, and
@@ -828,7 +825,7 @@ Progress:
   - release deletes only when the caller owns the current session
 - Flutter `ActiveSessionRepository` routes register/release to Java when
   `ASCEND_JAVA_BACKEND_URL` is configured.
-- Firebase Functions remain fallback for recoverable Java/server failures.
+- Firebase Functions fallback was removed after Java parity.
 - Java business-rule failures such as `active_session_conflict` do not fall
   back to TypeScript.
 
@@ -865,11 +862,10 @@ Progress:
   and increments `completedCount`.
 - Duplicate claim/completion records return `already_completed` without
   duplicating XP or leaderboard writes.
-- Flutter routes weekly boss claim to Java when `ASCEND_JAVA_BACKEND_URL` is
-  configured and falls back to TypeScript only for recoverable Java/server
-  failures.
+- Flutter routes weekly boss claim to Java through `ASCEND_JAVA_BACKEND_URL`.
 - Java business-rule failures such as active-session conflict, rank mismatch,
-  inactive boss, or expired event window do not fall back to TypeScript.
+  inactive boss, or expired event window are surfaced without TypeScript
+  fallback.
 
 Validation:
 - Java service tests cover successful claim, idempotent duplicate claim, rank
@@ -884,10 +880,15 @@ Status:
 ## Phase 16 - TypeScript Decommission
 
 Status:
-- decommission has started in small, reversible groups.
-- TypeScript remains deployed for untouched product behavior and rollback while
-  each Flutter repository is moved to Java-only calls.
-- preparation continues by auditing remaining Flutter `httpsCallable` usage.
+- decommission is active in the repository.
+- Flutter no longer imports `cloud_functions`, `FirebaseFunctions`, or
+  `httpsCallable`.
+- `functions/` was removed from the repository after Java parity was reached for
+  active product behavior.
+- `firebase.json` no longer declares a Functions source.
+- TypeScript Functions may still exist remotely until an explicit Firebase
+  cleanup/deletion step is executed, but they are no longer part of the local
+  project or Flutter routing.
 - `syncPlayerProfileFromSource` was still active through
   `PlayerProfileRepository.upsertProfile`, so it has been migrated to Java as
   `POST /api/v1/profile/source:sync`.
@@ -897,23 +898,22 @@ Status:
   Firebase ID token.
 - `upsertCompetitiveProgression` is no longer called from Flutter. Exam status
   sync moved to `POST /api/v1/competitive/promotion/exam:sync`.
-- `upsertCompetitiveIntegrity` has no active Flutter caller and is treated as a
-  legacy repair callable.
+- all remaining Flutter TypeScript fallbacks were removed in favor of Java
+  Cloud Run endpoints or local read-model fallback where no remote mutation is
+  performed.
 
 Goal:
-- remove TypeScript Functions by feature group as Java becomes authoritative.
+- finish operational cleanup after TypeScript removal.
 
 Steps:
-1. Confirm no Flutter code calls migrated TS functions.
+1. Confirm no Flutter code calls TS functions.
 2. Confirm no scheduled/event functions remain needed.
-3. Keep TS deployed for a rollback window.
+3. Delete/decommission remote Firebase Functions if they are still deployed.
 4. Monitor:
    - Cloud Run errors
    - Firebase Crashlytics
-   - callable failures
    - support reports
-5. Remove TS functions one group at a time.
-6. Update docs:
+5. Update docs:
    - `docs/ai/architecture-map.md`
    - `docs/product/progression-architecture.md`
    - `docs/product/release-environments.md`
@@ -925,8 +925,8 @@ Exit criteria:
 - rollback plan is archived
 
 Current remaining decisions:
-- remove unused TypeScript callable exports after the Flutter fallback removal
-  and staging smoke window confirm no active traffic remains.
+- decide whether to delete any remotely deployed Firebase Functions from the
+  Firebase project now or after a short staging smoke window.
 
 ## Validation Gates
 
@@ -1097,9 +1097,8 @@ Current status:
 - Phase 7 personal quest authority started locally with Java REST endpoints:
   - `POST /api/v1/quests/personal:complete`
   - `POST /api/v1/quests/personal:revoke`
-- Flutter staging/debug can route personal quest complete/revoke to Java with
-  `ASCEND_JAVA_BACKEND_URL`, while retaining Firebase Functions fallback on
-  non-session Java errors
+- Flutter staging/debug routes personal quest complete/revoke to Java with
+  `ASCEND_JAVA_BACKEND_URL`; Firebase Functions fallback has been removed.
 - Authenticated staging smoke confirmed normal personal quest completion through
   Java grants XP and attribute reward correctly on 2026-06-06
 - Authenticated staging smoke confirmed normal personal quest revoke/rollback
@@ -1116,21 +1115,18 @@ Current status:
   - `/api/v1/quests/inventory:sync` returns `401` without a Firebase ID token
 - Flutter staging/debug can route the season leaderboard read to Java with:
   - `--dart-define=ASCEND_JAVA_BACKEND_URL=https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
-- Flutter staging/debug can route quest inventory sync to Java with the same
-  `ASCEND_JAVA_BACKEND_URL`, with fallback to the TypeScript callable on
-  non-session Java errors
-- Flutter staging/debug can route reading quiz attempt creation to Java with the
-  same `ASCEND_JAVA_BACKEND_URL`, while preserving Firebase Functions fallback
-  on recoverable Java/provider errors
+- Flutter staging/debug routes quest inventory sync to Java with the same
+  `ASCEND_JAVA_BACKEND_URL`.
+- Flutter staging/debug routes reading quiz attempt creation to Java with the
+  same `ASCEND_JAVA_BACKEND_URL`.
 - Flutter staging/debug can route reading quiz completion verification to Java;
   Java evaluates the quiz attempt and records `quizRiskFlags`
-- Flutter staging/debug can route profile settings and attribute allocation to
-  Java; Firebase Functions remain fallback only for recoverable Java/server
-  failures
-- Flutter staging/debug can route active session register/release to Java;
-  Firebase Functions remain fallback only for recoverable Java/server failures
+- Flutter staging/debug routes profile settings and attribute allocation to
+  Java.
+- Flutter staging/debug routes active session register/release to Java.
 - Java backend routing in Flutter is centralized through `BackendRouteSelector`
-- Flutter keeps Firebase Functions as the default when the Java URL is omitted
+- Flutter no longer keeps Firebase Functions as the default when the Java URL is
+  omitted; backend-authoritative commands require Java configuration.
 - local validation passed:
   - `mvn test`
   - `mvn package`

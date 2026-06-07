@@ -15,7 +15,7 @@ O projeto usa:
 - Maven
 - Docker
 - Google Cloud Run
-- Cloud Functions como legado/fallback durante a migração
+- Cloud Run como backend Java autoritativo
 
 ## Regra central
 
@@ -27,7 +27,7 @@ O frontend Flutter nunca deve ser fonte final de verdade para:
 - recompensas sensíveis
 - antiabuso
 
-Essas regras devem ser validadas no backend autoritativo. Durante a migração, o alvo principal é o backend Java em Spring Boot publicado no Cloud Run. Cloud Functions e Firebase continuam existindo como legado ou fallback quando a feature ainda não foi migrada.
+Essas regras devem ser validadas no backend autoritativo. O alvo principal é o backend Java em Spring Boot publicado no Cloud Run. Não criar novos fallbacks TypeScript.
 
 ## Agentes especializados
 
@@ -58,7 +58,7 @@ Use quando a tarefa envolver:
 - Isar;
 - Firebase;
 - Cloud Run;
-- Cloud Functions legado/fallback;
+- Cloud Functions removido do projeto local;
 - refatoração;
 - correção de bug.
 

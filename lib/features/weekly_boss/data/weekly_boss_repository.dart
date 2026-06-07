@@ -11,7 +11,6 @@ import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
 enum ClaimWeeklyBossRemoteResult { claimed, alreadyCompleted }
@@ -29,23 +28,18 @@ class ClaimWeeklyBossCommandResult {
 class WeeklyBossRepository {
   WeeklyBossRepository(
     this._firestore, {
-    FirebaseFunctions? functions,
     FirebaseAuth? auth,
     JavaBackendClient? javaBackendClient,
     ActiveSessionRepository? sessionRepository,
     AppAnalytics? analytics,
     AppCrashReporter? crashReporter,
-  }) : _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
+  }) : _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
        _auth = auth ?? FirebaseAuth.instance,
        _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
   final ActiveSessionRepository _sessionRepository;
   final FirebaseAuth _auth;
   final JavaBackendClient? _javaBackendClient;
@@ -105,57 +99,31 @@ class WeeklyBossRepository {
   }) async {
     await _sessionRepository.registerActiveSession();
     final deviceSessionId = await _sessionRepository.deviceSessionId();
-    final javaClient = _javaBackendClient;
-    final idToken = await _auth.currentUser?.getIdToken();
-    if (javaClient != null && idToken != null && idToken.isNotEmpty) {
-      try {
-        final payload = await javaClient.claimWeeklyBoss(
-          idToken: idToken,
-          deviceSessionId: deviceSessionId,
-          bossId: bossId,
-          displayName: displayName,
-          photoUrl: photoUrl,
-          rankAtCompletion: rankAtCompletion,
-        );
-        return _parseClaimPayload(
-          payload,
-          bossId: bossId,
-          uid: uid,
-          fallbackName: fallbackName,
-          rankAtCompletion: rankAtCompletion,
-          source: 'java',
-        );
-      } on JavaBackendException catch (error, stackTrace) {
-        _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss_java');
-        if (error.isActiveSessionConflict) {
-          throw ActiveSessionConflictException();
-        }
-        if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
-          rethrow;
-        }
-      }
-    }
+    final javaClient = _javaBackendClientObrigatorio('resgatar boss semanal');
+    final idToken = await _idTokenObrigatorio('resgatar boss semanal');
 
     try {
-      final callable = _functions.httpsCallable('claimWeeklyBoss');
-      final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': deviceSessionId,
-        'bossId': bossId,
-        'displayName': displayName,
-        'photoUrl': photoUrl,
-        'rankAtCompletion': rankAtCompletion,
-      });
-
+      final payload = await javaClient.claimWeeklyBoss(
+        idToken: idToken,
+        deviceSessionId: deviceSessionId,
+        bossId: bossId,
+        displayName: displayName,
+        photoUrl: photoUrl,
+        rankAtCompletion: rankAtCompletion,
+      );
       return _parseClaimPayload(
-        response.data,
+        payload,
         bossId: bossId,
         uid: uid,
         fallbackName: fallbackName,
         rankAtCompletion: rankAtCompletion,
-        source: 'firebase',
+        source: 'java',
       );
-    } on FirebaseFunctionsException catch (error, stackTrace) {
-      _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss');
+    } on JavaBackendException catch (error, stackTrace) {
+      _reportRecoverable(error, stackTrace, stage: 'claim_weekly_boss_java');
+      if (error.isActiveSessionConflict) {
+        throw const ActiveSessionConflictException();
+      }
       rethrow;
     }
   }
@@ -231,6 +199,22 @@ class WeeklyBossRepository {
 
   bool _isWithinActiveWindow(DateTime now, RemoteWeeklyBoss boss) {
     return !boss.startsAt.isAfter(now) && boss.endsAt.isAfter(now);
+  }
+
+  JavaBackendClient _javaBackendClientObrigatorio(String acao) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
+    return javaBackendClient;
+  }
+
+  Future<String> _idTokenObrigatorio(String acao) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Token Firebase ausente para $acao.');
+    }
+    return idToken;
   }
 
   String _normalizeRank(String rank) => rank.trim().toUpperCase();

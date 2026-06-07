@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/features/auth/data/java_session_backend_client.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,31 +11,23 @@ class ActiveSessionConflictException implements Exception {
 }
 
 bool isActiveSessionConflictError(Object error) {
-  if (error is! FirebaseFunctionsException) {
-    return false;
+  if (error is ActiveSessionConflictException) {
+    return true;
   }
-
-  final details = error.details;
-  if (details is Map && details['reason'] == 'active_session_conflict') {
+  if (error is JavaSessionBackendException && error.isActiveSessionConflict) {
     return true;
   }
 
-  return error.code == 'failed-precondition' &&
-      error.message != null &&
-      error.message!.toLowerCase().contains('sessao ativa');
+  return false;
 }
 
 class ActiveSessionRepository {
   ActiveSessionRepository({
-    FirebaseFunctions? functions,
     FirebaseAuth? auth,
     JavaSessionBackendClient? javaBackendClient,
     Future<String?> Function()? idTokenProvider,
     Future<SharedPreferences>? preferences,
-  }) : _functions =
-           functions ??
-           FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _auth = auth ?? FirebaseAuth.instance,
+  }) : _auth = auth ?? FirebaseAuth.instance,
        _javaBackendClient =
            javaBackendClient ??
            (JavaBackendConfig.isEnabled
@@ -47,7 +38,6 @@ class ActiveSessionRepository {
 
   static const String _sessionIdKey = 'active_device_session_id';
 
-  final FirebaseFunctions _functions;
   final FirebaseAuth _auth;
   final JavaSessionBackendClient? _javaBackendClient;
   final Future<String?> Function()? _idTokenProvider;
@@ -78,57 +68,50 @@ class ActiveSessionRepository {
   }
 
   Future<void> _callSessionFunction(String name) async {
-    final callable = _functions.httpsCallable(name);
     final deviceSessionId = await this.deviceSessionId();
     final deviceLabel = _deviceLabel();
-    final javaBackendClient = _javaBackendClient;
-    final idToken = await _currentIdToken();
-
-    if (javaBackendClient != null && idToken != null && idToken.isNotEmpty) {
-      try {
-        if (name == 'registerActiveSession') {
-          await javaBackendClient.registerActiveSession(
-            idToken: idToken,
-            deviceSessionId: deviceSessionId,
-            deviceLabel: deviceLabel,
-          );
-        } else {
-          await javaBackendClient.releaseActiveSession(
-            idToken: idToken,
-            deviceSessionId: deviceSessionId,
-            deviceLabel: deviceLabel,
-          );
-        }
-        return;
-      } on JavaSessionBackendException catch (error) {
-        if (error.isActiveSessionConflict) {
-          throw const ActiveSessionConflictException();
-        }
-        if (error.isBusinessRuleFailure) {
-          rethrow;
-        }
-      }
-    }
+    final javaBackendClient = _javaBackendClientObrigatorio(name);
+    final idToken = await _idTokenObrigatorio(name);
 
     try {
-      await callable.call(<String, dynamic>{
-        'deviceSessionId': deviceSessionId,
-        'deviceLabel': deviceLabel,
-      });
-    } catch (error) {
-      if (isActiveSessionConflictError(error)) {
+      if (name == 'registerActiveSession') {
+        await javaBackendClient.registerActiveSession(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          deviceLabel: deviceLabel,
+        );
+      } else {
+        await javaBackendClient.releaseActiveSession(
+          idToken: idToken,
+          deviceSessionId: deviceSessionId,
+          deviceLabel: deviceLabel,
+        );
+      }
+    } on JavaSessionBackendException catch (error) {
+      if (error.isActiveSessionConflict) {
         throw const ActiveSessionConflictException();
       }
       rethrow;
     }
   }
 
-  Future<String?> _currentIdToken() async {
+  Future<String> _idTokenObrigatorio(String acao) async {
     final provider = _idTokenProvider;
-    if (provider != null) {
-      return provider();
+    final idToken = provider != null
+        ? await provider()
+        : await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Token Firebase ausente para $acao.');
     }
-    return _auth.currentUser?.getIdToken();
+    return idToken;
+  }
+
+  JavaSessionBackendClient _javaBackendClientObrigatorio(String acao) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
+    return javaBackendClient;
   }
 
   String _generateDeviceSessionId() {

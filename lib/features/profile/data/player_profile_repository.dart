@@ -120,9 +120,31 @@ class PlayerProfileRepository {
     final callable = _functions.httpsCallable('syncPlayerProfileFromSource');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final source = _profileSourceFor(player, quests: quests);
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null && idToken.isNotEmpty) {
+        try {
+          await javaBackendClient.syncPlayerProfile(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            source: source,
+          );
+          return;
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
+        }
+      }
+
       await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
-        'source': _profileSourceFor(player, quests: quests),
+        'deviceSessionId': deviceSessionId,
+        'source': source,
       });
     } catch (error) {
       if (isActiveSessionConflictError(error)) {

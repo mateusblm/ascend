@@ -887,6 +887,10 @@ Status:
 - decommission is not active yet.
 - this phase is now reserved for the final removal window after remaining
   product behavior has Java parity.
+- preparation has started by auditing remaining Flutter `httpsCallable` usage.
+- `syncPlayerProfileFromSource` was still active through
+  `PlayerProfileRepository.upsertProfile`, so it has been migrated to Java as
+  `POST /api/v1/profile/source:sync`.
 
 Goal:
 - remove TypeScript Functions only when Java is fully authoritative.
@@ -911,6 +915,14 @@ Exit criteria:
 - Java backend is the documented source of authority
 - TypeScript Functions no longer serve active product behavior
 - rollback plan is archived
+
+Current remaining decisions:
+- `upsertCompetitiveProgression`: client-to-backend mirror write that is now
+  less authoritative than Java `syncCompetitiveState`; decide whether to retire
+  or migrate as a low-priority repair endpoint.
+- `upsertCompetitiveIntegrity`: client-to-backend mirror write that is now less
+  authoritative than Java `syncCompetitiveState`; decide whether to retire or
+  migrate as a low-priority repair endpoint.
 
 ## Validation Gates
 

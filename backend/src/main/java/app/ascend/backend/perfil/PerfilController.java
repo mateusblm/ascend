@@ -11,9 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class PerfilController {
 
   private final MutacaoPerfilService service;
+  private final SincronizacaoPerfilService sincronizacaoPerfilService;
 
-  public PerfilController(MutacaoPerfilService service) {
+  public PerfilController(
+      MutacaoPerfilService service,
+      SincronizacaoPerfilService sincronizacaoPerfilService
+  ) {
     this.service = service;
+    this.sincronizacaoPerfilService = sincronizacaoPerfilService;
   }
 
   @PostMapping("/settings:update")
@@ -22,6 +27,14 @@ public class PerfilController {
       @RequestBody RequisicaoAtualizacaoPerfil request
   ) {
     return service.atualizarConfiguracoes(user.uid(), user.email(), request);
+  }
+
+  @PostMapping("/source:sync")
+  public RespostaPerfil sincronizarPerfil(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoSincronizacaoPerfil request
+  ) {
+    return sincronizacaoPerfilService.sincronizar(user.uid(), request);
   }
 
   @PostMapping("/attributes:allocate")

@@ -28,6 +28,9 @@ Current status:
 - `POST /api/v1/profile/settings:update` and
   `POST /api/v1/profile/attributes:allocate` are implemented for Java-first
   profile settings and attribute allocation authority.
+- `POST /api/v1/profile/source:sync` is implemented for Java-first profile
+  repair/source sync, recalculating XP, streak, attributes, and weekly boss
+  aggregates from validated facts.
 - `POST /api/v1/weekly-boss:claim` is implemented for Java-first weekly boss
   claim authority, including profile reward, completion leaderboard, user claim
   record, and idempotent duplicate handling.
@@ -163,6 +166,7 @@ Invoke-RestMethod "$serviceUrl/api/v1/quests/inventory:sync" -Method Post -Conte
 Invoke-RestMethod "$serviceUrl/api/v1/competitive/promotion/exam:start" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"snapshot":{"currentRank":"D","peakRank":"D","highestEligibleRank":"C","weekKey":"2026W0608","activeDays":5,"requiredActiveDays":4,"requiresBossClear":false,"bossCompleted":true,"status":"promotionReady","demotionStrikes":0,"promotionReady":true,"promotionTargetRank":"C","targetRequiredLevel":10,"targetLevelGateMet":true,"advancementMode":"ascension","eventType":"promotionUnlocked","summary":"Exame de promocao pronto para o rank C.","detail":"Smoke manual.","syncSchemaVersion":3,"syncSource":"backend","updatedAt":"2026-06-06T12:00:00Z"}}'
 Invoke-RestMethod "$serviceUrl/api/v1/season-rewards/current:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"seasonKey":"<season>"}'
 Invoke-RestMethod "$serviceUrl/api/v1/reading-quiz:attempt" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","questId":"reading-20-<id>","templateCatalogId":"reading-20","topic":"leitura"}'
+Invoke-RestMethod "$serviceUrl/api/v1/profile/source:sync" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","source":{"name":"Jogador","attributes":{"strength":10,"intelligence":10,"vitality":10,"agility":10},"lastResetDate":"2026-06-07T00:00:00Z","primaryFocus":"study","hasCompletedOnboarding":true,"quests":[]}}'
 Invoke-RestMethod "$serviceUrl/api/v1/profile/settings:update" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","name":"Jogador","primaryFocus":"study","hasCompletedOnboarding":true,"lastResetDate":"2026-06-07T00:00:00Z"}'
 Invoke-RestMethod "$serviceUrl/api/v1/profile/attributes:allocate" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","attribute":"strength"}'
 Invoke-RestMethod "$serviceUrl/api/v1/weekly-boss:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","bossId":"<weekly boss id>","displayName":"Jogador","photoUrl":"","rankAtCompletion":"E"}'

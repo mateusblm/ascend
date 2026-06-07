@@ -369,6 +369,9 @@ Domain:
 Current TS callable:
 - `syncPlayerProfileFromSource`
 
+Java endpoint:
+- `POST /api/v1/profile/source:sync`
+
 Known Flutter callers:
 - `lib/features/profile/data/player_profile_repository.dart`
 
@@ -395,16 +398,18 @@ Risk:
 - medium
 
 Java migration priority:
-- after authoritative profile operations
+- implemented during TypeScript decommission preparation because Flutter still
+  calls `upsertProfile` as active migration/repair tooling.
 
 Migration note:
 - this should remain repair/migration tooling, not the preferred reward path
 
 Tests required:
-- valid source sync
-- invalid profile payload
-- active session conflict
-- preserved backend metadata
+- valid source sync: covered
+- invalid profile payload: covered through request validation path
+- active session conflict: covered by shared active-session guard
+- preserved backend metadata: covered
+- Flutter Java client payload: covered
 
 ### syncQuestInventoryFromSource
 
@@ -1074,9 +1079,9 @@ Tests required:
 15. `claimSeasonReward`
 16. `claimWeeklyBoss`
 17. `startReadingQuizAttempt`
-18. `syncPlayerProfileFromSource`
-19. `upsertCompetitiveProgression`
-20. `upsertCompetitiveIntegrity`
+18. `syncPlayerProfileFromSource` - implemented as `POST /api/v1/profile/source:sync`
+19. `upsertCompetitiveProgression` - remaining decommission decision
+20. `upsertCompetitiveIntegrity` - remaining decommission decision
 
 ## First Endpoint Contract Draft
 

@@ -2,7 +2,7 @@ package app.ascend.backend.quests;
 
 import com.google.cloud.Timestamp;
 
-record QuestInventarioValidada(
+public record QuestInventarioValidada(
     String id,
     String title,
     String rewardAttribute,

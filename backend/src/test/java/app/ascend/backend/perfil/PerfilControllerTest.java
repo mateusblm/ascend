@@ -35,6 +35,9 @@ class PerfilControllerTest {
   @MockitoBean
   private MutacaoPerfilService service;
 
+  @MockitoBean
+  private SincronizacaoPerfilService sincronizacaoPerfilService;
+
   @Test
   void atualizarConfiguracoesRequerAutenticacao() throws Exception {
     mockMvc.perform(post("/api/v1/profile/settings:update")
@@ -70,6 +73,41 @@ class PerfilControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status", is("updated")))
         .andExpect(jsonPath("$.profile.name", is("Mateus")));
+  }
+
+  @Test
+  void sincronizarPerfilRetornaPerfilAtualizado() throws Exception {
+    when(tokenVerifier.verificar("valid-token"))
+        .thenReturn(new UsuarioAutenticado("user-1", "mateus@example.com"));
+    when(sincronizacaoPerfilService.sincronizar(
+        eq("user-1"),
+        any(RequisicaoSincronizacaoPerfil.class)
+    )).thenReturn(new RespostaPerfil("synced", Map.of("level", 2)));
+
+    mockMvc.perform(post("/api/v1/profile/source:sync")
+            .header("Authorization", "Bearer valid-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "deviceSessionId": "device-1",
+                  "source": {
+                    "name": "Mateus",
+                    "attributes": {
+                      "strength": 10,
+                      "intelligence": 10,
+                      "vitality": 10,
+                      "agility": 10
+                    },
+                    "lastResetDate": "2026-06-07T00:00:00Z",
+                    "primaryFocus": "study",
+                    "hasCompletedOnboarding": true,
+                    "quests": []
+                  }
+                }
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status", is("synced")))
+        .andExpect(jsonPath("$.profile.level", is(2)));
   }
 
   @Test

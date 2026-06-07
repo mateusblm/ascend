@@ -149,6 +149,33 @@ void main() {
     );
   });
 
+  test('syncPlayerProfile posts source payload', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"status":"synced","profile":{"level":2}}', 200);
+      }),
+    );
+
+    final response = await client.syncPlayerProfile(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      source: const <String, dynamic>{
+        'name': 'Hunter',
+        'quests': <Map<String, dynamic>>[],
+      },
+    );
+
+    expect(requestedUri.path, '/base/api/v1/profile/source:sync');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect((requestedBody['source'] as Map)['name'], 'Hunter');
+    expect(response['status'], 'synced');
+  });
+
   test(
     'backend route selector does not fallback on business rule failures',
     () {

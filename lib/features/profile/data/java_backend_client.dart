@@ -84,6 +84,21 @@ class JavaBackendClient {
     }
   }
 
+  Future<Map<String, dynamic>> syncPlayerProfile({
+    required String idToken,
+    required String deviceSessionId,
+    required Map<String, dynamic> source,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/profile/source:sync',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        'source': source,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> completePersonalQuest({
     required String idToken,
     required String deviceSessionId,

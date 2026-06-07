@@ -36,6 +36,11 @@ public class FirestoreRepositorioPromocaoCompetitiva implements RepositorioPromo
 
   @Override
   public void gravarInicioExame(String uid, ExamePromocao exame) {
+    gravarExameAtual(uid, exame);
+  }
+
+  @Override
+  public void gravarExameAtual(String uid, ExamePromocao exame) {
     try {
       usuario(uid)
           .collection("promotion_exam")
@@ -44,9 +49,9 @@ public class FirestoreRepositorioPromocaoCompetitiva implements RepositorioPromo
           .get();
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Gravacao da prova de promocao interrompida.", error);
+      throw new IllegalStateException("Gravacao do exame de promocao interrompida.", error);
     } catch (Exception error) {
-      throw new IllegalStateException("Nao foi possivel gravar a prova de promocao.", error);
+      throw new IllegalStateException("Nao foi possivel gravar o exame de promocao.", error);
     }
   }
 

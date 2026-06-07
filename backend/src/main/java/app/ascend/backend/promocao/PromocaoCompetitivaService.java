@@ -67,6 +67,40 @@ public class PromocaoCompetitivaService {
   }
 
   /**
+   * Sincroniza o status do exame em andamento a partir do snapshot competitivo
+   * autoritativo. Esta regra substitui o antigo espelhamento por Cloud
+   * Functions e garante que aprovacao ou expiracao sejam decididas no backend.
+   */
+  public RespostaExamePromocao sincronizarExame(String uid, RequisicaoExamePromocao requisicao) {
+    SnapshotRankCompetitivo snapshot = snapshotObrigatorio(requisicao);
+    ExamePromocao exame = repositorio.buscarExameAtual(uid);
+    if (exame == null) {
+      return new RespostaExamePromocao("not_found", null, null);
+    }
+    if (!"inProgress".equals(exame.status())) {
+      return new RespostaExamePromocao(exame.status(), exame.targetRank(), null);
+    }
+
+    Instant agora = Instant.now();
+    if (!exame.sourceWeekKey().equals(snapshot.weekKey()) || agora.isAfter(exame.expiresAt())) {
+      ExamePromocao expirado = exameComStatus(exame, "failed", snapshot.syncSchemaVersion(), agora);
+      repositorio.gravarExameAtual(uid, expirado);
+      return new RespostaExamePromocao("failed", exame.targetRank(), null);
+    }
+
+    int diasAtivosAlvo = exame.baselineActiveDays() + exame.requiredExtraActiveDays();
+    boolean passou =
+        snapshot.activeDays() >= diasAtivosAlvo && (!exame.bossRequired() || snapshot.bossCompleted());
+    if (!passou) {
+      return new RespostaExamePromocao("unchanged", exame.targetRank(), null);
+    }
+
+    ExamePromocao aprovado = exameComStatus(exame, "passed", snapshot.syncSchemaVersion(), agora);
+    repositorio.gravarExameAtual(uid, aprovado);
+    return new RespostaExamePromocao("passed", exame.targetRank(), null);
+  }
+
+  /**
    * Confirma a promocao somente depois de uma prova marcada como concluida. A
    * regra compara rank e semana de origem para impedir que um snapshot antigo
    * promova o jogador depois de mudancas competitivas relevantes.
@@ -152,6 +186,30 @@ public class PromocaoCompetitivaService {
     );
     repositorio.gravarPromocao(uid, promovido, examePromovido);
     return new RespostaExamePromocao("promoted", rankPromovido, rankPromovido);
+  }
+
+  private ExamePromocao exameComStatus(
+      ExamePromocao exame,
+      String status,
+      int syncSchemaVersion,
+      Instant resolvidoEm
+  ) {
+    return new ExamePromocao(
+        exame.sourceRank(),
+        exame.targetRank(),
+        exame.sourceWeekKey(),
+        status,
+        exame.mode(),
+        exame.baselineActiveDays(),
+        exame.requiredExtraActiveDays(),
+        exame.bossRequired(),
+        exame.requiredLevel(),
+        exame.startedAt(),
+        exame.expiresAt(),
+        syncSchemaVersion,
+        "backend",
+        resolvidoEm
+    );
   }
 
   private SnapshotRankCompetitivo snapshotObrigatorio(RequisicaoExamePromocao requisicao) {

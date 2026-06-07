@@ -24,6 +24,14 @@ public class PromocaoCompetitivaController {
     return service.iniciarExame(user.uid(), request);
   }
 
+  @PostMapping("/exam:sync")
+  public RespostaExamePromocao sincronizarExame(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoExamePromocao request
+  ) {
+    return service.sincronizarExame(user.uid(), request);
+  }
+
   @PostMapping(":confirm")
   public RespostaExamePromocao confirmarPromocao(
       UsuarioAutenticado user,

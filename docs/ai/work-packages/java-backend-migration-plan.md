@@ -884,16 +884,24 @@ Status:
 ## Phase 16 - TypeScript Decommission
 
 Status:
-- decommission is not active yet.
-- this phase is now reserved for the final removal window after remaining
-  product behavior has Java parity.
-- preparation has started by auditing remaining Flutter `httpsCallable` usage.
+- decommission has started in small, reversible groups.
+- TypeScript remains deployed for untouched product behavior and rollback while
+  each Flutter repository is moved to Java-only calls.
+- preparation continues by auditing remaining Flutter `httpsCallable` usage.
 - `syncPlayerProfileFromSource` was still active through
   `PlayerProfileRepository.upsertProfile`, so it has been migrated to Java as
   `POST /api/v1/profile/source:sync`.
+- `PlayerProfileRepository` no longer falls back to TypeScript for
+  `syncPlayerProfileFromSource`, `updateProfileSettings`, or
+  `allocateAttributePoint`; these flows now require the Java backend URL and a
+  Firebase ID token.
+- `upsertCompetitiveProgression` is no longer called from Flutter. Exam status
+  sync moved to `POST /api/v1/competitive/promotion/exam:sync`.
+- `upsertCompetitiveIntegrity` has no active Flutter caller and is treated as a
+  legacy repair callable.
 
 Goal:
-- remove TypeScript Functions only when Java is fully authoritative.
+- remove TypeScript Functions by feature group as Java becomes authoritative.
 
 Steps:
 1. Confirm no Flutter code calls migrated TS functions.
@@ -917,12 +925,8 @@ Exit criteria:
 - rollback plan is archived
 
 Current remaining decisions:
-- `upsertCompetitiveProgression`: client-to-backend mirror write that is now
-  less authoritative than Java `syncCompetitiveState`; decide whether to retire
-  or migrate as a low-priority repair endpoint.
-- `upsertCompetitiveIntegrity`: client-to-backend mirror write that is now less
-  authoritative than Java `syncCompetitiveState`; decide whether to retire or
-  migrate as a low-priority repair endpoint.
+- remove unused TypeScript callable exports after the Flutter fallback removal
+  and staging smoke window confirm no active traffic remains.
 
 ## Validation Gates
 

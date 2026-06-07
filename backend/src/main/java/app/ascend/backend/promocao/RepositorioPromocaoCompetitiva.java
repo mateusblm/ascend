@@ -8,5 +8,7 @@ public interface RepositorioPromocaoCompetitiva {
 
   void gravarInicioExame(String uid, ExamePromocao exame);
 
+  void gravarExameAtual(String uid, ExamePromocao exame);
+
   void gravarPromocao(String uid, SnapshotRankCompetitivo snapshot, ExamePromocao exame);
 }

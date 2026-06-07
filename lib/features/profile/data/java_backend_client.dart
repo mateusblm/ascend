@@ -208,6 +208,17 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> syncPromotionExam({
+    required String idToken,
+    required Map<String, dynamic> snapshot,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/competitive/promotion/exam:sync',
+      idToken: idToken,
+      body: <String, Object?>{'snapshot': snapshot},
+    );
+  }
+
   Future<Map<String, dynamic>> confirmPromotion({
     required String idToken,
     required Map<String, dynamic> snapshot,

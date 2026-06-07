@@ -466,6 +466,35 @@ void main() {
     expect(response['status'], 'promoted');
   });
 
+  test('syncPromotionExam posts promotion exam sync command', () async {
+    late Uri requestedUri;
+    late Map<String, String> requestedHeaders;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"status":"passed","targetRank":"C"}', 200);
+      }),
+    );
+
+    final response = await client.syncPromotionExam(
+      idToken: 'id-token',
+      snapshot: const <String, dynamic>{
+        'currentRank': 'D',
+        'weekKey': '2026W0608',
+        'activeDays': 3,
+      },
+    );
+
+    expect(requestedUri.path, '/api/v1/competitive/promotion/exam:sync');
+    expect(requestedHeaders['Authorization'], 'Bearer id-token');
+    expect((requestedBody['snapshot'] as Map)['activeDays'], 3);
+    expect(response['status'], 'passed');
+  });
+
   test('claimSeasonReward posts season reward claim command', () async {
     late Uri requestedUri;
     late Map<String, String> requestedHeaders;

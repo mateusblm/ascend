@@ -93,8 +93,8 @@ Java endpoint:
 - `POST /api/v1/session/active:register`
 
 Rollback:
-- Flutter falls back to the current TypeScript callable when the Java backend
-  URL is omitted or a recoverable Java/server error occurs.
+- TypeScript fallback removed from Flutter. This flow now requires Java backend
+  configuration and a valid Firebase ID token.
 
 Rollback:
 - keep Flutter using current callable until all session-sensitive endpoints have
@@ -154,7 +154,7 @@ Current TS callable:
 - `updateProfileSettings`
 
 Known Flutter callers:
-- `lib/features/profile/data/player_profile_repository.dart`
+- none after TypeScript fallback removal from `PlayerProfileRepository`
 
 Request:
 - `deviceSessionId`
@@ -196,8 +196,8 @@ Java endpoint:
 - `POST /api/v1/profile/settings:update`
 
 Rollback:
-- Flutter falls back to the current TypeScript callable when the Java backend
-  URL is omitted or a recoverable Java/server error occurs.
+- TypeScript fallback removed from Flutter. This flow now requires Java backend
+  configuration and a valid Firebase ID token.
 
 ### allocateAttributePoint
 
@@ -250,8 +250,8 @@ Java endpoint:
 - `POST /api/v1/profile/attributes:allocate`
 
 Rollback:
-- Flutter falls back to the current TypeScript callable when the Java backend
-  URL is omitted or a recoverable Java/server error occurs.
+- TypeScript fallback removed from Flutter. This flow now requires Java backend
+  configuration and a valid Firebase ID token.
 
 ### completePersonalQuest
 
@@ -393,6 +393,10 @@ Behavior:
 - requires active session
 - validates source payload
 - writes backend-normalized profile state
+
+Decommission note:
+- Flutter now calls `POST /api/v1/profile/source:sync` directly and does not
+  fall back to this callable.
 
 Risk:
 - medium
@@ -703,7 +707,7 @@ Current TS callable:
 - `syncCompetitiveStateFromSource`
 
 Known Flutter callers:
-- `lib/features/profile/data/rank_progression_repository.dart`
+- none after TypeScript fallback removal from `RankProgressionRepository`
 
 Request:
 - `source.playerLevel`
@@ -824,11 +828,12 @@ Risk:
 - medium
 
 Java migration priority:
-- late or deprecate if no longer needed
+- retired from active Flutter flow
 
 Migration note:
-- this path is less authoritative than `syncCompetitiveStateFromSource`
-- consider removing usage after Java backend becomes authoritative
+- rank state remains owned by `POST /api/v1/competitive/state:sync`
+- exam status updates moved to `POST /api/v1/competitive/promotion/exam:sync`
+- this callable can remain only as legacy repair tooling until TS cleanup
 
 Tests required:
 - snapshot write
@@ -868,7 +873,11 @@ Risk:
 - low
 
 Java migration priority:
-- late or deprecate
+- retired unless legacy repair tooling is needed
+
+Migration note:
+- no active Flutter caller was found in `lib/`; Java
+  `POST /api/v1/competitive/state:sync` owns integrity synchronization.
 
 Tests required:
 - valid write
@@ -1079,9 +1088,9 @@ Tests required:
 15. `claimSeasonReward`
 16. `claimWeeklyBoss`
 17. `startReadingQuizAttempt`
-18. `syncPlayerProfileFromSource` - implemented as `POST /api/v1/profile/source:sync`
-19. `upsertCompetitiveProgression` - remaining decommission decision
-20. `upsertCompetitiveIntegrity` - remaining decommission decision
+18. `syncPlayerProfileFromSource` - implemented as `POST /api/v1/profile/source:sync`; Flutter fallback removed
+19. `upsertCompetitiveProgression` - Flutter caller retired; exam sync moved to Java
+20. `upsertCompetitiveIntegrity` - no active Flutter caller; keep only as legacy repair if needed
 
 ## First Endpoint Contract Draft
 

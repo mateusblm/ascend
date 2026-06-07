@@ -497,29 +497,25 @@ class RankProgressionRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    final examRef = _promotionExamDoc(uid);
-    final examDoc = await examRef.get();
-    if (!examDoc.exists || examDoc.data() == null) return;
-
-    final currentExam = PromotionExam.fromFirestore(examDoc.data()!);
-    final nextExam = _resolveExamAfterSnapshot(
-      snapshot: snapshot.copyWith(
-        syncSchemaVersion: syncSchemaVersion,
-        syncSource: snapshot.syncSource,
-      ),
-      currentExam: currentExam,
-    );
-    if (nextExam == null ||
-        nextExam.toFirestore().toString() ==
-            currentExam.toFirestore().toString()) {
+    final javaBackendClient = _javaBackendClient;
+    if (javaBackendClient == null) {
       return;
     }
 
-    if (_shouldDispatchRpc(snapshot: snapshot, exam: nextExam)) {
-      await _upsertCompetitiveProgressionRemotely(
-        snapshot: snapshot,
-        exam: nextExam,
-      );
+    try {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null || idToken.isEmpty) {
+        return;
+      }
+
+      await javaBackendClient
+          .syncPromotionExam(
+            idToken: idToken,
+            snapshot: _rankSnapshotPayloadForJava(snapshot),
+          )
+          .timeout(_rpcTimeout);
+    } catch (error, stackTrace) {
+      _reportRecoverable(error, stackTrace, stage: 'sync_promotion_exam_java');
     }
   }
 
@@ -847,48 +843,6 @@ class RankProgressionRepository {
         .collection('integrity_history');
   }
 
-  PromotionExam? _resolveExamAfterSnapshot({
-    required CompetitiveRankSnapshot snapshot,
-    required PromotionExam? currentExam,
-    DateTime? now,
-  }) {
-    if (currentExam == null) return null;
-    if (currentExam.status != PromotionExamStatus.inProgress) {
-      return currentExam.copyWith(
-        syncSchemaVersion: syncSchemaVersion,
-        syncSource: currentExam.syncSource,
-      );
-    }
-
-    final currentTime = now ?? DateTime.now();
-    if (snapshot.weekKey != currentExam.sourceWeekKey ||
-        currentTime.isAfter(currentExam.expiresAt)) {
-      return currentExam.copyWith(
-        status: PromotionExamStatus.failed,
-        resolvedAt: currentTime,
-        syncSchemaVersion: syncSchemaVersion,
-        syncSource: 'client',
-      );
-    }
-
-    final passed =
-        snapshot.activeDays >= currentExam.targetActiveDays &&
-        (!currentExam.bossRequired || snapshot.bossCompleted);
-    if (!passed) {
-      return currentExam.copyWith(
-        syncSchemaVersion: syncSchemaVersion,
-        syncSource: currentExam.syncSource,
-      );
-    }
-
-    return currentExam.copyWith(
-      status: PromotionExamStatus.passed,
-      resolvedAt: currentTime,
-      syncSchemaVersion: syncSchemaVersion,
-      syncSource: 'client',
-    );
-  }
-
   String _fingerprintFor(CompetitiveRankSnapshot snapshot) {
     return _logicalSnapshotFingerprint(snapshot);
   }
@@ -916,38 +870,6 @@ class RankProgressionRepository {
     ].join('|');
   }
 
-  Future<void> _upsertCompetitiveProgressionRemotely({
-    required CompetitiveRankSnapshot snapshot,
-    PromotionExam? exam,
-    SeasonRewardSnapshot? seasonReward,
-  }) async {
-    if (!_shouldDispatchRpc(
-      snapshot: snapshot,
-      exam: exam,
-      seasonReward: seasonReward,
-    )) {
-      return;
-    }
-
-    try {
-      final callable = _functions.httpsCallable('upsertCompetitiveProgression');
-      await callable
-          .call({
-            'snapshot': snapshot.toFirestore(),
-            if (exam != null) 'exam': exam.toFirestore(),
-            if (seasonReward != null)
-              'seasonReward': seasonReward.toFirestore(),
-          })
-          .timeout(_rpcTimeout);
-    } catch (error, stackTrace) {
-      _reportRecoverable(
-        error,
-        stackTrace,
-        stage: 'upsert_competitive_progression',
-      );
-    }
-  }
-
   void _reportRecoverable(
     Object error,
     StackTrace stackTrace, {
@@ -961,35 +883,6 @@ class RankProgressionRepository {
         fatal: false,
       ),
     );
-  }
-
-  bool _shouldDispatchRpc({
-    required CompetitiveRankSnapshot snapshot,
-    PromotionExam? exam,
-    SeasonRewardSnapshot? seasonReward,
-  }) {
-    if (_auth.currentUser == null) {
-      return false;
-    }
-
-    if (snapshot.syncSource == 'debug' ||
-        snapshot.syncSchemaVersion < syncSchemaVersion) {
-      return false;
-    }
-
-    if (exam != null &&
-        (exam.syncSource == 'debug' ||
-            exam.syncSchemaVersion < syncSchemaVersion)) {
-      return false;
-    }
-
-    if (seasonReward != null &&
-        (seasonReward.syncSource == 'debug' ||
-            seasonReward.syncSchemaVersion < syncSchemaVersion)) {
-      return false;
-    }
-
-    return true;
   }
 
   Future<String> _claimSeasonRewardRemotely(

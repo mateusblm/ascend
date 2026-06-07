@@ -96,6 +96,35 @@ class PromocaoCompetitivaServiceTest {
   }
 
   @Test
+  void sincronizaExameComoAprovadoQuandoMetaFoiCumprida() {
+    repositorio.exameAtual = exameComPrazo("inProgress", Instant.parse("2099-06-13T12:00:00Z"));
+
+    RespostaExamePromocao resposta = service.sincronizarExame(
+        "user-1",
+        new RequisicaoExamePromocao(snapshotComDias(6, true, "2026W0608"))
+    );
+
+    assertThat(resposta.status()).isEqualTo("passed");
+    assertThat(repositorio.exameAtual.status()).isEqualTo("passed");
+    assertThat(repositorio.exameAtual.syncSource()).isEqualTo("backend");
+    assertThat(repositorio.exameAtual.resolvedAt()).isNotNull();
+  }
+
+  @Test
+  void sincronizaExameComoFalhoQuandoSemanaMuda() {
+    repositorio.exameAtual = exameComPrazo("inProgress", Instant.parse("2099-06-13T12:00:00Z"));
+
+    RespostaExamePromocao resposta = service.sincronizarExame(
+        "user-1",
+        new RequisicaoExamePromocao(snapshotComDias(6, true, "2026W0615"))
+    );
+
+    assertThat(resposta.status()).isEqualTo("failed");
+    assertThat(repositorio.exameAtual.status()).isEqualTo("failed");
+    assertThat(repositorio.exameAtual.resolvedAt()).isNotNull();
+  }
+
+  @Test
   void confirmacaoJaPromovidaEhIdempotente() {
     repositorio.exameAtual = exame("promoted");
 
@@ -122,15 +151,19 @@ class PromocaoCompetitivaServiceTest {
   }
 
   private SnapshotRankCompetitivo snapshotPromocaoPronta() {
+    return snapshotComDias(5, true, "2026W0608");
+  }
+
+  private SnapshotRankCompetitivo snapshotComDias(int diasAtivos, boolean bossConcluido, String semana) {
     return new SnapshotRankCompetitivo(
         "D",
         "D",
         "C",
-        "2026W0608",
-        5,
+        semana,
+        diasAtivos,
         4,
         false,
-        true,
+        bossConcluido,
         "promotionReady",
         0,
         true,
@@ -148,6 +181,10 @@ class PromocaoCompetitivaServiceTest {
   }
 
   private ExamePromocao exame(String status) {
+    return exameComPrazo(status, Instant.parse("2026-06-13T12:00:00Z"));
+  }
+
+  private ExamePromocao exameComPrazo(String status, Instant expiresAt) {
     return new ExamePromocao(
         "D",
         "C",
@@ -159,7 +196,7 @@ class PromocaoCompetitivaServiceTest {
         true,
         10,
         Instant.parse("2026-06-10T12:00:00Z"),
-        Instant.parse("2026-06-13T12:00:00Z"),
+        expiresAt,
         3,
         "backend",
         status.equals("promoted") ? Instant.parse("2026-06-11T12:00:00Z") : null
@@ -180,6 +217,11 @@ class PromocaoCompetitivaServiceTest {
 
     @Override
     public void gravarInicioExame(String uid, ExamePromocao exame) {
+      exameAtual = exame;
+    }
+
+    @Override
+    public void gravarExameAtual(String uid, ExamePromocao exame) {
       exameAtual = exame;
     }
 

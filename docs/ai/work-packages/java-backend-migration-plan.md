@@ -755,7 +755,55 @@ Status:
 - Phase 12 implementation is complete locally. Remaining work is staging smoke
   of a reading competitive quest with Java enabled.
 
-## Phase 13 - TypeScript Decommission
+## Phase 13 - Profile Authority Migration
+
+Status:
+- decommission is not active yet.
+- this phase exists before TypeScript decommission because
+  `updateProfileSettings` and `allocateAttributePoint` were still active in
+  TypeScript after Phases 11 and 12.
+- do not remove TypeScript Functions until session, profile repair, weekly
+  boss, and any remaining migration/repair callables are explicitly resolved.
+
+Goal:
+- migrate profile settings and attribute allocation to Java while keeping
+  Firebase Functions as fallback for recoverable Java failures.
+
+Candidates:
+- `updateProfileSettings`
+- `allocateAttributePoint`
+
+Risk:
+- medium/high, because these write profile identity, onboarding state, streak,
+  stat points, attributes, and allocation audit records.
+
+Progress:
+- Java exposes authenticated endpoints:
+  - `POST /api/v1/profile/settings:update`
+  - `POST /api/v1/profile/attributes:allocate`
+- Java validates active device session before profile writes.
+- Java profile settings update preserves profile aggregate fields and resets
+  `currentStreak` when `lastResetDate` is more than one day after the last
+  quest completion.
+- Java attribute allocation decrements exactly one stat point, increments one
+  valid attribute, increments `authoritativeAllocatedStatPoints`, and writes
+  `users/{uid}/attribute_allocations/{docId}`.
+- Flutter routes these operations to Java when `ASCEND_JAVA_BACKEND_URL` is
+  configured and falls back to TypeScript only for recoverable Java/server
+  failures.
+- Java business-rule failures such as active-session conflict or no stat points
+  do not fall back to TypeScript.
+
+Validation:
+- Java service tests cover streak reset, attribute allocation audit, and
+  no-points rejection.
+- Dart Java backend client tests cover the two new HTTP commands.
+
+Status:
+- implementation complete locally.
+- remaining work is full validation, deploy, and staging smoke.
+
+## Phase 14 - TypeScript Decommission
 
 Goal:
 - remove TypeScript Functions only when Java is fully authoritative.
@@ -977,6 +1025,9 @@ Current status:
   on recoverable Java/provider errors
 - Flutter staging/debug can route reading quiz completion verification to Java;
   Java evaluates the quiz attempt and records `quizRiskFlags`
+- Flutter staging/debug can route profile settings and attribute allocation to
+  Java; Firebase Functions remain fallback only for recoverable Java/server
+  failures
 - Java backend routing in Flutter is centralized through `BackendRouteSelector`
 - Flutter keeps Firebase Functions as the default when the Java URL is omitted
 - local validation passed:

@@ -1,8 +1,11 @@
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 bool shouldUploadPlayerProfileWhenRemoteMissing(
   Player player, {
@@ -81,14 +84,20 @@ class PlayerProfileRepository {
   PlayerProfileRepository(
     this._firestore, {
     FirebaseFunctions? functions,
+    FirebaseAuth? auth,
+    JavaBackendClient? javaBackendClient,
     required ActiveSessionRepository sessionRepository,
   }) : _functions =
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+       _auth = auth ?? FirebaseAuth.instance,
+       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
+  final FirebaseAuth _auth;
+  final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
 
   Stream<Player?> watchProfile({
@@ -134,25 +143,50 @@ class PlayerProfileRepository {
     final callable = _functions.httpsCallable('updateProfileSettings');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final normalizedName = name.trim().isEmpty ? fallbackName : name.trim();
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null && idToken.isNotEmpty) {
+        try {
+          final response = await javaBackendClient.updateProfileSettings(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            name: normalizedName,
+            primaryFocus: primaryFocus.name,
+            hasCompletedOnboarding: hasCompletedOnboarding,
+            lastResetDate: lastResetDate,
+          );
+          return _profileFromResponse(
+            response,
+            uid: uid,
+            fallbackName: fallbackName,
+            invalidResponseMessage: 'Resposta invalida ao atualizar perfil.',
+            invalidProfileMessage: 'Perfil remoto invalido.',
+          );
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
+        }
+      }
+
       final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
-        'name': name.trim().isEmpty ? fallbackName : name.trim(),
+        'deviceSessionId': deviceSessionId,
+        'name': normalizedName,
         'primaryFocus': primaryFocus.name,
         'hasCompletedOnboarding': hasCompletedOnboarding,
         'lastResetDate': lastResetDate.toIso8601String(),
       });
-      final payload = response.data;
-      if (payload is! Map) {
-        throw StateError('Resposta invalida ao atualizar perfil.');
-      }
-      final profile = payload['profile'];
-      if (profile is! Map) {
-        throw StateError('Perfil remoto invalido.');
-      }
-      return parsePlayerProfileData(
-        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+      return _profileFromResponse(
+        response.data,
         uid: uid,
         fallbackName: fallbackName,
+        invalidResponseMessage: 'Resposta invalida ao atualizar perfil.',
+        invalidProfileMessage: 'Perfil remoto invalido.',
       );
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
@@ -170,22 +204,43 @@ class PlayerProfileRepository {
     final callable = _functions.httpsCallable('allocateAttributePoint');
     try {
       await _sessionRepository.registerActiveSession();
+      final deviceSessionId = await _sessionRepository.deviceSessionId();
+      final javaBackendClient = _javaBackendClient;
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (javaBackendClient != null && idToken != null && idToken.isNotEmpty) {
+        try {
+          final response = await javaBackendClient.allocateAttributePoint(
+            idToken: idToken,
+            deviceSessionId: deviceSessionId,
+            attribute: attribute.name,
+          );
+          return _profileFromResponse(
+            response,
+            uid: uid,
+            fallbackName: fallbackName,
+            invalidResponseMessage: 'Resposta invalida ao alocar atributo.',
+            invalidProfileMessage: 'Perfil remoto invalido.',
+          );
+        } on JavaBackendException catch (error) {
+          if (error.isActiveSessionConflict) {
+            throw const ActiveSessionConflictException();
+          }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
+        }
+      }
+
       final response = await callable.call(<String, dynamic>{
-        'deviceSessionId': await _sessionRepository.deviceSessionId(),
+        'deviceSessionId': deviceSessionId,
         'attribute': attribute.name,
       });
-      final payload = response.data;
-      if (payload is! Map) {
-        throw StateError('Resposta invalida ao alocar atributo.');
-      }
-      final profile = payload['profile'];
-      if (profile is! Map) {
-        throw StateError('Perfil remoto invalido.');
-      }
-      return parsePlayerProfileData(
-        Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+      return _profileFromResponse(
+        response.data,
         uid: uid,
         fallbackName: fallbackName,
+        invalidResponseMessage: 'Resposta invalida ao alocar atributo.',
+        invalidProfileMessage: 'Perfil remoto invalido.',
       );
     } catch (error) {
       if (isActiveSessionConflictError(error)) {
@@ -202,6 +257,27 @@ class PlayerProfileRepository {
         .collection('profile')
         .doc('current');
   }
+}
+
+Player _profileFromResponse(
+  Object? payload, {
+  required String uid,
+  required String fallbackName,
+  required String invalidResponseMessage,
+  required String invalidProfileMessage,
+}) {
+  if (payload is! Map) {
+    throw StateError(invalidResponseMessage);
+  }
+  final profile = payload['profile'];
+  if (profile is! Map) {
+    throw StateError(invalidProfileMessage);
+  }
+  return parsePlayerProfileData(
+    Map<String, dynamic>.from(profile.cast<Object?, Object?>()),
+    uid: uid,
+    fallbackName: fallbackName,
+  );
 }
 
 Map<String, dynamic> _profileSourceFor(

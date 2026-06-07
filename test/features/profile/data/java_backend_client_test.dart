@@ -506,4 +506,64 @@ void main() {
     expect(requestedBody['templateCatalogId'], 'reading-20');
     expect(response['quizId'], 'quiz-1');
   });
+
+  test('updateProfileSettings posts profile settings command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com/base',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"updated","profile":{"name":"Hunter","primaryFocus":"study"}}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.updateProfileSettings(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      name: 'Hunter',
+      primaryFocus: 'study',
+      hasCompletedOnboarding: true,
+      lastResetDate: DateTime.utc(2026, 6, 7),
+    );
+
+    expect(requestedUri.path, '/base/api/v1/profile/settings:update');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['name'], 'Hunter');
+    expect(requestedBody['primaryFocus'], 'study');
+    expect(requestedBody['hasCompletedOnboarding'], isTrue);
+    expect(requestedBody['lastResetDate'], '2026-06-07T00:00:00.000Z');
+    expect(response['status'], 'updated');
+  });
+
+  test('allocateAttributePoint posts attribute allocation command', () async {
+    late Uri requestedUri;
+    late Map<String, dynamic> requestedBody;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requestedUri = request.url;
+        requestedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          '{"status":"allocated","profile":{"statPoints":0}}',
+          200,
+        );
+      }),
+    );
+
+    final response = await client.allocateAttributePoint(
+      idToken: 'id-token',
+      deviceSessionId: 'device-1',
+      attribute: 'strength',
+    );
+
+    expect(requestedUri.path, '/api/v1/profile/attributes:allocate');
+    expect(requestedBody['deviceSessionId'], 'device-1');
+    expect(requestedBody['attribute'], 'strength');
+    expect(response['status'], 'allocated');
+  });
 }

@@ -168,15 +168,22 @@ Risk:
 - medium
 
 Java migration priority:
-- after session migration
+- implemented as profile authority migration before TypeScript decommission
 
 Tests required:
 - missing auth
-- active session conflict
-- invalid name
-- invalid focus
-- onboarding transition
-- streak reset behavior
+- active session conflict: covered by shared active-session guard behavior
+- invalid name: covered by Java validator path
+- invalid focus: covered by Java validator path
+- onboarding transition: covered by response/write path
+- streak reset behavior: covered by Java service test
+
+Java endpoint:
+- `POST /api/v1/profile/settings:update`
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a recoverable Java/server error occurs.
 
 ### allocateAttributePoint
 
@@ -215,15 +222,22 @@ Risk:
 - high
 
 Java migration priority:
-- after personal quest authority, because personal quests create stat points
-  through level-up
+- implemented as profile authority migration before TypeScript decommission
 
 Tests required:
-- no points available
-- each attribute allocation
-- active session conflict
-- allocation audit record
-- no negative stat points
+- no points available: covered by Java service test
+- each attribute allocation: covered by validator plus allocation fixture;
+  additional per-attribute fixture can be added if this logic changes
+- active session conflict: covered by shared active-session guard behavior
+- allocation audit record: covered by Java service test
+- no negative stat points: covered by Java service test
+
+Java endpoint:
+- `POST /api/v1/profile/attributes:allocate`
+
+Rollback:
+- Flutter falls back to the current TypeScript callable when the Java backend
+  URL is omitted or a recoverable Java/server error occurs.
 
 ### completePersonalQuest
 
@@ -1116,6 +1130,9 @@ Next phase:
   complete/revoke
 - Flutter personal quest complete/revoke can opt into Java with
   `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain the fallback path
+- Flutter profile settings and attribute allocation can opt into Java with
+  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain fallback for
+  recoverable Java/server errors
 - Authenticated staging smoke confirmed normal personal quest completion grants
   XP and attribute reward through Java on 2026-06-06
 - Authenticated staging smoke confirmed normal personal quest revoke/rollback

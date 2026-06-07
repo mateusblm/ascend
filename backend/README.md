@@ -22,7 +22,10 @@ Current status:
   Gemini generation through Secret Manager or environment configuration.
 - `POST /api/v1/quests/competitive:verify` now evaluates backend-owned reading
   quiz attempts in Java before granting competitive XP/rank-bearing rewards.
-- TypeScript Functions remain authoritative.
+- `POST /api/v1/profile/settings:update` and
+  `POST /api/v1/profile/attributes:allocate` are implemented for Java-first
+  profile settings and attribute allocation authority.
+- TypeScript Functions remain deployed for fallback and unmigrated callables.
 
 ## Local Commands
 
@@ -152,6 +155,8 @@ Invoke-RestMethod "$serviceUrl/api/v1/quests/inventory:sync" -Method Post -Conte
 Invoke-RestMethod "$serviceUrl/api/v1/competitive/promotion/exam:start" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"snapshot":{"currentRank":"D","peakRank":"D","highestEligibleRank":"C","weekKey":"2026W0608","activeDays":5,"requiredActiveDays":4,"requiresBossClear":false,"bossCompleted":true,"status":"promotionReady","demotionStrikes":0,"promotionReady":true,"promotionTargetRank":"C","targetRequiredLevel":10,"targetLevelGateMet":true,"advancementMode":"ascension","eventType":"promotionUnlocked","summary":"Exame de promocao pronto para o rank C.","detail":"Smoke manual.","syncSchemaVersion":3,"syncSource":"backend","updatedAt":"2026-06-06T12:00:00Z"}}'
 Invoke-RestMethod "$serviceUrl/api/v1/season-rewards/current:claim" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"seasonKey":"<season>"}'
 Invoke-RestMethod "$serviceUrl/api/v1/reading-quiz:attempt" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","questId":"reading-20-<id>","templateCatalogId":"reading-20","topic":"leitura"}'
+Invoke-RestMethod "$serviceUrl/api/v1/profile/settings:update" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","name":"Jogador","primaryFocus":"study","hasCompletedOnboarding":true,"lastResetDate":"2026-06-07T00:00:00Z"}'
+Invoke-RestMethod "$serviceUrl/api/v1/profile/attributes:allocate" -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer <Firebase ID token>" } -Body '{"deviceSessionId":"<active device session id>","deviceLabel":"android","attribute":"strength"}'
 ```
 
 Keep Cloud Run public at the IAM layer for now (`--allow-unauthenticated`) so

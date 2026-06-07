@@ -236,6 +236,46 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> updateProfileSettings({
+    required String idToken,
+    required String deviceSessionId,
+    String? deviceLabel,
+    required String name,
+    required String primaryFocus,
+    required bool hasCompletedOnboarding,
+    required DateTime lastResetDate,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/profile/settings:update',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        if (deviceLabel != null) 'deviceLabel': deviceLabel,
+        'name': name,
+        'primaryFocus': primaryFocus,
+        'hasCompletedOnboarding': hasCompletedOnboarding,
+        'lastResetDate': lastResetDate.toIso8601String(),
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> allocateAttributePoint({
+    required String idToken,
+    required String deviceSessionId,
+    String? deviceLabel,
+    required String attribute,
+  }) {
+    return _postJson(
+      endpointPath: '/api/v1/profile/attributes:allocate',
+      idToken: idToken,
+      body: <String, Object?>{
+        'deviceSessionId': deviceSessionId,
+        if (deviceLabel != null) 'deviceLabel': deviceLabel,
+        'attribute': attribute,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> _postJson({
     required String endpointPath,
     required String idToken,

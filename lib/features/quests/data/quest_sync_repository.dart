@@ -1,5 +1,5 @@
-import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -79,11 +79,7 @@ class QuestSyncRepository {
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
        _auth = auth ?? FirebaseAuth.instance,
-       _javaBackendClient =
-           javaBackendClient ??
-           (JavaBackendConfig.isEnabled
-               ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
-               : null),
+       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository;
 
   final FirebaseFirestore _firestore;
@@ -132,6 +128,9 @@ class QuestSyncRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
         }
       }
 
@@ -177,6 +176,9 @@ class QuestSyncRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
         }
       }
 
@@ -212,11 +214,12 @@ class QuestSyncRepository {
       final idToken = await _auth.currentUser?.getIdToken();
       if (javaBackendClient != null && idToken != null) {
         try {
-          final response = await javaBackendClient.revokePersonalQuestCompletion(
-            idToken: idToken,
-            deviceSessionId: deviceSessionId,
-            questId: quest.id,
-          );
+          final response = await javaBackendClient
+              .revokePersonalQuestCompletion(
+                idToken: idToken,
+                deviceSessionId: deviceSessionId,
+                questId: quest.id,
+              );
           return _personalQuestMutationFromResponse(
             response,
             uid: uid,
@@ -226,6 +229,9 @@ class QuestSyncRepository {
         } on JavaBackendException catch (error) {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
+          }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
           }
         }
       }

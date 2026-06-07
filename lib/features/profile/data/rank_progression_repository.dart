@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:ascend/core/analytics/analytics_service.dart';
-import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -28,11 +28,7 @@ class RankProgressionRepository {
   }) : _functions =
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-       _javaBackendClient =
-           javaBackendClient ??
-           (JavaBackendConfig.isEnabled
-               ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
-               : null),
+       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _analytics = analytics ?? const NoopAppAnalytics(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 

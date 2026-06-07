@@ -1,6 +1,9 @@
 package app.ascend.backend.quests;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
+import app.ascend.backend.quiz.AvaliadorQuizLeitura;
+import app.ascend.backend.quiz.RepositorioQuizLeitura;
+import app.ascend.backend.quiz.ResultadoAvaliacaoQuizLeitura;
 import com.google.cloud.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -10,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,17 +36,23 @@ public class MutacaoQuestCompetitivaService {
   private final ValidadorRequisicaoInventarioQuest validadorQuest;
   private final CatalogoQuestCompetitiva catalogo;
   private final RepositorioQuestCompetitiva repositorio;
+  private final RepositorioQuizLeitura repositorioQuizLeitura;
+  private final AvaliadorQuizLeitura avaliadorQuizLeitura;
 
   public MutacaoQuestCompetitivaService(
       GuardaSessaoAtiva guardaSessaoAtiva,
       ValidadorRequisicaoInventarioQuest validadorQuest,
       CatalogoQuestCompetitiva catalogo,
-      RepositorioQuestCompetitiva repositorio
+      RepositorioQuestCompetitiva repositorio,
+      RepositorioQuizLeitura repositorioQuizLeitura,
+      AvaliadorQuizLeitura avaliadorQuizLeitura
   ) {
     this.guardaSessaoAtiva = guardaSessaoAtiva;
     this.validadorQuest = validadorQuest;
     this.catalogo = catalogo;
     this.repositorio = repositorio;
+    this.repositorioQuizLeitura = repositorioQuizLeitura;
+    this.avaliadorQuizLeitura = avaliadorQuizLeitura;
   }
 
   /**
@@ -74,9 +84,10 @@ public class MutacaoQuestCompetitivaService {
       String nomeFallback,
       RequisicaoQuestCompetitiva request
   ) {
-    DadosComando dados = validarComando(request, true);
-    guardaSessaoAtiva.exigirSessaoAtiva(uid, dados.idSessaoDispositivo());
+    DadosComando dadosRecebidos = validarComando(request, true);
+    guardaSessaoAtiva.exigirSessaoAtiva(uid, dadosRecebidos.idSessaoDispositivo());
     Timestamp now = Timestamp.now();
+    DadosComando dados = dadosComQuizAvaliado(uid, dadosRecebidos, now);
     String attemptId = attemptId(dados.questId(), dayKey(firstNonNull(dados.quest().verificationStartedAt(), now)));
     return (RespostaVerificacaoQuestCompetitiva) repositorio.executarMutacaoCompetitiva(
         uid,
@@ -341,7 +352,54 @@ public class MutacaoQuestCompetitivaService {
         ValidadorPayloadInventarioQuest.optionalNonNegativeInt(evidencia.quizScore(), "evidence.quizScore"),
         ValidadorPayloadInventarioQuest.optionalString(evidencia.quizId(), "evidence.quizId", 160, null),
         answers,
+        List.of(),
         ValidadorPayloadInventarioQuest.optionalString(evidencia.reflection(), "evidence.reflection", 500, null)
+    );
+  }
+
+  /**
+   * Para quests de leitura, o cliente nao envia score confiavel. Ele envia a
+   * tentativa emitida pelo backend e respostas ordenadas; este metodo busca a
+   * tentativa autoritativa, calcula o score e anexa os riscos ao payload que
+   * segue para a decisao competitiva.
+   */
+  private DadosComando dadosComQuizAvaliado(String uid, DadosComando dados, Timestamp now) {
+    if (!"readingComprehension".equals(dados.definicao().evidenceType()) || dados.evidencia() == null) {
+      return dados;
+    }
+    Optional<app.ascend.backend.quiz.TentativaQuizLeitura> tentativa = dados.evidencia().quizId() == null
+        ? Optional.empty()
+        : repositorioQuizLeitura.buscarTentativa(uid, dados.evidencia().quizId());
+    ResultadoAvaliacaoQuizLeitura avaliacao = avaliadorQuizLeitura.avaliar(
+        tentativa,
+        dados.questId(),
+        dados.evidencia().quizId(),
+        dados.evidencia().answers(),
+        now.toDate().toInstant()
+    );
+    EvidenciaCompetitivaValidada evidenciaAvaliada = new EvidenciaCompetitivaValidada(
+        dados.evidencia().questId(),
+        dados.evidencia().provider(),
+        dados.evidencia().type(),
+        dados.evidencia().startedAt(),
+        dados.evidencia().completedAt(),
+        dados.evidencia().durationMinutes(),
+        dados.evidencia().distanceMeters(),
+        dados.evidencia().sourceActivityId(),
+        avaliacao.score(),
+        avaliacao.quizId(),
+        dados.evidencia().answers(),
+        avaliacao.riskFlags(),
+        dados.evidencia().reflection()
+    );
+    return new DadosComando(
+        dados.idSessaoDispositivo(),
+        dados.rotuloDispositivo(),
+        dados.questId(),
+        dados.quest(),
+        dados.definicao(),
+        evidenciaAvaliada,
+        dados.respostaReflexao()
     );
   }
 
@@ -381,13 +439,26 @@ public class MutacaoQuestCompetitivaService {
         }
       }
     }
-    if (requisito.minimumQuizScore() > 0 && (evidencia.quizScore() == null || evidencia.quizScore() < requisito.minimumQuizScore())) {
-      flags.add(requisito.evidenceType().equals("readingComprehension") ? "missingQuizAttempt" : "missingQuiz");
+    if (requisito.minimumQuizScore() > 0
+        && !"readingComprehension".equals(requisito.evidenceType())
+        && (evidencia.quizScore() == null || evidencia.quizScore() < requisito.minimumQuizScore())) {
+      flags.add("missingQuiz");
+    }
+    if ("readingComprehension".equals(requisito.evidenceType()) && !evidencia.quizRiskFlags().isEmpty()) {
+      flags.addAll(evidencia.quizRiskFlags());
     }
     if (evidencia.completedAt().toSqlTimestamp().getTime() < now.toSqlTimestamp().getTime() - 2L * 24 * 60 * 60 * 1000) {
       flags.add("staleEvidence");
     }
-    if (flags.stream().anyMatch(Set.of("invalidProvider", "completedBeforeStart", "impossiblePace", "staleEvidence")::contains)) {
+    if (flags.stream().anyMatch(Set.of(
+        "invalidProvider",
+        "completedBeforeStart",
+        "impossiblePace",
+        "staleEvidence",
+        "quizQuestMismatch",
+        "quizIdMismatch",
+        "staleQuiz"
+    )::contains)) {
       return new DecisaoEvidenciaCompetitiva("rejected", 0, flags);
     }
     if (flags.stream().anyMatch(Set.of(
@@ -396,7 +467,10 @@ public class MutacaoQuestCompetitivaService {
         "missingDistance",
         "distanceTooShort",
         "missingQuiz",
-        "missingQuizAttempt"
+        "missingQuizAttempt",
+        "missingQuizSubmission",
+        "missingQuizAnswer",
+        "lowQuizScore"
     )::contains)) {
       return new DecisaoEvidenciaCompetitiva("insufficientEvidence", 15, flags);
     }
@@ -481,7 +555,7 @@ public class MutacaoQuestCompetitivaService {
         .put("sourceActivityId", dados.evidencia().sourceActivityId())
         .put("quizId", dados.evidencia().quizId())
         .put("quizScore", dados.evidencia().quizScore())
-        .put("quizRiskFlags", List.of())
+        .put("quizRiskFlags", dados.evidencia().quizRiskFlags())
         .put("confidenceScore", decisao.confidenceScore())
         .put("riskFlags", decisao.riskFlags())
         .put("status", decisao.status())

@@ -15,6 +15,7 @@ record EvidenciaCompetitivaValidada(
     Integer quizScore,
     String quizId,
     List<String> answers,
+    List<String> quizRiskFlags,
     String reflection
 ) {
 }

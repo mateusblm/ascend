@@ -65,15 +65,15 @@ Health Connect Adapter V1 is implemented behind a feature flag:
 - Android native compilation and real-device smoke are still pending because the
   current workstation has no Android SDK configured.
 
-AI Reading Quiz Contract V1 is implemented without a real AI provider:
+AI Reading Quiz Contract V1 is implemented:
 - backend can issue deterministic reading quiz attempts through
   `startReadingQuizAttempt`.
 - competitive reading evidence now needs a backend-owned quiz attempt/evaluation
   before reward/rank progress is accepted.
 - quiz attempts are readable by the owner but cannot be written directly by the
   client.
-- real AI generation remains future adapter work; the contract now defines the
-  authority boundary first.
+- Java now evaluates submitted quiz answers during competitive verification and
+  records quiz risk flags in evidence audit docs.
 
 Flutter reading quiz flow is implemented:
 - reading-comprehension competitive quests request a backend quiz attempt before
@@ -87,9 +87,9 @@ Reading quiz AI adapter boundary is implemented:
 - `ReadingQuizGenerator` is the backend-side generation boundary.
 - deterministic generation remains the default provider.
 - `AiReadingQuizGenerator` is available behind
-  `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed until a real provider is
-  supplied.
-- no provider SDK, API key, or network call is coupled to the core callable yet.
+  `ASCEND_READING_QUIZ_GENERATOR=ai`.
+- provider failures stay outside the core reward decision and can fall back
+  before user flow breaks.
 
 Gemini reading quiz provider is implemented:
 - `GeminiReadingQuizQuestionProvider` calls Gemini REST `generateContent`
@@ -108,8 +108,9 @@ Continue `Competitive Verification V1`:
 1. Configure Android SDK locally and run a staging debug APK build.
 2. Run real-device Health Connect smoke with
    `--dart-define=ASCEND_USE_HEALTH_CONNECT=true`.
-3. Configure `GEMINI_API_KEY` and smoke-test
-   `ASCEND_READING_QUIZ_GENERATOR=ai` against non-sensitive test topics.
+3. Smoke-test a reading competitive quest against Cloud Run with
+   `ASCEND_JAVA_BACKEND_URL` enabled, confirming quiz score and `quizRiskFlags`
+   in the evidence audit.
 
 ## Likely Files
 

@@ -4,9 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
+import app.ascend.backend.quiz.AvaliadorQuizLeitura;
+import app.ascend.backend.quiz.PerguntaQuizLeitura;
+import app.ascend.backend.quiz.RepositorioQuizLeitura;
+import app.ascend.backend.quiz.TentativaQuizLeitura;
 import com.google.cloud.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class MutacaoQuestCompetitivaServiceTest {
@@ -101,6 +107,48 @@ class MutacaoQuestCompetitivaServiceTest {
     assertThat(repositorio.auditoriaEvidenciaSalva).isNull();
   }
 
+  @Test
+  void avaliaQuizDeLeituraAntesDeConcederRecompensaCompetitiva() {
+    RepositorioInventarioQuestEmMemoria repositorio = repositorioComSessaoAtiva();
+    RepositorioQuizLeituraEmMemoria repositorioQuiz = new RepositorioQuizLeituraEmMemoria();
+    repositorio.perfil = perfilBase();
+    repositorio.sessaoExiste = true;
+    repositorio.sessao = Map.of("startedAt", timestamp("2026-06-06T10:00:00Z"));
+    repositorioQuiz.tentativa = tentativaQuiz("quiz-1", "reading-20-1", "2099-06-06T12:00:00Z");
+
+    RespostaVerificacaoQuestCompetitiva resposta = service(repositorio, repositorioQuiz)
+        .verificarConclusao("user-1", "Mateus", requisicaoLeitura(
+            List.of("A ideia principal apareceu no texto", "Vou fazer uma acao pratica hoje")
+        ));
+
+    assertThat(resposta.status()).isEqualTo("verified");
+    assertThat(resposta.verificationDecision().status()).isEqualTo("accepted");
+    assertThat(repositorio.auditoriaEvidenciaSalva)
+        .containsEntry("quizId", "quiz-1")
+        .containsEntry("quizScore", 100)
+        .containsEntry("quizRiskFlags", List.of());
+  }
+
+  @Test
+  void rejeitaQuizDeLeituraComScoreBaixoSemGravarRecompensa() {
+    RepositorioInventarioQuestEmMemoria repositorio = repositorioComSessaoAtiva();
+    RepositorioQuizLeituraEmMemoria repositorioQuiz = new RepositorioQuizLeituraEmMemoria();
+    repositorio.perfil = perfilBase();
+    repositorio.sessaoExiste = true;
+    repositorio.sessao = Map.of("startedAt", timestamp("2026-06-06T10:00:00Z"));
+    repositorioQuiz.tentativa = tentativaQuiz("quiz-1", "reading-20-1", "2099-06-06T12:00:00Z");
+
+    assertThatThrownBy(() -> service(repositorio, repositorioQuiz)
+        .verificarConclusao("user-1", "Mateus", requisicaoLeitura(List.of("resposta vaga"))))
+        .isInstanceOfSatisfying(ExcecaoApi.class, error -> {
+          assertThat(error.codigo()).isEqualTo("competitive_evidence_insufficient");
+          assertThat(error.getMessage()).contains("lowQuizScore");
+        });
+
+    assertThat(repositorio.concessaoSalva).isNull();
+    assertThat(repositorio.perfilSalvo).isNull();
+  }
+
   private RepositorioInventarioQuestEmMemoria repositorioComSessaoAtiva() {
     RepositorioInventarioQuestEmMemoria repositorio = new RepositorioInventarioQuestEmMemoria();
     repositorio.activeSession = new RegistroSessaoAtiva(
@@ -111,12 +159,21 @@ class MutacaoQuestCompetitivaServiceTest {
   }
 
   private MutacaoQuestCompetitivaService service(RepositorioInventarioQuestEmMemoria repositorio) {
+    return service(repositorio, new RepositorioQuizLeituraEmMemoria());
+  }
+
+  private MutacaoQuestCompetitivaService service(
+      RepositorioInventarioQuestEmMemoria repositorio,
+      RepositorioQuizLeitura repositorioQuizLeitura
+  ) {
     CatalogoQuestCompetitiva catalogo = new CatalogoQuestCompetitiva();
     return new MutacaoQuestCompetitivaService(
         new GuardaSessaoAtiva(repositorio),
         new ValidadorRequisicaoInventarioQuest(catalogo),
         catalogo,
-        repositorio
+        repositorio,
+        repositorioQuizLeitura,
+        new AvaliadorQuizLeitura()
     );
   }
 
@@ -189,6 +246,54 @@ class MutacaoQuestCompetitivaServiceTest {
     );
   }
 
+  private RequisicaoQuestCompetitiva requisicaoLeitura(List<String> respostas) {
+    return new RequisicaoQuestCompetitiva(
+        "device-1",
+        "Notebook",
+        "reading-20-1",
+        questCompetitiva(
+            "reading-20-1",
+            "Leitura de 20 minutos",
+            "readingSession",
+            "timerWithReflection",
+            20,
+            30,
+            "intelligence"
+        ),
+        new EvidenciaQuestCompetitiva(
+            "reading-20-1",
+            "mockEvidence",
+            "readingComprehension",
+            "2026-06-06T10:00:00Z",
+            "2026-06-06T10:25:00Z",
+            25,
+            null,
+            null,
+            null,
+            "quiz-1",
+            respostas,
+            null
+        ),
+        "Resumo curto da leitura."
+    );
+  }
+
+  private TentativaQuizLeitura tentativaQuiz(String quizId, String questId, String expiresAt) {
+    return new TentativaQuizLeitura(
+        quizId,
+        questId,
+        "Leitura",
+        70,
+        "deterministic_contract_v1",
+        List.of(
+            new PerguntaQuizLeitura("main-idea", "Qual foi a ideia principal?", "ideia principal"),
+            new PerguntaQuizLeitura("practical-action", "Qual acao pratica?", "acao pratica")
+        ),
+        Instant.parse("2026-06-06T10:05:00Z"),
+        Instant.parse(expiresAt)
+    );
+  }
+
   private Map<String, Object> perfilBase() {
     return Map.ofEntries(
         Map.entry("name", "Mateus"),
@@ -211,5 +316,26 @@ class MutacaoQuestCompetitivaServiceTest {
   private Timestamp timestamp(String value) {
     Instant instant = Instant.parse(value);
     return Timestamp.ofTimeSecondsAndNanos(instant.getEpochSecond(), instant.getNano());
+  }
+
+  private static class RepositorioQuizLeituraEmMemoria implements RepositorioQuizLeitura {
+
+    private TentativaQuizLeitura tentativa;
+
+    @Override
+    public void gravarTentativa(
+        String uid,
+        TentativaQuizLeitura tentativa,
+        String idSessaoDispositivo,
+        String rotuloDispositivo
+    ) {
+      this.tentativa = tentativa;
+    }
+
+    @Override
+    public Optional<TentativaQuizLeitura> buscarTentativa(String uid, String quizId) {
+      return Optional.ofNullable(tentativa)
+          .filter(valor -> valor.quizId().equals(quizId));
+    }
   }
 }

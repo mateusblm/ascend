@@ -570,8 +570,8 @@ Risk:
 - medium
 
 Java migration priority:
-- migrated in Phase 11 for attempt creation; quiz answer evaluation remains
-  tied to competitive completion verification until that contract moves to Java
+- migrated in Phase 11 for attempt creation and Java-side quiz evaluation
+  during competitive completion verification
 
 Tests required:
 - deterministic provider
@@ -618,6 +618,8 @@ Behavior:
 - requires Firebase Auth
 - requires active session
 - validates evidence
+- evaluates backend-owned reading quiz attempts before accepting reading
+  comprehension evidence
 - rejects unsafe evidence
 - blocks duplicate `sourceActivityId`
 - grants competitive XP once

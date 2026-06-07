@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:ascend/core/config/java_backend_config.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -80,11 +80,7 @@ class CompetitiveQuestAuthorityRepository {
            functions ??
            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
        _auth = auth ?? FirebaseAuth.instance,
-       _javaBackendClient =
-           javaBackendClient ??
-           (JavaBackendConfig.isEnabled
-               ? JavaBackendClient(baseUrl: JavaBackendConfig.baseUrl)
-               : null),
+       _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository ?? ActiveSessionRepository(),
        _crashReporter = crashReporter ?? const NoopAppCrashReporter();
 
@@ -123,7 +119,9 @@ class CompetitiveQuestAuthorityRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
-          rethrow;
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
         }
       }
 
@@ -170,13 +168,7 @@ class CompetitiveQuestAuthorityRepository {
       await _sessionRepository.registerActiveSession();
       final javaBackendClient = _javaBackendClient;
       final idToken = await _currentIdToken();
-      final usesBackendReadingQuiz =
-          evidence.type == CompetitiveEvidenceType.readingComprehension &&
-          evidence.quizId != null &&
-          evidence.quizScore == null;
-      if (javaBackendClient != null &&
-          idToken != null &&
-          !usesBackendReadingQuiz) {
+      if (javaBackendClient != null && idToken != null) {
         try {
           final response = await javaBackendClient
               .verifyCompetitiveQuestCompletion(
@@ -199,7 +191,9 @@ class CompetitiveQuestAuthorityRepository {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
           }
-          rethrow;
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
+          }
         }
       }
 
@@ -293,6 +287,9 @@ class CompetitiveQuestAuthorityRepository {
         } on JavaBackendException catch (error, stackTrace) {
           if (error.isActiveSessionConflict) {
             throw const ActiveSessionConflictException();
+          }
+          if (!BackendRouteSelector.shouldFallbackToFirebase(error)) {
+            rethrow;
           }
           _reportRecoverable(
             error,

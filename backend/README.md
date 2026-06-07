@@ -20,6 +20,8 @@ Current status:
 - `POST /api/v1/reading-quiz:attempt` is implemented for Java-first reading
   quiz attempt creation, with deterministic generation by default and optional
   Gemini generation through Secret Manager or environment configuration.
+- `POST /api/v1/quests/competitive:verify` now evaluates backend-owned reading
+  quiz attempts in Java before granting competitive XP/rank-bearing rewards.
 - TypeScript Functions remain authoritative.
 
 ## Local Commands

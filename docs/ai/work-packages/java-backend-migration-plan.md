@@ -714,14 +714,13 @@ Progress:
   environment first, then from Secret Manager.
 - Flutter tries Java first when `ASCEND_JAVA_BACKEND_URL` is configured and
   falls back to the TypeScript callable on recoverable Java/provider failures.
-- Reading quiz answer evaluation remains on the legacy verification path until
-  the competitive verification contract is migrated, so the user flow stays
-  compatible during Phase 11.
+- Java evaluates reading quiz submissions during
+  `POST /api/v1/quests/competitive:verify` by loading the backend-owned attempt,
+  calculating the score, and storing `quizRiskFlags` in evidence audit docs.
 
 Status:
 - Phase 11 implementation is complete locally. Remaining work is staging smoke
-  with an authenticated reading quest and later migration of quiz evaluation
-  inside competitive completion verification.
+  with an authenticated reading quest against Cloud Run.
 
 ## Phase 12 - Flutter Routing And Backend Client Cleanup
 
@@ -740,6 +739,21 @@ Exit criteria:
 - developers can see which backend serves each feature
 - rollback is possible per feature
 - no hidden mixed authority paths
+
+Progress:
+- `BackendRouteSelector` centralizes Java backend client creation from
+  `ASCEND_JAVA_BACKEND_URL`.
+- Flutter quest/profile repositories use the same selector instead of creating
+  Java clients independently.
+- Java business-rule failures such as active-session conflict or insufficient
+  competitive evidence no longer silently fall back to Firebase Functions.
+- Competitive reading verification now routes to Java when configured; Firebase
+  remains fallback only for recoverable Java/server failures or when the Java
+  URL is omitted.
+
+Status:
+- Phase 12 implementation is complete locally. Remaining work is staging smoke
+  of a reading competitive quest with Java enabled.
 
 ## Phase 13 - TypeScript Decommission
 
@@ -961,6 +975,9 @@ Current status:
 - Flutter staging/debug can route reading quiz attempt creation to Java with the
   same `ASCEND_JAVA_BACKEND_URL`, while preserving Firebase Functions fallback
   on recoverable Java/provider errors
+- Flutter staging/debug can route reading quiz completion verification to Java;
+  Java evaluates the quiz attempt and records `quizRiskFlags`
+- Java backend routing in Flutter is centralized through `BackendRouteSelector`
 - Flutter keeps Firebase Functions as the default when the Java URL is omitted
 - local validation passed:
   - `mvn test`

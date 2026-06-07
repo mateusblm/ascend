@@ -7,6 +7,7 @@ import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.CatalogoQuestCompetitiva;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.env.MockEnvironment;
@@ -81,6 +82,12 @@ class InicioQuizLeituraServiceTest {
     ) {
       this.tentativaGravada = tentativa;
       this.idSessaoDispositivo = idSessaoDispositivo;
+    }
+
+    @Override
+    public Optional<TentativaQuizLeitura> buscarTentativa(String uid, String quizId) {
+      return Optional.ofNullable(tentativaGravada)
+          .filter(tentativa -> tentativa.quizId().equals(quizId));
     }
   }
 }

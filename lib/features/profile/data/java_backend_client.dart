@@ -307,6 +307,12 @@ class JavaBackendException implements Exception {
   bool get isActiveSessionConflict =>
       statusCode == 412 && errorCode == 'active_session_conflict';
 
+  bool get isBusinessRuleFailure =>
+      statusCode == 400 ||
+      statusCode == 403 ||
+      statusCode == 409 ||
+      statusCode == 412;
+
   @override
   String toString() => message;
 }

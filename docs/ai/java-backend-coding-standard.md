@@ -2,7 +2,7 @@
 
 ## Proposito
 
-Manter a migracao Java consistente, legivel e facil de revisar.
+Manter o backend Java consistente, legivel e facil de revisar.
 
 Este padrao se aplica a todo novo endpoint Java em `backend/`.
 
@@ -63,9 +63,10 @@ Dentro de cada contexto, mantenha a separacao conceitual:
 - `infraestrutura`: implementacoes Firestore, Secret Manager e demais detalhes
   externos.
 
-Em contextos pequenos, os pacotes podem permanecer mais rasos durante a fase de
-migracao, mas as classes ainda devem respeitar essas responsabilidades. Ao tocar
-novamente em um contexto, prefira aproximar a estrutura fisica desse modelo.
+Em contextos pequenos, os pacotes podem permanecer mais rasos quando o escopo
+for muito localizado, mas as classes ainda devem respeitar essas
+responsabilidades. Ao tocar novamente em um contexto, prefira aproximar a
+estrutura fisica desse modelo.
 
 ## Regras SOLID
 
@@ -101,8 +102,7 @@ novamente em um contexto, prefira aproximar a estrutura fisica desse modelo.
   importante, especialmente regras de XP, recompensa, rank, sessao,
   sincronizacao e validacao de payload nao confiavel.
 - Escreva Javadocs e comentarios em portugues.
-- Comente apenas intencao de negocio ou compatibilidade nao obvia com o backend
-  TypeScript.
+- Comente apenas intencao de negocio ou compatibilidade historica nao obvia.
 - Nao comente mecanica obvia de Java.
 
 ## Regras De Erro
@@ -120,11 +120,11 @@ novamente em um contexto, prefira aproximar a estrutura fisica desse modelo.
 
 ## Regras De Teste
 
-Todo endpoint migrado precisa de:
+Todo endpoint Java novo ou alterado precisa de:
 - teste de controller para auth e formato da resposta
 - teste de service para orquestracao de negocio
 - fixtures de validator ou service para payloads invalidos
 - repository atras de interface para testes com fake
 
 Para areas sensiveis, adicione testes de idempotencia e rollback antes de
-trocar o trafego Flutter.
+publicar ou redirecionar trafego Flutter.

@@ -73,8 +73,8 @@ Watch these recoverable failure groups in Crashlytics:
 
 These should help us spot:
 
-- callable instability
-- remote fallback overuse
+- Java backend instability
+- Cloud Run or Firebase integration regressions
 - provider-layer regressions after release
 
 ## Suggested Weekly Review

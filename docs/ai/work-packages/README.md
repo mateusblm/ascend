@@ -1,10 +1,15 @@
 # AI Work Packages
 
-This folder contains task-specific briefs for the next implementation package.
+This folder contains task-specific briefs and historical work-package notes.
 
 Active briefs:
+- none at the moment.
+
+Historical briefs:
 - `month-2-backend-hardening.md`
 - `competitive-verification-v1-next.md`
+- `java-backend-migration-plan.md`
+- `java-backend-callable-inventory.md`
 
 These files are not permanent architecture and should not be treated as global
 instructions. When a package is completed, either:

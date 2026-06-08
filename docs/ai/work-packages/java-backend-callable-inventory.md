@@ -1,32 +1,45 @@
 # Java Backend Callable Inventory
 
+## Status
+
+Archived after Java migration completion.
+
+This file is a historical inventory of the former Firebase Functions TypeScript
+surface. The local `functions/` project has been removed, Flutter no longer uses
+`cloud_functions`, and active product behavior is served by the Java/Spring Boot
+backend on Cloud Run.
+
+Do not use this file as current architecture. Use it only to understand parity
+decisions or to inspect old callable contracts through Git history.
+
 ## Purpose
 
-Inventory the current Firebase Functions TypeScript callable surface before
-starting the Java/Spring Boot migration.
+Inventory the former Firebase Functions TypeScript callable surface before and
+during the Java/Spring Boot migration.
 
 Reference plan:
 - `docs/ai/work-packages/java-backend-migration-plan.md`
 
-Current backend source:
-- `functions/src/index.ts`
+Former backend source:
+- `functions/src/index.ts` in Git history
 
-Current backend tests:
-- `functions/test/account-authority.test.js`
-- `functions/test/competitive-quest-authority.test.js`
-- `functions/test/competitive-sync-payload.test.js`
-- `functions/test/firestore-rules.test.js`
+Former backend tests:
+- `functions/test/account-authority.test.js` in Git history
+- `functions/test/competitive-quest-authority.test.js` in Git history
+- `functions/test/competitive-sync-payload.test.js` in Git history
+- `functions/test/firestore-rules.test.js` in Git history
 
-## Migration Rule
+## Historical Migration Rule
 
-Do not port a callable to Java until its contract is explicitly frozen:
+During migration, no callable was ported to Java until its contract was
+explicitly frozen:
 - request payload
 - response payload
 - error cases
 - Firestore reads and writes
 - Flutter caller
 - tests required
-- rollback path
+- rollback path available during the transition
 
 ## Summary
 
@@ -1146,46 +1159,13 @@ Rollback:
 ## Phase 0 Status
 
 Status:
-- callable inventory created
-- first Java migration candidate selected
-- first endpoint contract drafted
-- Java auth base implemented locally
-- `GET /api/v1/me` implemented locally
-- `GET /api/v1/season-leaderboard` implemented locally
-- Java tests and package pass locally
-- Cloud Run staging deploy helper created at
-  `tools/backend/deploy-cloud-run-staging.ps1`
-- Cloud Run staging service deployed at
-  `https://ascend-backend-staging-331143433117.southamerica-east1.run.app`
-- unauthenticated smoke checks passed for `/health`, `/api/v1/me`, and
-  `/api/v1/season-leaderboard`
-- Flutter season leaderboard routing can opt into Java with
-  `ASCEND_JAVA_BACKEND_URL`, while the default remains Firebase Functions
-- `POST /api/v1/quests/inventory:sync` implemented and deployed to Cloud Run
-  staging
-- Flutter quest inventory sync can opt into Java with `ASCEND_JAVA_BACKEND_URL`,
-  while the default remains Firebase Functions
-- full Flutter test suite and Java backend test suite pass locally
-- unauthenticated Cloud Run smoke checks passed for `/health`, `/api/v1/me`,
-  and `/api/v1/quests/inventory:sync`
-
-Next phase:
-- Phase 6 quest inventory route passed authenticated local Docker and Cloud Run
-  staging walkthroughs on 2026-06-06
-- Phase 7 personal quest authority has started locally with Java endpoints for
-  complete/revoke
-- Flutter personal quest complete/revoke can opt into Java with
-  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain the fallback path
-- Flutter profile settings and attribute allocation can opt into Java with
-  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain fallback for
-  recoverable Java/server errors
-- Flutter active session register/release can opt into Java with
-  `ASCEND_JAVA_BACKEND_URL`, while Firebase Functions remain fallback for
-  recoverable Java/server errors
-- Authenticated staging smoke confirmed normal personal quest completion grants
-  XP and attribute reward through Java on 2026-06-06
-- Authenticated staging smoke confirmed normal personal quest revoke/rollback
-  works through Java on 2026-06-06
-- Competitive quest completion is not being used as a Java parity target yet
+- inventory completed and archived.
+- Java backend now owns active product behavior.
+- Flutter requires the Java backend URL for backend-authoritative remote
+  commands.
+- TypeScript fallback paths were removed from Flutter.
+- the local `functions/` project was removed from the repository.
+- remaining operational cleanup is limited to deleting/decommissioning remote
+  Firebase Functions if they still exist in the Firebase project.
   because its current baseline appears to be a pre-existing TypeScript/product
   behavior issue

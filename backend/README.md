@@ -9,29 +9,27 @@ Current status:
 - Firebase Auth validation is implemented for `/api/v1/**`.
 - `GET /api/v1/me` is implemented.
 - `POST /api/v1/session/active:register` and
-  `POST /api/v1/session/active:release` are implemented for Java-first active
+  `POST /api/v1/session/active:release` are implemented for active
   device session authority.
-- `GET /api/v1/season-leaderboard` is implemented as the first read-only
-  migration candidate.
-- `POST /api/v1/quests/inventory:sync` is implemented as the first quest write
-  migration candidate.
+- `GET /api/v1/season-leaderboard` is implemented for season leaderboard reads.
+- `POST /api/v1/quests/inventory:sync` is implemented for quest inventory sync.
 - `POST /api/v1/competitive/promotion/exam:start` and
-  `POST /api/v1/competitive/promotion:confirm` are implemented for Java-first
+  `POST /api/v1/competitive/promotion:confirm` are implemented for
   promotion exam start and promotion confirmation.
-- `POST /api/v1/season-rewards/current:claim` is implemented for Java-first
+- `POST /api/v1/season-rewards/current:claim` is implemented for
   season reward claim, legacy reward write, and active season profile update.
-- `POST /api/v1/reading-quiz:attempt` is implemented for Java-first reading
+- `POST /api/v1/reading-quiz:attempt` is implemented for reading
   quiz attempt creation, with deterministic generation by default and optional
   Gemini generation through Secret Manager or environment configuration.
 - `POST /api/v1/quests/competitive:verify` now evaluates backend-owned reading
   quiz attempts in Java before granting competitive XP/rank-bearing rewards.
 - `POST /api/v1/profile/settings:update` and
-  `POST /api/v1/profile/attributes:allocate` are implemented for Java-first
+  `POST /api/v1/profile/attributes:allocate` are implemented for
   profile settings and attribute allocation authority.
-- `POST /api/v1/profile/source:sync` is implemented for Java-first profile
+- `POST /api/v1/profile/source:sync` is implemented for profile
   repair/source sync, recalculating XP, streak, attributes, and weekly boss
   aggregates from validated facts.
-- `POST /api/v1/weekly-boss:claim` is implemented for Java-first weekly boss
+- `POST /api/v1/weekly-boss:claim` is implemented for weekly boss
   claim authority, including profile reward, completion leaderboard, user claim
   record, and idempotent duplicate handling.
 - Flutter no longer uses TypeScript Functions fallback. The local TypeScript

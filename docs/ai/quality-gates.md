@@ -79,7 +79,8 @@ Do not start implementation until all of the following are true:
 For Tier A work, also require:
 - backend versus client authority is explicitly decided
 - environment or migration impact is identified
-- fallback behavior on remote failure is understood
+- remote failure behavior is understood; reward-bearing flows must not fall back
+  to client-owned or TypeScript authority
 
 ## Architecture Gate
 

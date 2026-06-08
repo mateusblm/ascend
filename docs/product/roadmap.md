@@ -83,9 +83,8 @@ Goal:
 - make reward-bearing flows easier to trust and maintain
 
 Deliverables:
-- split large Functions implementation into domain/service modules without
-  changing behavior
-- keep callable contracts test-protected
+- keep Java backend domain/service modules cohesive and test-protected
+- keep HTTP endpoint contracts test-protected
 - remove or instrument silent failure paths in critical sync flows
 - confirm backend grant records are the long-term source for competitive credit
 - keep `sync*FromSource` paths as migration/repair tooling, not normal reward
@@ -162,7 +161,7 @@ Goal:
 Deliverables:
 - internal release candidate
 - small controlled tester cohort
-- weekly review of crashes, funnel events, support, and failed callables
+- weekly review of crashes, funnel events, support, and failed backend commands
 - regression fixes before new features
 - launch decision based on stability, trust, and retention signals
 

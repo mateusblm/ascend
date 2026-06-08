@@ -2,7 +2,8 @@
 
 ## Objetivo
 
-Adicionar uma camada remota para o boss semanal por rank sem substituir o sistema local do app.
+Configurar os documentos do boss semanal no Firestore e manter o resgate de
+recompensa sob autoridade do backend Java no Cloud Run.
 
 ## Dependencia
 
@@ -20,20 +21,19 @@ O repositorio agora possui:
 
 - `firestore.rules`
 - `firebase.json`
-- `functions/` com callable `claimWeeklyBoss`
+- endpoint Java `POST /api/v1/weekly-boss:claim`
 
 As regras atuais permitem:
 
 - leitura publica dos documentos de `weekly_bosses`
 - leitura publica do ranking inicial em `completions`
-- escrita segura pelo app (transacao create completion + update completedCount)
-- escrita pelo backend (Cloud Functions com Admin SDK), quando disponivel
+- escrita autoritativa pelo backend Java com Firebase Admin SDK
 
 As regras atuais bloqueiam:
 
 - alteracao arbitraria do boss semanal pelo app
 - edicao ou exclusao de conclusoes
-- update de contadores fora da transacao valida
+- update de contadores pelo cliente
 
 ### Publicar regras
 
@@ -52,32 +52,14 @@ Opcao 2, pelo Firebase Console:
 - cole o conteudo de `firestore.rules`
 - clique em `Publish`
 
-## Backend (Cloud Functions)
+## Backend Java
 
-O app agora chama a callable `claimWeeklyBoss` para registrar clear remoto.
-Se a callable nao estiver deployada (ex: projeto sem Blaze), o app usa fallback automatico para transacao cliente com as rules atuais.
+O app chama `POST /api/v1/weekly-boss:claim` para registrar o clear remoto.
+Nao existe fallback TypeScript ou transacao cliente para resgate de recompensa.
+Se o backend Java nao estiver configurado, o fluxo deve falhar de forma
+explicita durante validacao/desenvolvimento.
 
-### Estrutura criada
-
-- `functions/package.json`
-- `functions/tsconfig.json`
-- `functions/src/index.ts`
-
-### Deploy da callable
-
-No terminal, na raiz do projeto:
-
-```powershell
-cd functions
-npm install
-npm run build
-cd ..
-firebase deploy --only functions --project ascend-b7c20
-```
-
-> Observacao: Cloud Functions exige plano Blaze. Sem Blaze, mantenha apenas as rules publicadas e use o fallback cliente ja implementado no app.
-
-### O que a callable valida
+### O que o backend valida
 
 - usuario autenticado
 - `bossId` existente
@@ -85,12 +67,14 @@ firebase deploy --only functions --project ascend-b7c20
 - janela ativa (`startsAt <= agora < endsAt`)
 - rank enviado bate com rank do boss (quando enviado)
 - idempotencia por usuario (nao cria clear duplicado)
+- sessao ativa do dispositivo quando a regra exigir
 
-### O que a callable grava
+### O que o backend grava
 
 - `weekly_bosses/{bossId}/completions/{uid}`
 - incrementa `completedCount`
-- incrementa `participantCount`
+- `users/{uid}/weekly_boss_claims/{bossId}`
+- atualiza `users/{uid}/profile/current`
 
 ## Colecao inicial
 
@@ -142,7 +126,7 @@ Isso significa que:
 - calcula o progresso localmente pelos dias ativos da semana
 - usa Firestore para ler o boss remoto do rank
 - mostra `completedCount` e `participantCount` quando existir boss remoto
-- registra clear remoto pela callable `claimWeeklyBoss`
+- registra clear remoto pelo backend Java
 - mostra um ranking inicial com os primeiros clears sincronizados
 - o boss global agora deve ser controlado pelo Firestore. Sem boss remoto ativo, a UI mostra que nao ha evento no momento.
 
@@ -167,16 +151,5 @@ Esses documentos agora carregam metadata de sync:
 - `syncSchemaVersion`
 - `syncSource`
 
-Isso ajuda a manter a escrita cliente consistente enquanto a camada autoritativa de backend ainda esta sendo preparada.
-
-### Backend preparado
-
-O projeto agora possui tambem a callable:
-
-- `upsertCompetitiveProgression`
-
-Ela ainda e preparatoria para a migracao futura para Blaze/backend autoritativo, mas ja deixa pronto o contrato server-side de:
-
-- snapshot competitivo atual
-- historico semanal
-- estado do exame de promocao
+Isso ajuda a manter compatibilidade de leitura enquanto o backend Java mantem a
+autoridade das mutacoes sensiveis.

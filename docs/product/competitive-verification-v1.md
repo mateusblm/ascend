@@ -193,7 +193,8 @@ The client owns:
 
 ## Fraud Rules For V1
 
-Implement as pure evaluator rules first, then wire into callables.
+Implement as pure evaluator rules first, then wire into Java backend services
+and HTTP endpoints.
 
 Running:
 - reject missing distance or duration
@@ -270,10 +271,10 @@ Domain tests:
 - reading quiz below threshold rejected
 
 Backend tests:
-- callable rejects client reward mutation
-- callable writes evidence audit record
-- callable grants reward once
-- callable updates competitive grant/read-model only after accepted decision
+- Java endpoint rejects client reward mutation
+- Java service writes evidence audit record
+- Java service grants reward once
+- Java service updates competitive grant/read-model only after accepted decision
 
 Flutter tests:
 - competitive quest exposes correct primary action by state
@@ -286,7 +287,7 @@ Flutter tests:
 1. Add pure domain model/evaluator for evidence and decisions.
 2. Expand official competitive quest templates with verification requirements.
 3. Add deterministic fake evidence provider for tests and local development.
-4. Wire backend callable tests around evaluator decisions.
+4. Wire Java backend tests around evaluator decisions.
 5. Update Flutter repository/controller to submit evidence and render decisions.
 6. Add UI keys for primary competitive actions and decision surfaces.
 7. Add provider adapter boundary.

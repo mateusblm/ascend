@@ -482,6 +482,28 @@ Competitive Verification V1 reading quiz AI adapter boundary:
     `2026-04-30` and is scheduled for decommission on `2026-10-30`; plan a
     runtime upgrade pass before release.
 
+Progress note recorded on: `2026-06-07`
+
+Java backend migration completed for local project code:
+- Java/Spring Boot on Cloud Run is now the authoritative backend for active
+  product behavior.
+- Flutter no longer imports `cloud_functions`, `FirebaseFunctions`, or
+  `httpsCallable`.
+- the local TypeScript `functions/` project was removed.
+- `firebase.json` no longer declares a Functions source.
+- TypeScript fallback paths were removed from Flutter repositories.
+- documentation was updated so active architecture docs point to Java/Cloud Run
+  instead of Cloud Functions/callables.
+- validation passed during decommission:
+  - `flutter analyze`
+  - `flutter test`
+  - `cd backend && mvn test package`
+  - `flutter build apk --flavor staging --debug --dart-define=ASCEND_JAVA_BACKEND_URL=...`
+- remaining operational cleanup:
+  - delete/decommission any remotely deployed Firebase Functions if they still
+    exist in the Firebase project.
+  - run final staging smoke after remote cleanup.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

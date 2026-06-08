@@ -30,16 +30,24 @@ The goal is simple:
 - `flutter build apk --debug --flavor staging`
 - `flutter build apk --debug --flavor production`
 - `flutter build apk --release --flavor production`
-- `cd functions && npm run build`
-- `cd functions && npm run test:rules`
+- `cd backend && mvn test`
+- `cd backend && mvn package`
 
 ### Firebase
 
 - deploy Firestore rules if the data model or authority boundary changed
-- deploy Functions if callables or remote validation changed
 - confirm the app is pointing to the correct Firebase project
 - confirm the Android flavor matches the intended Firebase app identity
 - confirm the production Firebase Android app has the current release SHA registered
+
+### Cloud Run
+
+- deploy the Java backend if remote validation or backend behavior changed
+- confirm the release build sets `ASCEND_JAVA_BACKEND_URL` for the target
+  environment
+- smoke `/health` on the target Cloud Run service after deploy
+- smoke at least one authenticated backend-authoritative command when backend
+  behavior changed
 
 ### Production Signals
 
@@ -63,7 +71,7 @@ Latest recorded candidate:
 
 - confirm competitive quests still require backend validation
 - confirm weekly boss claim stays backend-only
-- confirm promotion and season reward flows still prefer callables
+- confirm promotion and season reward flows use the Java backend
 - confirm rank/integrity sync still uses source-based backend evaluation
 
 ## Release-Day Smoke Test

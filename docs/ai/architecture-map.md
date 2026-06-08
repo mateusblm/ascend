@@ -15,8 +15,9 @@ Start with:
 
 ## Current Shape
 
-Ascend is a Flutter app with Firebase-backed account authority and local Isar
-cache/offline support.
+Ascend is a Flutter app with a Java/Spring Boot backend on Cloud Run for
+authority-sensitive commands, Firebase Auth for identity, Firestore for
+canonical data, and local Isar cache/offline support.
 
 ```text
 lib/
@@ -36,9 +37,9 @@ lib/
 |   `-- main_navigation_screen.dart
 `-- main.dart
 
-functions/
-|-- src/
-`-- test/
+backend/
+|-- src/main/java/app/ascend/backend/
+`-- src/test/java/app/ascend/backend/
 ```
 
 State management:
@@ -48,7 +49,7 @@ Persistence and backend:
 - Isar for local cache/offline support
 - Firebase Auth for identity
 - Firestore for account data, read models, and audit records
-- Cloud Functions for reward-bearing and authority-sensitive commands
+- Cloud Run Java backend for reward-bearing and authority-sensitive commands
 
 Observability:
 - centralized analytics wrapper in `lib/core/analytics/analytics_service.dart`
@@ -121,8 +122,9 @@ backend-written from the client perspective.
 Primary files:
 - `lib/features/auth/presentation/auth_controller.dart`
 - `lib/features/auth/data/active_session_repository.dart`
+- `lib/features/auth/data/java_session_backend_client.dart`
 - `lib/features/auth/domain/auth_state.dart`
-- `functions/src/index.ts`
+- `backend/src/main/java/app/ascend/backend/sessao/`
 
 Rules:
 - auth state must expose enough identity for account surfaces
@@ -137,7 +139,8 @@ Primary files:
 - `lib/features/profile/domain/player_model.dart`
 - `lib/features/profile/presentation/player_controller.dart`
 - `lib/features/profile/data/player_profile_repository.dart`
-- `functions/src/index.ts`
+- `lib/features/profile/data/java_backend_client.dart`
+- `backend/src/main/java/app/ascend/backend/perfil/`
 - `firestore.rules`
 
 Rules:
@@ -145,13 +148,13 @@ Rules:
 - Isar player records are local cache/offline state
 - `syncPlayerProfileFromSource` is migration/repair tooling, not normal reward
   authority
-- attribute allocation should use backend callables
-- profile settings updates should use backend callables
+- attribute allocation uses Java backend commands
+- profile settings updates use Java backend commands
 - XP, level, streak, and stat rules need tests when changed
 
 Current risk:
-- `player_controller.dart` still mixes local persistence, remote sync, fallback,
-  and UI-facing state transitions. Refactor carefully behind existing tests.
+- `player_controller.dart` still mixes local persistence, remote sync, and
+  UI-facing state transitions. Refactor carefully behind existing tests.
 
 ### Quests
 
@@ -162,6 +165,8 @@ Primary files:
 - `lib/features/quests/presentation/quest_controller.dart`
 - `lib/features/quests/data/quest_sync_repository.dart`
 - `lib/features/quests/data/competitive_quest_authority_repository.dart`
+- `backend/src/main/java/app/ascend/backend/quests/`
+- `backend/src/main/java/app/ascend/backend/quiz/`
 
 Rules:
 - personal quests stay low-friction and can grant account XP through backend
@@ -173,7 +178,7 @@ Rules:
 - completed competitive quests should not appear as both active and completed
 
 Current risk:
-- `quest_controller.dart` still combines Isar writes, cloud sync, personal
+- `quest_controller.dart` still combines Isar writes, backend sync, personal
   completion, competitive verification, and UI flow decisions. Future refactors
   should split behavior without changing contracts.
 
@@ -188,7 +193,9 @@ Primary files:
 - `lib/features/profile/domain/competitive_integrity.dart`
 - `lib/features/profile/data/rank_progression_repository.dart`
 - `lib/features/profile/presentation/rank_progression_provider.dart`
-- `functions/src/index.ts`
+- `backend/src/main/java/app/ascend/backend/competitivo/`
+- `backend/src/main/java/app/ascend/backend/promocao/`
+- `backend/src/main/java/app/ascend/backend/temporada/`
 
 Rules:
 - level defines eligibility, not automatic rank ascent
@@ -198,20 +205,20 @@ Rules:
 - seasonal rewards and legacy records should come from backend authority
 
 Current risk:
-- competitive domain logic is broad and functions code is concentrated in one
-  large file. Extract pure services/modules before adding more complexity.
+- competitive domain logic is broad. Keep Java services small and domain-focused
+  before adding more complexity.
 
 ### Weekly Boss
 
 Primary files:
 - `lib/features/weekly_boss/`
 - `lib/features/profile/domain/weekly_boss.dart`
-- `functions/src/index.ts`
+- `backend/src/main/java/app/ascend/backend/boss/`
 
 Rules:
 - weekly boss claim is backend-authoritative
 - competitive activity should be preferred for rank-facing boss progress
-- local fallback must not create duplicate reward authority
+- local UI/cache fallback must not create duplicate reward authority
 
 ### UI Surfaces
 
@@ -235,27 +242,26 @@ Current risk:
 
 ## Backend Shape
 
-Current Functions file:
-- `functions/src/index.ts`
+Current backend:
+- `backend/`
+- Spring Boot Java 21
+- Maven
+- Cloud Run
+- Firebase Admin SDK for Auth and Firestore
 
-Important callable groups:
-- session: `registerActiveSession`, `releaseActiveSession`
-- profile: `updateProfileSettings`, `allocateAttributePoint`,
-  `syncPlayerProfileFromSource`
-- personal quests: `completePersonalQuest`, `revokePersonalQuestCompletion`,
-  `syncQuestInventoryFromSource`
-- competitive quests: `startCompetitiveQuestSession`,
-  `verifyCompetitiveQuestCompletion`
-- competitive read models: `syncCompetitiveStateFromSource`,
-  `syncCompetitiveIntegrityFromSource`
-- promotion/season: `startPromotionExam`, `confirmPromotion`,
-  `claimSeasonReward`, `getSeasonBracketLeaderboard`
-- weekly boss: `claimWeeklyBoss`
+Important endpoint groups:
+- session: active-session register/release
+- profile: settings, attribute allocation, source sync
+- personal quests: complete, revoke, inventory sync
+- competitive quests: session start, verification, integrity/state sync
+- reading quiz: attempt creation and Java-side verification
+- promotion/season: exam start/confirm, season reward, leaderboard
+- weekly boss: claim
 
 Current risk:
-- `functions/src/index.ts` is too large for long-term maintenance. The next
-  backend hardening step should extract modules by domain while preserving
-  callable contracts and tests.
+- Java is now the only remote authority for active product behavior. Any new
+  reward-bearing behavior must follow the existing DDD package style and include
+  service/controller tests before release.
 
 ## Competitive Verification V1
 
@@ -279,7 +285,6 @@ Reference:
 ## Refactor Priorities
 
 Do these in small, test-protected slices:
-- compact and modularize `functions/src/index.ts`
 - split large screens into local sections/widgets
 - reduce synchronous Isar work in UI-driven paths
 - make remote sync failures observable instead of silently swallowed
@@ -299,9 +304,14 @@ Flutter changes:
 - `flutter analyze`
 - `flutter test`
 
-Functions changes:
-- `npm test` in `functions`
-- `npm run test:rules` when rules or Firestore authority are touched
+Java backend changes:
+- `cd backend && mvn test`
+- `cd backend && mvn package`
+- deploy/smoke Cloud Run when backend behavior changes
+
+Firestore rules changes:
+- run the Firestore rules/emulator validation path when rules or Firestore
+  authority are touched
 
 Isar schema changes:
 - `dart run build_runner build --delete-conflicting-outputs`

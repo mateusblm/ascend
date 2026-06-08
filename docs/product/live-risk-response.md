@@ -15,7 +15,7 @@ Ascend does not yet have Remote Config feature flags or a dedicated kill-switch 
 For the current controlled validation phase, risk response relies on:
 - stopping distribution of the affected APK
 - reverting or hotfixing code
-- deploying backend fixes for callable/rules regressions
+- deploying backend fixes for Java/Cloud Run or Firestore rules regressions
 - documenting the incident and smoke result before resuming distribution
 
 Remote Config or a kill-switch layer should be added only when a specific risky behavior needs live toggling.
@@ -44,13 +44,13 @@ Action:
 
 Use when:
 - Firestore rules are too permissive or too restrictive
-- callable validation rejects valid requests
-- callable validation grants incorrect state
+- Java backend validation rejects valid requests
+- Java backend validation grants incorrect state
 - weekly boss or rank aggregate behavior is wrong
 
 Action:
 1. deploy only the affected backend surface
-2. run `rtk npm --prefix functions test -- --test-reporter=spec`
+2. run `cd backend && mvn test`
 3. run `rtk npm --prefix functions run test:rules`
 4. smoke the affected mobile path on device
 5. record the fix in the RC log

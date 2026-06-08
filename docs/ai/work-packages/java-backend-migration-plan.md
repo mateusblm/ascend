@@ -938,12 +938,7 @@ rtk flutter analyze
 rtk flutter test
 rtk flutter build apk --flavor staging --debug
 
-# TypeScript while it exists
-cd functions
-npm test
-npm run build
-
-# Java after backend/ exists
+# Java backend
 cd backend
 mvn test
 mvn package
@@ -957,18 +952,16 @@ For backend-sensitive phases, also require:
 
 ## Rollback Requirements
 
-Each migrated endpoint must have:
-- old TS callable still deployed
-- Flutter config or feature flag to switch back
-- no irreversible Firestore schema change
-- documented rollback command or config change
+TypeScript rollback is archived because the local Functions project and Flutter
+fallback paths have been removed.
 
 If a Java endpoint causes production instability:
-1. switch Flutter/API routing back to TS
+1. stop distributing the affected build or roll back the Cloud Run revision
 2. keep logs
 3. do not hotfix blindly
 4. reproduce with a fixture
 5. add a regression test
+6. redeploy the Java backend only after validation
 6. redeploy Java only after test passes
 
 ## Data Migration Policy
@@ -1035,7 +1028,7 @@ The timeline can expand if product release work has higher priority.
 
 ## AI Working Instructions
 
-When a future AI session works on this migration:
+When a future AI session works on post-migration backend work:
 
 1. Read this file first.
 2. Read `AGENTS.md`.
@@ -1045,12 +1038,12 @@ When a future AI session works on this migration:
    - `docs/product/progression-architecture.md`
    - `docs/product/competitive-verification-v1.md`
    - `docs/ai/java-backend-coding-standard.md`
-4. Inspect the current TypeScript function before writing Java.
-5. Add tests before switching Flutter.
+4. Inspect current Java service/controller tests before changing backend
+   behavior.
+5. Add tests before changing Flutter routing or backend authority.
 6. Keep changes small enough for a Java reviewer to understand.
 7. Explain business rules in Portuguese in the final response.
-8. Do not delete TypeScript code unless the decommission phase is explicitly
-   active.
+8. Do not reintroduce TypeScript Functions or Flutter fallback paths.
 
 ## Initial Backlog
 
@@ -1136,5 +1129,5 @@ Current status:
 - current blocker:
   - authenticated Cloud Run smoke requires a real Firebase ID token from a test
     user before this route should be enabled outside staging/debug validation
-- current TypeScript backend remains authoritative
+- TypeScript backend is no longer authoritative in the local project
 - Maven is the selected Java dependency/build tool

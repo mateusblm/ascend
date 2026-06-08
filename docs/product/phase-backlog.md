@@ -21,8 +21,9 @@ This document is downstream from:
 
 The repo already has strong Phase 1 movement:
 - active-session repository and conflict handling exist
-- backend callables exist for profile settings, attribute allocation, personal quest completion, competitive verification, and weekly boss claim
-- profile and quest repositories already prefer callable-backed authority
+- Java backend endpoints exist for profile settings, attribute allocation,
+  personal quest completion, competitive verification, and weekly boss claim
+- profile and quest repositories use Java backend authority for migrated flows
 - Firestore rules are locked down to read-only from the client for authority-sensitive collections
 - release environments and trust-surface docs already exist
 - the account surface already exposes account identity, privacy, terms, support, and deletion direction
@@ -45,7 +46,7 @@ Current handling decision:
 Status: `partial`
 
 Completed:
-- device session id generation and callable registration
+- device session id generation and Java backend session registration
 - conflict detection path in auth/session flows
 - central sign-out on active-session conflict
 - unit coverage for conflict classification
@@ -60,8 +61,8 @@ Status: `partial`
 
 Completed:
 - `profile/current` read model wiring in the client
-- callable-backed profile sync and profile settings updates
-- attribute allocation routed through backend callables
+- Java-backed profile sync and profile settings updates
+- attribute allocation routed through Java backend commands
 - repository-level tests covering missing-remote upload policy and profile parsing
 
 Still required:
@@ -73,10 +74,10 @@ Still required:
 Status: `partial`
 
 Completed:
-- callable-backed personal quest completion and revocation
-- callable-backed competitive quest verification
-- quest inventory sync callable path
-- callable tests for competitive authority and audited metadata
+- Java-backed personal quest completion and revocation
+- Java-backed competitive quest verification
+- quest inventory sync through Java backend
+- backend tests for competitive authority and audited metadata
 - repository-level tests covering quest sync parsing and upload policy
 - Firestore rules emulator coverage now verifies:
   - public weekly boss reads
@@ -244,10 +245,12 @@ Completed on `2026-05-11`:
   - Windows Developer Mode / symlink support
   - Java on `PATH`
   - Node 20 for Functions validation parity
-- `npm audit fix` was applied without `--force`, updating safe transitive dependencies in `functions/package-lock.json`
+- historical: `npm audit fix` was applied to the former Functions project before
+  TypeScript decommission
 
 Still required:
-- evaluate remaining `npm audit --force` recommendations in a dedicated dependency-upgrade pass rather than applying breaking changes blindly
+- no npm/Functions dependency-upgrade pass remains for the local project because
+  `functions/` was removed during TypeScript decommission
 
 ### Product focus override
 
@@ -277,14 +280,12 @@ Completed in the first implementation slice:
 - Firestore rule/test coverage for evidence audit read-only access
 
 Backend hardening completed on `2026-05-12`:
-- Functions code was reorganized without intentional product-rule changes.
+- historical: Functions code was reorganized without intentional product-rule changes.
 - shared validation/date helpers, competitive evidence, competitive rank helpers,
   competitive season helpers, profile progression, and quest inventory now have
-  module homes outside `functions/src/index.ts`.
-- callable wiring was cleaned up with shared callable options and Firestore ref
-  helpers.
-- final validation passed for Functions, Firestore rules, `flutter analyze`, and
-  `flutter test`.
+  module homes outside the former `functions/src/index.ts`.
+- final validation passed for the then-active Functions backend, Firestore
+  rules, `flutter analyze`, and `flutter test`.
 
 Competitive Verification V1 follow-up completed on `2026-05-12`:
 - backend competitive completion now checks prior grant history for reused
@@ -342,22 +343,22 @@ Competitive Verification V1 follow-up completed on `2026-05-14`:
 - backend reading quiz generation now goes through a `ReadingQuizGenerator`
   adapter boundary.
 - deterministic quiz generation remains the default and preserves the existing
-  callable contract.
+  backend response contract.
 - an `AiReadingQuizGenerator` boundary exists behind
   `ASCEND_READING_QUIZ_GENERATOR=ai`, but fails closed until a concrete provider
   is supplied.
 - Gemini is now the concrete provider implementation using REST
   `generateContent`, structured JSON output, `GEMINI_API_KEY`, and default model
   `gemini-2.5-flash-lite`.
-- no API key is hardcoded into the competitive verification callable.
+- no API key is hardcoded into competitive verification or quiz generation.
 
 Still pending after the current slice:
 - Android SDK setup and staging debug APK build for the native Health Connect code
 - real-device Health Connect permission/read smoke
 - configure `GEMINI_API_KEY` and smoke-test AI quiz generation with
   non-sensitive test topics
-- plan Cloud Functions runtime upgrade before `2026-10-30` because deploy now
-  warns Node.js 20 is deprecated for Cloud Functions
+- delete/decommission any remote Firebase Functions that still exist after the
+  local TypeScript project removal
 
 ### Workstreams
 

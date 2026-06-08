@@ -132,13 +132,13 @@ Notes:
 ## Recommended Command Surface
 
 Normal progression should move through backend commands such as:
-- `completePersonalQuest`
-- `revokePersonalQuestCompletion`
-- `startCompetitiveQuestSession`
-- `verifyCompetitiveQuestCompletion`
-- `allocateAttributePoint`
-- `claimWeeklyBoss`
-- `updateProfileSettings`
+- `POST /api/v1/quests/personal:complete`
+- `POST /api/v1/quests/personal:revoke`
+- `POST /api/v1/quests/competitive:session:start`
+- `POST /api/v1/quests/competitive:verify`
+- `POST /api/v1/profile/attributes:allocate`
+- `POST /api/v1/weekly-boss:claim`
+- `POST /api/v1/profile/settings:update`
 
 Each command should:
 1. validate intent and prerequisites
@@ -148,7 +148,7 @@ Each command should:
 
 ## Current Implementation Status
 
-The app is now in the first real backend-authoritative phase:
+The app is now backend-authoritative for active progression flows:
 - `profile/current` is the official account aggregate for:
   - `level`
   - `xp`
@@ -156,19 +156,20 @@ The app is now in the first real backend-authoritative phase:
   - `statPoints`
   - `attributes`
   - streak and activity history
-- `completePersonalQuest` writes the fact and updates `profile/current` + `quests/{questId}`
-- `revokePersonalQuestCompletion` reverts the personal completion fact and repairs the affected aggregate fields
-- `verifyCompetitiveQuestCompletion` now writes the competitive grant fact and updates:
+- personal quest completion writes the fact and updates `profile/current` + `quests/{questId}`
+- personal quest revocation reverts the personal completion fact and repairs the affected aggregate fields
+- competitive quest verification writes the competitive grant fact and updates:
   - `profile/current`
   - `quests/{questId}`
   - `quest_completions/{attemptId}`
-- `allocateAttributePoint` and `claimWeeklyBoss` also update `profile/current` on the backend
+- attribute allocation and weekly boss claim also update `profile/current` on the backend
 - `syncPlayerProfileFromSource` and `syncQuestInventoryFromSource` now exist primarily for:
   - migration
   - repair
   - audited cache recovery
 
-The Flutter app should treat the callable response as the source of truth and only cache that result locally.
+The Flutter app should treat the Java backend response as the source of truth
+and only cache that result locally.
 
 ## Anti-Patterns To Avoid
 
@@ -179,15 +180,17 @@ Do not:
 - let the client mutate reward-bearing collections directly
 - model long-term account progression as a UI cache problem
 
-## Migration Direction
+## Post-Migration Direction
 
-The target migration order should be:
+The migration direction is now complete for the active product behavior. Future
+work should:
 
-1. make `profile/current` the official backend-authored aggregate
-2. move personal quest completion to a command + fact + aggregate update flow
-3. move attribute allocation to a command + fact + aggregate update flow
+1. keep `profile/current` as the official backend-authored aggregate
+2. keep personal quest completion in the command + fact + aggregate update flow
+3. keep attribute allocation in the command + fact + aggregate update flow
 4. keep weekly boss and competitive paths backend-authored
-5. keep `syncPlayerProfileFromSource` / `syncQuestInventoryFromSource` as migration-repair tooling instead of the normal production path
+5. keep source sync endpoints as repair tooling instead of normal reward paths
+6. avoid reintroducing Firebase Functions or TypeScript fallback paths
 
 ## Security Rule
 

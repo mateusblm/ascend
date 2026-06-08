@@ -77,7 +77,10 @@ deleted, or folded into durable docs once their package is complete:
 - `docs/ai/work-packages/java-backend-migration-plan.md`
 - `docs/ai/work-packages/java-backend-callable-inventory.md`
 
-Do not treat work-package briefs as permanent architecture.
+Do not treat work-package briefs as permanent architecture. The Java migration
+briefs are now historical/post-migration references; current backend authority
+is documented in `docs/ai/architecture-map.md`,
+`docs/product/progression-architecture.md`, and `backend/README.md`.
 
 ## Knowledge Vault Policy
 
@@ -93,13 +96,17 @@ under `knowledge-vault/04-entities/` can become stale whenever code changes.
 
 ## Current Active State
 
-As of `2026-05-11`:
-- active phase: `Phase 3 - Product reliability and release readiness`
-- active stabilization package: documentation/control-plane cleanup completed, with dependency-upgrade follow-up remaining
-- next implementation track after cleanup: `Competitive Verification V1`
-- external beta remains blocked by:
+As of `2026-06-07`:
+- Java/Spring Boot on Cloud Run is the authoritative backend for active product
+  behavior.
+- The local TypeScript Firebase Functions project was removed.
+- Flutter no longer uses `cloud_functions` or TypeScript fallback paths.
+- remaining post-migration cleanup:
+  - delete/decommission any remotely deployed Firebase Functions if they still
+    exist in the Firebase project
+  - run a final staging smoke after remote cleanup
+  - keep release docs aligned with Java/Cloud Run operations
+- external beta still requires the normal release-readiness evidence:
   - real support channel ownership
   - recorded real-device smoke pass
   - operational owner and backup assignment
-- local validation environment blockers were resolved by the operator on `2026-05-11`
-- remaining dependency/security follow-up: evaluate the `npm audit --force` path for Firebase tooling in a dedicated upgrade pass

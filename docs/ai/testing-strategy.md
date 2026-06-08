@@ -125,7 +125,8 @@ Current competitive additions to protect:
 29. home and rank should render integrity state without breaking their primary CTA flows
 30. first-week journey summary should stay coherent for newly onboarded players
 31. progress payoff summary should stay readable as level, rank, and season state changes
-32. promotion authority should keep backend-first behavior without breaking fallback
+32. promotion authority should keep Java backend behavior without requiring
+    TypeScript fallback
 33. prestige summary should react softly to low competitive integrity
 34. season leaderboard summary should support backend-fed bracket standings
 35. boss claim should not silently fall back to client-side writes in the competitive path
@@ -181,8 +182,8 @@ Current competitive additions to protect:
 51. session and authority hardening should protect:
     - second device login is rejected while another active session is still valid
     - heartbeat/session refresh keeps the active device lease alive
-    - profile sync uses the backend-derived callable path instead of trusting client `level/xp/streak/history`
-    - quest sync uses the audited callable path instead of direct client writes
+    - profile sync uses the Java backend path instead of trusting client `level/xp/streak/history`
+    - quest sync uses the audited Java backend path instead of direct client writes
     - competitive quest templates remain validated against official backend definitions during quest inventory sync
 52. final progression architecture should protect:
     - frontend commands do not become the final authority for account progression
@@ -191,7 +192,7 @@ Current competitive additions to protect:
     - backend facts and aggregates stay aligned after competitive quest verification
     - backend facts and aggregates stay aligned after weekly boss claim
     - attribute allocation updates the authoritative profile instead of only local UI state
-    - callable responses are applied back into the local cache instead of local reward math running in parallel
+    - Java backend responses are applied back into the local cache instead of local reward math running in parallel
     - full recomputation remains a repair/migration path, not the default production write path
 
 ## AI Test Rules

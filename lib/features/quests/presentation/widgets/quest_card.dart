@@ -1,4 +1,5 @@
-import 'package:ascend/core/theme/app_colors.dart';
+﻿import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/theme/ascend_design_tokens.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
 
@@ -36,6 +37,11 @@ class QuestCard extends StatelessWidget {
     final surfaceGlow = quest.isCompleted
         ? Colors.white.withValues(alpha: 0.015)
         : accent.withValues(alpha: 0.06);
+    final missionLabel = quest.isCompetitive
+        ? 'CONTRATO DE ARENA'
+        : 'MISSÃO DE BASE';
+    final primaryLabel =
+        primaryActionLabel ?? (quest.isCompleted ? 'Arquivada' : 'Concluir');
 
     return AnimatedContainer(
       key: ValueKey('quest-card-${quest.id}'),
@@ -48,7 +54,7 @@ class QuestCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [surfaceGlow, surfaceBase, AppColors.surface],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: accent.withValues(alpha: quest.isCompleted ? 0.24 : 0.18),
         ),
@@ -68,11 +74,15 @@ class QuestCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          Positioned(left: 0, top: 0, bottom: 0, child: _MissionRail(accent)),
           Positioned(
-            left: 0,
             top: 0,
-            bottom: 0,
-            child: Container(width: 4, color: accent),
+            right: 0,
+            child: Container(
+              width: 74,
+              height: 1,
+              color: accent.withValues(alpha: 0.46),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -91,12 +101,16 @@ class QuestCard extends StatelessWidget {
                             runSpacing: 8,
                             children: [
                               _QuestChip(
-                                label: quest.isCompetitive ? 'Arena' : 'Base',
+                                label: missionLabel,
                                 color: accent,
+                                icon: quest.isCompetitive
+                                    ? Icons.shield_rounded
+                                    : Icons.track_changes_rounded,
                               ),
                               _QuestChip(
                                 label: _verificationLabel(quest),
                                 color: AppColors.textSecondary,
+                                icon: Icons.verified_user_outlined,
                               ),
                             ],
                           ),
@@ -139,22 +153,36 @@ class QuestCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: FilledButton.tonal(
+                      child: FilledButton.icon(
                         key: ValueKey('quest-card-primary-${quest.id}'),
                         onPressed: primaryActionEnabled
                             ? onPrimaryAction
                             : null,
+                        icon: Icon(
+                          quest.isCompleted
+                              ? Icons.inventory_2_rounded
+                              : quest.isCompetitive
+                              ? Icons.play_arrow_rounded
+                              : Icons.done_rounded,
+                          size: 18,
+                        ),
                         style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(42),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           backgroundColor: accent.withValues(alpha: 0.16),
                           foregroundColor: accent,
                           disabledBackgroundColor: Colors.white.withValues(
                             alpha: 0.05,
                           ),
                           disabledForegroundColor: Colors.white38,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        child: Text(
-                          primaryActionLabel ??
-                              (quest.isCompleted ? 'Concluida' : 'Marcar'),
+                        label: Text(
+                          primaryLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -164,6 +192,10 @@ class QuestCard extends StatelessWidget {
                       TextButton(
                         key: ValueKey('quest-card-secondary-${quest.id}'),
                         onPressed: onSecondaryAction,
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
                         child: Text(secondaryActionLabel!),
                       ),
                     ],
@@ -197,10 +229,11 @@ class QuestCard extends StatelessWidget {
 }
 
 class _QuestChip extends StatelessWidget {
-  const _QuestChip({required this.label, required this.color});
+  const _QuestChip({required this.label, required this.color, this.icon});
 
   final String label;
   final Color color;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +244,41 @@ class _QuestChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10.5,
-          color: color,
-          fontWeight: FontWeight.w700,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: color, size: 13),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionRail extends StatelessWidget {
+  const _MissionRail(this.accent);
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 5,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [accent, accent.withValues(alpha: 0.28), Colors.transparent],
         ),
       ),
     );
@@ -240,7 +302,7 @@ class _RewardPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AscendDesignTokens.radiusControl),
         border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(

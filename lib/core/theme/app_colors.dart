@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color background = Color(0xFF081018);
-  static const Color backgroundElevated = Color(0xFF0D1720);
-  static const Color surface = Color(0xFF111B24);
-  static const Color surfaceMuted = Color(0xFF15222C);
-  static const Color surfaceStrong = Color(0xFF1A2833);
+  static const Color background = Color(0xFF05070D);
+  static const Color backgroundElevated = Color(0xFF0A0F1A);
+  static const Color surface = Color(0xFF101620);
+  static const Color surfaceMuted = Color(0xFF171D2A);
+  static const Color surfaceStrong = Color(0xFF202838);
 
-  static const Color borderSubtle = Color(0x1FFFFFFF);
-  static const Color borderStrong = Color(0x24FFFFFF);
+  static const Color borderSubtle = Color(0x18D4E7F4);
+  static const Color borderStrong = Color(0x2AD4E7F4);
 
-  static const Color neonBlue = Color(0xFF58C7FF);
-  static const Color neonPurple = Color(0xFF8D7DFF);
-  static const Color questAccent = Color(0xFF6CE4B1);
-  static const Color arenaAccent = Color(0xFFFFC76B);
-  static const Color planAccent = Color(0xFF8ED7FF);
-  static const Color danger = Color(0xFFFF7E7E);
+  static const Color neonBlue = Color(0xFF5CCFE6);
+  static const Color neonPurple = Color(0xFF9F8CFF);
+  static const Color questAccent = Color(0xFF63C99B);
+  static const Color arenaAccent = Color(0xFFA78BFA);
+  static const Color planAccent = Color(0xFF7FB6C8);
+  static const Color danger = Color(0xFFE66F7C);
 
-  static const Color systemText = Color(0xFFF4F7FA);
-  static const Color textPrimary = Color(0xFFF4F7FA);
-  static const Color textSecondary = Color(0xFFA8B7C6);
-  static const Color textMuted = Color(0xFF7E8B98);
+  static const Color systemText = Color(0xFFEAF0F4);
+  static const Color textPrimary = Color(0xFFEAF0F4);
+  static const Color textSecondary = Color(0xFFA8B3BD);
+  static const Color textMuted = Color(0xFF74808B);
 }

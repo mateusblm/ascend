@@ -98,9 +98,12 @@ Exit criteria:
 ### Month 3 - UI Maintainability And Core Loop Clarity
 
 Goal:
-- keep top-level surfaces clear while reducing regression risk
+- make Ascend feel like an original progression system while keeping top-level
+  surfaces clear and reducing regression risk
 
 Deliverables:
+- apply the `Ascend System UI` direction from
+  `docs/product/game-system-design-plan.md`
 - break oversized screens into local sections/widgets where it improves clarity
 - preserve surface ownership:
   - Base/Home: identity, momentum, payoff

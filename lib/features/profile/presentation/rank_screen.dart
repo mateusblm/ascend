@@ -1,5 +1,4 @@
 import 'package:ascend/core/widgets/reveal_block.dart';
-import 'package:ascend/core/widgets/detail_shell_screen.dart';
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/competitive_integrity.dart';
@@ -30,7 +29,11 @@ class RankScreen extends ConsumerStatefulWidget {
   ConsumerState<RankScreen> createState() => _RankScreenState();
 }
 
+enum _ArenaBoard { agora, temporada, legado }
+
 class _RankScreenState extends ConsumerState<RankScreen> {
+  _ArenaBoard _selectedBoard = _ArenaBoard.agora;
+
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
@@ -133,8 +136,6 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     final targetLevel =
         snapshot?.targetRequiredLevel ?? nextRule?.minimumLevel ?? player.level;
     final targetLevelGateMet = snapshot?.targetLevelGateMet ?? true;
-    final heroMessage =
-        snapshot?.summary ?? 'Seu estado competitivo ainda está sincronizando.';
     final currentActiveDays = snapshot?.activeDays ?? 0;
     final nextActiveDays = nextRule == null
         ? currentActiveDays
@@ -196,18 +197,13 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 ),
               ),
               const InfoTooltipIcon(
-                title: 'Como ler esta tela',
+                title: 'Arena',
                 message:
-                    'Agora mostra o que precisa ser feito nesta semana. Temporada resume seu momento atual. Legado guarda o que você já conquistou.',
+                    'Agora, Temporada e Legado separam risco, corrida e histórico.',
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Seu posto atual, o risco da semana e o próximo gate em um único quadro.',
-            style: textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -364,14 +360,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  heroMessage,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _HeroReadTile(
                   label: 'Semana',
                   value: currentObjective,
@@ -435,48 +424,27 @@ class _RankScreenState extends ConsumerState<RankScreen> {
     SeasonProfileSnapshot? seasonProfile,
     List<SeasonLegacyReward> seasonLegacyHistory,
   ) {
-    final currentRank =
-        snapshot?.currentRank ?? playerRankForLevel(player.level);
     final status = snapshot?.status ?? RankMaintenanceStatus.secure;
     final accent = _statusColor(status);
-    final seasonSummary =
-        '${leaderboard.playerStandingLabel} • ${season.rewardStatusLabel}';
-    final legacySummary =
-        seasonProfile?.activeTitleLabel ??
-        'Titulos, picos e recompensas permanentes da conta.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Abrir detalhes',
-          style: TextStyle(
-            fontSize: 13,
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
+        _buildArenaBoardSelector(
+          selected: _selectedBoard,
+          onChanged: (board) => setState(() => _selectedBoard = board),
+          nowBadge: _statusLabel(status),
+          seasonBadge: season.rewardTierLabel,
+          legacyBadge: seasonProfile?.activeTitleLabel ?? 'Arquivo',
+          nowAccent: accent,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Agora mostra a pressao da semana. Temporada resume a corrida atual. Legado guarda o que ja ficou permanente.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 12),
-        _SectionEntryCard(
-          key: const ValueKey('rank-entry-now'),
-          title: 'Agora',
-          summary: snapshot?.summary ?? arena.leaderHeadline,
-          supporting: currentRank == season.peakRank
-              ? 'Seu posto da semana, a prova atual e o evento competitivo.'
-              : 'Seu posto da semana e o caminho para recuperar ou ampliar o pico.',
-          badge: _statusLabel(status),
-          accent: accent,
-          onTap: () => _openRankDetail(
-            context,
-            title: 'Pressao Atual',
-            subtitle:
-                'Manutencao do posto, promocao ou reconquista e evento competitivo da semana.',
-            child: _buildNowSection(
+        const SizedBox(height: 14),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: switch (_selectedBoard) {
+            _ArenaBoard.agora => _buildNowSection(
               context,
               player,
               snapshot,
@@ -485,22 +453,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               prestige,
               integrity,
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _SectionEntryCard(
-          key: const ValueKey('rank-entry-season'),
-          title: 'Temporada',
-          summary: seasonSummary,
-          supporting: 'Pontuacao sazonal, recompensa do ciclo e grupo atual.',
-          badge: season.rewardTierLabel,
-          accent: AppColors.neonBlue,
-          onTap: () => _openRankDetail(
-            context,
-            title: 'Corrida Sazonal',
-            subtitle:
-                'Corrida sazonal, recompensa do ciclo e situacao atual do seu grupo.',
-            child: _buildSeasonSection(
+            _ArenaBoard.temporada => _buildSeasonSection(
               context,
               player,
               season,
@@ -508,43 +461,82 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               currentSeasonReward,
               rivalry,
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _SectionEntryCard(
-          key: const ValueKey('rank-entry-legacy'),
-          title: 'Legado',
-          summary: legacySummary,
-          supporting: 'Titulos, picos e recompensas permanentes da conta.',
-          badge: 'ARQUIVO',
-          accent: Colors.amberAccent,
-          onTap: () => _openRankDetail(
-            context,
-            title: 'Legado',
-            subtitle:
-                'Titulos, picos, recompensas permanentes e trilha historica da conta.',
-            child: _buildLegacySection(
+            _ArenaBoard.legado => _buildLegacySection(
               snapshot,
               history,
               seasonProfile,
               seasonLegacyHistory,
             ),
-          ),
+          },
         ),
       ],
     );
   }
 
-  void _openRankDetail(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required Widget child,
+  Widget _buildArenaBoardSelector({
+    required _ArenaBoard selected,
+    required ValueChanged<_ArenaBoard> onChanged,
+    required String nowBadge,
+    required String seasonBadge,
+    required String legacyBadge,
+    required Color nowAccent,
   }) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            DetailShellScreen(title: title, subtitle: subtitle, child: child),
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Painel da Arena',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+              ),
+              _StatusPill(label: 'COMPETITIVO', color: AppColors.arenaAccent),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _ArenaBoardButton(
+                  key: const ValueKey('rank-entry-now'),
+                  label: 'Agora',
+                  badge: nowBadge,
+                  icon: Icons.warning_amber_rounded,
+                  accent: nowAccent,
+                  selected: selected == _ArenaBoard.agora,
+                  onTap: () => onChanged(_ArenaBoard.agora),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ArenaBoardButton(
+                  key: const ValueKey('rank-entry-season'),
+                  label: 'Temporada',
+                  badge: seasonBadge,
+                  icon: Icons.emoji_events_rounded,
+                  accent: AppColors.neonBlue,
+                  selected: selected == _ArenaBoard.temporada,
+                  onTap: () => onChanged(_ArenaBoard.temporada),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ArenaBoardButton(
+                  key: const ValueKey('rank-entry-legacy'),
+                  label: 'Legado',
+                  badge: legacyBadge,
+                  icon: Icons.workspace_premium_rounded,
+                  accent: Colors.amberAccent,
+                  selected: selected == _ArenaBoard.legado,
+                  onTap: () => onChanged(_ArenaBoard.legado),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -645,7 +637,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
               label: 'DESAFIO DO RANK',
               value: currentRule.requiresBossClear
                   ? ((snapshot?.bossCompleted ?? false) ? 'OK' : 'PENDENTE')
-                  : 'NAO EXIGIDO',
+                  : 'NÃO EXIGIDO',
               accent: (snapshot?.bossCompleted ?? false)
                   ? Colors.greenAccent
                   : Colors.white70,
@@ -683,8 +675,8 @@ class _RankScreenState extends ConsumerState<RankScreen> {
             Text(
               targetLevelGateMet
                   ? mode == RankAdvancementMode.reconquest
-                        ? 'Seu level ja permite voltar para $nextRank. Agora falta fechar a semana.'
-                        : 'Seu level ja permite tentar $nextRank. Agora falta fechar a semana.'
+                        ? 'Seu level já permite voltar para $nextRank. Agora falta fechar a semana.'
+                        : 'Seu level já permite tentar $nextRank. Agora falta fechar a semana.'
                   : 'O rank $nextRank abre a partir do level $targetLevel.',
               style: const TextStyle(
                 color: Colors.white70,
@@ -706,7 +698,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                 label: 'DESAFIO DO $nextRank',
                 value: nextRule.requiresBossClear
                     ? (nextBossDone ? 'OK' : 'PENDENTE')
-                    : 'NAO EXIGIDO',
+                    : 'NÃO EXIGIDO',
                 accent: nextRule.requiresBossClear
                     ? (nextBossDone ? Colors.greenAccent : Colors.white70)
                     : Colors.white70,
@@ -773,34 +765,34 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       PromotionExamStatus.passed =>
         examMode == PromotionExamMode.reconquest
             ? 'RECONQUISTA PRONTA'
-            : 'PROMOCAO PRONTA',
-      PromotionExamStatus.failed => 'PROVA NAO CONCLUIDA',
+            : 'PROMOÇÃO PRONTA',
+      PromotionExamStatus.failed => 'PROVA NÃO CONCLUÍDA',
       PromotionExamStatus.promoted => 'RANK ATUALIZADO',
       null =>
         snapshot?.promotionReady == true
             ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
-                  ? 'RECONQUISTA DISPONIVEL'
-                  : 'PROVA DISPONIVEL')
+                  ? 'RECONQUISTA DISPONÍVEL'
+                  : 'PROVA DISPONÍVEL')
             : 'PROVA DE RANK',
     };
     final body = switch (exam?.status) {
       PromotionExamStatus.inProgress =>
         examMode == PromotionExamMode.reconquest
-            ? 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para voltar ao seu pico.'
-            : 'Voce ja cumpriu a base da semana. Agora falta fechar a prova para subir.',
+            ? 'Você já cumpriu a base da semana. Agora falta fechar a prova para voltar ao seu pico.'
+            : 'Você já cumpriu a base da semana. Agora falta fechar a prova para subir.',
       PromotionExamStatus.passed =>
         examMode == PromotionExamMode.reconquest
-            ? 'A prova foi vencida. Agora voce pode recuperar seu rank.'
-            : 'A prova foi vencida. Agora voce pode confirmar a subida.',
+            ? 'A prova foi vencida. Agora você pode recuperar seu rank.'
+            : 'A prova foi vencida. Agora você pode confirmar a subida.',
       PromotionExamStatus.failed =>
-        'A prova expirou ou nao foi sustentada a tempo.',
+        'A prova expirou ou não foi sustentada a tempo.',
       PromotionExamStatus.promoted =>
-        'A ultima prova ja foi convertida em rank.',
+        'A última prova já foi convertida em rank.',
       null =>
         snapshot?.promotionReady == true
             ? (snapshot?.advancementMode == RankAdvancementMode.reconquest
-                  ? 'Seu historico ja provou esse posto. Falta so passar na prova de retorno.'
-                  : 'Voce ja cumpriu os requisitos. Falta so passar na prova final.')
+                  ? 'Seu histórico já provou esse posto. Falta só passar na prova de retorno.'
+                  : 'Você já cumpriu os requisitos. Falta só passar na prova final.')
             : 'Quando sua semana liberar uma prova, ela aparece aqui.',
     };
 
@@ -1154,7 +1146,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
                   context,
                   success
                       ? 'Pacote sazonal resgatado.'
-                      : 'A recompensa ainda nao pode ser resgatada.',
+                      : 'A recompensa ainda não pode ser resgatada.',
                 );
               },
             )
@@ -1435,7 +1427,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
           const SizedBox(height: 12),
           if (rewards.isEmpty)
             const Text(
-              'Voce ainda nao resgatou nenhuma temporada.',
+              'Você ainda não resgatou nenhuma temporada.',
               style: TextStyle(
                 color: Colors.white60,
                 fontSize: 12.5,
@@ -1651,7 +1643,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
   String _statusHeadline(RankMaintenanceStatus status) {
     return switch (status) {
       RankMaintenanceStatus.secure => 'Semana segura',
-      RankMaintenanceStatus.warning => 'Atencao nesta semana',
+      RankMaintenanceStatus.warning => 'Atenção nesta semana',
       RankMaintenanceStatus.critical => 'Risco real de queda',
       RankMaintenanceStatus.promotionReady => 'Pronto para prova',
       RankMaintenanceStatus.demoted => 'Queda aplicada',
@@ -1675,7 +1667,7 @@ class _RankScreenState extends ConsumerState<RankScreen> {
       CompetitiveRankEventType.perfectWeek => 'SEMANA FORTE',
       CompetitiveRankEventType.promotionUnlocked => 'EXAME',
       CompetitiveRankEventType.reconquestUnlocked => 'RECONQUISTA',
-      CompetitiveRankEventType.promotionConfirmed => 'PROMOCAO',
+      CompetitiveRankEventType.promotionConfirmed => 'PROMOÇÃO',
       CompetitiveRankEventType.demotionApplied => 'QUEDA',
     };
   }
@@ -1693,12 +1685,12 @@ class _RankScreenState extends ConsumerState<RankScreen> {
   String _prestigeReading(RankPrestigeSummary prestige) {
     return switch (prestige.prestigeLabel) {
       'PREDADOR' =>
-        'Voce esta sustentando uma faixa de elite com consistencia rara.',
+        'Você esta sustentando uma faixa de elite com consistência rara.',
       'ASCENDENTE' =>
-        'Seu historico mostra evolucao real e boa chance de continuar subindo.',
+        'Seu histórico mostra evolução real e boa chance de continuar subindo.',
       'ESTAVEL' => 'Seu ritmo esta confiavel e seguro.',
       'OSCILANTE' => 'Ha bons sinais, mas ainda com semanas de oscilacao.',
-      _ => 'Sua consistencia ainda esta sendo formada.',
+      _ => 'Sua consistência ainda esta sendo formada.',
     };
   }
 
@@ -2054,22 +2046,22 @@ class _HeroReadTile extends StatelessWidget {
   }
 }
 
-class _SectionEntryCard extends StatelessWidget {
-  const _SectionEntryCard({
+class _ArenaBoardButton extends StatelessWidget {
+  const _ArenaBoardButton({
     super.key,
-    required this.title,
-    required this.summary,
-    required this.supporting,
+    required this.label,
     required this.badge,
+    required this.icon,
     required this.accent,
+    required this.selected,
     required this.onTap,
   });
 
-  final String title;
-  final String summary;
-  final String supporting;
+  final String label;
   final String badge;
+  final IconData icon;
   final Color accent;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -2077,96 +2069,44 @@ class _SectionEntryCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 96),
-          padding: const EdgeInsets.all(18),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(minHeight: 86),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                accent.withValues(alpha: 0.08),
-                AppColors.surfaceStrong.withValues(alpha: 0.68),
-              ],
+            color: accent.withValues(alpha: selected ? 0.16 : 0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: accent.withValues(alpha: selected ? 0.38 : 0.14),
             ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: accent.withValues(alpha: 0.14)),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: accent,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.16),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Text(
-                            badge,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      summary,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      supporting,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12.3,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
+              Icon(icon, color: accent, size: 19),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: accent.withValues(alpha: 0.14)),
-                ),
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: accent,
-                  size: 24,
+              const SizedBox(height: 3),
+              Text(
+                badge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

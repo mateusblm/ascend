@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
-  testWidgets('RankScreen routes to now, season and legacy detail surfaces', (
+  testWidgets('RankScreen switches between now, season and legacy surfaces', (
     tester,
   ) async {
     final player = _buildPlayer();
@@ -201,16 +201,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('rank-now')), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
-    await tester.pumpAndSettle();
-
     await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-season')));
     await tester.tap(find.byKey(const ValueKey('rank-entry-season')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('rank-season')), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
-    await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byKey(const ValueKey('rank-entry-legacy')));
     await tester.tap(find.byKey(const ValueKey('rank-entry-legacy')));
@@ -314,7 +308,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rank-entry-now')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('rank-start-exam-action')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('rank-start-exam-action')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('RankScreen exposes promotion action after exam is passed', (

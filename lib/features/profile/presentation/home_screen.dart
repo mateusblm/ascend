@@ -1,7 +1,11 @@
 import 'dart:math' as math;
 
-import 'package:ascend/core/widgets/reveal_block.dart';
+import 'package:ascend/core/theme/ascend_design_tokens.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/reveal_block.dart';
+import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
+import 'package:ascend/core/widgets/system/system_badge.dart';
+import 'package:ascend/core/widgets/system/system_progress_core.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/achievement_modal.dart';
@@ -182,116 +186,136 @@ class HomeScreen extends ConsumerWidget {
   }) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Container(
+    return AscendSystemPanel(
       key: const ValueKey('home-header'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.neonBlue.withValues(alpha: 0.14),
-            AppColors.surface.withValues(alpha: 0.96),
-            AppColors.surfaceMuted.withValues(alpha: 0.98),
-          ],
-        ),
-        border: Border.all(color: AppColors.borderStrong),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.20),
-            blurRadius: 24,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Base',
-                      style: textTheme.labelMedium?.copyWith(
-                        color: AppColors.neonBlue,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 390;
+              final identity = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      const SystemBadge(
+                        label: 'BASE DO JOGADOR',
+                        icon: Icons.grid_view_rounded,
                       ),
+                      SystemBadge(
+                        label: seasonLabel ?? 'SISTEMA ATIVO',
+                        color: AppColors.planAccent,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.headlineMedium?.copyWith(
+                      fontSize: compact ? 26 : 30,
+                      height: 1.0,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    summary,
+                    style: textTheme.titleLarge?.copyWith(height: 1.2),
+                  ),
+                  if (detail.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
-                      name,
-                      style: textTheme.headlineMedium?.copyWith(
-                        fontSize: 28,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      title,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      detail,
+                      maxLines: compact ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodyMedium,
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _buildHeaderPill(seasonLabel ?? 'Base ativa', AppColors.neonBlue),
-            ],
+                ],
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: SystemProgressCore(
+                        progress: xpProgress,
+                        level: level,
+                        current: xp,
+                        target: maxXp,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    identity,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SystemProgressCore(
+                    progress: xpProgress,
+                    level: level,
+                    current: xp,
+                    target: maxXp,
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(child: identity),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 18),
-          Text(summary, style: textTheme.titleLarge?.copyWith(height: 1.2)),
-          const SizedBox(height: 8),
-          Text(detail, style: textTheme.bodyMedium),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           _buildStatBar('XP', xpProgress, AppColors.neonBlue, '$xp / $maxXp'),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          const SizedBox(height: 16),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
             children: [
-              SizedBox(
-                width: 138,
-                child: _buildHeaderMetricCard(
-                  label: 'Level',
-                  value: level.toString().padLeft(2, '0'),
-                  accentColor: AppColors.neonBlue,
-                  subtitle: 'próx.: ${math.max(maxXp - xp, 0)} XP',
-                ),
+              SystemMetricTile(
+                label: 'RANK',
+                value: rank,
+                color: AppColors.arenaAccent,
+                icon: Icons.shield_rounded,
               ),
-              SizedBox(
-                width: 138,
-                child: _buildHeaderMetricCard(
-                  label: 'Rank',
-                  value: rank,
-                  accentColor: AppColors.arenaAccent,
-                  subtitle: 'posto atual',
-                ),
+              SystemMetricTile(
+                label: 'STREAK',
+                value: '$currentStreak dias',
+                color: AscendDesignTokens.reward,
+                icon: Icons.local_fire_department_rounded,
               ),
-              SizedBox(
-                width: 138,
-                child: _buildHeaderMetricCard(
-                  label: 'Streak',
-                  value: '$currentStreak',
-                  accentColor: Colors.orangeAccent,
-                  subtitle: 'dias seguidos',
-                ),
+              SystemMetricTile(
+                label: 'FOCO',
+                value: focus.label,
+                color: AppColors.questAccent,
+                icon: Icons.track_changes_rounded,
               ),
-              SizedBox(
-                width: 138,
-                child: _buildHeaderMetricCard(
-                  label: 'Foco',
-                  value: focus.label,
-                  accentColor: AppColors.questAccent,
-                  compactValue: true,
-                  subtitle: 'ativo',
-                ),
+              SystemMetricTile(
+                label: 'PROXIMO PAYOFF',
+                value: '${math.max(maxXp - xp, 0)} XP',
+                color: AppColors.planAccent,
+                icon: Icons.auto_awesome_rounded,
               ),
             ],
           ),
@@ -318,7 +342,7 @@ class HomeScreen extends ConsumerWidget {
         : rankSnapshot?.summary ?? progressPayoff.headline;
     final body = firstWeekJourney.isActive
         ? firstWeekJourney.body
-        : 'Constancia efetiva ${prestige.effectiveMaintenanceRate}% nesta temporada. ${progressPayoff.rankLabel}';
+        : 'Constância efetiva ${prestige.effectiveMaintenanceRate}% nesta temporada. ${progressPayoff.rankLabel}';
 
     return _buildStatusCard(
       child: Column(
@@ -516,63 +540,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeaderMetricCard({
-    required String label,
-    required String value,
-    required Color accentColor,
-    bool compactValue = false,
-    String? subtitle,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.5,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: compactValue ? 0.1 : 0.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: compactValue ? 2 : 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: compactValue ? 13 : 26,
-              color: accentColor,
-              fontWeight: FontWeight.w800,
-              height: compactValue ? 1.2 : 1,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildStatusCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -696,7 +663,7 @@ class HomeScreen extends ConsumerWidget {
         weeklyBoss.isClaimedThisWeek(ref.read(playerProvider))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('O boss semanal ainda nao esta pronto para resgate.'),
+          content: Text('O boss semanal ainda não está pronto para resgate.'),
         ),
       );
       return;
@@ -722,7 +689,7 @@ class HomeScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Seu clear remoto ja estava registrado nesta semana.',
+              'Seu clear remoto já estava registrado nesta semana.',
             ),
           ),
         );
@@ -1185,7 +1152,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            snapshot?.summary ?? 'Seu estado competitivo esta sincronizando.',
+            snapshot?.summary ?? 'Seu estado competitivo está sincronizando.',
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -1412,7 +1379,7 @@ class HomeScreen extends ConsumerWidget {
             const Divider(color: Colors.white10, height: 1),
             const SizedBox(height: 12),
             const Text(
-              'Quem ja concluiu',
+              'Quem já concluiu',
               style: TextStyle(fontSize: 11, color: Colors.white38),
             ),
             const SizedBox(height: 10),
@@ -1589,7 +1556,7 @@ class HomeScreen extends ConsumerWidget {
           title: 'Pulso competitivo',
           summary:
               rankSnapshot?.summary ??
-              'Seu estado competitivo ainda esta sincronizando.',
+              'Seu estado competitivo ainda está sincronizando.',
           accent: pulseAccent,
           onTap: () => _openBaseDetailSheet(
             context,
@@ -1668,7 +1635,7 @@ class HomeScreen extends ConsumerWidget {
         value: attrs.intelligence,
         icon: Icons.psychology,
         color: Colors.cyanAccent,
-        description: 'Clareza, estudo e leitura de situacao.',
+        description: 'Clareza, estudo e leitura de situação.',
       ),
       _AttributeVisualSpec(
         label: 'VITALIDADE',
@@ -2026,7 +1993,7 @@ class HomeScreen extends ConsumerWidget {
         primaryLabel: primary.key,
         secondaryLabel: secondary.key,
         summary:
-            'Seu perfil esta distribuido. Isso passa leitura de consistencia, adaptacao e margem para varias linhas de quest sem depender de um unico atributo.',
+            'Seu perfil está distribuído. Isso passa leitura de consistência, adaptação e margem para várias linhas de quest sem depender de um único atributo.',
       );
     }
 
@@ -2044,7 +2011,7 @@ class HomeScreen extends ConsumerWidget {
       primaryLabel: primary.key,
       secondaryLabel: secondary.key,
       summary:
-          '${primary.key} lidera sua build agora, com ${secondary.key} como apoio. O grafico mostra uma identidade mais marcada e menos neutra no jeito como voce progride.',
+          '${primary.key} lidera sua build agora, com ${secondary.key} como apoio. O gráfico mostra uma identidade mais marcada e menos neutra no jeito como você progride.',
     );
   }
 }

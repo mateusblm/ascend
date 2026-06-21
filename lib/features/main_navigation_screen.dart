@@ -125,15 +125,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       ),
       child: Stack(
         children: [
-          const Positioned(
-            top: -170,
-            left: -130,
-            child: _AmbientGlow(
-              size: 360,
-              color: AppColors.neonBlue,
-              opacity: 0.05,
-            ),
-          ),
+          const Positioned.fill(child: _SystemAtmosphere()),
           Scaffold(
             extendBody: true,
             backgroundColor: Colors.transparent,
@@ -335,35 +327,78 @@ class _DockItem extends StatelessWidget {
   }
 }
 
-class _AmbientGlow extends StatelessWidget {
-  const _AmbientGlow({
-    required this.size,
-    required this.color,
-    required this.opacity,
-  });
-
-  final double size;
-  final Color color;
-  final double opacity;
+class _SystemAtmosphere extends StatelessWidget {
+  const _SystemAtmosphere();
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: opacity),
-              color.withValues(alpha: 0),
-            ],
-          ),
-        ),
-      ),
+      child: CustomPaint(painter: _SystemAtmospherePainter()),
     );
   }
+}
+
+class _SystemAtmospherePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundWash = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF070A10), Color(0xFF0B111A), Color(0xFF07080D)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, backgroundWash);
+
+    final riftPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..color = AppColors.neonBlue.withValues(alpha: 0.075);
+    final amberPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..color = AppColors.arenaAccent.withValues(alpha: 0.052);
+    final veilPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = AppColors.neonPurple.withValues(alpha: 0.032);
+
+    final leftRift = Path()
+      ..moveTo(size.width * 0.08, 0)
+      ..lineTo(size.width * 0.40, size.height * 0.26)
+      ..lineTo(size.width * 0.24, size.height * 0.53)
+      ..lineTo(size.width * 0.56, size.height * 0.84);
+    canvas.drawPath(leftRift, riftPaint);
+
+    final rightRift = Path()
+      ..moveTo(size.width * 0.96, size.height * 0.10)
+      ..lineTo(size.width * 0.64, size.height * 0.32)
+      ..lineTo(size.width * 0.83, size.height * 0.58)
+      ..lineTo(size.width * 0.58, size.height);
+    canvas.drawPath(rightRift, amberPaint);
+
+    final veil = Path()
+      ..moveTo(size.width * 0.58, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height * 0.64)
+      ..lineTo(size.width * 0.78, size.height * 0.46)
+      ..lineTo(size.width * 0.90, size.height * 0.18)
+      ..close();
+    canvas.drawPath(veil, veilPaint);
+
+    final gridPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.55
+      ..color = AppColors.borderSubtle.withValues(alpha: 0.50);
+    for (var y = size.height * 0.18; y < size.height; y += 86) {
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y + size.width * 0.18),
+        gridPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _NavigationDestination {

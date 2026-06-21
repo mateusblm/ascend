@@ -5,12 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static ThemeData dark() {
     final base = ThemeData.dark(useMaterial3: true);
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(
-      base.textTheme,
-    ).apply(
-      bodyColor: AppColors.textPrimary,
-      displayColor: AppColors.textPrimary,
-    );
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme)
+        .apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+        );
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
@@ -102,7 +101,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.neonBlue,
-          foregroundColor: Colors.black,
+          foregroundColor: const Color(0xFF051016),
           textStyle: textTheme.labelLarge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -113,7 +112,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.neonBlue,
-          foregroundColor: Colors.black,
+          foregroundColor: const Color(0xFF051016),
           textStyle: textTheme.labelLarge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

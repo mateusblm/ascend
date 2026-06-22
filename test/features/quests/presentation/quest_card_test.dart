@@ -35,21 +35,21 @@ void main() {
       final primaryFinder = find.byKey(
         const ValueKey('quest-card-primary-competitive-1'),
       );
-      expect(find.byKey(const ValueKey('quest-card-competitive-1')), findsOneWidget);
-      expect(primaryFinder, findsOneWidget);
       expect(
-        tester.widget<FilledButton>(primaryFinder).onPressed,
-        isNotNull,
+        find.byKey(const ValueKey('quest-card-competitive-1')),
+        findsOneWidget,
       );
+      expect(primaryFinder, findsOneWidget);
+      expect(tester.widget<FilledButton>(primaryFinder).onPressed, isNotNull);
 
       await tester.tap(primaryFinder);
       expect(primaryCalls, 1);
     },
   );
 
-  testWidgets('QuestCard exposes secondary action for completed personal quests', (
-    tester,
-  ) async {
+  testWidgets(
+    'QuestCard exposes secondary action for completed personal quests',
+    (tester) async {
       var secondaryCalls = 0;
       final quest = Quest(
         id: 'personal-1',
@@ -84,10 +84,7 @@ void main() {
         const ValueKey('quest-card-secondary-personal-1'),
       );
       expect(primaryFinder, findsOneWidget);
-      expect(
-        tester.widget<FilledButton>(primaryFinder).onPressed,
-        isNull,
-      );
+      expect(tester.widget<FilledButton>(primaryFinder).onPressed, isNull);
       expect(secondaryFinder, findsOneWidget);
 
       await tester.tap(secondaryFinder);

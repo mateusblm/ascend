@@ -52,13 +52,15 @@ The intended top-level navigation is:
 - `Base`
 - `Quests`
 - `Arena`
-- `Plano`
 
 Why:
 - `Base` frames the player as a character, not as a list owner
 - `Quests` keeps execution explicit and direct
 - `Arena` frames competitive pressure as its own destination
-- `Plano` frames reflection as action-oriented guidance, not just analytics
+
+`Conta` and planning details should be secondary surfaces opened from `Base`.
+The product should avoid adding a top-level destination unless it represents a
+daily player decision.
 
 ## Disclosure Strategy
 

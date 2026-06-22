@@ -7,20 +7,24 @@ Track the UI redesign as a phased workstream so future sessions can continue wit
 This document is downstream from:
 - `docs/product/ux-positioning.md`
 - `docs/product/ui-information-architecture.md`
+- `docs/product/game-system-design-plan.md`
 
 When an AI agent changes major UI surfaces, read this file first.
 
 ## Active Visual Direction
 
-Ascend should feel clear, calm, and progression-first.
+Ascend should feel like an original game system for personal progression, not a
+task dashboard with RPG decoration.
 
 The new shared pattern is:
 - one dominant hero or summary per top-level screen
 - fewer same-weight cards competing on screen
-- lighter surfaces and borders instead of constant glow-heavy panels
+- system-like panels, badges, and progress cores used with restraint
 - readable body typography first, expressive display typography only for short emphasis
 - sentence-case copy for most headings, buttons, and helper text
 - progressive disclosure through sheets or child screens instead of long explanation stacks
+- dense mobile surfaces where repeated metrics become badges or details
+- visual pressure where it changes behavior, especially in `Arena`
 
 Avoid reintroducing:
 - Orbitron-style display typography across all body copy
@@ -28,6 +32,7 @@ Avoid reintroducing:
 - repeated `panel + title + paragraph + metrics` blocks with the same visual weight
 - decorative gradients or glows that carry more visual weight than the content
 - long explanatory copy on top-level tabs when the next action can be shown directly
+- generic productivity language such as task filing, dashboard recap, or inbox management
 
 ## Shared Implementation Pattern
 
@@ -41,6 +46,8 @@ Rules for future UI work:
 - treat bright accent colors as directional emphasis, not as default card fill
 - prefer neutral surfaces (`surface`, `surfaceMuted`, `surfaceStrong`) for most containers
 - only use display fonts for short titles, hero numbers, or momentary payoff states
+- use `AscendDesignTokens` and widgets under `lib/core/widgets/system/` for reusable system surfaces
+- run every major screen against the density checklist in `game-system-design-plan.md`
 
 ## Phase Tracker
 
@@ -152,14 +159,105 @@ Follow-up:
 - test first-session conversion on smaller phones to confirm the sticky onboarding CTA never feels cramped
 - tune focus and starter-kit wording after real usage so the first week feels concrete without reading like setup text
 
+### Phase 8 - Ascend System UI foundation
+
+Status: `completed`
+
+Completed:
+- introduced shared system tokens and reusable system widgets
+- moved Base, Quests, and Arena toward a stronger game-system language
+- reduced repeated explanatory text in the highest-traffic progression surfaces
+- replaced generic ambient glow with a darker system atmosphere in the navigation shell
+
+Follow-up:
+- test the current build on device for scroll rhythm, contrast, and CTA reachability
+- keep cutting repeated information where mobile density still feels high
+
+### Phase 9 - Mobile density audit
+
+Status: `completed`
+
+Completed:
+- created `docs/product/ui-density-audit.md`
+- audited `Base`, `Quests`, `Arena`, and `Plano` against `game-system-design-plan.md`
+- identified repeated metrics, long helper copy, redundant cards, and weak CTAs
+- prioritized `Quests` first because it has the highest risk of becoming a generic task list
+
+Acceptance:
+- each top-level screen has a clear list of cuts and simplifications
+- no backend or progression rule changes are introduced
+- the next implementation batch can start from concrete screen-level decisions
+
+### Phase 10 - Compact Quests terminal
+
+Status: `completed`
+
+Completed:
+- merge the current hero and command deck into one compact terminal header
+- move the board selector directly below the header
+- move return-loop and first-week detail out of the first fold
+- make suggestions and competitive templates demand-driven
+- render completed quests as compact archive rows
+
+Acceptance:
+- active missions become the dominant visual object on the screen
+- the primary create/continue action is visible without a long scroll
+- board switching is available before secondary panels
+- no backend, reward, or quest-authority rule changes are introduced
+
+Follow-up:
+- smoke on a small Android emulator to validate scroll rhythm and CTA reachability
+- tune copy after live use if `Base`, `Arena`, or `Feitas` still feel too abstract
+
+### Phase 11 - Base density pass
+
+Status: `completed`
+
+Completed:
+- cut remaining explanatory copy from `Base`
+- keep level, XP, build, and next payoff as the first-fold owners
+- move secondary reads into badges or detail entries
+- confirm `Momento atual` is not acting like a second hero
+- move account access from `Plano` into `Base`
+- move attribute allocation into the `Base` build detail
+- remove `Plano` from the top-level bottom navigation
+
+Acceptance:
+- player state is understandable in a few seconds
+- next payoff remains visible without a long scroll
+- competitive pulse stays compact and does not become a second Arena
+
+Follow-up:
+- decide whether any remaining recommendation content from `Plano` deserves a
+  compact `Recomendacao do sistema` entry in `Base`
+- keep `StatsScreen` as secondary/legacy until remaining useful content is
+  folded into current surfaces or deleted
+
+### Phase 12 - Arena density pass
+
+Status: `next`
+
+Scope:
+- reduce long rule copy in `Arena`
+- make threat, promotion, and reconquest states more immediately readable
+- keep leaderboard, integrity, and legacy as compact detail surfaces
+
+Acceptance:
+- the player can tell whether they are safe, in risk, or ready to promote
+  without reading a long paragraph
+- competitive information does not repeat `Base` character state
+
 ## Continuation Protocol For AI
 
 Before continuing this redesign:
 1. read `docs/product/ux-positioning.md`
 2. read `docs/product/ui-information-architecture.md`
-3. read this file
-4. inspect `lib/core/theme/app_theme.dart`
-5. inspect the last completed phase before editing the next one
+3. read `docs/product/game-system-design-plan.md`
+4. read `docs/product/ui-density-audit.md`
+5. read this file
+6. inspect `lib/core/theme/app_theme.dart`
+7. inspect `lib/core/theme/ascend_design_tokens.dart`
+8. inspect the last completed phase before editing the next one
 
 When finishing a redesign phase:
 - update this file

@@ -19,9 +19,11 @@ import 'package:ascend/features/profile/domain/rank_season.dart';
 import 'package:ascend/features/profile/domain/rank_season_leaderboard.dart';
 import 'package:ascend/features/profile/domain/season_profile_snapshot.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
+import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/presentation/rank_progression_provider.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/weekly_boss/data/weekly_boss_repository.dart';
 import 'package:ascend/features/weekly_boss/domain/remote_weekly_boss.dart';
 import 'package:ascend/features/weekly_boss/domain/weekly_boss_completion.dart';
@@ -92,21 +94,30 @@ class HomeScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: RevealBlock(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 16),
-                    child: _buildHeader(
-                      context,
-                      name: player.name,
-                      level: player.level,
-                      rank: competitiveRank,
-                      title: _resolveDisplayTitle(player, seasonProfile),
-                      focus: player.primaryFocus,
-                      summary: heroSummary,
-                      detail: heroDetail,
-                      xpProgress: xpProgress,
-                      xp: player.xp,
-                      maxXp: player.maxXp,
-                      currentStreak: player.currentStreak,
-                      seasonLabel: seasonProfile?.activeSeasonLabel,
+                    padding: const EdgeInsets.only(top: 14, bottom: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTopAccountAccess(
+                          onOpenAccount: () => _openAccountScreen(context),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildHeader(
+                          context,
+                          name: player.name,
+                          level: player.level,
+                          rank: competitiveRank,
+                          title: _resolveDisplayTitle(player, seasonProfile),
+                          focus: player.primaryFocus,
+                          summary: heroSummary,
+                          detail: heroDetail,
+                          xpProgress: xpProgress,
+                          xp: player.xp,
+                          maxXp: player.maxXp,
+                          currentStreak: player.currentStreak,
+                          seasonLabel: seasonProfile?.activeSeasonLabel,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -134,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
                   delay: const Duration(milliseconds: 130),
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildBuildPanel(context, player.attributes),
+                    child: _buildBuildPanel(context, ref, player),
                   ),
                 ),
               ),
@@ -324,6 +335,48 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildTopAccountAccess({required VoidCallback onOpenAccount}) {
+    return Row(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onOpenAccount,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceStrong.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.manage_accounts_rounded,
+                    size: 18,
+                    color: AppColors.textPrimary,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Conta',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const Spacer(),
+      ],
+    );
+  }
+
   Widget _buildSnapshotPanel(
     BuildContext context, {
     required Player player,
@@ -490,7 +543,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBuildPanel(BuildContext context, PlayerAttributes attrs) {
+  Widget _buildBuildPanel(BuildContext context, WidgetRef ref, Player player) {
+    final attrs = player.attributes;
     return _buildStatusCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,7 +567,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 18),
-          _buildAttributeRadarPanel(context, attrs),
+          _buildAttributeRadarPanel(context, ref, player, attrs),
         ],
       ),
     );
@@ -1614,14 +1668,23 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  void _openAccountScreen(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AccountScreen()));
+  }
+
   Widget _buildAttributeRadarPanel(
     BuildContext context,
+    WidgetRef ref,
+    Player player,
     PlayerAttributes attrs,
   ) {
     final summary = _buildAttributeBuildSummary(attrs);
     final scaleMax = _attributeScaleMax(attrs);
     final items = <_AttributeVisualSpec>[
       _AttributeVisualSpec(
+        attribute: AttributeType.strength,
         label: 'FORCA',
         shortLabel: 'STR',
         value: attrs.strength,
@@ -1630,6 +1693,7 @@ class HomeScreen extends ConsumerWidget {
         description: 'Pressao fisica e presenca em tarefas duras.',
       ),
       _AttributeVisualSpec(
+        attribute: AttributeType.intelligence,
         label: 'INTELIGENCIA',
         shortLabel: 'INT',
         value: attrs.intelligence,
@@ -1638,6 +1702,7 @@ class HomeScreen extends ConsumerWidget {
         description: 'Clareza, estudo e leitura de situação.',
       ),
       _AttributeVisualSpec(
+        attribute: AttributeType.vitality,
         label: 'VITALIDADE',
         shortLabel: 'VIT',
         value: attrs.vitality,
@@ -1646,6 +1711,7 @@ class HomeScreen extends ConsumerWidget {
         description: 'Energia, constancia e margem de recuperacao.',
       ),
       _AttributeVisualSpec(
+        attribute: AttributeType.agility,
         label: 'AGILIDADE',
         shortLabel: 'AGI',
         value: attrs.agility,
@@ -1660,6 +1726,8 @@ class HomeScreen extends ConsumerWidget {
         final isWide = constraints.maxWidth >= 640;
         final summaryCard = _buildAttributeSummaryCard(
           context,
+          ref,
+          player,
           items,
           summary,
           scaleMax,
@@ -1768,6 +1836,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildAttributeDetailsBlock(
+    WidgetRef ref,
+    Player player,
     List<_AttributeVisualSpec> items,
     _AttributeBuildSummary summary,
     int scaleMax,
@@ -1815,10 +1885,34 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.amberAccent.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.amberAccent.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Text(
+            player.statPoints > 0
+                ? '${player.statPoints} ponto(s) livres para distribuir.'
+                : 'Nenhum ponto livre no momento.',
+            style: TextStyle(
+              color: player.statPoints > 0
+                  ? Colors.amberAccent
+                  : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: _buildAttributeInsightCard(item, scaleMax),
+            child: _buildAttributeInsightCard(item, scaleMax, player, ref),
           ),
         ),
       ],
@@ -1827,6 +1921,8 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildAttributeSummaryCard(
     BuildContext context,
+    WidgetRef ref,
+    Player player,
     List<_AttributeVisualSpec> items,
     _AttributeBuildSummary summary,
     int scaleMax,
@@ -1869,7 +1965,13 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => _openBaseDetailSheet(
               context,
               title: 'Build',
-              child: _buildAttributeDetailsBlock(items, summary, scaleMax),
+              child: _buildAttributeDetailsBlock(
+                ref,
+                player,
+                items,
+                summary,
+                scaleMax,
+              ),
             ),
             icon: const Icon(Icons.chevron_right_rounded),
             label: const Text('Abrir build'),
@@ -1879,8 +1981,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAttributeInsightCard(_AttributeVisualSpec item, int scaleMax) {
+  Widget _buildAttributeInsightCard(
+    _AttributeVisualSpec item,
+    int scaleMax,
+    Player player,
+    WidgetRef ref,
+  ) {
     final progress = (item.value / scaleMax).clamp(0.0, 1.0);
+    final canUpgrade = player.statPoints > 0;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1914,6 +2022,34 @@ class HomeScreen extends ConsumerWidget {
                   fontFamily: 'Courier',
                 ),
               ),
+              const SizedBox(width: 8),
+              InkResponse(
+                onTap: canUpgrade
+                    ? () => ref
+                          .read(playerProvider.notifier)
+                          .upgradeAttribute(item.attribute)
+                    : null,
+                radius: 22,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: canUpgrade
+                        ? item.color.withValues(alpha: 0.16)
+                        : Colors.white.withValues(alpha: 0.04),
+                    border: Border.all(
+                      color: canUpgrade
+                          ? item.color.withValues(alpha: 0.34)
+                          : Colors.white10,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    size: 16,
+                    color: canUpgrade ? item.color : Colors.white30,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -1925,6 +2061,17 @@ class HomeScreen extends ConsumerWidget {
               height: 1.45,
             ),
           ),
+          if (canUpgrade) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Gastar 1 ponto em ${item.label.toLowerCase()}.',
+              style: TextStyle(
+                color: item.color,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
@@ -2018,6 +2165,7 @@ class HomeScreen extends ConsumerWidget {
 
 class _AttributeVisualSpec {
   const _AttributeVisualSpec({
+    required this.attribute,
     required this.label,
     required this.shortLabel,
     required this.value,
@@ -2026,6 +2174,7 @@ class _AttributeVisualSpec {
     required this.description,
   });
 
+  final AttributeType attribute;
   final String label;
   final String shortLabel;
   final int value;

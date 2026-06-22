@@ -7,9 +7,10 @@ Record the ownership audit for the main Ascend surfaces so future UI work does n
 This document is downstream from:
 - `docs/product/ux-positioning.md`
 - `docs/product/ui-information-architecture.md`
+- `docs/product/game-system-design-plan.md`
 - `docs/product/ui-redesign-phases.md`
 
-Last updated: `2026-04-23`
+Last updated: `2026-06-21`
 
 ## Current Ownership Map
 
@@ -32,6 +33,7 @@ Current status:
 
 Residual watch item:
 - `Momento atual` should stay operational and compact, not drift into a second hero block
+- remaining explanatory copy should move to sheet/detail when it does not change the immediate decision
 
 ### `Quests`
 
@@ -48,12 +50,15 @@ Must not own:
 Current status:
 - hero owns counts and immediate execution state
 - weekly-priority block now interprets the queue instead of reprinting the same counters
+- current redesign direction reframes this surface as a mission terminal, not a task list
 
 Resolved in this pass:
 - removed duplicate command-deck counters that repeated the hero totals
 
 Residual watch item:
 - avoid turning suggestion and template panels into another analytics layer
+- review CTA placement and list density so the create/add action never competes with bottom navigation
+- completed quests should not dominate the main execution surface
 
 ### `Arena`
 
@@ -76,6 +81,7 @@ Resolved in this pass:
 
 Residual watch item:
 - keep hero density under control on smaller devices when gate copy grows
+- pressure, promotion, and reconquest should be readable without long rule explanations
 
 ### `Plano`
 
@@ -99,6 +105,7 @@ Resolved in this pass:
 
 Residual watch item:
 - `Visao geral` and `Semana detalhada` remain semantically close and should be reviewed after device usage
+- next pass should make `Plano` feel like a mentor recommendation, not another analytics dashboard
 
 ### `Conta`
 
@@ -140,6 +147,8 @@ Residual watch item:
 - a top-level screen repeating another screen's hero in smaller cards
 - action surfaces drifting into explanation surfaces
 - diagnostic surfaces drifting into dashboard recap
+- mission surfaces drifting back into generic to-do list cards
+- body text explaining a state that could be expressed as a badge, CTA, or progress core
 
 ## Review Protocol
 
@@ -151,3 +160,4 @@ Before adding or changing a major card:
    - interpretation
    - action
 4. reject the card if it only repeats a nearby block without changing meaning
+5. check the density rules in `game-system-design-plan.md` before adding helper copy

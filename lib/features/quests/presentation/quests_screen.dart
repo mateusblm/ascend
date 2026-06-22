@@ -123,8 +123,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                       personalCount: personalActiveQuests.length,
                       completedCount: completedCount,
                       summary: heroSummary,
-                      detail: '',
                       weeklyBossTitle: weeklyBoss?.title,
+                      onCreateQuest: createQuest,
+                      weeklyReview: insights.review,
+                      weeklyBossProgress: weeklyBossProgress,
+                      firstWeekJourney: firstWeekJourney,
                     ),
                   ),
                 ),
@@ -132,49 +135,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               SliverToBoxAdapter(
                 child: RevealBlock(
                   delay: const Duration(milliseconds: 70),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildQuestCommandDeck(
-                      onCreateQuest: createQuest,
-                      competitiveCount: competitiveQuests.length,
-                      personalCount: personalActiveQuests.length,
-                      completedCount: completedCount,
-                    ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: RevealBlock(
-                  delay: const Duration(milliseconds: 95),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildQuestReturnLoopPanel(
-                      personalCount: personalActiveQuests.length,
-                      competitiveCount: competitiveQuests.length,
-                      completedCount: completedCount,
-                      weeklyReview: insights.review,
-                      weeklyBoss: weeklyBoss,
-                      weeklyBossProgress: weeklyBossProgress,
-                    ),
-                  ),
-                ),
-              ),
-              if (firstWeekJourney.isActive)
-                SliverToBoxAdapter(
-                  child: RevealBlock(
-                    delay: const Duration(milliseconds: 110),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildFirstWeekPanel(
-                        firstWeekJourney,
-                        onCreateQuest: createQuest,
-                      ),
-                    ),
-                  ),
-                ),
-              SliverToBoxAdapter(
-                child: RevealBlock(
-                  delay: const Duration(milliseconds: 140),
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _buildMissionBoardSelector(
@@ -199,6 +159,35 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 officialTemplates: officialTemplates,
                 liveNow: liveNow,
               ),
+              SliverToBoxAdapter(
+                child: RevealBlock(
+                  delay: const Duration(milliseconds: 120),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 16),
+                    child: _buildQuestReturnLoopPanel(
+                      personalCount: personalActiveQuests.length,
+                      competitiveCount: competitiveQuests.length,
+                      completedCount: completedCount,
+                      weeklyReview: insights.review,
+                      weeklyBoss: weeklyBoss,
+                      weeklyBossProgress: weeklyBossProgress,
+                    ),
+                  ),
+                ),
+              ),
+              if (firstWeekJourney.isActive)
+                SliverToBoxAdapter(
+                  child: RevealBlock(
+                    delay: const Duration(milliseconds: 140),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildFirstWeekPanel(
+                        firstWeekJourney,
+                        onCreateQuest: createQuest,
+                      ),
+                    ),
+                  ),
+                ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
@@ -221,17 +210,6 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     switch (selectedBoard) {
       case _QuestBoard.arena:
         return [
-          if (officialTemplates.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 18),
-                child: _buildCompetitiveTemplatesPanel(
-                  context,
-                  ref,
-                  officialTemplates,
-                ),
-              ),
-            ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -242,25 +220,47 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ),
             ),
           ),
-          if (competitiveQuests.isNotEmpty)
+          if (competitiveQuests.isNotEmpty) ...[
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final quest = competitiveQuests[index];
                 return _buildQuestItem(context, ref, quest, liveNow);
               }, childCount: competitiveQuests.length),
-            )
-          else
+            ),
+            if (officialTemplates.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 14),
+                  child: _buildAuxiliaryLauncher(
+                    label: 'Contratos oficiais',
+                    detail: '${officialTemplates.length} modelo(s)',
+                    icon: Icons.shield_rounded,
+                    accent: AppColors.arenaAccent,
+                    onTap: () => _openCompetitiveTemplatesSheet(
+                      context,
+                      ref,
+                      officialTemplates,
+                    ),
+                  ),
+                ),
+              ),
+          ] else ...[
             _buildEmptyState('Nenhum contrato ativo.'),
+            if (officialTemplates.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 18),
+                  child: _buildCompetitiveTemplatesPanel(
+                    context,
+                    ref,
+                    officialTemplates,
+                  ),
+                ),
+              ),
+          ],
         ];
       case _QuestBoard.base:
         return [
-          if (suggestions.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 18),
-                child: _buildSuggestionsPanel(context, ref, suggestions),
-              ),
-            ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -271,15 +271,37 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ),
             ),
           ),
-          if (personalActiveQuests.isNotEmpty)
+          if (personalActiveQuests.isNotEmpty) ...[
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final quest = personalActiveQuests[index];
                 return _buildQuestItem(context, ref, quest, liveNow);
               }, childCount: personalActiveQuests.length),
-            )
-          else
+            ),
+            if (suggestions.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 14),
+                  child: _buildAuxiliaryLauncher(
+                    label: 'Sugestões da semana',
+                    detail: '${suggestions.length} pronta(s)',
+                    icon: Icons.auto_awesome_rounded,
+                    accent: AppColors.questAccent,
+                    onTap: () =>
+                        _openSuggestionsSheet(context, ref, suggestions),
+                  ),
+                ),
+              ),
+          ] else ...[
             _buildEmptyState('Nenhuma missão ativa.'),
+            if (suggestions.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 18),
+                  child: _buildSuggestionsPanel(context, ref, suggestions),
+                ),
+              ),
+          ],
         ];
       case _QuestBoard.concluidas:
         return [
@@ -297,9 +319,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final quest = completedQuests[index];
-                return Opacity(
-                  opacity: 0.82,
-                  child: _buildQuestItem(context, ref, quest, liveNow),
+                return _buildQuestItem(
+                  context,
+                  ref,
+                  quest,
+                  liveNow,
+                  compactArchive: true,
                 );
               }, childCount: completedQuests.length),
             ),
@@ -449,13 +474,29 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     required int personalCount,
     required int completedCount,
     required String summary,
-    required String detail,
     required String? weeklyBossTitle,
+    required VoidCallback onCreateQuest,
+    required WeeklyReviewReport weeklyReview,
+    required int weeklyBossProgress,
+    required FirstWeekJourneySummary firstWeekJourney,
   }) {
     final textTheme = Theme.of(context).textTheme;
+    final primaryLabel = activeCount == 0
+        ? 'Abrir primeira quest'
+        : competitiveCount > 0
+        ? 'Continuar arena'
+        : 'Nova quest';
+    final primaryIcon = activeCount == 0
+        ? Icons.add_task_rounded
+        : competitiveCount > 0
+        ? Icons.play_arrow_rounded
+        : Icons.add_rounded;
+    final weekBadge = weeklyBossTitle == null
+        ? weeklyReview.badge
+        : 'Boss $weeklyBossProgress';
 
     return AscendSystemPanel(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       accent: AppColors.questAccent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,17 +518,23 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                           icon: Icons.bolt_rounded,
                         ),
                         SystemBadge(
-                          label: weeklyBossTitle ?? 'SEMANA ATIVA',
+                          label: weekBadge,
                           color: AppColors.arenaAccent,
                           icon: Icons.shield_rounded,
                         ),
+                        if (firstWeekJourney.isActive)
+                          SystemBadge(
+                            label: firstWeekJourney.progressLabel,
+                            color: AppColors.planAccent,
+                            icon: Icons.flag_rounded,
+                          ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Text(
                       'Quests',
                       style: GoogleFonts.sora(
-                        fontSize: 30,
+                        fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                         height: 1.0,
@@ -506,7 +553,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             summary,
             style: textTheme.titleLarge?.copyWith(
@@ -514,117 +561,30 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 8),
-          if (detail.isNotEmpty) ...[
-            Text(detail, style: textTheme.bodyMedium),
-            const SizedBox(height: 18),
-          ] else
-            const SizedBox(height: 14),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.05,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              _QuestSummaryTile(
-                label: 'ATIVAS',
-                value: '$activeCount',
-                accent: Colors.white,
-                icon: Icons.radio_button_checked_rounded,
+              _StatusBadge(
+                label: activeCount == 1 ? '1 ativa' : '$activeCount ativas',
+                accent: AppColors.textPrimary,
               ),
-              _QuestSummaryTile(
-                label: 'ARENA',
-                value: '$competitiveCount',
-                accent: AppColors.arenaAccent,
-                icon: Icons.shield_rounded,
-              ),
-              _QuestSummaryTile(
-                label: 'BASE',
-                value: '$personalCount',
-                accent: AppColors.questAccent,
-                icon: Icons.track_changes_rounded,
-              ),
-              _QuestSummaryTile(
-                label: 'CONCLUÍDAS',
-                value: '$completedCount',
+              _StatusBadge(
+                label: completedCount == 1
+                    ? '1 arquivada'
+                    : '$completedCount arquivadas',
                 accent: AscendDesignTokens.reward,
-                icon: Icons.inventory_2_rounded,
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuestCommandDeck({
-    required VoidCallback onCreateQuest,
-    required int competitiveCount,
-    required int personalCount,
-    required int completedCount,
-  }) {
-    final headline = switch ((competitiveCount, personalCount)) {
-      (0, 0) => 'Nenhuma frente aberta.',
-      (0, _) => 'Arena vazia.',
-      (_, 0) => 'Base curta.',
-      _ => 'Frentes ativas.',
-    };
-
-    return _SectionPanel(
-      accent: AppColors.planAccent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Comando',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            headline,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _CommandReadTile(
-                  label: 'Arena',
-                  accent: AppColors.arenaAccent,
-                  body: '$competitiveCount aberto(s)',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CommandReadTile(
-                  label: 'Base',
-                  accent: AppColors.questAccent,
-                  body: '$personalCount aberto(s)',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onCreateQuest,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(
-                personalCount == 0 && competitiveCount == 0
-                    ? 'Abrir primeira quest'
-                    : 'Nova quest',
-              ),
+              icon: Icon(primaryIcon),
+              label: Text(primaryLabel),
             ),
           ),
         ],
@@ -889,8 +849,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     BuildContext context,
     WidgetRef ref,
     Quest quest,
-    DateTime liveNow,
-  ) {
+    DateTime liveNow, {
+    bool compactArchive = false,
+  }) {
     final controller = ref.read(questProvider.notifier);
     final helperText = _helperTextForQuest(quest, liveNow);
     final primaryLabel = _primaryLabelForQuest(quest);
@@ -915,6 +876,8 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
         quest: quest,
         primaryActionLabel: primaryLabel,
         helperText: helperText,
+        compactArchive: compactArchive,
+        onShowDetails: () => _showQuestDetails(context, quest, helperText),
         primaryActionEnabled: !quest.isCompleted || !quest.isCompetitive,
         onPrimaryAction: () => _handleQuestPrimaryAction(context, ref, quest),
         onSecondaryAction: quest.isCompleted && !quest.isCompetitive
@@ -933,6 +896,145 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             ? 'Desfazer'
             : null,
       ),
+    );
+  }
+
+  Widget _buildAuxiliaryLauncher({
+    required String label,
+    required String detail,
+    required IconData icon,
+    required Color accent,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.14)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: accent, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                detail,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.keyboard_arrow_up_rounded,
+                color: AppColors.textMuted,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCompetitiveTemplatesSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<CompetitiveQuestTemplate> templates,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _QuestAuxiliarySheet(
+        child: _buildCompetitiveTemplatesPanel(context, ref, templates),
+      ),
+    );
+  }
+
+  void _showQuestDetails(BuildContext context, Quest quest, String helperText) {
+    final accent = quest.isCompetitive
+        ? AppColors.arenaAccent
+        : AppColors.questAccent;
+    final typeLabel = quest.isCompetitive ? 'Contrato de arena' : 'Missão base';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: _SectionPanel(
+            accent: accent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _StatusBadge(label: typeLabel, accent: accent),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Fechar',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  quest.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  helperText,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildQuestChip('+${quest.xpReward} XP', accent),
+                    _buildQuestChip(
+                      quest.isCompleted ? 'Arquivada' : 'Ativa',
+                      quest.isCompleted ? AscendDesignTokens.reward : accent,
+                    ),
+                    _buildQuestChip(
+                      _primaryLabelForQuest(quest),
+                      AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1328,6 +1430,21 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     );
   }
 
+  void _openSuggestionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<QuestSuggestion> suggestions,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _QuestAuxiliarySheet(
+        child: _buildSuggestionsPanel(context, ref, suggestions),
+      ),
+    );
+  }
+
   Widget _buildQuestChip(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1555,6 +1672,25 @@ class _ReadingQuizPromptSheetState extends State<_ReadingQuizPromptSheet> {
   }
 }
 
+class _QuestAuxiliarySheet extends StatelessWidget {
+  const _QuestAuxiliarySheet({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+        ),
+        child: SingleChildScrollView(child: child),
+      ),
+    );
+  }
+}
+
 class _SectionPanel extends StatelessWidget {
   const _SectionPanel({super.key, required this.child, required this.accent});
 
@@ -1679,113 +1815,6 @@ class _MissionBoardButton extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _QuestSummaryTile extends StatelessWidget {
-  const _QuestSummaryTile({
-    required this.label,
-    required this.value,
-    required this.accent,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final Color accent;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 78),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: accent, size: 15),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CommandReadTile extends StatelessWidget {
-  const _CommandReadTile({
-    required this.label,
-    required this.body,
-    required this.accent,
-  });
-
-  final String label;
-  final String body;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: accent,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            body,
-            style: const TextStyle(
-              fontSize: 12.5,
-              color: AppColors.textSecondary,
-              height: 1.45,
-            ),
-          ),
-        ],
       ),
     );
   }

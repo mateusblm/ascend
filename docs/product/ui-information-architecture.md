@@ -14,11 +14,14 @@ The intended player-facing labels are:
 - `Base`
 - `Quests`
 - `Arena`
-- `Plano`
 
 These labels follow two goals:
 - concise, scan-friendly top-level navigation
 - language that frames Ascend as progression software instead of a generic to-do list
+
+Secondary surfaces:
+- `Conta`, opened from `Base`
+- planning/recommendation details, opened from `Base` when needed
 
 ### `BASE`
 
@@ -35,19 +38,22 @@ It should prioritize:
 It should avoid:
 - deep competitive explanation
 - long historical summaries
-- repeating the full planning view from `PLANO`
+- becoming a full planning dashboard
 
 Always visible:
 - player identity
 - XP and momentum
 - build radar
 - short weekly signal
+- account access
 
 Tap to open:
 - detailed attributes
+- attribute allocation
 - streak breakdown
 - activity history
 - advanced build interpretation
+- account and trust controls
 
 ### `QUESTS`
 
@@ -101,9 +107,10 @@ Tap to open:
 - legacy archive
 - integrity detail
 
-### `PLANO`
+### `PLANO` Detail
 
-This is the reflective and planning surface.
+This is no longer a top-level tab. The best planning content should appear as a
+compact recommendation or detail launched from `BASE`.
 
 It should prioritize:
 - cadence
@@ -117,10 +124,7 @@ It should avoid:
 - acting like a second home screen
 
 Always visible:
-- weekly read
-- score and grade
-- current recommendation
-- next-step planning
+- none as a top-level destination
 
 Tap to open:
 - historical trend
@@ -147,7 +151,7 @@ It should avoid:
 
 - A metric can appear in more than one place only if the role is different.
 - `BASE` may show a compact signal.
-- `PLANO` may show interpretation and planning.
+- planning detail may show interpretation only after the player asks for it.
 - `ARENA` may show the competitive consequence of the same metric.
 - If two tabs show the same number in the same presentation style, that is usually a design mistake.
 
@@ -158,7 +162,7 @@ It should avoid:
 - `BASE` should feel punchy and identity-driven.
 - `QUESTS` should feel action-driven.
 - `ARENA` should feel high-pressure and competitive.
-- `PLANO` should feel quieter and more diagnostic.
+- planning detail should feel quieter and more diagnostic.
 - `CONTA` should feel stable and trust-oriented.
 
 ## Practical Design Guardrails

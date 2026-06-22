@@ -123,6 +123,66 @@ void main() {
     expect(find.text('Primeira Ruptura'), findsOneWidget);
   });
 
+  testWidgets('HomeScreen opens account and build allocation from Base', (
+    tester,
+  ) async {
+    _setLargeSurface(tester);
+    final player = _buildPlayer();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith(
+            (ref) => _FakeAuthController(
+              AuthSuccess(uid: 'uid-1', displayName: 'Mateus', photoUrl: ''),
+            ),
+          ),
+          playerProvider.overrideWith((ref) => _TestPlayerNotifier(player)),
+          competitiveRankProvider.overrideWith((ref) => 'E'),
+          rankProgressionSnapshotProvider.overrideWith(
+            (ref) => Stream.value(_buildSnapshot()),
+          ),
+          rankProgressionHistoryProvider.overrideWith(
+            (ref) => Stream.value(const <CompetitiveRankSnapshot>[]),
+          ),
+          seasonProfileProvider.overrideWith((ref) => Stream.value(null)),
+          currentCompetitiveIntegrityProvider.overrideWith(
+            (ref) => Stream.value(null),
+          ),
+          seasonBracketLeaderboardProvider.overrideWith(
+            (ref) async => const <RankSeasonLeaderboardEntry>[],
+          ),
+          remoteWeeklyBossProvider.overrideWith((ref) => Stream.value(null)),
+          weeklyBossTopCompletionsProvider.overrideWith(
+            (ref) => Stream.value(const <WeeklyBossCompletion>[]),
+          ),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.manage_accounts_rounded).first);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('account-profile-panel')), findsOneWidget);
+
+    Navigator.of(
+      tester.element(find.byKey(const ValueKey('account-profile-panel'))),
+    ).pop();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Abrir build'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Abrir build'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 ponto(s) livres para distribuir.'), findsOneWidget);
+    expect(find.byIcon(Icons.add_rounded), findsWidgets);
+  });
+
   testWidgets(
     'HomeScreen keeps weekly boss panel visible without remote event',
     (tester) async {

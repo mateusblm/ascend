@@ -13,6 +13,8 @@ class QuestCard extends StatelessWidget {
     this.onSecondaryAction,
     this.secondaryActionLabel,
     this.helperText,
+    this.compactArchive = false,
+    this.onShowDetails,
   });
 
   final Quest quest;
@@ -22,6 +24,8 @@ class QuestCard extends StatelessWidget {
   final VoidCallback? onSecondaryAction;
   final String? secondaryActionLabel;
   final String? helperText;
+  final bool compactArchive;
+  final VoidCallback? onShowDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +46,19 @@ class QuestCard extends StatelessWidget {
         : 'MISSÃO DE BASE';
     final primaryLabel =
         primaryActionLabel ?? (quest.isCompleted ? 'Arquivada' : 'Concluir');
+
+    if (compactArchive) {
+      return _QuestArchiveRow(
+        quest: quest,
+        accent: accent,
+        primaryLabel: primaryLabel,
+        primaryActionEnabled: primaryActionEnabled,
+        onPrimaryAction: onPrimaryAction,
+        secondaryActionLabel: secondaryActionLabel,
+        onSecondaryAction: onSecondaryAction,
+        onShowDetails: onShowDetails,
+      );
+    }
 
     return AnimatedContainer(
       key: ValueKey('quest-card-${quest.id}'),
@@ -139,14 +156,10 @@ class QuestCard extends StatelessWidget {
                   ],
                 ),
                 if (helperText != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    helperText!,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: AppColors.textSecondary,
-                      height: 1.45,
-                    ),
+                  const SizedBox(height: 12),
+                  _MissionDetailButton(
+                    helperText: helperText!,
+                    onShowDetails: onShowDetails,
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -259,6 +272,170 @@ class _QuestChip extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionDetailButton extends StatelessWidget {
+  const _MissionDetailButton({required this.helperText, this.onShowDetails});
+
+  final String helperText;
+  final VoidCallback? onShowDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onShowDetails,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.035),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 15,
+              color: AppColors.textMuted,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                helperText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestArchiveRow extends StatelessWidget {
+  const _QuestArchiveRow({
+    required this.quest,
+    required this.accent,
+    required this.primaryLabel,
+    required this.primaryActionEnabled,
+    required this.onPrimaryAction,
+    required this.secondaryActionLabel,
+    required this.onSecondaryAction,
+    required this.onShowDetails,
+  });
+
+  final Quest quest;
+  final Color accent;
+  final String primaryLabel;
+  final bool primaryActionEnabled;
+  final VoidCallback onPrimaryAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
+  final VoidCallback? onShowDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final archiveLabel = quest.isCompetitive ? 'Arena' : 'Base';
+
+    return Container(
+      key: ValueKey('quest-card-${quest.id}'),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      archiveLabel,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '+${quest.xpReward} XP',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  quest.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Detalhes',
+            onPressed: onShowDetails,
+            icon: const Icon(Icons.info_outline_rounded),
+            color: AppColors.textMuted,
+            visualDensity: VisualDensity.compact,
+          ),
+          if (secondaryActionLabel != null && onSecondaryAction != null)
+            TextButton(
+              key: ValueKey('quest-card-secondary-${quest.id}'),
+              onPressed: onSecondaryAction,
+              child: Text(secondaryActionLabel!),
+            )
+          else
+            FilledButton(
+              key: ValueKey('quest-card-primary-${quest.id}'),
+              onPressed: primaryActionEnabled ? onPrimaryAction : null,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                backgroundColor: accent.withValues(alpha: 0.12),
+                foregroundColor: accent,
+                disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
+                disabledForegroundColor: Colors.white38,
+              ),
+              child: Text(primaryLabel),
+            ),
         ],
       ),
     );

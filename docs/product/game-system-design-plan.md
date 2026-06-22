@@ -1,292 +1,264 @@
-# Game System Design Plan
+# Ascend System UI - Plano Operacional De Design
 
 ## Objetivo
 
-Transformar a experiencia visual e interativa do Ascend de um app com cara de
-lista de tarefas para um sistema original de evolucao pessoal com linguagem de
-jogo, sem copiar nomes, arte, lore, icones ou elementos protegidos de qualquer
-obra existente.
+Transformar o Ascend de um app com cara de lista de tarefas para um sistema
+original de evolucao pessoal com linguagem de jogo, mantendo clareza,
+performance, acessibilidade e boas praticas de produto mobile.
 
-Este plano usa a inspiracao permitida do genero RPG/anime apenas no nivel de
-fantasia emocional:
+A referencia emocional continua sendo a fantasia de "sistema de ascensao":
 - receber missoes
-- evoluir atributos
+- evoluir uma build
 - sentir pressao de rank
 - enfrentar provas e bosses
-- visualizar crescimento acumulado
+- acumular legado
 
-O resultado deve continuar sendo um app util, legivel e confiavel. A imersao
-nao pode esconder a acao principal nem transformar o produto em interface
-confusa.
-
-## Agentes Usados
-
-- Orchestrator Agent: consolidar produto, frontend, backend, QA e game design.
-- PO Agent: transformar a vontade de "mais sistema de jogo" em requisitos.
-- Game Design Agent: proteger fantasia, retencao, originalidade e diferenca
-  contra to-do lists.
-- Dev Agent: manter a execucao compativel com Flutter, Riverpod, Isar e backend
-  Java.
-- QA Agent: definir metricas, riscos, testes e smoke path.
-
-## Base De Evidencia
-
-Este plano parte de quatro ideias sustentadas por literatura e guidelines:
-
-1. Gamificacao precisa apoiar competencia, autonomia e pertencimento, nao apenas
-   despejar pontos e badges. A Self-Determination Theory aplicada a gamificacao
-   destaca esses tres requisitos psicologicos como base para motivacao mais
-   duravel.
-   Referencia: https://selfdeterminationtheory.org/wp-content/uploads/2020/10/2018_RutledgeWalshEtAl_Gamification.pdf
-
-2. Pontos, niveis e leaderboards podem melhorar performance quando funcionam
-   como indicadores de progresso, mas nao sustentam motivacao sozinhos.
-   Referencia: https://edoc.unibas.ch/entities/publication/cd323935-e832-4bee-bf7a-4adf7365d4d7
-
-3. Leaderboards podem aumentar engajamento em certas condicoes quando criam
-   desafio, metas claras e avaliacao, mas devem ser usados com cuidado para nao
-   punir usuarios iniciantes ou menos competitivos.
-   Referencia: https://journals.sagepub.com/doi/abs/10.1177/1046878114563662
-
-4. Movimento e hierarquia visual devem comunicar relacao espacial, foco e
-   proxima acao. Animacao nao deve ser enfeite; deve explicar estado.
-   Referencia: https://m1.material.io/motion/material-motion.html
-
-5. Navegacao mobile deve preservar secoes principais estaveis e reconheciveis.
-   A tab bar deve ser usada para areas de topo, nao para acoes.
-   Referencia: https://developer.apple.com/design/human-interface-guidelines/tab-bars
+Esta direcao nao deve copiar nomes, arte, lore, icones, composicoes ou marcas de
+qualquer obra existente. A inspiracao permitida e de genero, nao de propriedade
+intelectual.
 
 ## Decisao De Produto
 
-Ascend deve virar um "Sistema de Ascensao" original.
+Ascend deve parecer um software de progressao pessoal, nao um gerenciador de
+tarefas com XP.
 
 Nao e:
-- uma copia de anime
-- uma dashboard de produtividade com neon
-- uma lista de tasks com XP no canto
+- dashboard de produtividade com neon
+- lista infinita de cards
+- tela cheia de explicacoes
+- fan app de anime/jogo
 
 E:
-- um sistema de evolucao pessoal
-- uma interface de personagem
-- um painel de missoes
-- uma arena de prova
-- um registro de legado
-
-## Fantasia Central
-
-O usuario nao esta "checando tarefas".
-
-O usuario esta:
-- recebendo missoes
-- fortalecendo uma build
-- mantendo uma campanha semanal
-- provando competencia em desafios verificaveis
-- defendendo ou subindo rank
-- acumulando legado
+- painel de personagem
+- terminal de missoes
+- arena de pressao competitiva
+- recomendacao de plano sob demanda
+- arquivo de legado
 
 Frase guia:
 
 > Cada acao real fortalece uma versao persistente de voce.
 
+## Base De Evidencia
+
+As decisoes abaixo seguem estas referencias praticas:
+
+1. Gamificacao sustentavel precisa apoiar competencia, autonomia e pertencimento,
+   nao apenas distribuir pontos e badges.
+   Referencia:
+   https://selfdeterminationtheory.org/wp-content/uploads/2020/10/2018_RutledgeWalshEtAl_Gamification.pdf
+
+2. Pontos, niveis e leaderboards ajudam quando tornam progresso e metas mais
+   claros, mas nao sustentam motivacao sozinhos.
+   Referencia:
+   https://edoc.unibas.ch/entities/publication/cd323935-e832-4bee-bf7a-4adf7365d4d7
+
+3. Leaderboards podem aumentar desafio e engajamento, mas devem ser usados com
+   cuidado para nao punir iniciantes ou usuarios em recuperacao.
+   Referencia:
+   https://journals.sagepub.com/doi/abs/10.1177/1046878114563662
+
+4. Movimento deve explicar foco, mudanca de estado e relacao espacial. Animacao
+   decorativa demais aumenta ruido cognitivo.
+   Referencia:
+   https://m1.material.io/motion/material-motion.html
+
+5. Navegacao mobile deve preservar areas principais estaveis e reconheciveis.
+   A tab bar e para destinos, nao para acoes.
+   Referencia:
+   https://developer.apple.com/design/human-interface-guidelines/tab-bars
+
 ## Principios De Design
 
 ### 1. Competencia Visivel
 
-Toda tela principal deve responder:
-- o que eu conquistei?
+Toda tela principal deve responder em poucos segundos:
+- quem eu sou agora?
 - o que mudou no meu personagem?
-- o que falta para o proximo marco?
-
-Aplicacao:
-- XP e nivel devem parecer crescimento, nao contador.
-- atributos devem parecer build, nao tabela.
-- rank deve parecer status competitivo, nao filtro.
+- qual e a proxima conquista concreta?
 
 ### 2. Autonomia Guiada
 
-O usuario escolhe foco, classe/build e quests, mas o sistema recomenda a proxima
-acao sem esmagar a tela com opcoes.
+O usuario escolhe foco, build e missoes, mas o sistema aponta uma proxima acao
+sem esmagar a tela com opcoes equivalentes.
 
-Aplicacao:
-- uma acao primaria forte por tela.
-- escolhas secundarias em sheets.
-- detalhes avancados por tap.
+Regra:
+- uma acao primaria por tela
+- escolhas secundarias em sheet, detalhe ou fluxo dedicado
+- detalhes avancados sob demanda
 
-### 3. Pertencimento E Rivalidade Justa
+### 3. Imersao Util
 
-O sistema pode usar rivalidade, mas sem fazer o usuario iniciante se sentir
-humilhado.
-
-Aplicacao:
-- rival fantasma e bracket local antes de ranking amplo.
-- copy competitiva deve ser intensa, mas nao toxica.
-- Arena mostra risco e oportunidade, nao vergonha.
-
-### 4. Consequencia Clara
-
-Rank, boss e temporada precisam mostrar risco, manutencao e recompensa.
-
-Aplicacao:
-- estados como seguro, em risco, prova disponivel, reconquista e bloqueado.
-- feedback visual para perda de janela ou manutencao incompleta.
-
-### 5. Imersao Util
-
-Toda camada visual deve melhorar entendimento ou motivacao.
+Cada elemento visual precisa melhorar entendimento, orientacao ou payoff.
 
 Permitido:
 - molduras de sistema
+- linhas, sigilos e paines abstratos originais
 - glows contidos
-- iconografia de rank/atributo
+- nucleo de progresso
+- badges de estado
 - microinteracoes de progresso
-- linguagem de "missao", "prova", "build", "campanha"
 
 Evitar:
-- excesso de cards iguais
-- textos longos explicando o proprio app
+- cards iguais empilhados
+- textos longos explicando a propria interface
+- repeticao da mesma metrica em varias telas
 - efeitos que competem com legibilidade
-- copia visual/literal de obras existentes
 
-## Direcao Visual
+### 4. Pressao Sem Humilhacao
 
-### Identidade
+Arena deve criar tensao e risco, mas com caminho de recuperacao claro.
 
-Nome interno do estilo:
+Regra:
+- mostrar estado competitivo como "seguro", "em risco", "prova", "reconquista"
+  ou "bloqueado"
+- evitar copy que pareca punicao moral
+- manter progresso pessoal separado de queda competitiva
+
+### 5. Originalidade Obrigatoria
+
+O Ascend pode ter fantasia de RPG, mas seus nomes, simbolos, hierarquia visual e
+microcopy precisam ser proprios.
+
+## Regras De Densidade Mobile
+
+Estas regras valem para qualquer tela nova ou refatorada.
+
+### Hierarquia
+
+- A primeira dobra deve ter no maximo uma decisao principal.
+- O bloco hero deve comunicar estado, nao explicar o app.
+- Numero importante pode ser grande; paragrafo explicativo nao.
+- Repetir informacao so e permitido quando o papel muda entre telas.
+
+### Texto
+
+- Preferir labels de 1 a 3 palavras.
+- Body copy so deve existir se mudar a decisao do usuario.
+- Evitar mais de 2 linhas de texto em cards recorrentes.
+- Descricao longa deve ir para sheet, tooltip ou tela de detalhe.
+- Labels de sistema em caixa alta devem ser curtas e raras.
+
+### Listas
+
+- Listas longas precisam de filtro, agrupamento ou resumo.
+- A tela nunca deve depender de scroll infinito para revelar a acao principal.
+- Itens concluidos devem colapsar ou ir para arquivo do dia.
+- Se dois cards usam a mesma estrutura visual, um deles provavelmente precisa
+  virar badge, linha compacta ou detalhe.
+
+### Metricas
+
+- Metricas repetidas viram badges.
+- Metricas com consequencia viram painel.
+- Metricas historicas viram detalhe.
+- Uma tela nao deve mostrar XP, rank, streak, boss e leaderboard com o mesmo peso.
+
+### Acoes
+
+- CTA principal deve ficar acima da dobra ou fixo de forma segura.
+- FAB nao pode competir com bottom navigation.
+- Acoes destrutivas ou raras ficam em menu/sheet.
+- Botao primario deve dizer o verbo do estado atual: `Iniciar`, `Registrar`,
+  `Concluir`, `Resgatar`, `Promover`, `Recuperar`.
+
+## Linguagem Visual Oficial
+
+Nome interno:
 - `Ascend System UI`
 
 Tom:
 - escuro
 - preciso
-- energetico
+- intenso
 - adulto
 - competitivo
-- de alta hierarquia
+- legivel
 
-Paleta sugerida:
-- Fundo principal: preto azulado quase neutro
-- Superficie: grafite frio
-- Linha de sistema: ciano eletrico
-- Alerta/risco: vermelho rubi
-- Recompensa: dourado controlado
-- Vitalidade: verde profundo
-- Inteligencia: azul claro
-- Forca: vermelho/ambar
-- Agilidade: violeta frio
+Paleta:
+- fundo principal: preto azulado quase neutro
+- superficie: grafite frio
+- linha de sistema: ciano contido
+- alerta/risco: rubi
+- recompensa: dourado controlado
+- vitalidade: verde profundo
+- inteligencia: azul claro
+- forca: ambar/vermelho
+- agilidade: violeta frio
 
 Regra:
-- usar ciano como sinal de sistema, nao como cor unica dominante.
-- cada atributo precisa ter identidade propria.
-- evitar virar "tema azul neon" monotono.
+- ciano e sinal de sistema, nao tema unico.
+- cada atributo deve ter identidade propria.
+- evitar monotonia azul/neon.
 
-### Tipografia
+Tipografia:
+- titulos curtos e fortes
+- numeros como payoff
+- corpo compacto
+- labels tecnicas em pequenas doses
 
-Direcao:
-- Titulos curtos com peso alto.
-- Numeros grandes para status e payoff.
-- Corpo compacto e legivel.
-- Labels de sistema em caixa alta apenas em pequenas doses.
+Motion:
+- microfeedback: 150-200ms
+- mudanca de estado: 250-400ms
+- conquista rara: ate 700ms, pulavel quando possivel
+- respeitar reducao de movimento do sistema
 
-Evitar:
-- paragrafo grande dentro de card.
-- H1 enorme em paineis compactos.
-- texto decorativo que nao ajuda decisao.
+## Componentes Padrao
 
-### Iconografia
-
-Sistema de icones proprio, mas abstrato:
-- Rank: marcas geometricas originais.
-- Atributos: simbolos simples e nao literais.
-- Boss: sigilo original por evento.
-- Quests: icones de tipo de esforco.
-
-Nao usar:
-- silhuetas, logos, armas, portais ou marcas parecidas com obras existentes.
-
-### Motion
-
-Motion deve explicar estado:
-- quest aceita: pulso curto no painel de missao.
-- XP ganho: barra preenche e numero estabiliza.
-- level up: transicao breve com foco no novo nivel.
-- rank em risco: oscilacao sutil ou borda viva, nunca piscando demais.
-- boss ativo: presenca visual persistente, mas sem bloquear a tela.
-
-Duracao guia:
-- microfeedback: 150-200ms.
-- mudanca de estado: 250-400ms.
-- conquistas raras: ate 700ms, pulavel/reduzivel.
-
-Sempre respeitar reducao de movimento do sistema operacional quando disponivel.
-
-## Componentes Do Sistema
-
-### 1. System Header
-
-Substitui headers genericos por um bloco de identidade.
-
-Conteudo:
-- nome do jogador
-- nivel
-- titulo atual
-- rank competitivo compacto
-- foco/build
+### System Panel
 
 Uso:
-- `Base`
-- perfil resumido em `Arena`
+- envolver blocos de estado importante
+- criar moldura de sistema sem virar card generico
 
-### 2. Core Status Ring
+Nao usar para:
+- todos os itens de lista
+- informacao secundaria demais
 
-Visual central de progresso.
-
-Estados:
-- XP atual
-- proximo nivel
-- momentum semanal
-- risco/seguranca
+### System Badge
 
 Uso:
-- Base como payoff primario.
+- estado curto
+- metrica compacta
+- classificacao de risco
 
-### 3. Attribute Matrix
+Exemplos:
+- `SEGURO`
+- `EM RISCO`
+- `BOSS 2/4`
+- `XP +120`
 
-Troca tabela de atributos por leitura de build.
+### Progress Core
 
-Conteudo:
-- Forca
-- Inteligencia
-- Vitalidade
-- Agilidade
-- pontos disponiveis
-- interpretacao curta da build
+Uso:
+- payoff central de XP, nivel, boss ou rank
+- primeira dobra da Base e estados raros da Arena
 
-Interacao:
-- tap abre detalhe e alocacao.
+Regra:
+- nao duplicar barra comum logo abaixo do nucleo.
 
-### 4. Mission Terminal
+### Mission Card
 
-Reframing da lista de quests.
+Uso:
+- item acionavel de quest
 
-Tipos:
-- Missao pessoal
-- Missao competitiva
-- Prova de promocao
-- Evento semanal
-
-Cada item deve mostrar:
+Deve mostrar:
 - objetivo
 - recompensa
-- requisito
 - status
-- acao primaria
+- CTA
 
-Evitar:
-- cards identicos de to-do.
-- checkbox como elemento central para tudo.
+Nao deve mostrar:
+- explicacao longa de regra
+- historico completo
+- todas as metricas do jogador
 
-### 5. Rank Threat Meter
+### Threat Meter
 
-Componente de Arena para mostrar pressao semanal.
+Uso:
+- pressao competitiva
+- manutencao semanal
+- promocao/reconquista
 
 Estados:
 - protegido
@@ -295,280 +267,279 @@ Estados:
 - prova disponivel
 - reconquista
 
+### Legacy Archive
+
 Uso:
-- Arena
-- resumo compacto na Base.
-
-### 6. Boss Encounter Panel
-
-Boss semanal deve parecer evento, nao card informativo.
-
-Conteudo:
-- boss atual
-- janela de tempo
-- requisito
-- progresso
-- recompensa
-- CTA
+- conquistas permanentes
+- temporadas anteriores
+- recordes
 
 Regra:
-- recompensa e elegibilidade continuam backend-authoritative.
+- nao competir com a acao principal de Arena ou Base.
 
-### 7. Legacy Archive
-
-Transforma historico em legado.
-
-Conteudo:
-- titulos permanentes
-- temporada anterior
-- maiores feitos
-- recordes pessoais
-
-Uso:
-- Arena/Perfil.
-
-## Redesign Por Tela
+## Contratos Por Tela
 
 ### Base
 
-Objetivo:
-- ser o painel de personagem.
+Papel:
+- painel de personagem.
 
 Primeira dobra:
-- System Header
-- Core Status Ring
+- identidade do jogador
+- nivel e XP
+- build/foco
 - proximo payoff
-- aviso semanal compacto
+- sinal semanal compacto
 
-Remover/reduzir:
-- blocos repetidos de metrica.
-- composicao de dashboard generica.
+Pode mostrar:
+- leitura curta da build
+- boss semanal resumido
+- pontos disponiveis
+
+Nao deve mostrar:
+- leaderboard completo
+- historico longo
+- explicacao detalhada de rank
+- segunda versao do Plano
+
+Principal pergunta:
+- "Como esta meu personagem agora?"
 
 ### Quests
 
-Objetivo:
-- ser painel de missoes executaveis.
+Papel:
+- terminal de missoes executaveis.
 
 Primeira dobra:
 - missao recomendada
-- abas/segmentos: pessoais, competitivas, concluidas
-- Mission Terminal
+- frentes ativas
+- alternancia pessoal/competitiva/concluidas
+- criacao ou inicio rapido sem ficar sob a bottom nav
 
-Mudanca principal:
-- checkbox deixa de ser o simbolo dominante; CTA vira "Iniciar", "Registrar",
-  "Entregar prova", "Resgatar", "Concluir".
+Pode mostrar:
+- recompensa
+- requisito
+- tempo
+- estado
+
+Nao deve mostrar:
+- dashboard de progresso geral
+- explicacao longa de atributos
+- lista infinita sem agrupamento
+
+Principal pergunta:
+- "O que eu faco agora?"
 
 ### Arena
 
-Objetivo:
-- ser centro de pressao competitiva.
+Papel:
+- centro de pressao competitiva.
 
 Primeira dobra:
 - rank atual
-- Rank Threat Meter
+- risco semanal
 - prova/promocao/reconquista
-- boss/evento semanal
+- evento competitivo atual
 
-Mudanca principal:
-- mostrar risco e oportunidade antes de leaderboard.
+Pode mostrar:
+- leaderboard compacto
+- bracket/temporada
+- boss competitivo
+- integridade competitiva
+
+Nao deve mostrar:
+- build pessoal como protagonista
+- copy longa sobre cada regra
+- ranking que humilha usuario iniciante
+
+Principal pergunta:
+- "Estou seguro, em risco ou pronto para subir?"
 
 ### Plano
 
-Objetivo:
-- ser diagnostico e proximo passo, nao outro dashboard.
+Papel:
+- diagnostico e proximo movimento sob demanda, nao aba principal.
 
-Primeira dobra:
+Quando aberto:
 - leitura da semana
-- recomendacao unica
-- ajuste de build ou rotina
+- uma recomendacao principal
+- ajuste sugerido de rotina/build
+- risco de abandono ou oportunidade de push
 
-Mudanca principal:
-- parecer "relatorio de mentor/sistema", nao analytics frio.
+Pode mostrar:
+- tendencias
+- lacunas
+- sugestoes
+- interpretacao de cadencia
+
+Nao deve mostrar:
+- a mesma build da Base
+- o mesmo boss da Arena
+- uma segunda lista de quests
+- uma aba propria sem decisao diaria forte
+
+Principal pergunta:
+- "Qual ajuste melhora minha semana?"
 
 ### Conta
 
-Objetivo:
-- confianca e operacao.
+Papel:
+- confianca, identidade e operacao.
 
 Direcao:
-- manter mais calma e convencional.
-- nao precisa de tanta imersao quanto Base/Arena.
+- mais convencional
+- menos imersiva
+- alta clareza
 
-## Fases De Implementacao
+Nao deve mostrar:
+- gameplay analytics
+- pressao competitiva
+- narrativa visual pesada
 
-### Fase 1 - Fundacao Visual
+## Backlog Visual
+
+### Fase A - Guia E Auditoria
 
 Escopo:
-- definir tokens de cor, spacing, borda, elevation e motion.
-- criar componentes base:
-  - `AscendSurface`
-  - `SystemHeader`
-  - `StatusBadge`
-  - `ProgressArc` ou equivalente Flutter
-  - `AttributeChip`
-  - `MissionCard`
-
-Arquivos provaveis:
-- `lib/core/theme/app_colors.dart`
-- `lib/core/theme/app_theme.dart`
-- novo `lib/core/theme/ascend_design_tokens.dart`
-- novo `lib/core/widgets/system/`
+- consolidar este plano como guia operacional.
+- auditar Base, Quests, Arena e Plano contra as regras de densidade.
+- marcar textos repetidos, metricas duplicadas e cards redundantes.
 
 Aceite:
-- app ainda compila.
-- nenhum texto quebra em telas pequenas.
-- contraste minimo preservado.
+- cada tela tem lista clara de cortes e simplificacoes.
+- nenhuma mudanca de regra de negocio.
 
-### Fase 2 - Base Como Painel De Personagem
+### Fase B - Quests Como Terminal
 
 Escopo:
-- redesenhar primeira dobra da Base.
-- destacar identidade, nivel, XP, build e proximo payoff.
-
-Arquivos provaveis:
-- `lib/features/profile/presentation/home_screen.dart`
-- novos widgets locais em `lib/features/profile/presentation/widgets/`
+- reduzir scroll e repeticao.
+- reposicionar acao de adicionar/criar para nao brigar com menu inferior.
+- tornar pessoais, competitivas e concluidas mais compactas.
+- mover detalhe longo para sheet.
 
 Aceite:
-- usuario entende o estado do personagem em menos de 5 segundos.
-- proxima acao fica clara sem scroll longo.
+- acao principal visivel sem scroll longo.
+- itens concluidos nao dominam a tela.
+- quest pessoal e competitiva continuam rapidas de executar.
 
-### Fase 3 - Quests Como Mission Terminal
+### Fase C - Base Como Personagem
 
 Escopo:
-- mudar quest cards para linguagem de missao.
-- separar pessoal, competitiva e concluida com hierarquia visual.
-- reforcar CTAs por estado.
-
-Arquivos provaveis:
-- `lib/features/quests/presentation/quests_screen.dart`
-- `lib/features/quests/presentation/widgets/quest_card.dart`
+- cortar textos explicativos restantes.
+- reforcar progresso, build e payoff como leitura unica.
+- transformar informacoes secundarias em badges/detalhes.
 
 Aceite:
-- quest pessoal continua rapida.
-- quest competitiva comunica requisito/prova.
-- fluxo nao parece lista generica com checkbox.
+- estado do personagem entendido em ate 5 segundos.
+- proximo ganho e acao semanal ficam claros.
 
-### Fase 4 - Arena Como Centro De Pressao
+### Fase D - Arena Como Pressao
 
 Escopo:
-- Rank Threat Meter.
-- boss semanal com presenca de evento.
-- promocao/reconquista com estado visual forte.
-
-Arquivos provaveis:
-- `lib/features/profile/presentation/rank_screen.dart`
-- `lib/features/weekly_boss/presentation/weekly_boss_provider.dart`
+- criar ou refinar Threat Meter.
+- deixar promocao, risco e reconquista autoexplicativos.
+- compactar leaderboard e legado.
 
 Aceite:
-- usuario sabe se esta seguro, em risco ou pronto para prova.
-- rank nao depende de explicacao longa.
+- usuario sabe se esta seguro, em risco ou pronto para prova sem ler texto longo.
+- rivalidade parece justa, nao punitiva.
 
-### Fase 5 - Motion E Payoff
+### Fase E - Plano Como Mentor
 
 Escopo:
-- microinteracoes de XP, level up, claim, risco e boss.
-- reducao de movimento.
+- transformar analise em uma recomendacao principal.
+- cortar metricas repetidas de Base/Arena.
+- criar leitura semanal compacta.
+
+Aceite:
+- Plano nao parece dashboard frio.
+- usuario sai com uma decisao de ajuste.
+
+### Fase F - Motion E Payoff
+
+Escopo:
+- microinteracoes de XP, claim, level up, risco e boss.
+- feedback visual apos concluir missao.
+- suporte a reducao de movimento.
 
 Aceite:
 - movimento comunica estado.
 - nao atrasa interacao.
-- acessibilidade preservada.
+- testes de acessibilidade/manual smoke aprovados.
 
-### Fase 6 - Onboarding Narrativo Leve
+## Checklist De Revisao De Tela
 
-Escopo:
-- reframe do onboarding como configuracao de build.
-- foco do usuario vira arquipo/build inicial.
+Antes de considerar uma tela pronta:
 
-Arquivos provaveis:
-- `lib/features/profile/presentation/awakening_onboarding_screen.dart`
-- `lib/features/profile/presentation/focus_selection_sheet.dart`
+- Existe uma acao principal clara?
+- A primeira dobra responde a pergunta principal da tela?
+- Alguma metrica aparece com o mesmo peso em outra aba?
+- Algum card tem texto que poderia virar badge?
+- Alguma explicacao poderia ir para sheet?
+- A bottom navigation nao cobre CTA/FAB?
+- A tela ainda funciona em viewport pequeno?
+- O visual reforca progresso, build, risco ou payoff?
+- Ha alguma referencia visual ou textual direta a obra existente?
+- `flutter analyze` passa?
+- testes relevantes passam?
 
-Aceite:
-- usuario sai com objetivo, foco e primeira missao.
-- nao parece fan app.
+## Riscos E Mitigacoes
 
-## Metricas De Sucesso
-
-Produto:
-- aumento de D1/D7 retention.
-- aumento de quest start rate.
-- aumento de competitive quest start rate.
-- aumento de completion rate da primeira semana.
-- aumento de retorno para Base/Arena.
-
-UX:
-- tempo ate entender proxima acao em teste moderado.
-- taxa de erro em iniciar/concluir quest.
-- usuarios conseguem explicar rank, XP e boss com suas palavras.
-
-Tecnico:
-- `flutter analyze`
-- `flutter test`
-- smoke em emulador Android
-- screenshots desktop/mobile se houver web preview
-
-## Riscos
-
-### Risco De Copia
+### Copia Visual
 
 Mitigacao:
-- nomes, simbolos, arte, ranks e lore originais.
-- sem referencias diretas a obras existentes.
-- inspiracao limitada a padroes amplos de RPG/progressao.
+- nomes, simbolos, ranks e lore originais.
+- abstracao geometrica propria.
+- sem copiar composicao reconhecivel de obra existente.
 
-### Risco De Confusao
+### Excesso De Informacao
 
 Mitigacao:
-- uma acao primaria por tela.
+- regras de densidade mobile.
 - progressive disclosure.
-- labels claros.
-- Conta permanece convencional.
+- auditoria por tela antes de implementar.
 
-### Risco De Gamificacao Rasa
-
-Mitigacao:
-- cada visual precisa representar regra real.
-- XP/rank/boss sempre conectados a progresso ou consequencia.
-- badges/titulos nao substituem crescimento e orientacao.
-
-### Risco De Frustracao
+### Gamificacao Rasa
 
 Mitigacao:
-- Arena mostra recuperacao, nao so perda.
-- rank competitivo separado de progresso pessoal.
-- primeiras semanas priorizam competencia e clareza.
+- cada elemento visual representa uma regra real.
+- badges nao substituem progresso, orientacao ou consequencia.
 
-## Fora De Escopo Inicial
+### Confusao Operacional
+
+Mitigacao:
+- Conta fica convencional.
+- acoes primarias claras.
+- detalhe sob demanda.
+
+## Fora De Escopo Agora
 
 - avatar 3D.
 - loja cosmetica.
-- multiplayer/social amplo.
+- multiplayer social amplo.
 - novas regras de recompensa.
 - novos ranks copiados de qualquer obra.
-- mudanca no backend Java, exceto se alguma nova metrica/evento precisar ser
-  registrada depois.
+- mudanca no backend Java sem necessidade de nova metrica/evento.
 
-## Primeira Issue Recomendada
+## Proxima Issue Recomendada
 
 Titulo:
-- Criar fundacao visual Ascend System UI
+- Auditar densidade mobile das telas principais
 
 Escopo:
-- tokens de cor/motion/elevation.
-- widgets base reutilizaveis.
-- aplicar somente na Base acima da dobra.
+- revisar Base, Quests, Arena e Plano contra este documento.
+- criar uma lista de cortes por tela.
+- priorizar Quests primeiro, por ser a tela com maior risco de voltar a parecer
+  uma lista de tarefas.
 
 Porque:
-- entrega mudanca perceptivel sem reescrever todas as telas.
-- cria linguagem reutilizavel para Quests e Arena.
-- permite validar se o novo estilo aumenta imersao sem quebrar usabilidade.
+- reduz tentativa e erro visual.
+- protege mobile contra excesso de texto.
+- cria criterio objetivo antes da proxima rodada de implementacao.
 
-Critérios de aceite:
-- Base parece painel de personagem, nao dashboard.
-- contraste e legibilidade continuam bons.
-- nenhum texto quebra em viewport pequena.
-- sem copia direta de anime/jogo.
-- `flutter analyze` passa.
-- smoke manual no emulador Android passa.
+Criterios de aceite:
+- Quests tem proposta de terminal compacto.
+- Base tem proposta de painel de personagem mais direto.
+- Arena tem proposta de pressao competitiva sem texto longo.
+- Plano tem proposta de mentor/recomendacao unica.
+- nenhuma regra de backend/progresso e alterada.

@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'profile/presentation/home_screen.dart';
 import 'profile/presentation/rank_screen.dart';
-import 'profile/presentation/stats_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
@@ -46,12 +45,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       icon: Icons.bar_chart_outlined,
       activeIcon: Icons.bar_chart_rounded,
       accent: AppColors.arenaAccent,
-    ),
-    _NavigationDestination(
-      label: 'Plano',
-      icon: Icons.analytics_outlined,
-      activeIcon: Icons.analytics_rounded,
-      accent: AppColors.planAccent,
     ),
   ];
 
@@ -108,8 +101,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       const HomeScreen(),
       const QuestsScreen(),
       const RankScreen(),
-      const StatsScreen(),
     ];
+    final safeIndex = currentIndex.clamp(0, screens.length - 1);
 
     return Container(
       decoration: BoxDecoration(
@@ -131,13 +124,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
             backgroundColor: Colors.transparent,
             body: requiresOnboarding
                 ? const AwakeningOnboardingScreen()
-                : IndexedStack(index: currentIndex, children: screens),
+                : IndexedStack(index: safeIndex, children: screens),
             bottomNavigationBar: requiresOnboarding || keyboardOpen
                 ? null
                 : Padding(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
                     child: _FloatingBottomDock(
-                      currentIndex: currentIndex,
+                      currentIndex: safeIndex,
                       destinations: _destinations,
                       onTap: (index) =>
                           ref.read(navigationProvider.notifier).state = index,

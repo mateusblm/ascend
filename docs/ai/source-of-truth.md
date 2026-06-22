@@ -44,6 +44,7 @@ For UI/navigation/surface ownership work, also read:
 - `docs/product/ux-positioning.md`
 - `docs/product/ui-information-architecture.md`
 - `docs/product/game-system-design-plan.md`
+- `docs/product/ui-density-audit.md`
 - `docs/product/ui-surface-audit.md`
 - `docs/product/ui-redesign-phases.md`
 

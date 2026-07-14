@@ -606,6 +606,13 @@ Base daily return:
 - local pending inventory remains a resilient fallback when remote reading is unavailable;
 - validation passed: `flutter analyze` and `flutter test`.
 
+Progress note recorded on `2026-07-14`
+
+Recovery entry point:
+- Base identifies a three-day absence from the reconciled authoritative completion history;
+- the new Camp panel preserves the player's progress and offers light return, plan maintenance, or Journey reorganization;
+- validation passed: `flutter analyze` and `flutter test`.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

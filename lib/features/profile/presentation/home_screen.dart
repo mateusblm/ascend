@@ -2,6 +2,7 @@ import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
+import 'package:ascend/features/profile/domain/retomada.dart';
 import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
@@ -38,6 +39,10 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
                 _HeroAscensao(jogador: jogador),
+                if (precisaDeRetomada(jogador)) ...[
+                  const SizedBox(height: 18),
+                  _PainelRetomada(onEscolher: (mensagem) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)))),
+                ],
                 const SizedBox(height: 30),
                 _TituloSecao(
                   etiqueta: 'ROTA ATUAL',
@@ -103,6 +108,24 @@ class HomeScreen extends ConsumerWidget {
       context,
     ).showSnackBar(SnackBar(content: Text(mensagem)));
   }
+}
+
+class _PainelRetomada extends StatelessWidget {
+  const _PainelRetomada({required this.onEscolher});
+  final ValueChanged<String> onEscolher;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.surfaceMuted, border: Border.all(color: AppColors.amber.withValues(alpha: .4))),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('ACAMPAMENTO', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 6), const Text('Seu progresso foi preservado. Escolha como retomar.'),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        OutlinedButton(onPressed: () => onEscolher('Retomada leve ativada. Comece pelo próximo passo.'), child: const Text('Retomada leve')),
+        TextButton(onPressed: () => onEscolher('Seu plano atual continua disponível.'), child: const Text('Voltar ao plano')),
+        TextButton(onPressed: () => onEscolher('Abra Jornadas para reorganizar sua rota.'), child: const Text('Reorganizar Jornada')),
+      ]),
+    ]),
+  );
 }
 
 class _CabecalhoBase extends StatelessWidget {

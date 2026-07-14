@@ -592,6 +592,13 @@ Journey legacy read-model:
 - the Jornada surface renders those permanent records as a compact Legacy section;
 - validation passed: `flutter analyze`, `flutter test`, and `cd backend && mvn test` (36 tests).
 
+Progress note recorded on `2026-07-14`
+
+Daily completion payoff:
+- personal mission completion now displays compact XP, attribute, and Journey-route feedback;
+- the next authoritative recommendation refreshes immediately after a mission mutation;
+- validation passed: `flutter analyze` and `flutter test`.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

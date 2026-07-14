@@ -82,7 +82,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   if (filtradas.isEmpty)
                     _RotaVazia(mostrarConcluidas: _mostrarConcluidas)
                   else
-                    _ListaDeRota(quests: filtradas),
+                    _ListaDeRota(quests: filtradas, aoAtualizar: () => setState(() => _recomendada = _buscarRecomendada())),
                 ]),
               ),
             ),
@@ -220,8 +220,9 @@ class _AbaRota extends StatelessWidget {
 }
 
 class _ListaDeRota extends StatelessWidget {
-  const _ListaDeRota({required this.quests});
+  const _ListaDeRota({required this.quests, required this.aoAtualizar});
   final List<Quest> quests;
+  final VoidCallback aoAtualizar;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -230,15 +231,17 @@ class _ListaDeRota extends StatelessWidget {
         _FaixaMissao(
           quest: quests[indice],
           ultima: indice == quests.length - 1,
+          aoAtualizar: aoAtualizar,
         ),
     ],
   );
 }
 
 class _FaixaMissao extends ConsumerWidget {
-  const _FaixaMissao({required this.quest, required this.ultima});
+  const _FaixaMissao({required this.quest, required this.ultima, required this.aoAtualizar});
   final Quest quest;
   final bool ultima;
+  final VoidCallback aoAtualizar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -337,6 +340,7 @@ class _FaixaMissao extends ConsumerWidget {
                             final resultado = await ref
                                 .read(questProvider.notifier)
                                 .toggleQuest(quest.id);
+                            aoAtualizar();
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

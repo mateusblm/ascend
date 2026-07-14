@@ -70,7 +70,7 @@ String questResultSnackBarMessage(Quest quest, QuestCompletionResult result) {
     QuestCompletionResult.success =>
       quest.isCompleted
           ? 'Missao reaberta.'
-          : 'Missao concluida. Recompensa aplicada.',
+          : 'MISSÃO CONCLUÍDA  ·  +${quest.xpReward} XP  ·  ${quest.rewardAttribute.name.toUpperCase()}${quest.journeyId == null ? '' : '  ·  ROTA ATUALIZADA'}',
     QuestCompletionResult.notFound => 'Missao nao encontrada.',
     QuestCompletionResult.alreadyCompleted => 'Esta missao ja foi concluida.',
     QuestCompletionResult.invalidFlow => 'Nao foi possivel atualizar a missao.',

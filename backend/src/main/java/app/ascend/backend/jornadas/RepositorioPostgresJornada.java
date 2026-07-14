@@ -23,7 +23,7 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
     return jdbcTemplate.query("""
         select id, titulo, objetivo, motivacao, status, criada_em
         from jornadas
-        where uid = ? and status <> 'arquivada'
+        where uid = ? and status in ('ativa', 'pausada')
         order by case status when 'ativa' then 0 when 'pausada' then 1 else 2 end, criada_em desc
         """, (resultado, linha) -> mapear(resultado), uid);
   }

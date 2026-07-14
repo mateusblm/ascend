@@ -13,4 +13,8 @@ public interface RepositorioJornada {
   Optional<Jornada> buscarPorId(String uid, String jornadaId);
 
   Jornada atualizarStatus(String uid, String jornadaId, StatusJornada status);
+
+  List<CapituloJornada> listarCapitulos(String uid, String jornadaId);
+
+  CapituloJornada adicionarCapitulo(String uid, String jornadaId, CapituloJornada capitulo);
 }

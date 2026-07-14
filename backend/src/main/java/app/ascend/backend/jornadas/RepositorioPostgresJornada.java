@@ -60,6 +60,25 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
     return buscarPorId(uid, jornadaId).orElseThrow();
   }
 
+  @Override
+  public List<CapituloJornada> listarCapitulos(String uid, String jornadaId) {
+    return jdbcTemplate.query("""
+        select c.id, c.titulo, c.indice_ordem from capitulos_jornada c
+        join jornadas j on j.id = c.jornada_id
+        where j.uid = ? and j.id = ? order by c.indice_ordem
+        """, (resultado, linha) -> new CapituloJornada(
+        resultado.getString("id"), resultado.getString("titulo"), resultado.getInt("indice_ordem")), uid, jornadaId);
+  }
+
+  @Override
+  public CapituloJornada adicionarCapitulo(String uid, String jornadaId, CapituloJornada capitulo) {
+    jdbcTemplate.update("""
+        insert into capitulos_jornada (id, jornada_id, titulo, indice_ordem)
+        select ?, j.id, ?, ? from jornadas j where j.uid = ? and j.id = ?
+        """, capitulo.id(), capitulo.titulo(), capitulo.indiceOrdem(), uid, jornadaId);
+    return capitulo;
+  }
+
   private Jornada mapear(java.sql.ResultSet resultado) throws java.sql.SQLException {
     return new Jornada(
         resultado.getString("id"),

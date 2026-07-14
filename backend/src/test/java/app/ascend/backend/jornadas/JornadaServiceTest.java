@@ -59,4 +59,15 @@ class JornadaServiceTest {
 
     verify(repositorio).atualizarStatus("user-1", "jornada-1", StatusJornada.pausada);
   }
+
+  @Test
+  void adicionarCapituloRejeitaJornadaPausada() {
+    when(repositorio.buscarPorId("user-1", "jornada-1")).thenReturn(Optional.of(new Jornada(
+        "jornada-1", "TCC", "Entregar", null, StatusJornada.pausada, Instant.now())));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.adicionarCapitulo(
+        "user-1", "jornada-1", new RequisicaoCriacaoCapitulo("Revisao final")));
+
+    assertEquals("jornada_nao_esta_ativa", erro.codigo());
+  }
 }

@@ -60,6 +60,27 @@ class JavaBackendClient {
     body: const {},
   );
 
+  Future<List<Map<String, dynamic>>> fetchJourneyChapters({
+    required String idToken,
+    required String journeyId,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/journeys/$journeyId/chapters'),
+      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'},
+    );
+    return _decodeList(response);
+  }
+
+  Future<Map<String, dynamic>> createJourneyChapter({
+    required String idToken,
+    required String journeyId,
+    required String title,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/$journeyId/chapters',
+    idToken: idToken,
+    body: {'titulo': title},
+  );
+
   Future<void> syncQuestInventory({
     required String idToken,
     required String deviceSessionId,

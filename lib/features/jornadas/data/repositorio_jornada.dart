@@ -49,6 +49,19 @@ class RepositorioJornada {
     return Jornada.fromJson(resposta);
   }
 
+  Future<List<CapituloJornada>> listarCapitulos(String jornadaId) async {
+    final resposta = await _clienteObrigatorio('carregar capítulos').fetchJourneyChapters(
+      idToken: await _tokenObrigatorio('carregar capítulos'), journeyId: jornadaId);
+    return resposta.map(CapituloJornada.fromJson).toList(growable: false);
+  }
+
+  Future<CapituloJornada> criarCapitulo(String jornadaId, String titulo) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('criar capítulo').createJourneyChapter(
+      idToken: await _tokenObrigatorio('criar capítulo'), journeyId: jornadaId, title: titulo);
+    return CapituloJornada.fromJson(resposta);
+  }
+
   JavaBackendClient _clienteObrigatorio(String acao) {
     final cliente = _clienteJava;
     if (cliente == null) throw StateError('Backend Java nao configurado para $acao.');

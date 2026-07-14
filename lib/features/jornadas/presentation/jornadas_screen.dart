@@ -3,6 +3,7 @@ import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
 import 'package:ascend/features/jornadas/domain/jornada.dart';
 import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
+import 'package:ascend/features/jornadas/data/repositorio_jornada.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
@@ -230,6 +231,12 @@ class _CartaoJornada extends ConsumerWidget {
         Text(jornada.objetivo, style: const TextStyle(color: AppColors.textSecondary)),
         const SizedBox(height: 18),
         _TrilhaDeCapitulo(progresso: progresso, ativa: jornada.estaAtiva),
+        const SizedBox(height: 10),
+        TextButton.icon(
+          onPressed: () => _mostrarCapitulos(context, ref),
+          icon: const Icon(Icons.account_tree_outlined, size: 17),
+          label: const Text('Gerenciar capítulos'),
+        ),
         if (marcos.isNotEmpty) ...[
           const SizedBox(height: 16),
           _MarcosDoCapitulo(marcos: marcos),
@@ -265,6 +272,52 @@ class _CartaoJornada extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Future<void> _mostrarCapitulos(BuildContext context, WidgetRef ref) async {
+    final repositorio = ref.read(repositorioJornadaProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (contexto) => SafeArea(
+        child: FutureBuilder<List<CapituloJornada>>(
+          future: repositorio.listarCapitulos(jornada.id),
+          builder: (contexto, snapshot) {
+            final capitulos = snapshot.data ?? const <CapituloJornada>[];
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(jornada.titulo, style: Theme.of(contexto).textTheme.titleLarge),
+                const SizedBox(height: 14),
+                for (final capitulo in capitulos)
+                  ListTile(leading: Text('${capitulo.indiceOrdem + 1}'), title: Text(capitulo.titulo)),
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const Center(child: CircularProgressIndicator()),
+                if (jornada.estaAtiva)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _criarCapitulo(contexto, repositorio),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Novo capítulo'),
+                    ),
+                  ),
+              ]),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _criarCapitulo(BuildContext context, RepositorioJornada repositorio) async {
+    final campo = TextEditingController();
+    await showDialog<void>(context: context, builder: (dialogo) => AlertDialog(
+      title: const Text('Novo capítulo'),
+      content: TextField(controller: campo, autofocus: true, decoration: const InputDecoration(labelText: 'Nome')),
+      actions: [TextButton(onPressed: () => Navigator.pop(dialogo), child: const Text('Cancelar')),
+        FilledButton(onPressed: () async { if (campo.text.trim().isEmpty) return; await repositorio.criarCapitulo(jornada.id, campo.text); if (dialogo.mounted) Navigator.pop(dialogo); }, child: const Text('Criar'))],
+    ));
+    campo.dispose();
   }
 }
 

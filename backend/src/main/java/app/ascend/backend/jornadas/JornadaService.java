@@ -21,6 +21,10 @@ public class JornadaService {
     return repositorio.listarPorUsuario(uid);
   }
 
+  public List<CapituloJornada> listarCapitulos(String uid, String jornadaId) {
+    return repositorio.listarCapitulos(uid, jornadaId);
+  }
+
   /**
    * Inicia uma Jornada independente das missoes para permitir planejamento progressivo.
    * A vinculacao de missoes sera adicionada sem alterar este contrato de criacao.
@@ -48,6 +52,21 @@ public class JornadaService {
       );
     }
     return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.pausada);
+  }
+
+  /** Adiciona um capitulo somente enquanto a Jornada ainda pode receber novos objetivos. */
+  public CapituloJornada adicionarCapitulo(
+      String uid, String jornadaId, RequisicaoCriacaoCapitulo requisicao
+  ) {
+    Jornada jornada = repositorio.buscarPorId(uid, jornadaId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "jornada_nao_encontrada", "Jornada nao encontrada."));
+    if (jornada.status() != StatusJornada.ativa) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "jornada_nao_esta_ativa",
+          "Somente uma Jornada ativa pode receber capitulos.");
+    }
+    int proximoIndice = repositorio.listarCapitulos(uid, jornadaId).size();
+    return repositorio.adicionarCapitulo(uid, jornadaId, new CapituloJornada(
+        UUID.randomUUID().toString(), requisicao.titulo().trim(), proximoIndice));
   }
 
   private String textoOpcional(String valor) {

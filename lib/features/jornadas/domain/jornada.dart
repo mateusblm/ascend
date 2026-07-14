@@ -2,6 +2,17 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 
 enum StatusJornada { ativa, pausada, concluida, arquivada }
 
+class CapituloJornada {
+  const CapituloJornada({required this.id, required this.titulo, required this.indiceOrdem});
+  final String id;
+  final String titulo;
+  final int indiceOrdem;
+  factory CapituloJornada.fromJson(Map<String, dynamic> dados) => CapituloJornada(
+    id: dados['id'] as String? ?? '', titulo: dados['titulo'] as String? ?? 'Capítulo',
+    indiceOrdem: (dados['indiceOrdem'] as num?)?.toInt() ?? 0,
+  );
+}
+
 /// Progresso de uma Jornada calculado apenas pelas missões a ela vinculadas.
 class ProgressoJornada {
   const ProgressoJornada({required this.total, required this.concluidas});

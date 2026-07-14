@@ -54,7 +54,7 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
   @Override
   public Jornada atualizarStatus(String uid, String jornadaId, StatusJornada status) {
     jdbcTemplate.update("""
-        update jornadas set status = ?, atualizado_em = current_timestamp
+        update jornadas set status = ?, atualizada_em = current_timestamp
         where uid = ? and id = ?
         """, status.name(), uid, jornadaId);
     return buscarPorId(uid, jornadaId).orElseThrow();
@@ -63,7 +63,7 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
   @Override
   public Jornada atualizarProposito(String uid, String jornadaId, String titulo, String objetivo, String motivacao) {
     jdbcTemplate.update("""
-        update jornadas set titulo = ?, objetivo = ?, motivacao = ?, atualizado_em = current_timestamp
+        update jornadas set titulo = ?, objetivo = ?, motivacao = ?, atualizada_em = current_timestamp
         where uid = ? and id = ?
         """, titulo, objetivo, motivacao, uid, jornadaId);
     return buscarPorId(uid, jornadaId).orElseThrow();

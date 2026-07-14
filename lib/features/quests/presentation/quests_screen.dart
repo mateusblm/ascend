@@ -280,13 +280,13 @@ class _FaixaMissao extends ConsumerWidget {
         ),
       ),
       child: SizedBox(
-        height: 148,
+        height: 168,
         child: Row(
           children: [
             EixoAscensao(
               cor: cor,
               concluido: quest.isCompleted,
-              altura: 148,
+              altura: 168,
             ),
             const SizedBox(width: 8),
             Expanded(

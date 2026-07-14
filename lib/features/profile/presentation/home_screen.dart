@@ -20,7 +20,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final jogador = ref.watch(playerProvider);
     final quests = ref.watch(questProvider);
-    final pendentes = quests.where((quest) => !quest.isCompleted).toList();
+    final pendentes = quests
+        .where((quest) => !quest.isArchived && !quest.isCompleted)
+        .toList();
     final boss = weeklyBossForPlayer(jogador);
 
     return SafeArea(

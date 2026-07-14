@@ -628,6 +628,9 @@ Recovery P0 completion:
 - personal missions can now be archived idempotently or rescheduled by date through authoritative commands; archived missions are excluded from the active route and recommendations while historical completions are preserved;
 - remote Railway/Firebase Anonymous Auth smoke remains pending: verify `FIREBASE_SERVICE_ACCOUNT_JSON` matches the staging APK Firebase project.
 
+Lifecycle synchronization follow-up:
+- the legacy profile-source synchronization now also preserves Journey links, archival state, and planned date for personal missions, preventing a profile sync from discarding authoritative mission lifecycle data.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

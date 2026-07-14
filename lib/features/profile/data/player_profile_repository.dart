@@ -286,7 +286,7 @@ Map<String, dynamic> _profileSourceFor(
     'lastResetDate': player.lastResetDate.toIso8601String(),
     'primaryFocus': player.primaryFocus.name,
     'hasCompletedOnboarding': player.hasCompletedOnboarding,
-    'quests': quests.map(_questSourceFor).toList(growable: false),
+    'quests': quests.map(questSourceForProfileSync).toList(growable: false),
   };
 }
 
@@ -295,10 +295,11 @@ String? _dateStringOrNull(DateTime? value) {
   return value.toIso8601String();
 }
 
-Map<String, dynamic> _questSourceFor(Quest quest) {
+Map<String, dynamic> questSourceForProfileSync(Quest quest) {
   return <String, dynamic>{
     'id': quest.id,
     'title': quest.title,
+    'journeyId': quest.journeyId,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
     'category': 'personal',
@@ -311,7 +312,9 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'verificationStartedAt': _dateStringOrNull(quest.verificationStartedAt),
     'completedAt': _dateStringOrNull(quest.completedAt),
     'verifiedAt': _dateStringOrNull(quest.verifiedAt),
+    'plannedFor': _dateStringOrNull(quest.plannedFor),
     'isCompleted': quest.isCompleted,
+    'isArchived': quest.isArchived,
     'preRewardLevel': quest.preRewardLevel,
     'preRewardXp': quest.preRewardXp,
     'preRewardMaxXp': quest.preRewardMaxXp,

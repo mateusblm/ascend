@@ -1,4 +1,5 @@
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -78,5 +79,21 @@ void main() {
     ]);
     expect(player.primaryFocus, AwakeningPath.study);
     expect(player.hasCompletedOnboarding, isTrue);
+  });
+
+  test('preserva o ciclo de vida e a Jornada ao sincronizar o perfil', () {
+    final fonte = questSourceForProfileSync(Quest(
+      id: 'quest-1',
+      title: 'Organizar rota',
+      journeyId: 'jornada-1',
+      rewardAttribute: AttributeType.intelligence,
+      xpReward: 12,
+      plannedFor: DateTime(2026, 7, 20),
+      isArchived: true,
+    ));
+
+    expect(fonte['journeyId'], 'jornada-1');
+    expect(fonte['isArchived'], isTrue);
+    expect(fonte['plannedFor'], contains('2026-07-20'));
   });
 }

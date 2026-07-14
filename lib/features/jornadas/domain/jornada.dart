@@ -74,6 +74,30 @@ ProgressoJornada calcularProgressoJornada(
   return ProgressoJornada(total: total, concluidas: concluidas);
 }
 
+/// Sinal compacto para revisar somente desvios da rota, sem repetir o progresso geral.
+class RevisaoRotaJornada {
+  const RevisaoRotaJornada({required this.reagendadas, required this.arquivadas});
+  final List<Quest> reagendadas;
+  final List<Quest> arquivadas;
+  bool get precisaDeAjuste => reagendadas.isNotEmpty || arquivadas.isNotEmpty;
+  int get totalDeAjustes => reagendadas.length + arquivadas.length;
+}
+
+RevisaoRotaJornada revisarRotaJornada(Jornada jornada, Iterable<Quest> quests) {
+  final vinculadas = quests.where((quest) => quest.journeyId == jornada.id);
+  final reagendadas = vinculadas.where((quest) {
+    if (quest.isCompleted || quest.isArchived || quest.plannedFor == null) return false;
+    final original = quest.occursOn;
+    return original != null && DateTime(
+          original.year, original.month, original.day,
+        ) != DateTime(quest.plannedFor!.year, quest.plannedFor!.month, quest.plannedFor!.day);
+  }).toList(growable: false);
+  return RevisaoRotaJornada(
+    reagendadas: reagendadas,
+    arquivadas: vinculadas.where((quest) => quest.isArchived).toList(growable: false),
+  );
+}
+
 /// Objetivo pessoal de medio prazo que recebe missoes e marcos progressivamente.
 class Jornada {
   const Jornada({

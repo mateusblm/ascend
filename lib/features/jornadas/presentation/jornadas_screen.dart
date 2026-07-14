@@ -3,6 +3,7 @@ import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/core/widgets/above_navigation_dock_fab_location.dart';
 import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
 import 'package:ascend/features/jornadas/domain/jornada.dart';
+import 'package:ascend/features/jornadas/presentation/widgets/sinal_revisao_rota.dart';
 import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
 import 'package:ascend/features/jornadas/data/repositorio_jornada.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
@@ -48,9 +49,8 @@ class JornadasScreen extends ConsumerWidget {
                       const _CarregandoJornadas()
                     else if (estado.erro != null)
                       _ErroJornadas(
-                        aoTentarNovamente: () => ref
-                            .read(jornadaProvider.notifier)
-                            .recarregar(),
+                        aoTentarNovamente: () =>
+                            ref.read(jornadaProvider.notifier).recarregar(),
                       )
                     else if (estado.jornadas.isEmpty)
                       _JornadasVazias(
@@ -60,7 +60,9 @@ class JornadasScreen extends ConsumerWidget {
                       _ListaJornadas(jornadas: estado.jornadas),
                     if (!estado.carregando && estado.erro == null) ...[
                       const SizedBox(height: 20),
-                      _LegadoJornadas(repositorio: ref.read(repositorioJornadaProvider)),
+                      _LegadoJornadas(
+                        repositorio: ref.read(repositorioJornadaProvider),
+                      ),
                     ],
                   ]),
                 ),
@@ -121,7 +123,10 @@ class _ErroJornadas extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('SINAL INTERROMPIDO', style: TextStyle(color: AppColors.boss)),
+        const Text(
+          'SINAL INTERROMPIDO',
+          style: TextStyle(color: AppColors.boss),
+        ),
         const SizedBox(height: 8),
         const Text('Nao foi possivel carregar suas Jornadas agora.'),
         const SizedBox(height: 14),
@@ -154,8 +159,10 @@ class _JornadasVazias extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Text('Uma Jornada transforma um objetivo real em um caminho visível.',
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Uma Jornada transforma um objetivo real em um caminho visível.',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         const Text(
           'Comece pelo que você quer alcançar. Os capítulos e missões entram depois.',
@@ -192,24 +199,51 @@ class _LegadoJornadas extends StatelessWidget {
   final RepositorioJornada repositorio;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<List<RegistroLegadoJornada>>(
+  Widget build(
+    BuildContext context,
+  ) => FutureBuilder<List<RegistroLegadoJornada>>(
     future: repositorio.listarLegado(),
     builder: (context, snapshot) {
       final registros = snapshot.data ?? const <RegistroLegadoJornada>[];
       if (registros.isEmpty) return const SizedBox.shrink();
       return AscendSystemPanel(
         accent: AppColors.amber,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('LEGADO', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          for (final registro in registros) Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(children: [const Icon(Icons.workspace_premium_rounded, color: AppColors.amber, size: 17),
-              const SizedBox(width: 9), Expanded(child: Text(registro.titulo)),
-              Text('${registro.concluidaEm.day.toString().padLeft(2, '0')}/${registro.concluidaEm.month.toString().padLeft(2, '0')}', style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
-            ]),
-          ),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'LEGADO',
+              style: TextStyle(
+                color: AppColors.amber,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final registro in registros)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: AppColors.amber,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(child: Text(registro.titulo)),
+                    Text(
+                      '${registro.concluidaEm.day.toString().padLeft(2, '0')}/${registro.concluidaEm.month.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       );
     },
   );
@@ -223,94 +257,111 @@ class _CartaoJornada extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final quests = ref.watch(questProvider);
     final progresso = calcularProgressoJornada(jornada, quests);
-    final marcos = quests.where((quest) => quest.journeyId == jornada.id).toList();
+    final marcos = quests
+        .where((quest) => quest.journeyId == jornada.id)
+        .toList();
+    final revisao = revisarRotaJornada(jornada, quests);
     return AscendSystemPanel(
       accent: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              jornada.estaAtiva
-                  ? Icons.explore_rounded
-                  : Icons.pause_circle_outline_rounded,
-              color: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
-              size: 17,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              jornada.estaAtiva ? 'JORNADA ATIVA' : 'EM PAUSA',
-              style: TextStyle(
-                color: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                jornada.estaAtiva
+                    ? Icons.explore_rounded
+                    : Icons.pause_circle_outline_rounded,
+                color: jornada.estaAtiva
+                    ? AppColors.intellect
+                    : AppColors.textMuted,
+                size: 17,
               ),
-            ),
-            const Spacer(),
-            if (jornada.estaAtiva)
-              Tooltip(
-                message: 'Ajustar Jornada',
-                child: IconButton(
-                  onPressed: () => _editar(context, ref),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  color: AppColors.textSecondary,
+              const SizedBox(width: 8),
+              Text(
+                jornada.estaAtiva ? 'JORNADA ATIVA' : 'EM PAUSA',
+                style: TextStyle(
+                  color: jornada.estaAtiva
+                      ? AppColors.intellect
+                      : AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
+              const Spacer(),
+              if (jornada.estaAtiva)
+                Tooltip(
+                  message: 'Ajustar Jornada',
+                  child: IconButton(
+                    onPressed: () => _editar(context, ref),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              if (jornada.estaAtiva)
+                Tooltip(
+                  message: 'Pausar Jornada',
+                  child: IconButton(
+                    onPressed: () => _pausar(context, ref),
+                    icon: const Icon(Icons.pause_rounded, size: 19),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(jornada.titulo, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            jornada.objetivo,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 18),
+          _TrilhaDeCapitulo(progresso: progresso, ativa: jornada.estaAtiva),
+          if (jornada.estaAtiva && revisao.precisaDeAjuste) ...[
+            const SizedBox(height: 10),
+            SinalRevisaoRota(
+              revisao: revisao,
+              onTap: () => _abrirRevisao(context, ref, revisao),
+            ),
+          ],
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: () => _mostrarCapitulos(context, ref),
+            icon: const Icon(Icons.account_tree_outlined, size: 17),
+            label: const Text('Gerenciar capítulos'),
+          ),
+          if (jornada.estaAtiva)
+            TextButton.icon(
+              onPressed: () => _concluirJornada(context, ref),
+              icon: const Icon(Icons.workspace_premium_outlined, size: 17),
+              label: const Text('Concluir Jornada'),
+            ),
+          if (marcos.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _MarcosDoCapitulo(marcos: marcos),
             if (jornada.estaAtiva)
-              Tooltip(
-                message: 'Pausar Jornada',
-                child: IconButton(
-                  onPressed: () => _pausar(context, ref),
-                  icon: const Icon(Icons.pause_rounded, size: 19),
-                  color: AppColors.textSecondary,
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _ajustarMissoes(context, ref, marcos),
+                  icon: const Icon(Icons.tune_rounded, size: 17),
+                  label: const Text('Ajustar missões da rota'),
                 ),
               ),
           ],
-        ),
-        const SizedBox(height: 10),
-        Text(jornada.titulo, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Text(jornada.objetivo, style: const TextStyle(color: AppColors.textSecondary)),
-        const SizedBox(height: 18),
-        _TrilhaDeCapitulo(progresso: progresso, ativa: jornada.estaAtiva),
-        const SizedBox(height: 10),
-        TextButton.icon(
-          onPressed: () => _mostrarCapitulos(context, ref),
-          icon: const Icon(Icons.account_tree_outlined, size: 17),
-          label: const Text('Gerenciar capítulos'),
-        ),
-        if (jornada.estaAtiva)
-          TextButton.icon(
-            onPressed: () => _concluirJornada(context, ref),
-            icon: const Icon(Icons.workspace_premium_outlined, size: 17),
-            label: const Text('Concluir Jornada'),
-          ),
-        if (marcos.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _MarcosDoCapitulo(marcos: marcos),
-          if (jornada.estaAtiva)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _ajustarMissoes(context, ref, marcos),
-                icon: const Icon(Icons.tune_rounded, size: 17),
-                label: const Text('Ajustar missões da rota'),
+          if (jornada.motivacao?.isNotEmpty == true) ...[
+            const SizedBox(height: 16),
+            Text(
+              jornada.motivacao!,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
               ),
             ),
+          ],
         ],
-        if (jornada.motivacao?.isNotEmpty == true) ...[
-          const SizedBox(height: 16),
-          Text(
-            jornada.motivacao!,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ],
       ),
     );
   }
@@ -320,7 +371,9 @@ class _CartaoJornada extends ConsumerWidget {
       await ref.read(jornadaProvider.notifier).pausar(jornada.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Jornada pausada. Seu progresso foi preservado.')),
+          const SnackBar(
+            content: Text('Jornada pausada. Seu progresso foi preservado.'),
+          ),
         );
       }
     } catch (_) {
@@ -336,27 +389,160 @@ class _CartaoJornada extends ConsumerWidget {
     final titulo = TextEditingController(text: jornada.titulo);
     final objetivo = TextEditingController(text: jornada.objetivo);
     final motivacao = TextEditingController(text: jornada.motivacao ?? '');
-    final salvo = await showDialog<bool>(context: context, builder: (dialogo) => AlertDialog(
-      title: const Text('Ajustar Jornada'),
-      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextField(controller: titulo, decoration: const InputDecoration(labelText: 'Nome da Jornada')),
-        TextField(controller: objetivo, maxLines: 2, decoration: const InputDecoration(labelText: 'Objetivo')),
-        TextField(controller: motivacao, maxLines: 2, decoration: const InputDecoration(labelText: 'Motivação (opcional)')),
-      ])),
-      actions: [TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('Cancelar')),
-        FilledButton(onPressed: () async {
-          if (titulo.text.trim().isEmpty || objetivo.text.trim().isEmpty) return;
-          try {
-            await ref.read(jornadaProvider.notifier).atualizar(jornadaId: jornada.id, titulo: titulo.text, objetivo: objetivo.text, motivacao: motivacao.text);
-            if (dialogo.mounted) Navigator.pop(dialogo, true);
-          } catch (_) {
-            if (dialogo.mounted) ScaffoldMessenger.of(dialogo).showSnackBar(const SnackBar(content: Text('Não foi possível ajustar a Jornada agora.')));
-          }
-        }, child: const Text('Salvar'))],
-    ));
-    titulo.dispose(); objetivo.dispose(); motivacao.dispose();
-    if (salvo == true && context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Jornada ajustada. Sua rota foi preservada.')));
+    final salvo = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Ajustar Jornada'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titulo,
+                decoration: const InputDecoration(labelText: 'Nome da Jornada'),
+              ),
+              TextField(
+                controller: objetivo,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Objetivo'),
+              ),
+              TextField(
+                controller: motivacao,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Motivação (opcional)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (titulo.text.trim().isEmpty || objetivo.text.trim().isEmpty) {
+                return;
+              }
+              try {
+                await ref
+                    .read(jornadaProvider.notifier)
+                    .atualizar(
+                      jornadaId: jornada.id,
+                      titulo: titulo.text,
+                      objetivo: objetivo.text,
+                      motivacao: motivacao.text,
+                    );
+                if (dialogo.mounted) Navigator.pop(dialogo, true);
+              } catch (_) {
+                if (dialogo.mounted) {
+                  ScaffoldMessenger.of(dialogo).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Não foi possível ajustar a Jornada agora.',
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    titulo.dispose();
+    objetivo.dispose();
+    motivacao.dispose();
+    if (salvo == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Jornada ajustada. Sua rota foi preservada.'),
+        ),
+      );
+    }
   }
+
+  Future<void> _abrirRevisao(
+    BuildContext context,
+    WidgetRef ref,
+    RevisaoRotaJornada revisao,
+  ) => showModalBottomSheet<void>(
+    context: context,
+    builder: (contexto) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'REVISÃO DE ROTA',
+              style: TextStyle(
+                color: AppColors.intellect,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Estas mudanças não apagam seu progresso. Ajuste somente o que precisa voltar para a rota.',
+            ),
+            if (revisao.reagendadas.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'REAGENDADAS',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              for (final quest in revisao.reagendadas)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(quest.title),
+                  trailing: const Icon(Icons.event_outlined),
+                ),
+            ],
+            if (revisao.arquivadas.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'ARQUIVADAS',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              for (final quest in revisao.arquivadas)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(quest.title),
+                  trailing: const Icon(Icons.archive_outlined),
+                ),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(contexto);
+                  _ajustarMissoes(context, ref, [
+                    ...revisao.reagendadas,
+                    ...revisao.arquivadas,
+                  ]);
+                },
+                icon: const Icon(Icons.tune_rounded),
+                label: const Text('Ajustar rota'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Future<void> _concluirJornada(BuildContext context, WidgetRef ref) async {
     try {
@@ -369,7 +555,11 @@ class _CartaoJornada extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conclua todos os capítulos antes de encerrar a Jornada.')),
+          const SnackBar(
+            content: Text(
+              'Conclua todos os capítulos antes de encerrar a Jornada.',
+            ),
+          ),
         );
       }
     }
@@ -386,30 +576,41 @@ class _CartaoJornada extends ConsumerWidget {
             final capitulos = snapshot.data ?? const <CapituloJornada>[];
             return Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(jornada.titulo, style: Theme.of(contexto).textTheme.titleLarge),
-                const SizedBox(height: 14),
-                for (final capitulo in capitulos)
-                  ListTile(
-                    leading: _NoDaRota(indice: capitulo.indiceOrdem),
-                    title: Text(capitulo.titulo),
-                    trailing: capitulo.concluido
-                        ? const Icon(Icons.check_circle_rounded, color: AppColors.ascension)
-                        : const Icon(Icons.chevron_right_rounded),
-                    onTap: () => _abrirDetalheCapitulo(contexto, ref, capitulo),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    jornada.titulo,
+                    style: Theme.of(contexto).textTheme.titleLarge,
                   ),
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const Center(child: CircularProgressIndicator()),
-                if (jornada.estaAtiva)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () => _criarCapitulo(contexto, repositorio),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Novo capítulo'),
+                  const SizedBox(height: 14),
+                  for (final capitulo in capitulos)
+                    ListTile(
+                      leading: _NoDaRota(indice: capitulo.indiceOrdem),
+                      title: Text(capitulo.titulo),
+                      trailing: capitulo.concluido
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: AppColors.ascension,
+                            )
+                          : const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          _abrirDetalheCapitulo(contexto, ref, capitulo),
                     ),
-                  ),
-              ]),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const Center(child: CircularProgressIndicator()),
+                  if (jornada.estaAtiva)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => _criarCapitulo(contexto, repositorio),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Novo capítulo'),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         ),
@@ -417,52 +618,109 @@ class _CartaoJornada extends ConsumerWidget {
     );
   }
 
-  Future<void> _ajustarMissoes(BuildContext context, WidgetRef ref, List<Quest> quests) => showModalBottomSheet<void>(
+  Future<void> _ajustarMissoes(
+    BuildContext context,
+    WidgetRef ref,
+    List<Quest> quests,
+  ) => showModalBottomSheet<void>(
     context: context,
     builder: (contexto) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('AJUSTAR ROTA', style: TextStyle(color: AppColors.intellect, fontSize: 11, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          const Text('Reagende ou arquive passos sem apagar seu progresso.'),
-          const SizedBox(height: 8),
-          for (final quest in quests.where((quest) => !quest.isCompleted && !quest.isArchived))
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(quest.title),
-              trailing: Wrap(spacing: 2, children: [
-                IconButton(
-                  tooltip: 'Reagendar',
-                  icon: const Icon(Icons.event_outlined),
-                  onPressed: () async {
-                    final data = await showDatePicker(context: contexto, initialDate: DateTime.now().add(const Duration(days: 1)), firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
-                    if (data != null) await ref.read(questProvider.notifier).reagendarQuest(quest.id, data);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Arquivar',
-                  icon: const Icon(Icons.archive_outlined),
-                  onPressed: () async {
-                    await ref.read(questProvider.notifier).arquivarQuest(quest.id);
-                    if (contexto.mounted) Navigator.pop(contexto);
-                  },
-                ),
-              ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'AJUSTAR ROTA',
+              style: TextStyle(
+                color: AppColors.intellect,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-        ]),
+            const SizedBox(height: 8),
+            const Text('Reagende ou arquive passos sem apagar seu progresso.'),
+            const SizedBox(height: 8),
+            for (final quest in quests.where(
+              (quest) => !quest.isCompleted && !quest.isArchived,
+            ))
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(quest.title),
+                trailing: Wrap(
+                  spacing: 2,
+                  children: [
+                    IconButton(
+                      tooltip: 'Reagendar',
+                      icon: const Icon(Icons.event_outlined),
+                      onPressed: () async {
+                        final data = await showDatePicker(
+                          context: contexto,
+                          initialDate: DateTime.now().add(
+                            const Duration(days: 1),
+                          ),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
+                        );
+                        if (data != null) {
+                          await ref
+                              .read(questProvider.notifier)
+                              .reagendarQuest(quest.id, data);
+                        }
+                      },
+                    ),
+                    IconButton(
+                      tooltip: 'Arquivar',
+                      icon: const Icon(Icons.archive_outlined),
+                      onPressed: () async {
+                        await ref
+                            .read(questProvider.notifier)
+                            .arquivarQuest(quest.id);
+                        if (contexto.mounted) Navigator.pop(contexto);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     ),
   );
 
-  Future<void> _criarCapitulo(BuildContext context, RepositorioJornada repositorio) async {
+  Future<void> _criarCapitulo(
+    BuildContext context,
+    RepositorioJornada repositorio,
+  ) async {
     final campo = TextEditingController();
-    await showDialog<void>(context: context, builder: (dialogo) => AlertDialog(
-      title: const Text('Novo capítulo'),
-      content: TextField(controller: campo, autofocus: true, decoration: const InputDecoration(labelText: 'Nome')),
-      actions: [TextButton(onPressed: () => Navigator.pop(dialogo), child: const Text('Cancelar')),
-        FilledButton(onPressed: () async { if (campo.text.trim().isEmpty) return; await repositorio.criarCapitulo(jornada.id, campo.text); if (dialogo.mounted) Navigator.pop(dialogo); }, child: const Text('Criar'))],
-    ));
+    await showDialog<void>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        title: const Text('Novo capítulo'),
+        content: TextField(
+          controller: campo,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nome'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogo),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (campo.text.trim().isEmpty) return;
+              await repositorio.criarCapitulo(jornada.id, campo.text);
+              if (dialogo.mounted) Navigator.pop(dialogo);
+            },
+            child: const Text('Criar'),
+          ),
+        ],
+      ),
+    );
     campo.dispose();
   }
 
@@ -512,7 +770,9 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
     _recarregar();
   }
 
-  void _recarregar() => _marcos = ref.read(repositorioJornadaProvider).listarMarcos(widget.capitulo.id);
+  void _recarregar() => _marcos = ref
+      .read(repositorioJornadaProvider)
+      .listarMarcos(widget.capitulo.id);
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -524,10 +784,19 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('CAPÍTULO ${widget.capitulo.indiceOrdem + 1}',
-                style: const TextStyle(color: AppColors.intellect, fontSize: 11, fontWeight: FontWeight.w800)),
+            Text(
+              'CAPÍTULO ${widget.capitulo.indiceOrdem + 1}',
+              style: const TextStyle(
+                color: AppColors.intellect,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 5),
-            Text(widget.capitulo.titulo, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              widget.capitulo.titulo,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
@@ -538,7 +807,9 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
                 marcos: snapshot.data ?? const [],
                 aoConcluir: widget.jornada.estaAtiva ? _concluir : null,
               ),
-            if (!widget.capitulo.concluido && widget.jornada.estaAtiva && snapshot.hasData) ...[
+            if (!widget.capitulo.concluido &&
+                widget.jornada.estaAtiva &&
+                snapshot.hasData) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
                 onPressed: () => _concluirCapitulo(),
@@ -570,14 +841,18 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
 
   Future<void> _concluirCapitulo() async {
     try {
-      await ref.read(repositorioJornadaProvider).concluirCapitulo(widget.capitulo.id);
+      await ref
+          .read(repositorioJornadaProvider)
+          .concluirCapitulo(widget.capitulo.id);
       if (mounted) {
         Navigator.pop(context);
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conclua todos os marcos para encerrar o capítulo.')),
+          const SnackBar(
+            content: Text('Conclua todos os marcos para encerrar o capítulo.'),
+          ),
         );
       }
     }
@@ -586,28 +861,72 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
   Future<void> _criar() async {
     final titulo = TextEditingController();
     String? questId;
-    final quests = ref.read(questProvider)
+    final quests = ref
+        .read(questProvider)
         .where((quest) => quest.journeyId == widget.jornada.id)
         .toList(growable: false);
-    final criado = await showDialog<bool>(context: context, builder: (dialogo) => StatefulBuilder(
-      builder: (context, setDialogo) => AlertDialog(
-        title: const Text('Novo marco'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titulo, autofocus: true, decoration: const InputDecoration(labelText: 'Etapa da rota')),
-          if (quests.isNotEmpty) DropdownButtonFormField<String?>(
-            initialValue: questId,
-            decoration: const InputDecoration(labelText: 'Missão vinculada (opcional)'),
-            items: [const DropdownMenuItem(value: null, child: Text('Marco manual')),
-              ...quests.map((quest) => DropdownMenuItem(value: quest.id, child: Text(quest.title)))],
-            onChanged: (valor) => setDialogo(() => questId = valor),
+    final criado = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => StatefulBuilder(
+        builder: (context, setDialogo) => AlertDialog(
+          title: const Text('Novo marco'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titulo,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Etapa da rota'),
+              ),
+              if (quests.isNotEmpty)
+                DropdownButtonFormField<String?>(
+                  initialValue: questId,
+                  decoration: const InputDecoration(
+                    labelText: 'Missão vinculada (opcional)',
+                  ),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('Marco manual'),
+                    ),
+                    ...quests.map(
+                      (quest) => DropdownMenuItem(
+                        value: quest.id,
+                        child: Text(quest.title),
+                      ),
+                    ),
+                  ],
+                  onChanged: (valor) => setDialogo(() => questId = valor),
+                ),
+            ],
           ),
-        ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () async { if (titulo.text.trim().isEmpty) return; await ref.read(repositorioJornadaProvider).criarMarco(capituloId: widget.capitulo.id, titulo: titulo.text, questId: questId); if (dialogo.mounted) Navigator.pop(dialogo, true); }, child: const Text('Adicionar'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogo, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (titulo.text.trim().isEmpty) return;
+                await ref
+                    .read(repositorioJornadaProvider)
+                    .criarMarco(
+                      capituloId: widget.capitulo.id,
+                      titulo: titulo.text,
+                      questId: questId,
+                    );
+                if (dialogo.mounted) Navigator.pop(dialogo, true);
+              },
+              child: const Text('Adicionar'),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
     titulo.dispose();
-    if (criado == true && mounted) setState(_recarregar);
+    if (criado == true && mounted) {
+      setState(_recarregar);
+    }
   }
 }
 
@@ -618,25 +937,75 @@ class _RotaDeMarcos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (marcos.isEmpty) return const Text('A rota começa quando você define o primeiro marco.', style: TextStyle(color: AppColors.textSecondary));
-    return Column(children: [
-      for (final marco in marcos)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(children: [
-            Column(children: [Icon(marco.concluido ? Icons.check_circle_rounded : Icons.circle_outlined,
-                color: marco.concluido ? AppColors.ascension : AppColors.intellect),
-              if (marco != marcos.last) Container(width: 1, height: 22, color: AppColors.textMuted)],),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(marco.titulo, style: TextStyle(decoration: marco.concluido ? TextDecoration.lineThrough : null)),
-              Text(marco.vinculadoAMissao ? 'Avança com a missão vinculada' : 'Confirmação manual', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-            ])),
-            if (!marco.concluido && !marco.vinculadoAMissao && aoConcluir != null)
-              IconButton(onPressed: () => aoConcluir!(marco), icon: const Icon(Icons.check_rounded), tooltip: 'Confirmar marco'),
-          ]),
-        ),
-    ]);
+    if (marcos.isEmpty) {
+      return const Text(
+        'A rota começa quando você define o primeiro marco.',
+        style: TextStyle(color: AppColors.textSecondary),
+      );
+    }
+    return Column(
+      children: [
+        for (final marco in marcos)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Column(
+                  children: [
+                    Icon(
+                      marco.concluido
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      color: marco.concluido
+                          ? AppColors.ascension
+                          : AppColors.intellect,
+                    ),
+                    if (marco != marcos.last)
+                      Container(
+                        width: 1,
+                        height: 22,
+                        color: AppColors.textMuted,
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        marco.titulo,
+                        style: TextStyle(
+                          decoration: marco.concluido
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                      Text(
+                        marco.vinculadoAMissao
+                            ? 'Avança com a missão vinculada'
+                            : 'Confirmação manual',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!marco.concluido &&
+                    !marco.vinculadoAMissao &&
+                    aoConcluir != null)
+                  IconButton(
+                    onPressed: () => aoConcluir!(marco),
+                    icon: const Icon(Icons.check_rounded),
+                    tooltip: 'Confirmar marco',
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -653,8 +1022,12 @@ class _MarcosDoCapitulo extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                marco.isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: marco.isCompleted ? AppColors.intellect : AppColors.textMuted,
+                marco.isCompleted
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: marco.isCompleted
+                    ? AppColors.intellect
+                    : AppColors.textMuted,
                 size: 16,
               ),
               const SizedBox(width: 9),
@@ -665,8 +1038,12 @@ class _MarcosDoCapitulo extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
-                    color: marco.isCompleted ? AppColors.textMuted : AppColors.textSecondary,
-                    decoration: marco.isCompleted ? TextDecoration.lineThrough : null,
+                    color: marco.isCompleted
+                        ? AppColors.textMuted
+                        : AppColors.textSecondary,
+                    decoration: marco.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ),
@@ -698,7 +1075,11 @@ class _TrilhaDeCapitulo extends StatelessWidget {
           ),
           child: Text(
             '${progresso.percentual}%',
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: cor),
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: cor,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -706,8 +1087,10 @@ class _TrilhaDeCapitulo extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('CAPÍTULO I  ·  PRIMEIRO AVANÇO',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+              const Text(
+                'CAPÍTULO I  ·  PRIMEIRO AVANÇO',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(2),
@@ -722,8 +1105,10 @@ class _TrilhaDeCapitulo extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Text('${progresso.concluidas}/${progresso.total}',
-            style: TextStyle(color: cor, fontWeight: FontWeight.w800)),
+        Text(
+          '${progresso.concluidas}/${progresso.total}',
+          style: TextStyle(color: cor, fontWeight: FontWeight.w800),
+        ),
       ],
     );
   }
@@ -757,7 +1142,9 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
                 controller: objetivo,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'O que você quer alcançar?'),
+                decoration: const InputDecoration(
+                  labelText: 'O que você quer alcançar?',
+                ),
                 validator: (valor) => valor == null || valor.trim().isEmpty
                     ? 'Informe o objetivo.'
                     : null,
@@ -767,7 +1154,9 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
                 controller: motivacao,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Por que isso importa? (opcional)'),
+                decoration: const InputDecoration(
+                  labelText: 'Por que isso importa? (opcional)',
+                ),
               ),
             ],
           ),
@@ -782,16 +1171,20 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
           onPressed: () async {
             if (!formulario.currentState!.validate()) return;
             try {
-              await ref.read(jornadaProvider.notifier).criar(
-                titulo: titulo.text,
-                objetivo: objetivo.text,
-                motivacao: motivacao.text,
-              );
+              await ref
+                  .read(jornadaProvider.notifier)
+                  .criar(
+                    titulo: titulo.text,
+                    objetivo: objetivo.text,
+                    motivacao: motivacao.text,
+                  );
               if (contextoDialogo.mounted) Navigator.pop(contextoDialogo, true);
             } catch (_) {
               if (contextoDialogo.mounted) {
                 ScaffoldMessenger.of(contextoDialogo).showSnackBar(
-                  const SnackBar(content: Text('Nao foi possivel iniciar a Jornada.')),
+                  const SnackBar(
+                    content: Text('Nao foi possivel iniciar a Jornada.'),
+                  ),
                 );
               }
             }
@@ -806,7 +1199,9 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
   motivacao.dispose();
   if (criada == true && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Jornada iniciada. Defina missões para avançar.')),
+      const SnackBar(
+        content: Text('Jornada iniciada. Defina missões para avançar.'),
+      ),
     );
   }
 }

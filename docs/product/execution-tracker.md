@@ -649,6 +649,10 @@ Journey adjustment:
 - active Journeys can now update title, objective, and motivation through an authenticated authoritative command, preserving chapters, linked missions, and Legacy;
 - local notification Android build validation remains an explicit pre-production follow-up and does not represent production readiness.
 
+Journey route review:
+- active Journeys now surface a single compact review signal only when linked missions were rescheduled or archived;
+- the detail is progressive: it identifies exceptions and routes the player to the existing adjustment controls without duplicating progress, chapters, or the daily mission list.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

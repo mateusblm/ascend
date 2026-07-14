@@ -10,6 +10,12 @@ docker compose up --build
 
 O serviço responde em `http://localhost:8080/health`. O PostgreSQL e iniciado pelo mesmo compose.
 
+## Ambiente remoto
+
+O staging remoto e publicado automaticamente no Railway quando uma alteracao em
+`backend/` chega a `main`. O endpoint `/health` confirma que a instancia e as
+migracoes Flyway iniciaram corretamente.
+
 ## Persistencia
 
 Firebase Auth autentica o usuario. O estado de jogo fica exclusivamente no PostgreSQL: perfil, quests pessoais, conclusoes, sessoes ativas e ruptura semanal pessoal. As migracoes ficam em `src/main/resources/db/migration`.

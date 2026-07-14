@@ -102,6 +102,32 @@ public class JornadaService {
     return repositorio.concluirMarco(uid, marcoId);
   }
 
+  /** Fecha um capitulo somente quando sua rota possui marcos e todos foram atendidos. */
+  public CapituloJornada concluirCapitulo(String uid, String capituloId) {
+    contextoCapituloAtivo(uid, capituloId);
+    List<MarcoCapitulo> marcos = repositorio.listarMarcos(uid, capituloId);
+    if (marcos.isEmpty() || marcos.stream().anyMatch(marco -> !marco.concluido())) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "marcos_pendentes",
+          "Conclua todos os marcos antes de encerrar o capitulo.");
+    }
+    return repositorio.concluirCapitulo(uid, capituloId);
+  }
+
+  /** Conclui uma Jornada ativa apenas depois de todos os seus capitulos. */
+  public Jornada concluir(String uid, String jornadaId) {
+    Jornada jornada = repositorio.buscarPorId(uid, jornadaId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "jornada_nao_encontrada", "Jornada nao encontrada."));
+    if (jornada.status() != StatusJornada.ativa) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "jornada_nao_esta_ativa",
+          "Somente uma Jornada ativa pode ser concluida.");
+    }
+    if (!repositorio.todosCapitulosConcluidos(uid, jornadaId)) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "capitulos_pendentes",
+          "Conclua todos os capitulos antes de encerrar a Jornada.");
+    }
+    return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.concluida);
+  }
+
   private ContextoCapituloJornada contextoCapituloAtivo(String uid, String capituloId) {
     ContextoCapituloJornada contexto = contextoCapitulo(uid, capituloId);
     if (contexto.status() != StatusJornada.ativa) {

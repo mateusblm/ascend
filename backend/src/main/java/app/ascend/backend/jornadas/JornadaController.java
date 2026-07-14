@@ -73,4 +73,14 @@ public class JornadaController {
   ) {
     return service.concluirMarco(usuario.uid(), marcoId);
   }
+
+  @PostMapping("/chapters/{capituloId}/complete")
+  public CapituloJornada concluirCapitulo(UsuarioAutenticado usuario, @PathVariable String capituloId) {
+    return service.concluirCapitulo(usuario.uid(), capituloId);
+  }
+
+  @PostMapping("/{jornadaId}/complete")
+  public Jornada concluir(UsuarioAutenticado usuario, @PathVariable String jornadaId) {
+    return service.concluir(usuario.uid(), jornadaId);
+  }
 }

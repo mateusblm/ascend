@@ -29,4 +29,8 @@ public interface RepositorioJornada {
   MarcoCapitulo concluirMarco(String uid, String marcoId);
 
   boolean questPertenceAJornada(String uid, String questId, String jornadaId);
+
+  CapituloJornada concluirCapitulo(String uid, String capituloId);
+
+  boolean todosCapitulosConcluidos(String uid, String jornadaId);
 }

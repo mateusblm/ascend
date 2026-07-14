@@ -3,13 +3,15 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 enum StatusJornada { ativa, pausada, concluida, arquivada }
 
 class CapituloJornada {
-  const CapituloJornada({required this.id, required this.titulo, required this.indiceOrdem});
+  const CapituloJornada({required this.id, required this.titulo, required this.indiceOrdem, this.concluido = false});
   final String id;
   final String titulo;
   final int indiceOrdem;
+  final bool concluido;
   factory CapituloJornada.fromJson(Map<String, dynamic> dados) => CapituloJornada(
     id: dados['id'] as String? ?? '', titulo: dados['titulo'] as String? ?? 'Capítulo',
     indiceOrdem: (dados['indiceOrdem'] as num?)?.toInt() ?? 0,
+    concluido: dados['concluido'] as bool? ?? false,
   );
 }
 

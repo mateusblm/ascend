@@ -570,6 +570,14 @@ Staging mobile follow-up:
   - `flutter analyze`: no issues found
   - `flutter test`: passed
 
+Progress note recorded on `2026-07-14`
+
+Journey completion slice:
+- a chapter can be closed only after every milestone in its route is complete;
+- an active Journey can be concluded only after all of its chapters;
+- Flutter exposes the chapter-closing action from its route detail;
+- validation passed: `flutter analyze` and `cd backend && mvn test` (35 tests).
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

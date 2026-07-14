@@ -294,7 +294,9 @@ class _CartaoJornada extends ConsumerWidget {
                   ListTile(
                     leading: _NoDaRota(indice: capitulo.indiceOrdem),
                     title: Text(capitulo.titulo),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                    trailing: capitulo.concluido
+                        ? const Icon(Icons.check_circle_rounded, color: AppColors.ascension)
+                        : const Icon(Icons.chevron_right_rounded),
                     onTap: () => _abrirDetalheCapitulo(contexto, ref, capitulo),
                   ),
                 if (snapshot.connectionState == ConnectionState.waiting)
@@ -399,6 +401,14 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
                 marcos: snapshot.data ?? const [],
                 aoConcluir: widget.jornada.estaAtiva ? _concluir : null,
               ),
+            if (!widget.capitulo.concluido && widget.jornada.estaAtiva && snapshot.hasData) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => _concluirCapitulo(),
+                icon: const Icon(Icons.flag_rounded),
+                label: const Text('Concluir capítulo'),
+              ),
+            ],
             if (widget.jornada.estaAtiva) ...[
               const SizedBox(height: 14),
               Align(
@@ -419,6 +429,21 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
   Future<void> _concluir(MarcoCapitulo marco) async {
     await ref.read(repositorioJornadaProvider).concluirMarco(marco.id);
     if (mounted) setState(_recarregar);
+  }
+
+  Future<void> _concluirCapitulo() async {
+    try {
+      await ref.read(repositorioJornadaProvider).concluirCapitulo(widget.capitulo.id);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conclua todos os marcos para encerrar o capítulo.')),
+        );
+      }
+    }
   }
 
   Future<void> _criar() async {

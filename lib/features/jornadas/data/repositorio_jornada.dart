@@ -87,6 +87,18 @@ class RepositorioJornada {
     return MarcoCapitulo.fromJson(resposta);
   }
 
+  Future<CapituloJornada> concluirCapitulo(String capituloId) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('concluir capitulo').completeJourneyChapter(idToken: await _tokenObrigatorio('concluir capitulo'), chapterId: capituloId);
+    return CapituloJornada.fromJson(resposta);
+  }
+
+  Future<Jornada> concluirJornada(String jornadaId) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('concluir Jornada').completeJourney(idToken: await _tokenObrigatorio('concluir Jornada'), journeyId: jornadaId);
+    return Jornada.fromJson(resposta);
+  }
+
   JavaBackendClient _clienteObrigatorio(String acao) {
     final cliente = _clienteJava;
     if (cliente == null) throw StateError('Backend Java nao configurado para $acao.');

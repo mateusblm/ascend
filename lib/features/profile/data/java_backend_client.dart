@@ -112,6 +112,10 @@ class JavaBackendClient {
     body: const {},
   );
 
+  Future<Map<String, dynamic>> completeJourneyChapter({required String idToken, required String chapterId}) => _postJson(endpointPath: '/api/v1/journeys/chapters/$chapterId/complete', idToken: idToken, body: const {});
+
+  Future<Map<String, dynamic>> completeJourney({required String idToken, required String journeyId}) => _postJson(endpointPath: '/api/v1/journeys/$journeyId/complete', idToken: idToken, body: const {});
+
   Future<void> syncQuestInventory({
     required String idToken,
     required String deviceSessionId,

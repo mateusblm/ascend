@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,5 +114,28 @@ class JornadaServiceTest {
     ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.concluirMarco("user-1", "marco-1"));
 
     assertEquals("marco_vinculado_a_missao", erro.codigo());
+  }
+
+  @Test
+  void concluirCapituloExigeTodosOsMarcosConcluidos() {
+    when(repositorio.buscarContextoCapitulo("user-1", "capitulo-1")).thenReturn(Optional.of(
+        new ContextoCapituloJornada("capitulo-1", "jornada-1", StatusJornada.ativa)));
+    when(repositorio.listarMarcos("user-1", "capitulo-1")).thenReturn(List.of(
+        new MarcoCapitulo("marco-1", "Enviar", null, false, 0)));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.concluirCapitulo("user-1", "capitulo-1"));
+
+    assertEquals("marcos_pendentes", erro.codigo());
+  }
+
+  @Test
+  void concluirJornadaExigeCapitulosConcluidos() {
+    when(repositorio.buscarPorId("user-1", "jornada-1")).thenReturn(Optional.of(new Jornada(
+        "jornada-1", "TCC", "Entregar", null, StatusJornada.ativa, Instant.now())));
+    when(repositorio.todosCapitulosConcluidos("user-1", "jornada-1")).thenReturn(false);
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.concluir("user-1", "jornada-1"));
+
+    assertEquals("capitulos_pendentes", erro.codigo());
   }
 }

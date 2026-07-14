@@ -63,11 +63,11 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
   @Override
   public List<CapituloJornada> listarCapitulos(String uid, String jornadaId) {
     return jdbcTemplate.query("""
-        select c.id, c.titulo, c.indice_ordem from capitulos_jornada c
+        select c.id, c.titulo, c.indice_ordem, c.concluido from capitulos_jornada c
         join jornadas j on j.id = c.jornada_id
         where j.uid = ? and j.id = ? order by c.indice_ordem
         """, (resultado, linha) -> new CapituloJornada(
-        resultado.getString("id"), resultado.getString("titulo"), resultado.getInt("indice_ordem")), uid, jornadaId);
+        resultado.getString("id"), resultado.getString("titulo"), resultado.getInt("indice_ordem"), resultado.getBoolean("concluido")), uid, jornadaId);
   }
 
   @Override
@@ -132,6 +132,27 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
     return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
         "select exists(select 1 from quests where uid = ? and id = ? and jornada_id = ?)",
         Boolean.class, uid, questId, jornadaId));
+  }
+
+  @Override
+  public CapituloJornada concluirCapitulo(String uid, String capituloId) {
+    jdbcTemplate.update("""
+        update capitulos_jornada c set concluido = true, concluido_em = current_timestamp
+        from jornadas j where c.jornada_id = j.id and j.uid = ? and c.id = ?
+        """, uid, capituloId);
+    return jdbcTemplate.query("""
+        select c.id, c.titulo, c.indice_ordem, c.concluido from capitulos_jornada c join jornadas j on j.id = c.jornada_id
+        where j.uid = ? and c.id = ?
+        """, (r, n) -> new CapituloJornada(r.getString("id"), r.getString("titulo"), r.getInt("indice_ordem"), r.getBoolean("concluido")), uid, capituloId).getFirst();
+  }
+
+  @Override
+  public boolean todosCapitulosConcluidos(String uid, String jornadaId) {
+    return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+        select exists(select 1 from capitulos_jornada c join jornadas j on j.id = c.jornada_id
+          where j.uid = ? and j.id = ?) and not exists(select 1 from capitulos_jornada c join jornadas j on j.id = c.jornada_id
+          where j.uid = ? and j.id = ? and c.concluido = false)
+        """, Boolean.class, uid, jornadaId, uid, jornadaId));
   }
 
   private MarcoCapitulo mapearMarco(java.sql.ResultSet resultado) throws java.sql.SQLException {

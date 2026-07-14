@@ -502,18 +502,21 @@ class _RitualRotaPanelState extends ConsumerState<_RitualRotaPanel> {
             const Text('RITUAL DE ROTA', style: TextStyle(fontSize: 13, color: Colors.white54, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             const Text('Um convite diário e gentil para sua próxima missão. Sem alertas de streak ou culpa.', style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.45)),
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Lembrete diário'),
-              value: settings.enabled,
-              onChanged: (enabled) async {
-                final service = ref.read(ritualRotaProvider);
-                final allowed = enabled
-                    ? await service.enable(minutes: settings.minutes)
-                    : await _disable(service);
-                if (allowed) await service.sync(ref.read(questProvider));
-                if (allowed && mounted) setState(() => _settings = service.settings());
-              },
+            Material(
+              type: MaterialType.transparency,
+              child: SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Lembrete diário'),
+                value: settings.enabled,
+                onChanged: (enabled) async {
+                  final service = ref.read(ritualRotaProvider);
+                  final allowed = enabled
+                      ? await service.enable(minutes: settings.minutes)
+                      : await _disable(service);
+                  if (allowed) await service.sync(ref.read(questProvider));
+                  if (allowed && mounted) setState(() => _settings = service.settings());
+                },
+              ),
             ),
             if (settings.enabled)
               TextButton.icon(

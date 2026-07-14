@@ -770,9 +770,11 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
     _recarregar();
   }
 
-  void _recarregar() => _marcos = ref
-      .read(repositorioJornadaProvider)
-      .listarMarcos(widget.capitulo.id);
+  void _recarregar() {
+    _marcos = ref
+        .read(repositorioJornadaProvider)
+        .listarMarcos(widget.capitulo.id);
+  }
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -915,7 +917,9 @@ class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
                       titulo: titulo.text,
                       questId: questId,
                     );
-                if (dialogo.mounted) Navigator.pop(dialogo, true);
+          if (!dialogo.mounted) return;
+          FocusScope.of(dialogo).unfocus();
+          Navigator.pop(dialogo, true);
               },
               child: const Text('Adicionar'),
             ),

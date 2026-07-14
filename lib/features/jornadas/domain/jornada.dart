@@ -1,4 +1,27 @@
+import 'package:ascend/features/quests/domain/quest_model.dart';
+
 enum StatusJornada { ativa, pausada, concluida, arquivada }
+
+/// Progresso de uma Jornada calculado apenas pelas missões a ela vinculadas.
+class ProgressoJornada {
+  const ProgressoJornada({required this.total, required this.concluidas});
+
+  final int total;
+  final int concluidas;
+
+  double get fracao => total == 0 ? 0 : concluidas / total;
+  int get percentual => (fracao * 100).round();
+}
+
+ProgressoJornada calcularProgressoJornada(
+  Jornada jornada,
+  Iterable<Quest> quests,
+) {
+  final vinculadas = quests.where((quest) => quest.journeyId == jornada.id);
+  final total = vinculadas.length;
+  final concluidas = vinculadas.where((quest) => quest.isCompleted).length;
+  return ProgressoJornada(total: total, concluidas: concluidas);
+}
 
 /// Objetivo pessoal de medio prazo que recebe missoes e marcos progressivamente.
 class Jornada {

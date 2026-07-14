@@ -3,6 +3,7 @@ import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
 import 'package:ascend/features/jornadas/domain/jornada.dart';
 import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
+import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -183,9 +184,11 @@ class _CartaoJornada extends ConsumerWidget {
   final Jornada jornada;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => AscendSystemPanel(
-    accent: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
-    child: Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progresso = calcularProgressoJornada(jornada, ref.watch(questProvider));
+    return AscendSystemPanel(
+      accent: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -222,6 +225,8 @@ class _CartaoJornada extends ConsumerWidget {
         Text(jornada.titulo, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
         Text(jornada.objetivo, style: const TextStyle(color: AppColors.textSecondary)),
+        const SizedBox(height: 18),
+        _TrilhaDeCapitulo(progresso: progresso, ativa: jornada.estaAtiva),
         if (jornada.motivacao?.isNotEmpty == true) ...[
           const SizedBox(height: 16),
           Text(
@@ -234,8 +239,9 @@ class _CartaoJornada extends ConsumerWidget {
           ),
         ],
       ],
-    ),
-  );
+      ),
+    );
+  }
 
   Future<void> _pausar(BuildContext context, WidgetRef ref) async {
     try {
@@ -252,6 +258,58 @@ class _CartaoJornada extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+class _TrilhaDeCapitulo extends StatelessWidget {
+  const _TrilhaDeCapitulo({required this.progresso, required this.ativa});
+  final ProgressoJornada progresso;
+  final bool ativa;
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = ativa ? AppColors.intellect : AppColors.textMuted;
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: cor.withValues(alpha: .12),
+            border: Border.all(color: cor.withValues(alpha: .55)),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            '${progresso.percentual}%',
+            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: cor),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('CAPÍTULO I  ·  PRIMEIRO AVANÇO',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: progresso.fracao,
+                  minHeight: 4,
+                  backgroundColor: AppColors.surfaceStrong,
+                  valueColor: AlwaysStoppedAnimation<Color>(cor),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text('${progresso.concluidas}/${progresso.total}',
+            style: TextStyle(color: cor, fontWeight: FontWeight.w800)),
+      ],
+    );
   }
 }
 

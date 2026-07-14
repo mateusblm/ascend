@@ -17,10 +17,17 @@ services:
     image: maven:3.9.9-eclipse-temurin-21
     working_dir: /workspace/backend
     command: mvn spring-boot:run
+    depends_on:
+      ascend-postgres:
+        condition: service_healthy
     ports:
       - "${ASCEND_BACKEND_PORT:-8080}:8080"
     environment:
       PORT: 8080
+      ASCEND_DATABASE_URL: jdbc:postgresql://ascend-postgres:5432/ascend
+      ASCEND_DATABASE_USERNAME: ascend
+      ASCEND_DATABASE_PASSWORD: ascend
+      ASCEND_DATABASE_DRIVER: org.postgresql.Driver
       GOOGLE_APPLICATION_CREDENTIALS: /root/.config/gcloud/application_default_credentials.json
       GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-ascend-b7c20}
     volumes:
@@ -34,6 +41,25 @@ services:
         source: gcloud-config
         target: /root/.config/gcloud
 
+  ascend-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ascend
+      POSTGRES_USER: ascend
+      POSTGRES_PASSWORD: ascend
+    ports:
+      - "${ASCEND_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ascend -d ascend"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 volumes:
   gcloud-config:
   maven-cache:
+  postgres-data:

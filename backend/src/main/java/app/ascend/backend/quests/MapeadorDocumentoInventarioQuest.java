@@ -8,7 +8,7 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
- * Mapeia o inventario validado para documentos compativeis com o Firestore.
+ * Mapeia o inventario validado para o documento autoritativo persistido no PostgreSQL.
  */
 @Component
 public class MapeadorDocumentoInventarioQuest {

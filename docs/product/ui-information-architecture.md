@@ -13,7 +13,6 @@ This document is downstream from `docs/product/ux-positioning.md`.
 The intended player-facing labels are:
 - `Base`
 - `Quests`
-- `Arena`
 
 These labels follow two goals:
 - concise, scan-friendly top-level navigation
@@ -22,6 +21,7 @@ These labels follow two goals:
 Secondary surfaces:
 - `Conta`, opened from `Base`
 - planning/recommendation details, opened from `Base` when needed
+- `Arena`, hidden in V1 and reserved for a future competitive expansion
 
 ### `BASE`
 
@@ -32,6 +32,7 @@ It should prioritize:
 - XP and current momentum
 - focus and build identity
 - immediate weekly signal
+- personal weekly boss
 - one-screen clarity
 - access to deeper build detail through tap
 
@@ -45,6 +46,7 @@ Always visible:
 - XP and momentum
 - build radar
 - short weekly signal
+- personal weekly boss progress
 - account access
 
 Tap to open:
@@ -61,13 +63,13 @@ This is the execution surface.
 
 It should prioritize:
 - what can be done now
-- personal vs competitive action
+- casual mission action
 - suggested next actions
 - completion flow
 
 It should avoid:
 - re-explaining account progress already visible in `BASE`
-- deep arena analysis already owned by `ARENA`
+- exposing competitive systems in the V1 casual-first release
 
 Always visible:
 - actionable quest lists
@@ -81,6 +83,9 @@ Tap to open:
 - full reward breakdown
 
 ### `ARENA`
+
+Hidden in V1. Keep this section as the future ownership target when competitive
+systems return.
 
 This is the competitive command center.
 
@@ -153,6 +158,7 @@ It should avoid:
 - `BASE` may show a compact signal.
 - planning detail may show interpretation only after the player asks for it.
 - `ARENA` may show the competitive consequence of the same metric.
+- In V1, competitive metrics should not appear in top-level surfaces.
 - If two tabs show the same number in the same presentation style, that is usually a design mistake.
 
 ## Visual Differentiation Rules
@@ -161,7 +167,7 @@ It should avoid:
 - Each main surface should have a recognizable visual rhythm.
 - `BASE` should feel punchy and identity-driven.
 - `QUESTS` should feel action-driven.
-- `ARENA` should feel high-pressure and competitive.
+- `ARENA`, when re-enabled, should feel high-pressure and competitive.
 - planning detail should feel quieter and more diagnostic.
 - `CONTA` should feel stable and trust-oriented.
 

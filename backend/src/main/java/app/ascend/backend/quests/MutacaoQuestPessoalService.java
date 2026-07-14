@@ -86,15 +86,18 @@ public class MutacaoQuestPessoalService {
     exigirQuestPessoal(quest);
 
     if (quest.isCompleted() || contexto.conclusaoExiste()) {
+      QuestInventarioValidada questRespostaFonte = quest.isCompleted()
+          ? quest
+          : questConcluidaSemRecompensa(quest, now);
       Map<String, Object> questResposta = documentoQuest(
-          questExistente != null ? questExistente : questConcluidaSemRecompensa(quest, now),
+          questRespostaFonte,
           contexto.indiceOrdem(),
           dados,
           now
       );
       return new EscritaMutacaoQuestPessoal(
           null,
-          null,
+          quest.isCompleted() ? null : questResposta,
           null,
           false,
           new RespostaMutacaoQuestPessoal("already_completed", perfilAtual.paraDocumento(
@@ -122,8 +125,6 @@ public class MutacaoQuestPessoalService {
         streaks.melhor(),
         now,
         historico,
-        recompensado.lastCompetitiveQuestCompletionDate(),
-        recompensado.competitiveActivityHistory(),
         recompensado.primaryFocus(),
         recompensado.hasCompletedOnboarding(),
         recompensado.weeklyBossLastClaimedAt(),
@@ -225,8 +226,6 @@ public class MutacaoQuestPessoalService {
         streaks.melhor(),
         projecao.lastQuestCompletionDate(),
         projecao.activityHistory(),
-        projecao.lastCompetitiveQuestCompletionDate(),
-        projecao.competitiveActivityHistory(),
         perfilAtual.primaryFocus(),
         perfilAtual.hasCompletedOnboarding(),
         perfilAtual.weeklyBossLastClaimedAt(),
@@ -336,8 +335,6 @@ public class MutacaoQuestPessoalService {
         inteiro(data.get("bestStreak"), 0),
         timestamp(data.get("lastQuestCompletionDate"), null),
         timestampsUnicosPorDia(listaTimestamps(data.get("activityHistory"))),
-        timestamp(data.get("lastCompetitiveQuestCompletionDate"), null),
-        timestampsUnicosPorDia(listaTimestamps(data.get("competitiveActivityHistory"))),
         foco(data.get("primaryFocus")),
         data.get("hasCompletedOnboarding") instanceof Boolean done && done,
         timestamp(data.get("weeklyBossLastClaimedAt"), null),
@@ -429,7 +426,6 @@ public class MutacaoQuestPessoalService {
         .put("title", quest.title())
         .put("rewardAttribute", quest.rewardAttribute())
         .put("xpReward", quest.xpReward())
-        .put("countsTowardCompetitive", false)
         .put("completedAt", now)
         .put("preRewardLevel", perfilAtual.level())
         .put("preRewardXp", perfilAtual.xp())
@@ -471,7 +467,6 @@ public class MutacaoQuestPessoalService {
         perfil.name(), levelAtual, xpAtual, maxXpAtual, pontos, perfil.attributes(),
         perfil.lastResetDate(), perfil.currentStreak(), perfil.bestStreak(),
         perfil.lastQuestCompletionDate(), perfil.activityHistory(),
-        perfil.lastCompetitiveQuestCompletionDate(), perfil.competitiveActivityHistory(),
         perfil.primaryFocus(), perfil.hasCompletedOnboarding(), perfil.weeklyBossLastClaimedAt(),
         perfil.authoritativeQuestXp(), perfil.authoritativeWeeklyBossXp(),
         perfil.authoritativeWeeklyBossStatPoints(), perfil.authoritativeAllocatedStatPoints(),
@@ -492,19 +487,12 @@ public class MutacaoQuestPessoalService {
         .map(data -> timestamp(data.get("completedAt"), null))
         .filter(value -> value != null)
         .toList());
-    List<Timestamp> historicoCompetitivo = timestampsUnicosPorDia(restantes.stream()
-        .filter(data -> data.get("countsTowardCompetitive") instanceof Boolean value && value)
-        .map(data -> timestamp(data.get("completedAt"), null))
-        .filter(value -> value != null)
-        .toList());
     int questXp = restantes.stream()
         .mapToInt(data -> inteiro(data.get("xpReward"), 0))
         .sum();
     return new ProjecaoConclusoes(
         historico,
-        historicoCompetitivo,
         historico.isEmpty() ? null : historico.getLast(),
-        historicoCompetitivo.isEmpty() ? null : historicoCompetitivo.getLast(),
         questXp
     );
   }
@@ -632,9 +620,7 @@ public class MutacaoQuestPessoalService {
 
   private record ProjecaoConclusoes(
       List<Timestamp> activityHistory,
-      List<Timestamp> competitiveActivityHistory,
       Timestamp lastQuestCompletionDate,
-      Timestamp lastCompetitiveQuestCompletionDate,
       int questXp
   ) {
   }

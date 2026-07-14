@@ -10,7 +10,7 @@ This document is downstream from:
 - `docs/product/game-system-design-plan.md`
 - `docs/product/ui-redesign-phases.md`
 
-Last updated: `2026-06-21`
+Last updated: `2026-07-13`
 
 ## Current Ownership Map
 
@@ -21,6 +21,7 @@ Owns:
 - XP and immediate momentum
 - build preview
 - short weekly signal
+- personal weekly boss
 
 Must not own:
 - full competitive explanation
@@ -29,7 +30,8 @@ Must not own:
 
 Current status:
 - top-level ownership is correct
-- arena-related reads are now kept in the detail directory instead of competing with the hero
+- V1 removes competitive detail entries from the visible Base directory
+- weekly boss is personal and uses general active days
 
 Residual watch item:
 - `Momento atual` should stay operational and compact, not drift into a second hero block
@@ -45,12 +47,13 @@ Owns:
 
 Must not own:
 - account-progress recap already visible in `Base`
-- competitive-system explanation already owned by `Arena`
+- competitive-system access in the V1 casual-first release
 
 Current status:
 - hero owns counts and immediate execution state
 - weekly-priority block now interprets the queue instead of reprinting the same counters
 - current redesign direction reframes this surface as a mission terminal, not a task list
+- V1 shows only casual quest creation and casual mission boards
 
 Resolved in this pass:
 - removed duplicate command-deck counters that repeated the hero totals
@@ -61,6 +64,10 @@ Residual watch item:
 - completed quests should not dominate the main execution surface
 
 ### `Arena`
+
+V1 status:
+- hidden from top-level navigation
+- code and backend remain for future expansion
 
 Owns:
 - current competitive state
@@ -137,9 +144,9 @@ Residual watch item:
 
 ### Still allowed by design
 
-- `Base` may show a compact competitive pulse while `Arena` owns the competitive system in depth.
-- `Plano` may reference competitive consequences only when explaining planning tradeoffs.
-- `Quests` may reference rank impact only inside quest-execution context.
+- Future `Arena` may own competitive pressure when the system is re-enabled.
+- V1 `Base` may show personal weekly boss progress.
+- V1 `Quests` should stay casual-first and avoid rank impact language.
 
 ### Smells to reject in review
 

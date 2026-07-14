@@ -16,8 +16,6 @@ record PerfilJogador(
     int bestStreak,
     Timestamp lastQuestCompletionDate,
     List<Timestamp> activityHistory,
-    Timestamp lastCompetitiveQuestCompletionDate,
-    List<Timestamp> competitiveActivityHistory,
     String primaryFocus,
     boolean hasCompletedOnboarding,
     Timestamp weeklyBossLastClaimedAt,
@@ -50,8 +48,6 @@ record PerfilJogador(
         .put("bestStreak", bestStreak)
         .put("lastQuestCompletionDate", lastQuestCompletionDate)
         .put("activityHistory", activityHistory)
-        .put("lastCompetitiveQuestCompletionDate", lastCompetitiveQuestCompletionDate)
-        .put("competitiveActivityHistory", competitiveActivityHistory)
         .put("primaryFocus", primaryFocus)
         .put("hasCompletedOnboarding", hasCompletedOnboarding)
         .put("weeklyBossLastClaimedAt", weeklyBossLastClaimedAt)

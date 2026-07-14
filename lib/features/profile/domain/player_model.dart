@@ -55,8 +55,6 @@ class Player {
   final int bestStreak;
   final DateTime? lastQuestCompletionDate;
   final List<DateTime> activityHistory;
-  final DateTime? lastCompetitiveQuestCompletionDate;
-  final List<DateTime> competitiveActivityHistory;
   @enumerated
   final AwakeningPath primaryFocus;
   final bool hasCompletedOnboarding;
@@ -76,8 +74,6 @@ class Player {
     this.bestStreak = 0,
     this.lastQuestCompletionDate,
     this.activityHistory = const [],
-    this.lastCompetitiveQuestCompletionDate,
-    this.competitiveActivityHistory = const [],
     this.primaryFocus = AwakeningPath.discipline,
     this.hasCompletedOnboarding = false,
     this.weeklyBossLastClaimedAt,
@@ -109,9 +105,7 @@ class Player {
         currentStreak > 0 ||
         bestStreak > 0 ||
         activityHistory.isNotEmpty ||
-        competitiveActivityHistory.isNotEmpty ||
         lastQuestCompletionDate != null ||
-        lastCompetitiveQuestCompletionDate != null ||
         weeklyBossLastClaimedAt != null;
   }
 
@@ -128,13 +122,10 @@ class Player {
     int? bestStreak,
     DateTime? lastQuestCompletionDate,
     List<DateTime>? activityHistory,
-    DateTime? lastCompetitiveQuestCompletionDate,
-    List<DateTime>? competitiveActivityHistory,
     AwakeningPath? primaryFocus,
     bool? hasCompletedOnboarding,
     DateTime? weeklyBossLastClaimedAt,
     bool clearLastQuestCompletionDate = false,
-    bool clearLastCompetitiveQuestCompletionDate = false,
     bool clearWeeklyBossLastClaimedAt = false,
   }) {
     return Player(
@@ -153,13 +144,6 @@ class Player {
           ? null
           : (lastQuestCompletionDate ?? this.lastQuestCompletionDate),
       activityHistory: activityHistory ?? this.activityHistory,
-      lastCompetitiveQuestCompletionDate:
-          clearLastCompetitiveQuestCompletionDate
-          ? null
-          : (lastCompetitiveQuestCompletionDate ??
-                this.lastCompetitiveQuestCompletionDate),
-      competitiveActivityHistory:
-          competitiveActivityHistory ?? this.competitiveActivityHistory,
       primaryFocus: primaryFocus ?? this.primaryFocus,
       hasCompletedOnboarding:
           hasCompletedOnboarding ?? this.hasCompletedOnboarding,

@@ -504,6 +504,20 @@ Java backend migration completed for local project code:
     exist in the Firebase project.
   - run final staging smoke after remote cleanup.
 
+Progress note recorded on: `2026-07-13`
+
+V1 scope reduction started:
+- first public version is now casual-first.
+- `Arena` and competitive quests are hidden from the visible V1 product
+  surface, while the Java/backend/domain implementation remains in the repo for
+  future expansion.
+- onboarding starter kit now starts with casual quests only.
+- add-quest modal now creates casual quests only.
+- weekly boss is being reframed as a personal weekly boss based on general
+  active days, without leaderboard or rank pressure in the V1 surface.
+- new operational plan:
+  - `docs/product/v1-casual-first-launch-plan.md`
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

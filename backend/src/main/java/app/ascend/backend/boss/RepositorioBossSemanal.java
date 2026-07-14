@@ -4,9 +4,9 @@ import java.util.function.Function;
 
 public interface RepositorioBossSemanal {
 
-  RespostaResgateBossSemanal executarResgate(
+  RespostaResgateBossSemanal executarResgatePessoal(
       String uid,
-      String bossId,
-      Function<ContextoResgateBossSemanal, EscritaResgateBossSemanal> mutacao
+      String claimId,
+      Function<ContextoResgateBossPessoalSemanal, EscritaResgateBossSemanal> mutacao
   );
 }

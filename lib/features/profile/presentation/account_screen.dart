@@ -477,21 +477,20 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 }
 
 const String _privacyPolicySummary =
-    'Ascend coleta somente os dados necessarios para autenticacao, progresso do jogador, quests, estado competitivo, analytics operacionais e erros de execucao. '
-    'O objetivo e operar o produto, medir o funil principal e proteger a integridade competitiva. '
+    'Ascend coleta somente os dados necessarios para autenticacao, progresso do jogador, quests, analytics operacionais e erros de execucao. '
+    'O objetivo e operar o produto e medir o funil principal. '
     'O app nao deve vender dados pessoais. Dados de analytics e crash podem ser usados para diagnostico, estabilidade e melhoria de produto. '
     'O usuario pode solicitar revisao ou exclusao dos dados operacionais pelos canais de suporte definidos pela release.';
 
 const String _termsOfUseSummary =
-    'Ascend e um produto de progressao pessoal com camadas competitivas e regras de integridade. '
-    'O usuario e responsavel pelas informacoes que registra, pelo uso da propria conta Google e pelo respeito ao uso honesto das mecanicas competitivas. '
-    'O app pode ajustar regras, temporadas, recompensas, verificacoes e politicas operacionais para manter estabilidade, seguranca e equilibrio de produto. '
-    'Abuso competitivo, manipulacao de fluxo ou exploracao deliberada podem gerar revisao operacional e perda de standing competitivo.';
+    'Ascend e um produto de progressao pessoal. '
+    'O usuario e responsavel pelas informacoes que registra e pelo uso da propria conta Google. '
+    'O app pode ajustar regras, recompensas e politicas operacionais para manter estabilidade e equilibrio de produto.';
 
 const String _accountDeletionSummary =
     'Durante a fase atual, pedidos de exclusao devem ser tratados manualmente. '
     'O fluxo minimo esperado e: confirmar a identidade do titular, registrar o pedido, remover o acesso autenticado quando aplicavel e limpar os dados remotos vinculados ao usuario usados pelo app. '
-    'Colecoes de leitura competitiva, season state e demais registros operacionais devem ser revisados no mesmo processo. '
+    'Os registros operacionais associados a conta devem ser revisados no mesmo processo. '
     'Antes de beta publica ou distribuicao aberta, esse fluxo precisa apontar para um canal real de suporte e uma politica publica de prazo de atendimento.';
 
 class _AccountAvatar extends StatelessWidget {

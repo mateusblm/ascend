@@ -8,7 +8,6 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -16,10 +15,7 @@ import 'package:isar/isar.dart';
 final playerProfileRepositoryProvider = Provider<PlayerProfileRepository>((
   ref,
 ) {
-  return PlayerProfileRepository(
-    FirebaseFirestore.instance,
-    sessionRepository: ActiveSessionRepository(),
-  );
+  return PlayerProfileRepository(sessionRepository: ActiveSessionRepository());
 });
 
 final playerProvider = StateNotifierProvider<PlayerNotifier, Player>((ref) {
@@ -394,7 +390,8 @@ class PlayerNotifier extends StateNotifier<Player> {
     if (state.statPoints <= 0 || _attributeAllocationInFlight) return;
     final uid = _activeUid;
     final repository = _profileRepository;
-    if (uid == null || (repository == null && _allocateAttributePointOverride == null)) {
+    if (uid == null ||
+        (repository == null && _allocateAttributePointOverride == null)) {
       return;
     }
     final previousState = state;
@@ -479,36 +476,19 @@ class PlayerNotifier extends StateNotifier<Player> {
     await _pushProfileSettings();
   }
 
-  void recordQuestCompletion({
-    DateTime? completedAt,
-    bool countsForCompetitive = false,
-  }) {
+  void recordQuestCompletion({DateTime? completedAt}) {
     final completionDate = completedAt ?? DateTime.now();
     final lastCompletion = state.lastQuestCompletionDate;
     final updatedHistory = _upsertActivityDate(
       state.activityHistory,
       completionDate,
     );
-    final updatedCompetitiveHistory = countsForCompetitive
-        ? _upsertActivityDate(state.competitiveActivityHistory, completionDate)
-        : state.competitiveActivityHistory;
-
     if (lastCompletion != null &&
         _daysBetween(lastCompletion, completionDate) == 0) {
       final historyChanged =
           updatedHistory.length != state.activityHistory.length;
-      final competitiveHistoryChanged =
-          updatedCompetitiveHistory.length !=
-          state.competitiveActivityHistory.length;
-
-      if (historyChanged || competitiveHistoryChanged) {
-        state = state.copyWith(
-          activityHistory: updatedHistory,
-          competitiveActivityHistory: updatedCompetitiveHistory,
-          lastCompetitiveQuestCompletionDate: countsForCompetitive
-              ? completionDate
-              : state.lastCompetitiveQuestCompletionDate,
-        );
+      if (historyChanged) {
+        state = state.copyWith(activityHistory: updatedHistory);
         _saveToDb();
       }
       return;
@@ -526,10 +506,6 @@ class PlayerNotifier extends StateNotifier<Player> {
       bestStreak: streak > state.bestStreak ? streak : state.bestStreak,
       lastQuestCompletionDate: completionDate,
       activityHistory: updatedHistory,
-      competitiveActivityHistory: updatedCompetitiveHistory,
-      lastCompetitiveQuestCompletionDate: countsForCompetitive
-          ? completionDate
-          : state.lastCompetitiveQuestCompletionDate,
     );
 
     _saveToDb();
@@ -551,10 +527,6 @@ class PlayerNotifier extends StateNotifier<Player> {
 
   Future<void> completeOnboarding(AwakeningPath focus) async {
     final starterKit = starterQuestsForFocus(focus);
-    final competitiveCount = starterKit
-        .where((quest) => quest.isCompetitive)
-        .length;
-    final personalCount = starterKit.length - competitiveCount;
 
     state = state.copyWith(primaryFocus: focus, hasCompletedOnboarding: true);
 
@@ -564,8 +536,8 @@ class PlayerNotifier extends StateNotifier<Player> {
       _analytics.logOnboardingCompleted(
         focus: focus.name,
         starterKitSize: starterKit.length,
-        competitiveQuestCount: competitiveCount,
-        personalQuestCount: personalCount,
+        competitiveQuestCount: 0,
+        personalQuestCount: starterKit.length,
       ),
     );
   }
@@ -609,8 +581,7 @@ class PlayerNotifier extends StateNotifier<Player> {
     WeeklyBossDefinition weeklyBoss, {
     void Function(int level)? onLevelUp,
   }) {
-    if (!weeklyBoss.isCompleted(state, competitiveOnly: true) ||
-        weeklyBoss.isClaimedThisWeek(state)) {
+    if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
       return false;
     }
 

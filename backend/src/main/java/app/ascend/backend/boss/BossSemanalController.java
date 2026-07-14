@@ -16,11 +16,11 @@ public class BossSemanalController {
     this.service = service;
   }
 
-  @PostMapping("/weekly-boss:claim")
-  public RespostaResgateBossSemanal resgatar(
+  @PostMapping("/weekly-boss/personal:claim")
+  public RespostaResgateBossSemanal resgatarPessoal(
       UsuarioAutenticado user,
-      @RequestBody RequisicaoResgateBossSemanal request
+      @RequestBody RequisicaoResgateBossPessoalSemanal request
   ) {
-    return service.resgatar(user.uid(), user.email(), request);
+    return service.resgatarPessoal(user.uid(), user.email(), request);
   }
 }

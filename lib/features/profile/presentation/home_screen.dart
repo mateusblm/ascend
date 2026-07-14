@@ -6,6 +6,8 @@ import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,11 +46,16 @@ class HomeScreen extends ConsumerWidget {
                       : '${pendentes.length} PASSOS',
                 ),
                 const SizedBox(height: 10),
-                _ProximaMissao(
-                  quest: pendentes.isEmpty ? null : pendentes.first,
-                  onComplete: pendentes.isEmpty
-                      ? null
-                      : () => _concluirMissao(context, ref, pendentes.first),
+                FutureBuilder<Map<String, dynamic>?>(
+                  future: _buscarRecomendada(),
+                  builder: (context, snapshot) {
+                    final id = snapshot.data?['questId'] as String?;
+                    final quest = pendentes.where((item) => item.id == id).firstOrNull ?? (pendentes.isEmpty ? null : pendentes.first);
+                    return _ProximaMissao(
+                      quest: quest,
+                      onComplete: quest == null ? null : () => _concluirMissao(context, ref, quest),
+                    );
+                  },
                 ),
                 const SizedBox(height: 28),
                 _TituloSecao(etiqueta: 'CAPACIDADES', detalhe: 'NÚCLEO'),
@@ -66,6 +73,18 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<Map<String, dynamic>?> _buscarRecomendada() async {
+    final cliente = BackendRouteSelector.javaClient(null);
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (cliente == null || token == null) return null;
+    try {
+      final dados = await cliente.fetchRecommendedMission(idToken: token);
+      return dados.isEmpty ? null : dados;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _concluirMissao(

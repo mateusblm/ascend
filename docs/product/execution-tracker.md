@@ -599,6 +599,13 @@ Daily completion payoff:
 - the next authoritative recommendation refreshes immediately after a mission mutation;
 - validation passed: `flutter analyze` and `flutter test`.
 
+Progress note recorded on `2026-07-14`
+
+Base daily return:
+- Base now consumes the backend-authoritative next-mission read-model for its central action;
+- local pending inventory remains a resilient fallback when remote reading is unavailable;
+- validation passed: `flutter analyze` and `flutter test`.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

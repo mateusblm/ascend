@@ -23,7 +23,7 @@ class JornadasScreen extends ConsumerWidget {
       floatingActionButton: Tooltip(
         message: 'Nova Jornada',
         child: FloatingActionButton.small(
-          onPressed: () => _abrirCriacaoJornada(context, ref),
+          onPressed: () => _abrirCriacaoJornada(context),
           backgroundColor: AppColors.intellect,
           foregroundColor: AppColors.background,
           shape: const RoundedRectangleBorder(
@@ -54,7 +54,7 @@ class JornadasScreen extends ConsumerWidget {
                       )
                     else if (estado.jornadas.isEmpty)
                       _JornadasVazias(
-                        aoCriar: () => _abrirCriacaoJornada(context, ref),
+                        aoCriar: () => _abrirCriacaoJornada(context),
                       )
                     else
                       _ListaJornadas(jornadas: estado.jornadas),
@@ -1118,23 +1118,54 @@ class _TrilhaDeCapitulo extends StatelessWidget {
   }
 }
 
-Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
-  final titulo = TextEditingController();
-  final objetivo = TextEditingController();
-  final motivacao = TextEditingController();
-  final formulario = GlobalKey<FormState>();
+Future<void> _abrirCriacaoJornada(BuildContext context) async {
   final criada = await showDialog<bool>(
     context: context,
-    builder: (contextoDialogo) => AlertDialog(
+    builder: (_) => const _DialogoCriacaoJornada(),
+  );
+  if (criada == true && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Jornada iniciada. Defina missões para avançar.'),
+      ),
+    );
+  }
+}
+
+class _DialogoCriacaoJornada extends ConsumerStatefulWidget {
+  const _DialogoCriacaoJornada();
+
+  @override
+  ConsumerState<_DialogoCriacaoJornada> createState() =>
+      _DialogoCriacaoJornadaState();
+}
+
+class _DialogoCriacaoJornadaState
+    extends ConsumerState<_DialogoCriacaoJornada> {
+  final _titulo = TextEditingController();
+  final _objetivo = TextEditingController();
+  final _motivacao = TextEditingController();
+  final _formulario = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _titulo.dispose();
+    _objetivo.dispose();
+    _motivacao.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
       title: const Text('Iniciar Jornada'),
       content: Form(
-        key: formulario,
+        key: _formulario,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                controller: titulo,
+                controller: _titulo,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(labelText: 'Nome da Jornada'),
                 validator: (valor) => valor == null || valor.trim().isEmpty
@@ -1143,7 +1174,7 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: objetivo,
+                controller: _objetivo,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
                 decoration: const InputDecoration(
@@ -1155,7 +1186,7 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: motivacao,
+                controller: _motivacao,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
                 decoration: const InputDecoration(
@@ -1168,44 +1199,33 @@ Future<void> _abrirCriacaoJornada(BuildContext context, WidgetRef ref) async {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(contextoDialogo, false),
+          onPressed: () => Navigator.pop(context, false),
           child: const Text('Cancelar'),
         ),
         FilledButton(
           onPressed: () async {
-            if (!formulario.currentState!.validate()) return;
+            if (!_formulario.currentState!.validate()) return;
             try {
               await ref
                   .read(jornadaProvider.notifier)
                   .criar(
-                    titulo: titulo.text,
-                    objetivo: objetivo.text,
-                    motivacao: motivacao.text,
+                    titulo: _titulo.text,
+                    objetivo: _objetivo.text,
+                    motivacao: _motivacao.text,
                   );
-              if (contextoDialogo.mounted) Navigator.pop(contextoDialogo, true);
+              if (!context.mounted) return;
+              Navigator.pop(context, true);
             } catch (_) {
-              if (contextoDialogo.mounted) {
-                ScaffoldMessenger.of(contextoDialogo).showSnackBar(
-                  const SnackBar(
-                    content: Text('Nao foi possivel iniciar a Jornada.'),
-                  ),
-                );
-              }
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Nao foi possivel iniciar a Jornada.'),
+                ),
+              );
             }
           },
           child: const Text('Iniciar'),
         ),
       ],
-    ),
-  );
-  titulo.dispose();
-  objetivo.dispose();
-  motivacao.dispose();
-  if (criada == true && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Jornada iniciada. Defina missões para avançar.'),
-      ),
     );
-  }
 }

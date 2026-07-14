@@ -82,7 +82,10 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                   if (filtradas.isEmpty)
                     _RotaVazia(filtro: _filtro)
                   else
-                    _ListaDeRota(quests: filtradas, aoAtualizar: () => setState(() => _recomendada = _buscarRecomendada())),
+                    _ListaDeRota(
+                      quests: filtradas,
+                      aoAtualizar: _atualizarRecomendada,
+                    ),
                 ]),
               ),
             ),
@@ -90,6 +93,12 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
         ),
       ),
     );
+  }
+
+  void _atualizarRecomendada() {
+    setState(() {
+      _recomendada = _buscarRecomendada();
+    });
   }
 
   bool _pertenceAoFiltro(Quest quest, _FiltroRota filtro, DateTime hoje) {

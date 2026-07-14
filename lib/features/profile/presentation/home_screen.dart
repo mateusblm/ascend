@@ -283,14 +283,14 @@ class _ProximaMissao extends StatelessWidget {
     }
     final cor = _corAtributo(quest!.rewardAttribute);
     return SizedBox(
-      height: 116,
+      height: 112,
       child: Row(
         children: [
-          EixoAscensao(cor: cor, altura: 116),
+          EixoAscensao(cor: cor, altura: 112),
           const SizedBox(width: 8),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 13, 10, 12),
+              padding: const EdgeInsets.fromLTRB(14, 10, 8, 8),
               decoration: BoxDecoration(
                 color: AppColors.surface.withValues(alpha: .92),
                 border: Border(
@@ -313,7 +313,7 @@ class _ProximaMissao extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     quest!.title,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
@@ -333,6 +333,11 @@ class _ProximaMissao extends StatelessWidget {
                         message: 'Concluir missão',
                         child: IconButton(
                           onPressed: onComplete,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 34,
+                            height: 34,
+                          ),
                           icon: const Icon(
                             Icons.arrow_upward_rounded,
                             size: 19,

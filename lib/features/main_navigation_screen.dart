@@ -261,51 +261,93 @@ class _SystemAtmosphere extends StatelessWidget {
 class _SystemAtmospherePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final backgroundWash = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.background,
-          AppColors.backgroundElevated,
-          AppColors.background,
-        ],
-      ).createShader(Offset.zero & size);
-    canvas.drawRect(Offset.zero & size, backgroundWash);
+    canvas.drawRect(Offset.zero & size, Paint()..color = AppColors.background);
 
-    final riftPaint = Paint()
+    final contorno = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1
-      ..color = AppColors.ascension.withValues(alpha: 0.075);
-    final amberPaint = Paint()
+      ..strokeWidth = .8
+      ..color = AppColors.textPrimary.withValues(alpha: .055);
+    final contornoAscensao = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
-      ..color = AppColors.amber.withValues(alpha: 0.052);
+      ..strokeWidth = 1
+      ..color = AppColors.ascension.withValues(alpha: .11);
 
-    final leftRift = Path()
-      ..moveTo(size.width * 0.08, 0)
-      ..lineTo(size.width * 0.40, size.height * 0.26)
-      ..lineTo(size.width * 0.24, size.height * 0.53)
-      ..lineTo(size.width * 0.56, size.height * 0.84);
-    canvas.drawPath(leftRift, riftPaint);
+    _desenharIlhaDeRelevo(
+      canvas,
+      size,
+      centro: Offset(size.width * .78, size.height * .12),
+      raio: size.width * .42,
+      tinta: contorno,
+    );
+    _desenharIlhaDeRelevo(
+      canvas,
+      size,
+      centro: Offset(size.width * .02, size.height * .62),
+      raio: size.width * .50,
+      tinta: contorno,
+    );
 
-    final rightRift = Path()
-      ..moveTo(size.width * 0.96, size.height * 0.10)
-      ..lineTo(size.width * 0.64, size.height * 0.32)
-      ..lineTo(size.width * 0.83, size.height * 0.58)
-      ..lineTo(size.width * 0.58, size.height);
-    canvas.drawPath(rightRift, amberPaint);
-
-    final gridPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.55
-      ..color = AppColors.borderSubtle.withValues(alpha: 0.50);
-    for (var y = size.height * 0.18; y < size.height; y += 86) {
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y + size.width * 0.18),
-        gridPaint,
+    final rota = Path()
+      ..moveTo(size.width * .50, size.height * .04)
+      ..cubicTo(
+        size.width * .39,
+        size.height * .22,
+        size.width * .66,
+        size.height * .38,
+        size.width * .51,
+        size.height * .55,
+      )
+      ..cubicTo(
+        size.width * .37,
+        size.height * .72,
+        size.width * .63,
+        size.height * .84,
+        size.width * .48,
+        size.height,
       );
+    canvas.drawPath(rota, contornoAscensao);
+    final marco = Paint()..color = AppColors.ascension.withValues(alpha: .2);
+    for (final fator in [.18, .48, .76]) {
+      canvas.drawCircle(Offset(size.width * .5, size.height * fator), 3, marco);
+    }
+  }
+
+  void _desenharIlhaDeRelevo(
+    Canvas canvas,
+    Size size, {
+    required Offset centro,
+    required double raio,
+    required Paint tinta,
+  }) {
+    for (var indice = 0; indice < 4; indice++) {
+      final escala = 1 - (indice * .16);
+      final caminho = Path()
+        ..moveTo(centro.dx - raio * escala, centro.dy)
+        ..cubicTo(
+          centro.dx - raio * escala,
+          centro.dy - raio * .58 * escala,
+          centro.dx - raio * .24 * escala,
+          centro.dy - raio * .76 * escala,
+          centro.dx + raio * .34 * escala,
+          centro.dy - raio * .58 * escala,
+        )
+        ..cubicTo(
+          centro.dx + raio * .86 * escala,
+          centro.dy - raio * .30 * escala,
+          centro.dx + raio * .82 * escala,
+          centro.dy + raio * .43 * escala,
+          centro.dx + raio * .18 * escala,
+          centro.dy + raio * .66 * escala,
+        )
+        ..cubicTo(
+          centro.dx - raio * .50 * escala,
+          centro.dy + raio * .68 * escala,
+          centro.dx - raio * .90 * escala,
+          centro.dy + raio * .28 * escala,
+          centro.dx - raio * escala,
+          centro.dy,
+        );
+      canvas.drawPath(caminho, tinta);
     }
   }
 

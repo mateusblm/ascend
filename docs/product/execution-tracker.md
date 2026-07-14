@@ -578,6 +578,13 @@ Journey completion slice:
 - Flutter exposes the chapter-closing action from its route detail;
 - validation passed: `flutter analyze` and `cd backend && mvn test` (35 tests).
 
+Progress note recorded on `2026-07-14`
+
+Journey legacy completion:
+- closing a Journey now records an idempotent durable Legacy entry in PostgreSQL;
+- the Journey surface exposes its completion action and preserves the completed state;
+- validation passed: `flutter analyze`, `flutter test`, and `cd backend && mvn test` (36 tests).
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

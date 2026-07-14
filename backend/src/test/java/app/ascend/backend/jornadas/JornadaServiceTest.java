@@ -138,4 +138,16 @@ class JornadaServiceTest {
 
     assertEquals("capitulos_pendentes", erro.codigo());
   }
+
+  @Test
+  void concluirJornadaRegistraLegadoUmaVez() {
+    Jornada ativa = new Jornada("jornada-1", "TCC", "Entregar", null, StatusJornada.ativa, Instant.now());
+    Jornada concluida = new Jornada("jornada-1", "TCC", "Entregar", null, StatusJornada.concluida, Instant.now());
+    when(repositorio.buscarPorId("user-1", "jornada-1")).thenReturn(Optional.of(ativa));
+    when(repositorio.todosCapitulosConcluidos("user-1", "jornada-1")).thenReturn(true);
+    when(repositorio.atualizarStatus("user-1", "jornada-1", StatusJornada.concluida)).thenReturn(concluida);
+
+    assertEquals(concluida, service.concluir("user-1", "jornada-1"));
+    verify(repositorio).registrarConclusaoNoLegado("user-1", concluida);
+  }
 }

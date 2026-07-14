@@ -155,6 +155,14 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
         """, Boolean.class, uid, jornadaId, uid, jornadaId));
   }
 
+  @Override
+  public void registrarConclusaoNoLegado(String uid, Jornada jornada) {
+    jdbcTemplate.update("""
+        insert into legado_jornadas (id, uid, jornada_id, titulo)
+        values (?, ?, ?, ?) on conflict (jornada_id) do nothing
+        """, java.util.UUID.randomUUID().toString(), uid, jornada.id(), jornada.titulo());
+  }
+
   private MarcoCapitulo mapearMarco(java.sql.ResultSet resultado) throws java.sql.SQLException {
     return new MarcoCapitulo(resultado.getString("id"), resultado.getString("titulo"),
         resultado.getString("quest_id"), resultado.getBoolean("concluido"), resultado.getInt("indice_ordem"));

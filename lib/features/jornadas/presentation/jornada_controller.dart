@@ -92,6 +92,14 @@ class JornadaNotifier extends StateNotifier<EstadoJornadas> {
     );
   }
 
+  Future<void> concluir(String jornadaId) async {
+    final atualizada = await _repositorio.concluirJornada(jornadaId);
+    state = EstadoJornadas(
+      jornadas: state.jornadas.map((jornada) => jornada.id == jornadaId ? atualizada : jornada).toList(growable: false),
+      carregando: false,
+    );
+  }
+
   @override
   void dispose() {
     _assinaturaAutenticacao?.cancel();

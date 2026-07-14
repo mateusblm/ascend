@@ -239,6 +239,12 @@ class _CartaoJornada extends ConsumerWidget {
           icon: const Icon(Icons.account_tree_outlined, size: 17),
           label: const Text('Gerenciar capítulos'),
         ),
+        if (jornada.estaAtiva)
+          TextButton.icon(
+            onPressed: () => _concluirJornada(context, ref),
+            icon: const Icon(Icons.workspace_premium_outlined, size: 17),
+            label: const Text('Concluir Jornada'),
+          ),
         if (marcos.isNotEmpty) ...[
           const SizedBox(height: 16),
           _MarcosDoCapitulo(marcos: marcos),
@@ -271,6 +277,23 @@ class _CartaoJornada extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nao foi possivel pausar a Jornada.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _concluirJornada(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(jornadaProvider.notifier).concluir(jornada.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Jornada registrada no seu Legado.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conclua todos os capítulos antes de encerrar a Jornada.')),
         );
       }
     }

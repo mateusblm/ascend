@@ -125,7 +125,9 @@ public class JornadaService {
       throw new ExcecaoApi(HttpStatus.CONFLICT, "capitulos_pendentes",
           "Conclua todos os capitulos antes de encerrar a Jornada.");
     }
-    return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.concluida);
+    Jornada concluida = repositorio.atualizarStatus(uid, jornadaId, StatusJornada.concluida);
+    repositorio.registrarConclusaoNoLegado(uid, concluida);
+    return concluida;
   }
 
   private ContextoCapituloJornada contextoCapituloAtivo(String uid, String capituloId) {

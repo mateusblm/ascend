@@ -1,5 +1,6 @@
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/ascension_visuals.dart';
+import 'package:ascend/core/widgets/above_navigation_dock_fab_location.dart';
 import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
 import 'package:ascend/features/jornadas/domain/jornada.dart';
 import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
@@ -30,6 +31,7 @@ class JornadasScreen extends ConsumerWidget {
           child: const Icon(Icons.add_rounded),
         ),
       ),
+      floatingActionButtonLocation: const AboveNavigationDockFabLocation(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => ref.read(jornadaProvider.notifier).recarregar(),

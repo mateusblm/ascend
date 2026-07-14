@@ -1,5 +1,6 @@
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/ascension_visuals.dart';
+import 'package:ascend/core/widgets/above_navigation_dock_fab_location.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
@@ -43,6 +44,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
           child: const Icon(Icons.add_rounded),
         ),
       ),
+      floatingActionButtonLocation: const AboveNavigationDockFabLocation(),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [

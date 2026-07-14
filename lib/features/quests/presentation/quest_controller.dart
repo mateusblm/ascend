@@ -180,6 +180,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           : QuestCompletionResult.success;
     } on ActiveSessionConflictException {
       return QuestCompletionResult.invalidFlow;
+    } catch (_) {
+      // A recompensa permanece autoritativa: em falha remota, nada e alterado localmente.
+      return QuestCompletionResult.invalidFlow;
     }
   }
 

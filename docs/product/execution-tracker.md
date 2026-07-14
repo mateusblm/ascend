@@ -555,6 +555,21 @@ Chapter milestones delivered:
   - `flutter test`: passed
   - `cd backend && mvn test`: 33 tests passed
 
+Progress note recorded on `2026-07-14`
+
+Staging mobile follow-up:
+- mission and Journey creation controls now stay above the internal navigation
+  dock and Android system navigation area;
+- remote failures during personal mission completion no longer escape the
+  interaction handler or alter local rewards;
+- operational follow-up remains to verify Railway has
+  `FIREBASE_SERVICE_ACCOUNT_JSON` from the same Firebase project as the
+  staging APK, because anonymous test users must be accepted by the
+  authoritative backend too;
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

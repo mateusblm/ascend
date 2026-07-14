@@ -58,6 +58,10 @@ class JornadasScreen extends ConsumerWidget {
                       )
                     else
                       _ListaJornadas(jornadas: estado.jornadas),
+                    if (!estado.carregando && estado.erro == null) ...[
+                      const SizedBox(height: 20),
+                      _LegadoJornadas(repositorio: ref.read(repositorioJornadaProvider)),
+                    ],
                   ]),
                 ),
               ),
@@ -180,6 +184,34 @@ class _ListaJornadas extends StatelessWidget {
         const SizedBox(height: 14),
       ],
     ],
+  );
+}
+
+class _LegadoJornadas extends StatelessWidget {
+  const _LegadoJornadas({required this.repositorio});
+  final RepositorioJornada repositorio;
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<RegistroLegadoJornada>>(
+    future: repositorio.listarLegado(),
+    builder: (context, snapshot) {
+      final registros = snapshot.data ?? const <RegistroLegadoJornada>[];
+      if (registros.isEmpty) return const SizedBox.shrink();
+      return AscendSystemPanel(
+        accent: AppColors.amber,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('LEGADO', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          for (final registro in registros) Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(children: [const Icon(Icons.workspace_premium_rounded, color: AppColors.amber, size: 17),
+              const SizedBox(width: 9), Expanded(child: Text(registro.titulo)),
+              Text('${registro.concluidaEm.day.toString().padLeft(2, '0')}/${registro.concluidaEm.month.toString().padLeft(2, '0')}', style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+            ]),
+          ),
+        ]),
+      );
+    },
   );
 }
 

@@ -42,6 +42,17 @@ class MarcoCapitulo {
   );
 }
 
+class RegistroLegadoJornada {
+  const RegistroLegadoJornada({required this.id, required this.jornadaId, required this.titulo, required this.concluidaEm});
+  final String id;
+  final String jornadaId;
+  final String titulo;
+  final DateTime concluidaEm;
+  factory RegistroLegadoJornada.fromJson(Map<String, dynamic> dados) => RegistroLegadoJornada(
+    id: dados['id'] as String? ?? '', jornadaId: dados['jornadaId'] as String? ?? '',
+    titulo: dados['titulo'] as String? ?? 'Jornada', concluidaEm: DateTime.tryParse(dados['concluidaEm'] as String? ?? '') ?? DateTime.now());
+}
+
 /// Progresso de uma Jornada calculado apenas pelas missões a ela vinculadas.
 class ProgressoJornada {
   const ProgressoJornada({required this.total, required this.concluidas});

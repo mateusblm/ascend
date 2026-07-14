@@ -35,6 +35,12 @@ class JavaBackendClient {
     return _decodeList(response);
   }
 
+  Future<List<Map<String, dynamic>>> fetchJourneyLegacy({required String idToken}) async {
+    final response = await _httpClient.get(_uri('/api/v1/journeys/legacy'),
+      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+    return _decodeList(response);
+  }
+
   Future<Map<String, dynamic>> createJourney({
     required String idToken,
     required String title,

@@ -25,6 +25,11 @@ class RepositorioJornada {
     return resposta.map(Jornada.fromJson).toList(growable: false);
   }
 
+  Future<List<RegistroLegadoJornada>> listarLegado() async {
+    final resposta = await _clienteObrigatorio('carregar Legado').fetchJourneyLegacy(idToken: await _tokenObrigatorio('carregar Legado'));
+    return resposta.map(RegistroLegadoJornada.fromJson).toList(growable: false);
+  }
+
   Future<Jornada> criar({
     required String titulo,
     required String objetivo,

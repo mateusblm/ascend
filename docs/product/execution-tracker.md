@@ -585,6 +585,13 @@ Journey legacy completion:
 - the Journey surface exposes its completion action and preserves the completed state;
 - validation passed: `flutter analyze`, `flutter test`, and `cd backend && mvn test` (36 tests).
 
+Progress note recorded on `2026-07-14`
+
+Journey legacy read-model:
+- authenticated `GET /api/v1/journeys/legacy` returns the player's completed Journeys in deterministic chronological order;
+- the Jornada surface renders those permanent records as a compact Legacy section;
+- validation passed: `flutter analyze`, `flutter test`, and `cd backend && mvn test` (36 tests).
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

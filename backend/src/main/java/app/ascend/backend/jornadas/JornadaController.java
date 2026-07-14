@@ -26,6 +26,11 @@ public class JornadaController {
     return service.listar(usuario.uid());
   }
 
+  @GetMapping("/legacy")
+  public List<RegistroLegadoJornada> listarLegado(UsuarioAutenticado usuario) {
+    return service.listarLegado(usuario.uid());
+  }
+
   @PostMapping
   public Jornada criar(
       UsuarioAutenticado usuario,

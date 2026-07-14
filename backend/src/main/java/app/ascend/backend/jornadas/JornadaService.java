@@ -21,6 +21,10 @@ public class JornadaService {
     return repositorio.listarPorUsuario(uid);
   }
 
+  public List<RegistroLegadoJornada> listarLegado(String uid) {
+    return repositorio.listarLegado(uid);
+  }
+
   public List<CapituloJornada> listarCapitulos(String uid, String jornadaId) {
     return repositorio.listarCapitulos(uid, jornadaId);
   }

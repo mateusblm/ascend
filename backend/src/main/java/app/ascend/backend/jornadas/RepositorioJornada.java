@@ -35,4 +35,6 @@ public interface RepositorioJornada {
   boolean todosCapitulosConcluidos(String uid, String jornadaId);
 
   void registrarConclusaoNoLegado(String uid, Jornada jornada);
+
+  List<RegistroLegadoJornada> listarLegado(String uid);
 }

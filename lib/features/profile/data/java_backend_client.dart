@@ -22,6 +22,11 @@ class JavaBackendClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> fetchRecommendedMission({required String idToken}) async {
+    final response = await _httpClient.get(_uri('/api/v1/recommended-mission'), headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+    return _decode(response);
+  }
+
   Future<List<Map<String, dynamic>>> fetchJourneys({
     required String idToken,
   }) async {

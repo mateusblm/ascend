@@ -102,6 +102,24 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
     return valor instanceof Boolean valorBooleano && valorBooleano;
   }
 
+  /** Resolve o proximo passo pela rota ativa antes de considerar o inventario geral. */
+  public Map<String, Object> buscarMissaoRecomendada(String uid) {
+    return jdbcTemplate.query("""
+        select q.id, q.titulo, q.jornada_id, j.titulo as jornada_titulo, m.titulo as marco_titulo,
+          case when m.id is not null then 'proximo_marco_da_jornada'
+               when j.id is not null then 'missao_da_jornada' else 'missao_pendente' end as motivo
+        from quests q left join jornadas j on j.id = q.jornada_id and j.uid = q.uid and j.status = 'ativa'
+        left join marcos_capitulo m on m.quest_id = q.id and m.concluido = false
+        where q.uid = ? and q.concluida = false
+        order by case when m.id is not null then 0 when j.id is not null then 1 else 2 end, q.indice_ordem, q.criado_em
+        limit 1
+        """, (r, n) -> Map.<String, Object>of("questId", r.getString("id"), "titulo", r.getString("titulo"),
+        "jornadaId", r.getString("jornada_id") == null ? "" : r.getString("jornada_id"),
+        "jornadaTitulo", r.getString("jornada_titulo") == null ? "" : r.getString("jornada_titulo"),
+        "marcoTitulo", r.getString("marco_titulo") == null ? "" : r.getString("marco_titulo"),
+        "motivo", r.getString("motivo")), uid).stream().findFirst().orElse(Map.of());
+  }
+
   private String textoNulo(Object valor) {
     return valor instanceof String texto && !texto.isBlank() ? texto : null;
   }

@@ -4,6 +4,8 @@ import 'package:ascend/core/widgets/above_navigation_dock_fab_location.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:ascend/features/profile/data/backend_route_selector.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +19,18 @@ class QuestsScreen extends ConsumerStatefulWidget {
 
 class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   bool _mostrarConcluidas = false;
+  late Future<Map<String, dynamic>?> _recomendada;
+
+  @override
+  void initState() { super.initState(); _recomendada = _buscarRecomendada(); }
+
+  Future<Map<String, dynamic>?> _buscarRecomendada() async {
+    final cliente = BackendRouteSelector.javaClient(null);
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (cliente == null || token == null) return null;
+    final dados = await cliente.fetchRecommendedMission(idToken: token);
+    return dados.isEmpty ? null : dados;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +68,11 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 delegate: SliverChildListDelegate([
                   _CabecalhoMissoes(pendentes: pendentes),
                   const SizedBox(height: 24),
+                  if (!_mostrarConcluidas) FutureBuilder<Map<String, dynamic>?>(
+                    future: _recomendada,
+                    builder: (context, snapshot) => snapshot.data == null ? const SizedBox.shrink() : _ProximoPasso(dados: snapshot.data!),
+                  ),
+                  if (!_mostrarConcluidas) const SizedBox(height: 18),
                   _AlternadorRotas(
                     mostrarConcluidas: _mostrarConcluidas,
                     onChanged: (valor) =>
@@ -72,6 +91,22 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
       ),
     );
   }
+}
+
+class _ProximoPasso extends StatelessWidget {
+  const _ProximoPasso({required this.dados});
+  final Map<String, dynamic> dados;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: AppColors.surfaceStrong, border: Border(left: BorderSide(color: AppColors.amber, width: 3))),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('PRÓXIMO PASSO', style: TextStyle(color: AppColors.amber, fontSize: 10, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 6), Text(dados['titulo'] as String? ?? 'Missão', style: Theme.of(context).textTheme.titleMedium),
+      if ((dados['marcoTitulo'] as String? ?? '').isNotEmpty) Text(dados['marcoTitulo'] as String, style: const TextStyle(color: AppColors.textSecondary)),
+      if ((dados['jornadaTitulo'] as String? ?? '').isNotEmpty) Text(dados['jornadaTitulo'] as String, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+    ]),
+  );
 }
 
 class _CabecalhoMissoes extends StatelessWidget {

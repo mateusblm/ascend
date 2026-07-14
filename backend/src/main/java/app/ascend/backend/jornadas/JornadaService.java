@@ -58,6 +58,17 @@ public class JornadaService {
     return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.pausada);
   }
 
+  /** Atualiza o proposito de uma Jornada ativa sem reescrever capitulos ou missoes. */
+  public Jornada atualizar(String uid, String jornadaId, RequisicaoAtualizacaoJornada requisicao) {
+    Jornada jornada = repositorio.buscarPorId(uid, jornadaId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "jornada_nao_encontrada", "Jornada nao encontrada."));
+    if (jornada.status() != StatusJornada.ativa) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "jornada_nao_esta_ativa", "Somente uma Jornada ativa pode ser ajustada.");
+    }
+    return repositorio.atualizarProposito(uid, jornadaId, requisicao.titulo().trim(),
+        requisicao.objetivo().trim(), textoOpcional(requisicao.motivacao()));
+  }
+
   /** Adiciona um capitulo somente enquanto a Jornada ainda pode receber novos objetivos. */
   public CapituloJornada adicionarCapitulo(
       String uid, String jornadaId, RequisicaoCriacaoCapitulo requisicao

@@ -4,6 +4,8 @@ import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/notifications/ritual_rota_service.dart';
+import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/profile/presentation/focus_selection_sheet.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +113,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+              const _RitualRotaPanel(),
               const SizedBox(height: 14),
               RevealBlock(
                 delay: const Duration(milliseconds: 180),
@@ -474,6 +478,66 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       },
     );
   }
+}
+
+class _RitualRotaPanel extends ConsumerStatefulWidget {
+  const _RitualRotaPanel();
+  @override
+  ConsumerState<_RitualRotaPanel> createState() => _RitualRotaPanelState();
+}
+
+class _RitualRotaPanelState extends ConsumerState<_RitualRotaPanel> {
+  late Future<RitualRotaSettings> _settings;
+  @override
+  void initState() { super.initState(); _settings = ref.read(ritualRotaProvider).settings(); }
+  @override
+  Widget build(BuildContext context) => RevealBlock(
+    delay: const Duration(milliseconds: 210),
+    child: _AccountPanel(
+      child: FutureBuilder<RitualRotaSettings>(
+        future: _settings,
+        builder: (context, snapshot) {
+          final settings = snapshot.data ?? const RitualRotaSettings(enabled: false, minutes: 1140);
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('RITUAL DE ROTA', style: TextStyle(fontSize: 13, color: Colors.white54, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            const Text('Um convite diário e gentil para sua próxima missão. Sem alertas de streak ou culpa.', style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.45)),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Lembrete diário'),
+              value: settings.enabled,
+              onChanged: (enabled) async {
+                final service = ref.read(ritualRotaProvider);
+                final allowed = enabled
+                    ? await service.enable(minutes: settings.minutes)
+                    : await _disable(service);
+                if (allowed) await service.sync(ref.read(questProvider));
+                if (allowed && mounted) setState(() => _settings = service.settings());
+              },
+            ),
+            if (settings.enabled)
+              TextButton.icon(
+                onPressed: () async {
+                  final selected = await showTimePicker(context: context, initialTime: TimeOfDay(hour: settings.hour, minute: settings.minute));
+                  if (selected == null) return;
+                  final service = ref.read(ritualRotaProvider);
+                  await service.updateMinutes(selected.hour * 60 + selected.minute);
+                  await service.sync(ref.read(questProvider));
+                  if (mounted) setState(() => _settings = service.settings());
+                },
+                icon: const Icon(Icons.schedule_outlined),
+                label: Text('Horário: ${settings.hour.toString().padLeft(2, '0')}:${settings.minute.toString().padLeft(2, '0')}'),
+              ),
+          ]);
+        },
+      ),
+    ),
+  );
+}
+
+Future<bool> _disable(RitualRotaService service) async {
+  await service.disable();
+  return true;
 }
 
 const String _privacyPolicySummary =

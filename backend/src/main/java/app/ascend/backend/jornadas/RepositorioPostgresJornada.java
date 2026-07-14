@@ -61,6 +61,15 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
   }
 
   @Override
+  public Jornada atualizarProposito(String uid, String jornadaId, String titulo, String objetivo, String motivacao) {
+    jdbcTemplate.update("""
+        update jornadas set titulo = ?, objetivo = ?, motivacao = ?, atualizado_em = current_timestamp
+        where uid = ? and id = ?
+        """, titulo, objetivo, motivacao, uid, jornadaId);
+    return buscarPorId(uid, jornadaId).orElseThrow();
+  }
+
+  @Override
   public List<CapituloJornada> listarCapitulos(String uid, String jornadaId) {
     return jdbcTemplate.query("""
         select c.id, c.titulo, c.indice_ordem, c.concluido from capitulos_jornada c

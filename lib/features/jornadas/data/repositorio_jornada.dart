@@ -54,6 +54,15 @@ class RepositorioJornada {
     return Jornada.fromJson(resposta);
   }
 
+  Future<Jornada> atualizar({required String jornadaId, required String titulo, required String objetivo, String? motivacao}) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('ajustar Jornada').updateJourney(
+      idToken: await _tokenObrigatorio('ajustar Jornada'), journeyId: jornadaId,
+      title: titulo, objective: objetivo, motivation: motivacao,
+    );
+    return Jornada.fromJson(resposta);
+  }
+
   Future<List<CapituloJornada>> listarCapitulos(String jornadaId) async {
     final resposta = await _clienteObrigatorio('carregar capítulos').fetchJourneyChapters(
       idToken: await _tokenObrigatorio('carregar capítulos'), journeyId: jornadaId);

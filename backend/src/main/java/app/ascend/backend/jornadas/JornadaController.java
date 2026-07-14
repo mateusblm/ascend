@@ -44,6 +44,12 @@ public class JornadaController {
     return service.pausar(usuario.uid(), jornadaId);
   }
 
+  @PostMapping("/{jornadaId}/update")
+  public Jornada atualizar(UsuarioAutenticado usuario, @PathVariable String jornadaId,
+      @Valid @RequestBody RequisicaoAtualizacaoJornada requisicao) {
+    return service.atualizar(usuario.uid(), jornadaId, requisicao);
+  }
+
   @GetMapping("/{jornadaId}/chapters")
   public List<CapituloJornada> listarCapitulos(UsuarioAutenticado usuario, @PathVariable String jornadaId) {
     return service.listarCapitulos(usuario.uid(), jornadaId);

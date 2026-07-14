@@ -250,6 +250,15 @@ class _CartaoJornada extends ConsumerWidget {
             const Spacer(),
             if (jornada.estaAtiva)
               Tooltip(
+                message: 'Ajustar Jornada',
+                child: IconButton(
+                  onPressed: () => _editar(context, ref),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            if (jornada.estaAtiva)
+              Tooltip(
                 message: 'Pausar Jornada',
                 child: IconButton(
                   onPressed: () => _pausar(context, ref),
@@ -321,6 +330,32 @@ class _CartaoJornada extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Future<void> _editar(BuildContext context, WidgetRef ref) async {
+    final titulo = TextEditingController(text: jornada.titulo);
+    final objetivo = TextEditingController(text: jornada.objetivo);
+    final motivacao = TextEditingController(text: jornada.motivacao ?? '');
+    final salvo = await showDialog<bool>(context: context, builder: (dialogo) => AlertDialog(
+      title: const Text('Ajustar Jornada'),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: titulo, decoration: const InputDecoration(labelText: 'Nome da Jornada')),
+        TextField(controller: objetivo, maxLines: 2, decoration: const InputDecoration(labelText: 'Objetivo')),
+        TextField(controller: motivacao, maxLines: 2, decoration: const InputDecoration(labelText: 'Motivação (opcional)')),
+      ])),
+      actions: [TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('Cancelar')),
+        FilledButton(onPressed: () async {
+          if (titulo.text.trim().isEmpty || objetivo.text.trim().isEmpty) return;
+          try {
+            await ref.read(jornadaProvider.notifier).atualizar(jornadaId: jornada.id, titulo: titulo.text, objetivo: objetivo.text, motivacao: motivacao.text);
+            if (dialogo.mounted) Navigator.pop(dialogo, true);
+          } catch (_) {
+            if (dialogo.mounted) ScaffoldMessenger.of(dialogo).showSnackBar(const SnackBar(content: Text('Não foi possível ajustar a Jornada agora.')));
+          }
+        }, child: const Text('Salvar'))],
+    ));
+    titulo.dispose(); objetivo.dispose(); motivacao.dispose();
+    if (salvo == true && context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Jornada ajustada. Sua rota foi preservada.')));
   }
 
   Future<void> _concluirJornada(BuildContext context, WidgetRef ref) async {

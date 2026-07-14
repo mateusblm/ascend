@@ -640,6 +640,15 @@ Mission route filters:
 - the mission terminal now separates today's actionable route, planned upcoming occurrences, completed record, and archived missions;
 - recommendations remain confined to the immediate route, so future recurring occurrences do not compete with the next step.
 
+Local notification ritual:
+- Account now offers an explicit opt-in daily reminder with a configurable time; it schedules only the next pending mission and uses neutral, non-punitive copy;
+- completion, archival, pause, and inventory reconciliation reschedule or cancel the local reminder;
+- Android scheduling declares boot restoration and notification permission. Remaining validation: enable Windows Developer Mode to permit plugin symlinks, then build a staging APK and run real-device permission/scheduling smoke.
+
+Journey adjustment:
+- active Journeys can now update title, objective, and motivation through an authenticated authoritative command, preserving chapters, linked missions, and Legacy;
+- local notification Android build validation remains an explicit pre-production follow-up and does not represent production readiness.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

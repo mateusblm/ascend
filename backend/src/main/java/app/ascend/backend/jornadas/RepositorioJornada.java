@@ -14,6 +14,8 @@ public interface RepositorioJornada {
 
   Jornada atualizarStatus(String uid, String jornadaId, StatusJornada status);
 
+  Jornada atualizarProposito(String uid, String jornadaId, String titulo, String objetivo, String motivacao);
+
   List<CapituloJornada> listarCapitulos(String uid, String jornadaId);
 
   CapituloJornada adicionarCapitulo(String uid, String jornadaId, CapituloJornada capitulo);

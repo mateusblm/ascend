@@ -71,6 +71,18 @@ class JavaBackendClient {
     body: const {},
   );
 
+  Future<Map<String, dynamic>> updateJourney({
+    required String idToken,
+    required String journeyId,
+    required String title,
+    required String objective,
+    String? motivation,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/$journeyId/update',
+    idToken: idToken,
+    body: {'titulo': title, 'objetivo': objective, 'motivacao': motivation ?? ''},
+  );
+
   Future<List<Map<String, dynamic>>> fetchJourneyChapters({
     required String idToken,
     required String journeyId,

@@ -92,6 +92,14 @@ class JornadaNotifier extends StateNotifier<EstadoJornadas> {
     );
   }
 
+  Future<void> atualizar({required String jornadaId, required String titulo, required String objetivo, String? motivacao}) async {
+    final atualizada = await _repositorio.atualizar(jornadaId: jornadaId, titulo: titulo, objetivo: objetivo, motivacao: motivacao);
+    state = EstadoJornadas(
+      jornadas: state.jornadas.map((jornada) => jornada.id == jornadaId ? atualizada : jornada).toList(growable: false),
+      carregando: false,
+    );
+  }
+
   Future<void> concluir(String jornadaId) async {
     final atualizada = await _repositorio.concluirJornada(jornadaId);
     state = EstadoJornadas(

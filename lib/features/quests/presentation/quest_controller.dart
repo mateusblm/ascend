@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ascend/core/database/isar_provider.dart';
+import 'package:ascend/features/notifications/ritual_rota_service.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -19,6 +20,7 @@ final questProvider = StateNotifierProvider<QuestNotifier, List<Quest>>((ref) {
     ref,
     ref.watch(isarProvider),
     ref.read(questSyncRepositoryProvider),
+    ref.read(ritualRotaProvider),
   );
   ref.onDispose(notifier.dispose);
   return notifier;
@@ -81,7 +83,8 @@ enum QuestCompletionResult { success, notFound, alreadyCompleted, invalidFlow }
 
 /// Controla apenas quests pessoais. XP e atributos sao confirmados pelo backend Java.
 class QuestNotifier extends StateNotifier<List<Quest>> {
-  QuestNotifier(this.ref, this._isar, this._repositorio) : super(const []) {
+  QuestNotifier(this.ref, this._isar, this._repositorio, this._ritualRota)
+      : super(const []) {
     _assinaturaAuth = FirebaseAuth.instance.authStateChanges().listen(
       _carregarUsuario,
     );
@@ -91,6 +94,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   final Ref ref;
   final Isar _isar;
   final QuestSyncRepository _repositorio;
+  final RitualRotaService _ritualRota;
   StreamSubscription<User?>? _assinaturaAuth;
   String? _uid;
 
@@ -232,6 +236,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   void _substituir(List<Quest> quests, {bool sincronizar = true}) {
     state = quests.map((quest) => quest.copyWith(ownerUid: _uid)).toList();
     _persistirLocal();
+    unawaited(_ritualRota.sync(state));
     if (sincronizar && _uid != null) {
       unawaited(_repositorio.replaceQuests(uid: _uid!, quests: state));
     }

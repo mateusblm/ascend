@@ -41,6 +41,7 @@ Quest parseQuestSyncData(
         ? (data['title'] as String).trim()
         : 'Quest',
     journeyId: data['journeyId'] as String?,
+    recurrenceId: data['recurrenceId'] as String?,
     rewardAttribute: _attributeFrom(data['rewardAttribute']),
     xpReward: ((data['xpReward'] as num?)?.toInt() ?? personalQuestDefaultXp)
         .clamp(personalQuestMinXp, 1000000),
@@ -55,6 +56,7 @@ Quest parseQuestSyncData(
     completedAt: _dateFrom(data['completedAt']),
     verifiedAt: _dateFrom(data['verifiedAt']),
     plannedFor: _dateFrom(data['plannedFor']),
+    occursOn: _dateFrom(data['occursOn']),
     isCompleted: data['isCompleted'] as bool? ?? false,
     isArchived: data['isArchived'] as bool? ?? false,
     preRewardLevel: (data['preRewardLevel'] as num?)?.toInt(),
@@ -212,6 +214,28 @@ class QuestSyncRepository {
   Future<Quest> reschedulePersonalQuest({required String uid, required Quest quest, required DateTime plannedFor}) =>
       _mutateLifecycle(uid: uid, quest: quest, action: 'reagendar', plannedFor: plannedFor);
 
+  Future<void> createRecurringQuest({required String title, required AttributeType attribute, required List<int> weekdays, String? journeyId}) async {
+    await _sessionRepository.registerActiveSession();
+    final client = _javaBackendClientObrigatorio('criar rotina semanal');
+    final token = await _idTokenObrigatorio('criar rotina semanal');
+    await client.createRecurringQuest(
+      idToken: token,
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+      title: title,
+      rewardAttribute: attribute.name,
+      weekdays: weekdays,
+      journeyId: journeyId,
+    );
+  }
+
+  Future<void> pauseRecurringQuest(String recurrenceId) async {
+    await _sessionRepository.registerActiveSession();
+    await _javaBackendClientObrigatorio('pausar rotina semanal').pauseRecurringQuest(
+      idToken: await _idTokenObrigatorio('pausar rotina semanal'),
+      deviceSessionId: await _sessionRepository.deviceSessionId(), recurrenceId: recurrenceId,
+    );
+  }
+
   Future<Quest> _mutateLifecycle({required String uid, required Quest quest, required String action, DateTime? plannedFor}) async {
     await _sessionRepository.registerActiveSession();
     final client = _javaBackendClientObrigatorio('$action quest pessoal');
@@ -307,6 +331,7 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'id': quest.id,
     'title': quest.title,
     'journeyId': quest.journeyId,
+    'recurrenceId': quest.recurrenceId,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
     'category': 'personal',
@@ -320,6 +345,7 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'completedAt': _timestampOrNull(quest.completedAt),
     'verifiedAt': _timestampOrNull(quest.verifiedAt),
     'plannedFor': _timestampOrNull(quest.plannedFor),
+    'occursOn': _timestampOrNull(quest.occursOn),
     'isCompleted': quest.isCompleted,
     'isArchived': quest.isArchived,
     'preRewardLevel': quest.preRewardLevel,

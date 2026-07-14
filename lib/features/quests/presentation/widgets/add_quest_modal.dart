@@ -17,6 +17,8 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
   final _controller = TextEditingController();
   AttributeType _selectedAttribute = AttributeType.strength;
   String? _jornadaSelecionada;
+  bool _recorrente = false;
+  final Set<int> _diasSemana = <int>{};
 
   @override
   void dispose() {
@@ -74,19 +76,29 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_controller.text.trim().isEmpty) return;
-                ref
-                    .read(questProvider.notifier)
-                    .addPersonalQuest(
-                      _controller.text.trim(),
-                      _selectedAttribute,
-                      personalQuestDefaultXp,
-                      jornadaId: _jornadaSelecionada,
-                    );
-                Navigator.pop(context);
+                if (_recorrente) {
+                  if (_diasSemana.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escolha ao menos um dia da semana.')));
+                    return;
+                  }
+                  final criada = await ref.read(questProvider.notifier).addRecurringQuest(
+                    _controller.text.trim(), _selectedAttribute, _diasSemana.toList(), jornadaId: _jornadaSelecionada,
+                  );
+                  if (!context.mounted) return;
+                  if (!criada) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível criar a rotina agora.')));
+                    return;
+                  }
+                } else {
+                  ref.read(questProvider.notifier).addPersonalQuest(
+                    _controller.text.trim(), _selectedAttribute, personalQuestDefaultXp, jornadaId: _jornadaSelecionada,
+                  );
+                }
+                if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Criar quest'),
+              child: Text(_recorrente ? 'Criar rotina' : 'Criar quest'),
             ),
           ),
         ],
@@ -136,6 +148,34 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           onChanged: (val) => setState(() => _selectedAttribute = val!),
           decoration: const InputDecoration(labelText: 'Atributo'),
         ),
+        const SizedBox(height: 14),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _recorrente,
+          title: const Text('Repetir semanalmente'),
+          subtitle: const Text('Cada dia gera uma ocorrência independente.'),
+          onChanged: (valor) => setState(() => _recorrente = valor),
+        ),
+        if (_recorrente) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            children: [('S', 1), ('T', 2), ('Q', 3), ('Q', 4), ('S', 5), ('S', 6), ('D', 7)]
+                .map((dia) => _DiaSemanaChip(
+                      sigla: dia.$1,
+                      dia: dia.$2,
+                      selected: _diasSemana.contains(dia.$2),
+                      onSelected: (selecionado) => setState(() {
+                        if (selecionado) {
+                          _diasSemana.add(dia.$2);
+                        } else {
+                          _diasSemana.remove(dia.$2);
+                        }
+                      }),
+                    ))
+                .toList(),
+          ),
+        ],
         if (jornadas.isNotEmpty) ...[
           const SizedBox(height: 16),
           DropdownButtonFormField<String?>(
@@ -157,4 +197,14 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
       ],
     );
   }
+}
+
+class _DiaSemanaChip extends StatelessWidget {
+  const _DiaSemanaChip({required this.sigla, required this.dia, required this.selected, required this.onSelected});
+  final String sigla;
+  final int dia;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+  @override
+  Widget build(BuildContext context) => FilterChip(label: Text(sigla), selected: selected, onSelected: onSelected);
 }

@@ -162,7 +162,7 @@ public class MutacaoQuestPessoalService {
         perfilAtual.attributes().intelligence(),
         perfilAtual.attributes().vitality(),
         perfilAtual.attributes().agility(),
-        quest.journeyId(), quest.isArchived(), quest.plannedFor()
+        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -264,7 +264,7 @@ public class MutacaoQuestPessoalService {
         null,
         null,
         null,
-        quest.journeyId(), quest.isArchived(), quest.plannedFor()
+        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -379,7 +379,9 @@ public class MutacaoQuestPessoalService {
         data.get("preRewardAgility"),
         data.get("journeyId"),
         data.get("isArchived"),
-        data.get("plannedFor")
+        data.get("plannedFor"),
+        data.get("recurrenceId"),
+        data.get("occursOn")
     ));
   }
 
@@ -415,6 +417,8 @@ public class MutacaoQuestPessoalService {
     data.put("journeyId", quest.journeyId());
     data.put("isArchived", quest.isArchived());
     data.put("plannedFor", quest.plannedFor());
+    data.put("recurrenceId", quest.recurrenceId());
+    data.put("occursOn", quest.occursOn());
     data.put("orderIndex", indiceOrdem);
     data.put("syncSchemaVersion", 1);
     data.put("syncSource", SYNC_SOURCE);
@@ -456,7 +460,7 @@ public class MutacaoQuestPessoalService {
         quest.verifiedAt() == null ? now : quest.verifiedAt(),
         true, quest.preRewardLevel(), quest.preRewardXp(), quest.preRewardMaxXp(),
         quest.preRewardStatPoints(), quest.preRewardStrength(), quest.preRewardIntelligence(),
-        quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId(), quest.isArchived(), quest.plannedFor()
+        quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
     );
   }
 

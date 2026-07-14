@@ -13,15 +13,18 @@ public class InventarioQuestController {
   private final SincronizacaoInventarioQuestService service;
   private final MutacaoQuestPessoalService mutacaoQuestPessoalService;
   private final CicloVidaQuestPessoalService cicloVidaQuestPessoalService;
+  private final RecorrenciaQuestService recorrenciaQuestService;
 
   public InventarioQuestController(
       SincronizacaoInventarioQuestService service,
       MutacaoQuestPessoalService mutacaoQuestPessoalService,
-      CicloVidaQuestPessoalService cicloVidaQuestPessoalService
+      CicloVidaQuestPessoalService cicloVidaQuestPessoalService,
+      RecorrenciaQuestService recorrenciaQuestService
   ) {
     this.service = service;
     this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
     this.cicloVidaQuestPessoalService = cicloVidaQuestPessoalService;
+    this.recorrenciaQuestService = recorrenciaQuestService;
   }
 
   @PostMapping("/inventory:sync")
@@ -56,6 +59,18 @@ public class InventarioQuestController {
   @PostMapping("/personal:reschedule")
   public java.util.Map<String, Object> reagendarQuestPessoal(UsuarioAutenticado user, @RequestBody RequisicaoCicloVidaQuest request) {
     return cicloVidaQuestPessoalService.reagendar(user.uid(), request);
+  }
+
+  @PostMapping("/recurring")
+  public java.util.Map<String, Object> criarRecorrencia(UsuarioAutenticado user, @RequestBody RequisicaoCriacaoRecorrenciaQuest request) {
+    return recorrenciaQuestService.criar(user.uid(), request);
+  }
+
+  @PostMapping("/recurring/{recurrenceId}:pause")
+  public java.util.Map<String, Object> pausarRecorrencia(UsuarioAutenticado user, @org.springframework.web.bind.annotation.PathVariable String recurrenceId,
+      @RequestBody RequisicaoCicloVidaQuest request) {
+    recorrenciaQuestService.pausar(user.uid(), recurrenceId, request.deviceSessionId());
+    return java.util.Map.of("paused", true);
   }
 
 }

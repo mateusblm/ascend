@@ -54,7 +54,9 @@ public class ValidadorRequisicaoInventarioQuest {
         optionalNonNegativeInt(quest.preRewardAgility(), prefixo + ".preRewardAgility"),
         jornadaId(quest.journeyId(), prefixo),
         optionalBoolean(quest.isArchived()),
-        optionalTimestamp(quest.plannedFor(), prefixo + ".plannedFor"));
+        optionalTimestamp(quest.plannedFor(), prefixo + ".plannedFor"),
+        jornadaId(quest.recurrenceId(), prefixo + ".recurrence"),
+        optionalTimestamp(quest.occursOn(), prefixo + ".occursOn"));
   }
 
   private String jornadaId(Object valor, String prefixo) {

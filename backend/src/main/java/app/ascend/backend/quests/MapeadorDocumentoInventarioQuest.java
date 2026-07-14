@@ -90,6 +90,8 @@ public class MapeadorDocumentoInventarioQuest {
     data.put("journeyId", quest.journeyId());
     data.put("isArchived", quest.isArchived());
     data.put("plannedFor", quest.plannedFor());
+    data.put("recurrenceId", quest.recurrenceId());
+    data.put("occursOn", quest.occursOn());
     data.put("orderIndex", orderIndex);
     data.put("syncSchemaVersion", SYNC_SCHEMA_VERSION);
     data.put("syncSource", SYNC_SOURCE);

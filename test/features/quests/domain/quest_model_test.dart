@@ -29,4 +29,18 @@ void main() {
     expect(arquivada.isArchived, isTrue);
     expect(arquivada.isCompleted, isFalse);
   });
+
+  test('uma ocorrencia recorrente conserva sua definicao e data propria', () {
+    final ocorrencia = Quest(
+      id: 'ocorrencia-1',
+      recurrenceId: 'rotina-1',
+      title: 'Estudar inglês',
+      occursOn: DateTime(2026, 7, 20),
+      rewardAttribute: AttributeType.intelligence,
+      xpReward: 12,
+    );
+
+    expect(ocorrencia.recurrenceId, 'rotina-1');
+    expect(ocorrencia.copyWith(isCompleted: true).occursOn, DateTime(2026, 7, 20));
+  });
 }

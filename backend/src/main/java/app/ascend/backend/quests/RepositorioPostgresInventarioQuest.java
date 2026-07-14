@@ -66,8 +66,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
   void salvarQuest(String uid, String questId, Map<String, Object> quest) {
     jdbcTemplate.update("""
         insert into quests (id, uid, titulo, atributo_recompensa, xp_recompensa, categoria,
-          tipo_template, modo_verificacao, status_verificacao, concluida, arquivada, planejada_para, indice_ordem, jornada_id, dados)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
+          tipo_template, modo_verificacao, status_verificacao, concluida, arquivada, planejada_para, ocorrencia_em, recorrencia_id, indice_ordem, jornada_id, dados)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
         on conflict (id) do update set
           uid = excluded.uid,
           titulo = excluded.titulo,
@@ -80,6 +80,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
           concluida = excluded.concluida,
           arquivada = excluded.arquivada,
           planejada_para = excluded.planejada_para,
+          ocorrencia_em = excluded.ocorrencia_em,
+          recorrencia_id = excluded.recorrencia_id,
           indice_ordem = excluded.indice_ordem,
           jornada_id = excluded.jornada_id,
           dados = excluded.dados,
@@ -89,7 +91,7 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
         inteiro(quest.get("xpReward")), textoOu(quest.get("category"), "personal"),
         textoOu(quest.get("templateType"), "custom"), textoOu(quest.get("verificationMode"), "manual"),
         textoOu(quest.get("verificationStatus"), "none"), booleano(quest.get("isCompleted")),
-        booleano(quest.get("isArchived")), dataJdbc(quest.get("plannedFor")), inteiro(quest.get("orderIndex")), textoNulo(quest.get("journeyId")), json(quest));
+        booleano(quest.get("isArchived")), dataJdbc(quest.get("plannedFor")), dataJdbc(quest.get("occursOn")), textoNulo(quest.get("recurrenceId")), inteiro(quest.get("orderIndex")), textoNulo(quest.get("journeyId")), json(quest));
   }
 
   private String textoOu(Object valor, String padrao) {

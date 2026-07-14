@@ -33,6 +33,7 @@ class Quest {
   final String id;
   final String title;
   final String? journeyId;
+  final String? recurrenceId;
 
   @enumerated
   final AttributeType rewardAttribute;
@@ -55,6 +56,7 @@ class Quest {
   final DateTime? completedAt;
   final DateTime? verifiedAt;
   final DateTime? plannedFor;
+  final DateTime? occursOn;
   final bool isCompleted;
   final bool isArchived;
 
@@ -75,6 +77,7 @@ class Quest {
     required this.id,
     required this.title,
     this.journeyId,
+    this.recurrenceId,
     required this.rewardAttribute,
     required this.xpReward,
     this.templateType = QuestTemplateType.custom,
@@ -87,6 +90,7 @@ class Quest {
     this.completedAt,
     this.verifiedAt,
     this.plannedFor,
+    this.occursOn,
     this.isCompleted = false,
     this.isArchived = false,
     this.preRewardLevel,
@@ -111,6 +115,7 @@ class Quest {
   Quest copyWith({
     String? ownerUid,
     String? journeyId,
+    String? recurrenceId,
     bool clearJourney = false,
     bool? isCompleted,
     QuestTemplateType? templateType,
@@ -123,6 +128,7 @@ class Quest {
     DateTime? completedAt,
     DateTime? verifiedAt,
     DateTime? plannedFor,
+    DateTime? occursOn,
     int? preRewardLevel,
     int? preRewardXp,
     int? preRewardMaxXp,
@@ -141,6 +147,7 @@ class Quest {
       id: id,
       title: title,
       journeyId: clearJourney ? null : (journeyId ?? this.journeyId),
+      recurrenceId: recurrenceId ?? this.recurrenceId,
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
       templateType: templateType ?? this.templateType,
@@ -162,6 +169,7 @@ class Quest {
           ? null
           : (verifiedAt ?? this.verifiedAt),
       plannedFor: plannedFor ?? this.plannedFor,
+      occursOn: occursOn ?? this.occursOn,
       isCompleted: isCompleted ?? this.isCompleted,
       isArchived: isArchived ?? this.isArchived,
       preRewardLevel: clearPreRewardSnapshot

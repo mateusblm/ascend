@@ -631,6 +631,11 @@ Recovery P0 completion:
 Lifecycle synchronization follow-up:
 - the legacy profile-source synchronization now also preserves Journey links, archival state, and planned date for personal missions, preventing a profile sync from discarding authoritative mission lifecycle data.
 
+Recurring missions:
+- a weekly routine is now an authoritative definition separate from its dated mission occurrences;
+- the backend materializes the next 30 days idempotently, so each occurrence can be concluded, revoked, rescheduled, or archived without changing its routine or historical siblings;
+- the mission composer creates weekly routines and a recurring occurrence exposes a pause action; remote staging smoke remains pending.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

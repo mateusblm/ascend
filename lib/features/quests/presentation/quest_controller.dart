@@ -186,6 +186,25 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     }
   }
 
+  Future<bool> addRecurringQuest(String titulo, AttributeType atributo, List<int> diasSemana, {String? jornadaId}) async {
+    if (_uid == null || diasSemana.isEmpty) return false;
+    try {
+      await _repositorio.createRecurringQuest(title: titulo, attribute: atributo, weekdays: diasSemana, journeyId: jornadaId);
+      final remotas = await _repositorio.watchQuests(_uid!).first;
+      _substituir(remotas, sincronizar: false);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  Future<bool> pausarRotina(String recurrenceId) async {
+    try {
+      await _repositorio.pauseRecurringQuest(recurrenceId);
+      final remotas = await _repositorio.watchQuests(_uid!).first;
+      _substituir(remotas, sincronizar: false);
+      return true;
+    } catch (_) { return false; }
+  }
+
   Future<bool> arquivarQuest(String id) async {
     final quest = state.where((item) => item.id == id).firstOrNull;
     if (quest == null || _uid == null || quest.isCompleted) return false;

@@ -324,6 +324,15 @@ class _FaixaMissao extends ConsumerWidget {
                             tooltip: 'Ajustar missão',
                             icon: const Icon(Icons.more_horiz_rounded, size: 18, color: AppColors.textSecondary),
                             onSelected: (acao) async {
+                              if (acao == 'pausar_rotina') {
+                                final sucesso = await ref.read(questProvider.notifier).pausarRotina(quest.recurrenceId!);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+                                    sucesso ? 'Rotina pausada. As ocorrências concluídas foram preservadas.' : 'Não foi possível pausar a rotina agora.',
+                                  )));
+                                }
+                                return;
+                              }
                               if (acao != 'reagendar') return;
                               final data = await showDatePicker(
                                 context: context,
@@ -340,7 +349,10 @@ class _FaixaMissao extends ConsumerWidget {
                                 )));
                               }
                             },
-                            itemBuilder: (_) => const [PopupMenuItem(value: 'reagendar', child: Text('Reagendar'))],
+                            itemBuilder: (_) => [
+                              const PopupMenuItem(value: 'reagendar', child: Text('Reagendar')),
+                              if (quest.recurrenceId != null) const PopupMenuItem(value: 'pausar_rotina', child: Text('Pausar rotina')),
+                            ],
                           ),
                       ],
                     ),

@@ -28,6 +28,8 @@ public record QuestInventarioValidada(
     Integer preRewardAgility,
     String journeyId,
     boolean isArchived,
-    Timestamp plannedFor
+    Timestamp plannedFor,
+    String recurrenceId,
+    Timestamp occursOn
 ) {
 }

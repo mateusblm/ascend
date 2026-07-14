@@ -202,6 +202,30 @@ class JavaBackendClient {
     },
   );
 
+  Future<Map<String, dynamic>> createRecurringQuest({
+    required String idToken,
+    required String deviceSessionId,
+    required String title,
+    required String rewardAttribute,
+    required List<int> weekdays,
+    String? journeyId,
+  }) => _postJson(
+    endpointPath: '/api/v1/quests/recurring',
+    idToken: idToken,
+    body: {
+      'deviceSessionId': deviceSessionId,
+      'title': title,
+      'rewardAttribute': rewardAttribute,
+      'weekdays': weekdays,
+      if (journeyId != null) 'journeyId': journeyId,
+    },
+  );
+
+  Future<void> pauseRecurringQuest({required String idToken, required String deviceSessionId, required String recurrenceId}) async {
+    await _postJson(endpointPath: '/api/v1/quests/recurring/$recurrenceId:pause', idToken: idToken,
+      body: {'deviceSessionId': deviceSessionId, 'questId': recurrenceId});
+  }
+
   Future<Map<String, dynamic>> fetchRecovery({required String idToken}) async {
     final response = await _httpClient.get(_uri('/api/v1/recovery'), headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
     return _decode(response);

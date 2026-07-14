@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'profile/presentation/home_screen.dart';
+import 'jornadas/presentation/jornadas_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
@@ -36,6 +37,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       icon: Icons.bolt_outlined,
       activeIcon: Icons.bolt_rounded,
       accent: AppColors.amber,
+    ),
+    _NavigationDestination(
+      label: 'Jornadas',
+      icon: Icons.explore_outlined,
+      activeIcon: Icons.explore_rounded,
+      accent: AppColors.intellect,
     ),
   ];
 
@@ -75,7 +82,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     final requiresOnboarding = _requiresOnboarding(player, quests.isNotEmpty);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
-    final screens = <Widget>[const HomeScreen(), const QuestsScreen()];
+    final screens = <Widget>[
+      const HomeScreen(),
+      const QuestsScreen(),
+      const JornadasScreen(),
+    ];
     final safeIndex = currentIndex.clamp(0, screens.length - 1);
 
     return Container(

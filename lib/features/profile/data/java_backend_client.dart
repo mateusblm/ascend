@@ -22,6 +22,44 @@ class JavaBackendClient {
     return _decode(response);
   }
 
+  Future<List<Map<String, dynamic>>> fetchJourneys({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/journeys'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return _decodeList(response);
+  }
+
+  Future<Map<String, dynamic>> createJourney({
+    required String idToken,
+    required String title,
+    required String objective,
+    String? motivation,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys',
+    idToken: idToken,
+    body: {
+      'titulo': title,
+      'objetivo': objective,
+      if (motivation != null && motivation.trim().isNotEmpty)
+        'motivacao': motivation.trim(),
+    },
+  );
+
+  Future<Map<String, dynamic>> pauseJourney({
+    required String idToken,
+    required String journeyId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/$journeyId/pause',
+    idToken: idToken,
+    body: const {},
+  );
+
   Future<void> syncQuestInventory({
     required String idToken,
     required String deviceSessionId,
@@ -152,6 +190,20 @@ class JavaBackendClient {
       throw const JavaBackendException('Resposta do backend Java invalida.');
     }
     return Map<String, dynamic>.from(decoded.cast<Object?, Object?>());
+  }
+
+  List<Map<String, dynamic>> _decodeList(http.Response response) {
+    if (response.statusCode != 200) {
+      throw _exceptionFromResponse(response);
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const JavaBackendException('Resposta do backend Java invalida.');
+    }
+    return decoded
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item.cast<Object?, Object?>()))
+        .toList(growable: false);
   }
 
   JavaBackendException _exceptionFromResponse(http.Response response) {

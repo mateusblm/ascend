@@ -1,7 +1,7 @@
 # Plano de Projeto — Renovação do Ascend
 
 **Versão:** 1.0  
-**Status:** baseline para planejamento  
+**Status:** em execucao  
 **Produto:** Ascend  
 **Plataformas iniciais:** Android e iOS  
 **Idioma inicial:** Português brasileiro  
@@ -1677,6 +1677,13 @@ Todos os requisitos P0 funcionam em dispositivo real e possuem monitoramento.
 - design system;
 - modelo de dados;
 - estratégia de sincronização.
+
+### Marco entregue: Jornadas — fundação vertical
+
+- a entidade `Jornada` agora possui armazenamento autoritativo no PostgreSQL;
+- a API Java permite listar, criar e pausar Jornadas do usuário autenticado;
+- o Flutter possui a área `Jornadas` para iniciar, consultar e pausar um objetivo;
+- capítulos, marcos e vínculo com missões continuam como o próximo recorte desta fase.
 
 ## Fase 2 — Loop diário
 

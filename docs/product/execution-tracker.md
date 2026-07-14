@@ -11,7 +11,7 @@ Update this file:
 
 ## Current State
 
-- Current date baseline: `2026-05-11`
+- Current date baseline: `2026-07-14`
 - Active plan: `docs/product/project-plan.md`
 - Active requirements baseline: `docs/product/requirements-baseline.md`
 - Active phase: `Phase 3 - Product reliability and release readiness`
@@ -517,6 +517,17 @@ V1 scope reduction started:
   active days, without leaderboard or rank pressure in the V1 surface.
 - new operational plan:
   - `docs/product/v1-casual-first-launch-plan.md`
+
+Progress note recorded on `2026-07-14`
+
+Renewal foundation started:
+- the product baseline now advances toward personal `Jornadas`, as defined in
+  `docs/product/plano-projeto-ascend.md`;
+- PostgreSQL migration V4 introduces the authoritative `jornadas` aggregate;
+- Java exposes authenticated list, creation and pause operations;
+- Flutter exposes the new `Jornadas` navigation surface with creation, loading,
+  recoverable error and empty states;
+- the next slice is chapters, milestones and the first mission-to-Jornada link.
 
 Planned completion note:
 - record release identity/environment readiness

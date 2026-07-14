@@ -8,6 +8,7 @@ import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/profile/data/backend_route_selector.dart';
+import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,7 +42,11 @@ class HomeScreen extends ConsumerWidget {
                 _HeroAscensao(jogador: jogador),
                 if (precisaDeRetomada(jogador)) ...[
                   const SizedBox(height: 18),
-                  _PainelRetomada(onEscolher: (mensagem) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)))),
+                  _PainelRetomada(
+                    onLeve: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Retomada leve: avance somente no próximo passo.'))),
+                    onPlano: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seu plano atual foi preservado.'))),
+                    onReorganizar: () => ref.read(navigationProvider.notifier).state = 2,
+                  ),
                 ],
                 const SizedBox(height: 30),
                 _TituloSecao(
@@ -111,8 +116,10 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _PainelRetomada extends StatelessWidget {
-  const _PainelRetomada({required this.onEscolher});
-  final ValueChanged<String> onEscolher;
+  const _PainelRetomada({required this.onLeve, required this.onPlano, required this.onReorganizar});
+  final VoidCallback onLeve;
+  final VoidCallback onPlano;
+  final VoidCallback onReorganizar;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.surfaceMuted, border: Border.all(color: AppColors.amber.withValues(alpha: .4))),
@@ -120,9 +127,9 @@ class _PainelRetomada extends StatelessWidget {
       const Text('ACAMPAMENTO', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800)),
       const SizedBox(height: 6), const Text('Seu progresso foi preservado. Escolha como retomar.'),
       Wrap(spacing: 8, runSpacing: 8, children: [
-        OutlinedButton(onPressed: () => onEscolher('Retomada leve ativada. Comece pelo próximo passo.'), child: const Text('Retomada leve')),
-        TextButton(onPressed: () => onEscolher('Seu plano atual continua disponível.'), child: const Text('Voltar ao plano')),
-        TextButton(onPressed: () => onEscolher('Abra Jornadas para reorganizar sua rota.'), child: const Text('Reorganizar Jornada')),
+        OutlinedButton(onPressed: onLeve, child: const Text('Retomada leve')),
+        TextButton(onPressed: onPlano, child: const Text('Voltar ao plano')),
+        TextButton(onPressed: onReorganizar, child: const Text('Reorganizar Jornada')),
       ]),
     ]),
   );

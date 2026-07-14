@@ -613,6 +613,14 @@ Recovery entry point:
 - the new Camp panel preserves the player's progress and offers light return, plan maintenance, or Journey reorganization;
 - validation passed: `flutter analyze` and `flutter test`.
 
+Progress note recorded on `2026-07-14`
+
+Recovery actions:
+- light return keeps the player focused on the authoritative next step;
+- plan maintenance explicitly preserves the active queue;
+- Journey reorganization routes the player directly to Jornadas;
+- validation passed: `flutter analyze` and `flutter test`.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

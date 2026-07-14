@@ -62,6 +62,31 @@ class RepositorioJornada {
     return CapituloJornada.fromJson(resposta);
   }
 
+  Future<List<MarcoCapitulo>> listarMarcos(String capituloId) async {
+    final resposta = await _clienteObrigatorio('carregar marcos').fetchChapterMilestones(
+      idToken: await _tokenObrigatorio('carregar marcos'), chapterId: capituloId);
+    return resposta.map(MarcoCapitulo.fromJson).toList(growable: false);
+  }
+
+  Future<MarcoCapitulo> criarMarco({
+    required String capituloId,
+    required String titulo,
+    String? questId,
+  }) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('criar marco').createChapterMilestone(
+      idToken: await _tokenObrigatorio('criar marco'), chapterId: capituloId,
+      title: titulo, questId: questId);
+    return MarcoCapitulo.fromJson(resposta);
+  }
+
+  Future<MarcoCapitulo> concluirMarco(String marcoId) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('concluir marco').completeChapterMilestone(
+      idToken: await _tokenObrigatorio('concluir marco'), milestoneId: marcoId);
+    return MarcoCapitulo.fromJson(resposta);
+  }
+
   JavaBackendClient _clienteObrigatorio(String acao) {
     final cliente = _clienteJava;
     if (cliente == null) throw StateError('Backend Java nao configurado para $acao.');

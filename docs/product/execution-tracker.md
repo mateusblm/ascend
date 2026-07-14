@@ -539,6 +539,22 @@ Mission-to-Journey link delivered:
   Journey slice;
 - focused tests now cover Journey service rules and local quest-link retention.
 
+Progress note recorded on `2026-07-14`
+
+Chapter milestones delivered:
+- PostgreSQL now persists ordered chapter milestones, optionally linked to a
+  personal mission in the same authenticated Journey;
+- authenticated endpoints list and create chapter milestones, and complete
+  manual milestones idempotently;
+- a paused Journey cannot receive new milestones, and a mission-linked
+  milestone is advanced only by the authoritative mission completion state;
+- the Flutter chapter detail now renders milestones as a compact vertical route
+  and lets the player add either a manual stage or a same-Journey mission link;
+- validation passed:
+  - `flutter analyze`: no issues found
+  - `flutter test`: passed
+  - `cd backend && mvn test`: 33 tests passed
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

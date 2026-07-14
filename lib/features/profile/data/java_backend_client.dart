@@ -81,6 +81,37 @@ class JavaBackendClient {
     body: {'titulo': title},
   );
 
+  Future<Map<String, dynamic>> createChapterMilestone({
+    required String idToken,
+    required String chapterId,
+    required String title,
+    String? questId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/chapters/$chapterId/milestones',
+    idToken: idToken,
+    body: {'titulo': title, if (questId != null) 'questId': questId},
+  );
+
+  Future<List<Map<String, dynamic>>> fetchChapterMilestones({
+    required String idToken,
+    required String chapterId,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/journeys/chapters/$chapterId/milestones'),
+      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'},
+    );
+    return _decodeList(response);
+  }
+
+  Future<Map<String, dynamic>> completeChapterMilestone({
+    required String idToken,
+    required String milestoneId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/milestones/$milestoneId/complete',
+    idToken: idToken,
+    body: const {},
+  );
+
   Future<void> syncQuestInventory({
     required String idToken,
     required String deviceSessionId,

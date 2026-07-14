@@ -17,4 +17,16 @@ public interface RepositorioJornada {
   List<CapituloJornada> listarCapitulos(String uid, String jornadaId);
 
   CapituloJornada adicionarCapitulo(String uid, String jornadaId, CapituloJornada capitulo);
+
+  Optional<ContextoCapituloJornada> buscarContextoCapitulo(String uid, String capituloId);
+
+  List<MarcoCapitulo> listarMarcos(String uid, String capituloId);
+
+  MarcoCapitulo adicionarMarco(String capituloId, String titulo, String questId);
+
+  Optional<MarcoCapitulo> buscarMarco(String uid, String marcoId);
+
+  MarcoCapitulo concluirMarco(String uid, String marcoId);
+
+  boolean questPertenceAJornada(String uid, String questId, String jornadaId);
 }

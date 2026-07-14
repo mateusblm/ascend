@@ -68,6 +68,45 @@ class JornadaControllerTest {
         .andExpect(jsonPath("$[0].objetivo", is("Entregar a versao final")));
   }
 
+  @Test
+  void listarMarcosRetornaRotaDoCapituloAutenticado() throws Exception {
+    configurarUsuario();
+    when(service.listarMarcos("user-1", "capitulo-1")).thenReturn(List.of(
+        new MarcoCapitulo("marco-1", "Enviar versao", null, false, 0)));
+
+    mockMvc.perform(get("/api/v1/journeys/chapters/capitulo-1/milestones")
+            .header("Authorization", "Bearer valid-token"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].titulo", is("Enviar versao")));
+  }
+
+  @Test
+  void criarMarcoUsaUsuarioAutenticado() throws Exception {
+    configurarUsuario();
+    when(service.adicionarMarco(eq("user-1"), eq("capitulo-1"), any(RequisicaoCriacaoMarco.class)))
+        .thenReturn(new MarcoCapitulo("marco-1", "Enviar versao", null, false, 0));
+
+    mockMvc.perform(post("/api/v1/journeys/chapters/capitulo-1/milestones")
+            .header("Authorization", "Bearer valid-token")
+            .contentType(MediaType.APPLICATION_JSON).content("{\"titulo\":\"Enviar versao\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.indiceOrdem", is(0)));
+  }
+
+  @Test
+  void concluirMarcoUsaUsuarioAutenticado() throws Exception {
+    configurarUsuario();
+    when(service.concluirMarco("user-1", "marco-1"))
+        .thenReturn(new MarcoCapitulo("marco-1", "Enviar versao", null, true, 0));
+
+    mockMvc.perform(post("/api/v1/journeys/milestones/marco-1/complete")
+            .header("Authorization", "Bearer valid-token")
+            .contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.concluido", is(true)));
+  }
+
   private void configurarUsuario() {
     when(tokenVerifier.verificar("valid-token"))
         .thenReturn(new UsuarioAutenticado("user-1", "mateus@example.com"));

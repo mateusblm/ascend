@@ -70,4 +70,48 @@ class JornadaServiceTest {
 
     assertEquals("jornada_nao_esta_ativa", erro.codigo());
   }
+
+  @Test
+  void adicionarMarcoRejeitaCapituloDeJornadaPausada() {
+    when(repositorio.buscarContextoCapitulo("user-1", "capitulo-1")).thenReturn(Optional.of(
+        new ContextoCapituloJornada("capitulo-1", "jornada-1", StatusJornada.pausada)));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.adicionarMarco(
+        "user-1", "capitulo-1", new RequisicaoCriacaoMarco("Enviar versao", null)));
+
+    assertEquals("jornada_nao_esta_ativa", erro.codigo());
+  }
+
+  @Test
+  void adicionarMarcoRejeitaMissaoDeOutraJornada() {
+    when(repositorio.buscarContextoCapitulo("user-1", "capitulo-1")).thenReturn(Optional.of(
+        new ContextoCapituloJornada("capitulo-1", "jornada-1", StatusJornada.ativa)));
+    when(repositorio.questPertenceAJornada("user-1", "quest-2", "jornada-1")).thenReturn(false);
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.adicionarMarco(
+        "user-1", "capitulo-1", new RequisicaoCriacaoMarco("Enviar versao", "quest-2")));
+
+    assertEquals("missao_invalida_para_marco", erro.codigo());
+  }
+
+  @Test
+  void concluirMarcoManualEIdempotenteNoRepositorio() {
+    MarcoCapitulo pendente = new MarcoCapitulo("marco-1", "Enviar", null, false, 0);
+    MarcoCapitulo concluido = new MarcoCapitulo("marco-1", "Enviar", null, true, 0);
+    when(repositorio.buscarMarco("user-1", "marco-1")).thenReturn(Optional.of(pendente));
+    when(repositorio.concluirMarco("user-1", "marco-1")).thenReturn(concluido);
+
+    assertEquals(concluido, service.concluirMarco("user-1", "marco-1"));
+    verify(repositorio).concluirMarco("user-1", "marco-1");
+  }
+
+  @Test
+  void concluirMarcoVinculadoExigeConclusaoDaMissao() {
+    when(repositorio.buscarMarco("user-1", "marco-1")).thenReturn(Optional.of(
+        new MarcoCapitulo("marco-1", "Enviar", "quest-1", false, 0)));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.concluirMarco("user-1", "marco-1"));
+
+    assertEquals("marco_vinculado_a_missao", erro.codigo());
+  }
 }

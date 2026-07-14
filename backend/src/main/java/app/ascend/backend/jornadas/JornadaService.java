@@ -69,6 +69,53 @@ public class JornadaService {
         UUID.randomUUID().toString(), requisicao.titulo().trim(), proximoIndice));
   }
 
+  /** Cria um marco apenas em um capitulo pertencente a uma Jornada ativa do usuario. */
+  public MarcoCapitulo adicionarMarco(
+      String uid, String capituloId, RequisicaoCriacaoMarco requisicao
+  ) {
+    ContextoCapituloJornada contexto = contextoCapituloAtivo(uid, capituloId);
+    String questId = textoOpcional(requisicao.questId());
+    if (questId != null && !repositorio.questPertenceAJornada(uid, questId, contexto.jornadaId())) {
+      throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "missao_invalida_para_marco",
+          "A missao vinculada deve pertencer a esta Jornada.");
+    }
+    return repositorio.adicionarMarco(capituloId, requisicao.titulo().trim(), questId);
+  }
+
+  /** Lista a rota de marcos somente para o dono do capitulo solicitado. */
+  public List<MarcoCapitulo> listarMarcos(String uid, String capituloId) {
+    contextoCapitulo(uid, capituloId);
+    return repositorio.listarMarcos(uid, capituloId);
+  }
+
+  /**
+   * Conclui um marco manual de forma idempotente. Marcos ligados a missao sao
+   * atualizados somente pela conclusao autoritativa da missao no banco.
+   */
+  public MarcoCapitulo concluirMarco(String uid, String marcoId) {
+    MarcoCapitulo marco = repositorio.buscarMarco(uid, marcoId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "marco_nao_encontrado", "Marco nao encontrado."));
+    if (marco.questId() != null) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "marco_vinculado_a_missao",
+          "Este marco avanca quando a missao vinculada for concluida.");
+    }
+    return repositorio.concluirMarco(uid, marcoId);
+  }
+
+  private ContextoCapituloJornada contextoCapituloAtivo(String uid, String capituloId) {
+    ContextoCapituloJornada contexto = contextoCapitulo(uid, capituloId);
+    if (contexto.status() != StatusJornada.ativa) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "jornada_nao_esta_ativa",
+          "Somente uma Jornada ativa pode receber marcos.");
+    }
+    return contexto;
+  }
+
+  private ContextoCapituloJornada contextoCapitulo(String uid, String capituloId) {
+    return repositorio.buscarContextoCapitulo(uid, capituloId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "capitulo_nao_encontrado", "Capitulo nao encontrado."));
+  }
+
   private String textoOpcional(String valor) {
     if (valor == null || valor.isBlank()) return null;
     return valor.trim();

@@ -13,6 +13,33 @@ class CapituloJornada {
   );
 }
 
+/// Etapa concreta da rota; pode aguardar uma missao ou ser confirmada manualmente.
+class MarcoCapitulo {
+  const MarcoCapitulo({
+    required this.id,
+    required this.titulo,
+    required this.concluido,
+    required this.indiceOrdem,
+    this.questId,
+  });
+
+  final String id;
+  final String titulo;
+  final String? questId;
+  final bool concluido;
+  final int indiceOrdem;
+
+  bool get vinculadoAMissao => questId != null;
+
+  factory MarcoCapitulo.fromJson(Map<String, dynamic> dados) => MarcoCapitulo(
+    id: dados['id'] as String? ?? '',
+    titulo: dados['titulo'] as String? ?? 'Marco',
+    questId: dados['questId'] as String?,
+    concluido: dados['concluido'] as bool? ?? false,
+    indiceOrdem: (dados['indiceOrdem'] as num?)?.toInt() ?? 0,
+  );
+}
+
 /// Progresso de uma Jornada calculado apenas pelas missões a ela vinculadas.
 class ProgressoJornada {
   const ProgressoJornada({required this.total, required this.concluidas});

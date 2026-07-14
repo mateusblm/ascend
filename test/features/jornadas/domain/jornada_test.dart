@@ -18,4 +18,12 @@ void main() {
     expect(progresso.concluidas, 1);
     expect(progresso.percentual, 50);
   });
+
+  test('identifica marco vinculado a missao sem confundi-lo com marco manual', () {
+    const manual = MarcoCapitulo(id: 'm-1', titulo: 'Planejar', concluido: false, indiceOrdem: 0);
+    const vinculado = MarcoCapitulo(id: 'm-2', titulo: 'Executar', questId: 'q-1', concluido: false, indiceOrdem: 1);
+
+    expect(manual.vinculadoAMissao, isFalse);
+    expect(vinculado.vinculadoAMissao, isTrue);
+  });
 }

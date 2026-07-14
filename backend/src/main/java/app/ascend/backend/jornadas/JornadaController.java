@@ -51,4 +51,26 @@ public class JornadaController {
   ) {
     return service.adicionarCapitulo(usuario.uid(), jornadaId, requisicao);
   }
+
+  @PostMapping("/chapters/{capituloId}/milestones")
+  public MarcoCapitulo adicionarMarco(
+      UsuarioAutenticado usuario, @PathVariable String capituloId,
+      @Valid @RequestBody RequisicaoCriacaoMarco requisicao
+  ) {
+    return service.adicionarMarco(usuario.uid(), capituloId, requisicao);
+  }
+
+  @GetMapping("/chapters/{capituloId}/milestones")
+  public List<MarcoCapitulo> listarMarcos(
+      UsuarioAutenticado usuario, @PathVariable String capituloId
+  ) {
+    return service.listarMarcos(usuario.uid(), capituloId);
+  }
+
+  @PostMapping("/milestones/{marcoId}/complete")
+  public MarcoCapitulo concluirMarco(
+      UsuarioAutenticado usuario, @PathVariable String marcoId
+  ) {
+    return service.concluirMarco(usuario.uid(), marcoId);
+  }
 }

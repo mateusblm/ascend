@@ -289,7 +289,12 @@ class _CartaoJornada extends ConsumerWidget {
                 Text(jornada.titulo, style: Theme.of(contexto).textTheme.titleLarge),
                 const SizedBox(height: 14),
                 for (final capitulo in capitulos)
-                  ListTile(leading: Text('${capitulo.indiceOrdem + 1}'), title: Text(capitulo.titulo)),
+                  ListTile(
+                    leading: _NoDaRota(indice: capitulo.indiceOrdem),
+                    title: Text(capitulo.titulo),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _abrirDetalheCapitulo(contexto, ref, capitulo),
+                  ),
                 if (snapshot.connectionState == ConnectionState.waiting)
                   const Center(child: CircularProgressIndicator()),
                 if (jornada.estaAtiva)
@@ -318,6 +323,156 @@ class _CartaoJornada extends ConsumerWidget {
         FilledButton(onPressed: () async { if (campo.text.trim().isEmpty) return; await repositorio.criarCapitulo(jornada.id, campo.text); if (dialogo.mounted) Navigator.pop(dialogo); }, child: const Text('Criar'))],
     ));
     campo.dispose();
+  }
+
+  Future<void> _abrirDetalheCapitulo(
+    BuildContext context,
+    WidgetRef ref,
+    CapituloJornada capitulo,
+  ) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _DetalheCapitulo(jornada: jornada, capitulo: capitulo),
+  );
+}
+
+class _NoDaRota extends StatelessWidget {
+  const _NoDaRota({required this.indice});
+  final int indice;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 28,
+    height: 28,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: AppColors.intellect.withValues(alpha: .7)),
+    ),
+    child: Text('${indice + 1}', style: const TextStyle(fontSize: 11)),
+  );
+}
+
+class _DetalheCapitulo extends ConsumerStatefulWidget {
+  const _DetalheCapitulo({required this.jornada, required this.capitulo});
+  final Jornada jornada;
+  final CapituloJornada capitulo;
+
+  @override
+  ConsumerState<_DetalheCapitulo> createState() => _DetalheCapituloState();
+}
+
+class _DetalheCapituloState extends ConsumerState<_DetalheCapitulo> {
+  late Future<List<MarcoCapitulo>> _marcos;
+
+  @override
+  void initState() {
+    super.initState();
+    _recarregar();
+  }
+
+  void _recarregar() => _marcos = ref.read(repositorioJornadaProvider).listarMarcos(widget.capitulo.id);
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: FutureBuilder<List<MarcoCapitulo>>(
+        future: _marcos,
+        builder: (context, snapshot) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('CAPÍTULO ${widget.capitulo.indiceOrdem + 1}',
+                style: const TextStyle(color: AppColors.intellect, fontSize: 11, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 5),
+            Text(widget.capitulo.titulo, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            if (snapshot.connectionState == ConnectionState.waiting)
+              const Center(child: CircularProgressIndicator())
+            else if (snapshot.hasError)
+              const Text('Não foi possível abrir esta rota agora.')
+            else
+              _RotaDeMarcos(
+                marcos: snapshot.data ?? const [],
+                aoConcluir: widget.jornada.estaAtiva ? _concluir : null,
+              ),
+            if (widget.jornada.estaAtiva) ...[
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _criar,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Adicionar marco'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _concluir(MarcoCapitulo marco) async {
+    await ref.read(repositorioJornadaProvider).concluirMarco(marco.id);
+    if (mounted) setState(_recarregar);
+  }
+
+  Future<void> _criar() async {
+    final titulo = TextEditingController();
+    String? questId;
+    final quests = ref.read(questProvider)
+        .where((quest) => quest.journeyId == widget.jornada.id)
+        .toList(growable: false);
+    final criado = await showDialog<bool>(context: context, builder: (dialogo) => StatefulBuilder(
+      builder: (context, setDialogo) => AlertDialog(
+        title: const Text('Novo marco'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: titulo, autofocus: true, decoration: const InputDecoration(labelText: 'Etapa da rota')),
+          if (quests.isNotEmpty) DropdownButtonFormField<String?>(
+            initialValue: questId,
+            decoration: const InputDecoration(labelText: 'Missão vinculada (opcional)'),
+            items: [const DropdownMenuItem(value: null, child: Text('Marco manual')),
+              ...quests.map((quest) => DropdownMenuItem(value: quest.id, child: Text(quest.title)))],
+            onChanged: (valor) => setDialogo(() => questId = valor),
+          ),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(dialogo, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () async { if (titulo.text.trim().isEmpty) return; await ref.read(repositorioJornadaProvider).criarMarco(capituloId: widget.capitulo.id, titulo: titulo.text, questId: questId); if (dialogo.mounted) Navigator.pop(dialogo, true); }, child: const Text('Adicionar'))],
+      ),
+    ));
+    titulo.dispose();
+    if (criado == true && mounted) setState(_recarregar);
+  }
+}
+
+class _RotaDeMarcos extends StatelessWidget {
+  const _RotaDeMarcos({required this.marcos, this.aoConcluir});
+  final List<MarcoCapitulo> marcos;
+  final ValueChanged<MarcoCapitulo>? aoConcluir;
+
+  @override
+  Widget build(BuildContext context) {
+    if (marcos.isEmpty) return const Text('A rota começa quando você define o primeiro marco.', style: TextStyle(color: AppColors.textSecondary));
+    return Column(children: [
+      for (final marco in marcos)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(children: [
+            Column(children: [Icon(marco.concluido ? Icons.check_circle_rounded : Icons.circle_outlined,
+                color: marco.concluido ? AppColors.ascension : AppColors.intellect),
+              if (marco != marcos.last) Container(width: 1, height: 22, color: AppColors.textMuted)],),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(marco.titulo, style: TextStyle(decoration: marco.concluido ? TextDecoration.lineThrough : null)),
+              Text(marco.vinculadoAMissao ? 'Avança com a missão vinculada' : 'Confirmação manual', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            ])),
+            if (!marco.concluido && !marco.vinculadoAMissao && aoConcluir != null)
+              IconButton(onPressed: () => aoConcluir!(marco), icon: const Icon(Icons.check_rounded), tooltip: 'Confirmar marco'),
+          ]),
+        ),
+    ]);
   }
 }
 

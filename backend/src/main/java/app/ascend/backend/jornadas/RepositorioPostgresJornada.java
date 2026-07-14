@@ -79,6 +79,66 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
     return capitulo;
   }
 
+  @Override
+  public Optional<ContextoCapituloJornada> buscarContextoCapitulo(String uid, String capituloId) {
+    return jdbcTemplate.query("""
+        select c.id, j.id as jornada_id, j.status from capitulos_jornada c join jornadas j on j.id=c.jornada_id
+        where j.uid=? and c.id=?
+        """, (r, n) -> new ContextoCapituloJornada(
+        r.getString("id"), r.getString("jornada_id"), StatusJornada.valueOf(r.getString("status"))), uid, capituloId).stream().findFirst();
+  }
+
+  @Override
+  public List<MarcoCapitulo> listarMarcos(String uid, String capituloId) {
+    return jdbcTemplate.query("""
+        select m.id, m.titulo, m.quest_id, m.concluido, m.indice_ordem
+        from marcos_capitulo m join capitulos_jornada c on c.id = m.capitulo_id
+        join jornadas j on j.id = c.jornada_id
+        where j.uid = ? and c.id = ? order by m.indice_ordem, m.criado_em, m.id
+        """, (r, n) -> mapearMarco(r), uid, capituloId);
+  }
+
+  @Override
+  public MarcoCapitulo adicionarMarco(String capituloId, String titulo, String questId) {
+    String id = java.util.UUID.randomUUID().toString();
+    int indice = jdbcTemplate.queryForObject(
+        "select coalesce(max(indice_ordem), -1) + 1 from marcos_capitulo where capitulo_id = ?", Integer.class, capituloId);
+    jdbcTemplate.update("insert into marcos_capitulo (id, capitulo_id, titulo, quest_id, concluido, indice_ordem) values (?, ?, ?, ?, false, ?)",
+        id, capituloId, titulo, questId, indice);
+    return new MarcoCapitulo(id, titulo, questId, false, indice);
+  }
+
+  @Override
+  public Optional<MarcoCapitulo> buscarMarco(String uid, String marcoId) {
+    return jdbcTemplate.query("""
+        select m.id, m.titulo, m.quest_id, m.concluido, m.indice_ordem
+        from marcos_capitulo m join capitulos_jornada c on c.id = m.capitulo_id
+        join jornadas j on j.id = c.jornada_id where j.uid = ? and m.id = ?
+        """, (r, n) -> mapearMarco(r), uid, marcoId).stream().findFirst();
+  }
+
+  @Override
+  public MarcoCapitulo concluirMarco(String uid, String marcoId) {
+    jdbcTemplate.update("""
+        update marcos_capitulo m set concluido = true
+        from capitulos_jornada c join jornadas j on j.id = c.jornada_id
+        where m.capitulo_id = c.id and j.uid = ? and m.id = ? and m.concluido = false
+        """, uid, marcoId);
+    return buscarMarco(uid, marcoId).orElseThrow();
+  }
+
+  @Override
+  public boolean questPertenceAJornada(String uid, String questId, String jornadaId) {
+    return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+        "select exists(select 1 from quests where uid = ? and id = ? and jornada_id = ?)",
+        Boolean.class, uid, questId, jornadaId));
+  }
+
+  private MarcoCapitulo mapearMarco(java.sql.ResultSet resultado) throws java.sql.SQLException {
+    return new MarcoCapitulo(resultado.getString("id"), resultado.getString("titulo"),
+        resultado.getString("quest_id"), resultado.getBoolean("concluido"), resultado.getInt("indice_ordem"));
+  }
+
   private Jornada mapear(java.sql.ResultSet resultado) throws java.sql.SQLException {
     return new Jornada(
         resultado.getString("id"),

@@ -4,7 +4,6 @@ import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
@@ -44,7 +43,6 @@ Quest parseQuestSyncData(
     rewardAttribute: _attributeFrom(data['rewardAttribute']),
     xpReward: ((data['xpReward'] as num?)?.toInt() ?? personalQuestDefaultXp)
         .clamp(personalQuestMinXp, 1000000),
-    category: _categoryFrom(data['category']),
     templateType: _templateTypeFrom(data['templateType']),
     verificationMode: _verificationModeFrom(data['verificationMode']),
     verificationStatus: _verificationStatusFrom(data['verificationStatus']),
@@ -68,8 +66,7 @@ Quest parseQuestSyncData(
 }
 
 class QuestSyncRepository {
-  QuestSyncRepository(
-    this._firestore, {
+  QuestSyncRepository({
     FirebaseAuth? auth,
     JavaBackendClient? javaBackendClient,
     required ActiveSessionRepository sessionRepository,
@@ -77,26 +74,16 @@ class QuestSyncRepository {
        _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository;
 
-  final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
 
   Future<bool> hasInitializedSnapshot(String uid) async {
-    final snapshot = await _metaDoc(uid).get();
-    return snapshot.data()?['initialized'] as bool? ?? false;
+    return (await _buscarQuests(uid)).isNotEmpty;
   }
 
   Stream<List<Quest>> watchQuests(String uid) {
-    return _questsCollection(uid).snapshots().map((snapshot) {
-      final quests = snapshot.docs
-          .map(
-            (doc) => parseQuestSyncData(doc.data(), uid: uid, questId: doc.id),
-          )
-          .toList(growable: false);
-      quests.sort(_compareQuestOrder);
-      return quests;
-    });
+    return Stream.fromFuture(_buscarQuests(uid));
   }
 
   Future<void> replaceQuests({
@@ -216,16 +203,29 @@ class QuestSyncRepository {
     }
   }
 
-  CollectionReference<Map<String, dynamic>> _questsCollection(String uid) {
-    return _firestore.collection('users').doc(uid).collection('quests');
-  }
-
-  DocumentReference<Map<String, dynamic>> _metaDoc(String uid) {
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('quests_meta')
-        .doc('current');
+  Future<List<Quest>> _buscarQuests(String uid) async {
+    final token = await _auth.currentUser?.getIdToken();
+    if (token == null || token.isEmpty) return const <Quest>[];
+    final estado = await _javaBackendClientObrigatorio(
+      'carregar quests',
+    ).fetchGameState(idToken: token);
+    final resposta = estado['quests'];
+    if (resposta is! List) return const <Quest>[];
+    final quests = resposta
+        .whereType<Map>()
+        .map((quest) {
+          final dados = Map<String, dynamic>.from(
+            quest.cast<Object?, Object?>(),
+          );
+          return parseQuestSyncData(
+            dados,
+            uid: uid,
+            questId: dados['id'] as String? ?? '',
+          );
+        })
+        .toList(growable: false);
+    quests.sort(_compareQuestOrder);
+    return quests;
   }
 
   JavaBackendClient _javaBackendClientObrigatorio(String acao) {
@@ -288,7 +288,7 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'title': quest.title,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
-    'category': quest.category.name,
+    'category': 'personal',
     'templateType': quest.templateType.name,
     'verificationMode': quest.verificationMode.name,
     'verificationStatus': quest.verificationStatus.name,
@@ -316,7 +316,6 @@ String? _timestampOrNull(DateTime? value) {
 }
 
 DateTime? _dateFrom(Object? value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   if (value is String) {
     return DateTime.tryParse(value);
@@ -331,11 +330,6 @@ int _compareQuestOrder(Quest left, Quest right) {
     return leftCompleted.compareTo(rightCompleted);
   }
 
-  final categoryOrder = left.category.index.compareTo(right.category.index);
-  if (categoryOrder != 0) {
-    return categoryOrder;
-  }
-
   return left.title.toLowerCase().compareTo(right.title.toLowerCase());
 }
 
@@ -346,15 +340,6 @@ AttributeType _attributeFrom(Object? value) {
           .where((entry) => entry.name == value)
           .firstOrNull ??
       AttributeType.vitality;
-}
-
-QuestCategory _categoryFrom(Object? value) {
-  if (value is! String) return QuestCategory.personal;
-
-  return QuestCategory.values
-          .where((entry) => entry.name == value)
-          .firstOrNull ??
-      QuestCategory.personal;
 }
 
 QuestTemplateType _templateTypeFrom(Object? value) {

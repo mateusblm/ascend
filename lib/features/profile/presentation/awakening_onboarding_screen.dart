@@ -24,14 +24,8 @@ class _AwakeningOnboardingScreenState
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final starterKit = starterQuestsForFocus(_selectedFocus);
-    final firstRecommendedQuest = starterKit.firstWhere(
-      (quest) => !quest.isCompetitive,
-      orElse: () => starterKit.first,
-    );
-    final competitiveCount = starterKit
-        .where((quest) => quest.isCompetitive)
-        .length;
-    final personalCount = starterKit.length - competitiveCount;
+    final firstRecommendedQuest = starterKit.first;
+    final personalCount = starterKit.length;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,7 +52,6 @@ class _AwakeningOnboardingScreenState
                     RevealBlock(
                       child: _OnboardingHero(
                         focusLabel: _displayFocusLabel(_selectedFocus),
-                        competitiveCount: competitiveCount,
                         personalCount: personalCount,
                         firstActionTitle: firstRecommendedQuest.title,
                       ),
@@ -155,13 +148,8 @@ class _AwakeningOnboardingScreenState
                       accent: AppColors.planAccent,
                     ),
                     _StarterMetric(
-                      label: 'Arena',
-                      value: '$competitiveCount quest(s)',
-                      accent: AppColors.arenaAccent,
-                    ),
-                    _StarterMetric(
-                      label: 'Base',
-                      value: '$personalCount quest(s)',
+                      label: 'Kit',
+                      value: '$personalCount quests',
                       accent: AppColors.questAccent,
                     ),
                   ],
@@ -198,13 +186,11 @@ class _AwakeningOnboardingScreenState
 class _OnboardingHero extends StatelessWidget {
   const _OnboardingHero({
     required this.focusLabel,
-    required this.competitiveCount,
     required this.personalCount,
     required this.firstActionTitle,
   });
 
   final String focusLabel;
-  final int competitiveCount;
   final int personalCount;
   final String firstActionTitle;
 
@@ -262,11 +248,7 @@ class _OnboardingHero extends StatelessWidget {
             children: [
               _HeroPill(label: focusLabel, accent: AppColors.planAccent),
               _HeroPill(
-                label: '$competitiveCount para Arena',
-                accent: AppColors.arenaAccent,
-              ),
-              _HeroPill(
-                label: '$personalCount para Base',
+                label: '$personalCount quests iniciais',
                 accent: AppColors.questAccent,
               ),
             ],
@@ -321,7 +303,7 @@ class _FirstRecommendedActionPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Comece pela Base. Fechar uma quest pessoal primeiro reduz friccao, marca seu ritmo inicial e deixa a Arena para o segundo movimento.',
+            'Comece pequeno. Fechar uma quest pessoal primeiro reduz friccao, marca seu ritmo inicial e ja mostra seu personagem evoluindo.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -376,10 +358,10 @@ class _FocusSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Material(
               color: Colors.transparent,
-                child: InkWell(
-                  key: ValueKey('onboarding-focus-${focus.name}'),
-                  borderRadius: BorderRadius.circular(22),
-                  onTap: () => onSelect(focus),
+              child: InkWell(
+                key: ValueKey('onboarding-focus-${focus.name}'),
+                borderRadius: BorderRadius.circular(22),
+                onTap: () => onSelect(focus),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: double.infinity,
@@ -482,7 +464,7 @@ class _StarterKitPanel extends StatelessWidget {
           Text('Seu kit inicial', style: textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
-            '$focusLabel entra com um kit curto: duas quests para abrir pressao competitiva e uma para sustentar a base.',
+            '$focusLabel entra com um kit curto de quests casuais para gerar o primeiro ganho ainda hoje.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -555,10 +537,8 @@ class _StarterQuestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = quest.isCompetitive
-        ? AppColors.arenaAccent
-        : AppColors.questAccent;
-    final tag = quest.isCompetitive ? 'Arena' : 'Base';
+    final accent = AppColors.questAccent;
+    const tag = 'Base';
     final verification = switch (quest.verificationMode) {
       QuestVerificationMode.manual => 'Livre',
       QuestVerificationMode.timer => '${quest.targetDurationMinutes} min',

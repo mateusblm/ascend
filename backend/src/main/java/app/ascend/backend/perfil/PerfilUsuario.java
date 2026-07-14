@@ -18,8 +18,6 @@ public record PerfilUsuario(
     int bestStreak,
     Timestamp lastQuestCompletionDate,
     List<Timestamp> activityHistory,
-    Timestamp lastCompetitiveQuestCompletionDate,
-    List<Timestamp> competitiveActivityHistory,
     String primaryFocus,
     boolean hasCompletedOnboarding,
     Timestamp weeklyBossLastClaimedAt,
@@ -52,8 +50,6 @@ public record PerfilUsuario(
         bestStreak,
         timestamp(data.get("lastQuestCompletionDate")),
         timestamps(data.get("activityHistory")),
-        timestamp(data.get("lastCompetitiveQuestCompletionDate")),
-        timestamps(data.get("competitiveActivityHistory")),
         focoSeguro(data.get("primaryFocus")),
         data.get("hasCompletedOnboarding") instanceof Boolean completed && completed,
         timestamp(data.get("weeklyBossLastClaimedAt")),
@@ -81,8 +77,6 @@ public record PerfilUsuario(
     data.put("bestStreak", bestStreak);
     data.put("lastQuestCompletionDate", lastQuestCompletionDate);
     data.put("activityHistory", activityHistory);
-    data.put("lastCompetitiveQuestCompletionDate", lastCompetitiveQuestCompletionDate);
-    data.put("competitiveActivityHistory", competitiveActivityHistory);
     data.put("primaryFocus", primaryFocus);
     data.put("hasCompletedOnboarding", hasCompletedOnboarding);
     data.put("weeklyBossLastClaimedAt", weeklyBossLastClaimedAt);
@@ -133,8 +127,6 @@ public record PerfilUsuario(
         bestStreak,
         lastQuestCompletionDate,
         activityHistory,
-        lastCompetitiveQuestCompletionDate,
-        competitiveActivityHistory,
         primaryFocus,
         hasCompletedOnboarding,
         reivindicadoEm,

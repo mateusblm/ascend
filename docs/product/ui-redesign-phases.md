@@ -26,6 +26,13 @@ The new shared pattern is:
 - dense mobile surfaces where repeated metrics become badges or details
 - visual pressure where it changes behavior, especially in `Arena`
 
+Current V1 scope:
+- `Arena` is hidden from the first public version
+- competitive quests are hidden from the catalog and creation flow
+- weekly boss remains visible as a personal weekly boss, not a competitive
+  event
+- top-level polish should prioritize `Base` and `Quests`
+
 Avoid reintroducing:
 - Orbitron-style display typography across all body copy
 - all-caps labels everywhere
@@ -233,19 +240,23 @@ Follow-up:
 - keep `StatsScreen` as secondary/legacy until remaining useful content is
   folded into current surfaces or deleted
 
-### Phase 12 - Arena density pass
+### Phase 12 - V1 casual-first scope cut
 
-Status: `next`
+Status: `in_progress`
 
 Scope:
-- reduce long rule copy in `Arena`
-- make threat, promotion, and reconquest states more immediately readable
-- keep leaderboard, integrity, and legacy as compact detail surfaces
+- hide `Arena` from top-level navigation
+- hide competitive quest board and official competitive templates
+- make the add-quest modal casual-only
+- make onboarding starter kit casual-only
+- move weekly boss into a personal weekly objective
 
 Acceptance:
-- the player can tell whether they are safe, in risk, or ready to promote
-  without reading a long paragraph
-- competitive information does not repeat `Base` character state
+- a new V1 user only sees casual quests, Base, and Quests
+- weekly boss progress comes from general active days
+- no visible V1 surface asks for competitive evidence, rank pressure, or
+  leaderboard behavior
+- competitive code remains available for future expansion
 
 ## Continuation Protocol For AI
 

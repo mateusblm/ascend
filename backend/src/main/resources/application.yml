@@ -1,6 +1,14 @@
 spring:
   application:
     name: ascend-backend
+  datasource:
+    url: ${ASCEND_DATABASE_URL:jdbc:h2:mem:ascend;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${ASCEND_DATABASE_USERNAME:sa}
+    password: ${ASCEND_DATABASE_PASSWORD:}
+    driver-class-name: ${ASCEND_DATABASE_DRIVER:org.h2.Driver}
+  flyway:
+    enabled: ${ASCEND_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
 
 server:
   port: ${PORT:8080}

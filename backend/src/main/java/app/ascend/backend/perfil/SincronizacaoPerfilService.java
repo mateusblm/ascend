@@ -102,18 +102,9 @@ public class SincronizacaoPerfilService {
         .filter(quest -> quest.isCompleted() && quest.completedAt() != null)
         .sorted(Comparator.comparing(QuestInventarioValidada::completedAt))
         .toList();
-    List<QuestInventarioValidada> competitivas = concluidas.stream()
-        .filter(quest -> "competitive".equals(quest.category())
-            && "verified".equals(quest.verificationStatus()))
-        .toList();
-
     List<Timestamp> historicoAtividade = diasUnicos(concluidas.stream()
         .map(QuestInventarioValidada::completedAt)
         .toList());
-    List<Timestamp> historicoCompetitivo = diasUnicos(competitivas.stream()
-        .map(QuestInventarioValidada::completedAt)
-        .toList());
-
     int xpQuests = concluidas.stream().mapToInt(QuestInventarioValidada::xpReward).sum();
     int xpBoss = claimsBoss.stream().mapToInt(ClaimBossSemanalPerfil::rewardXp).sum();
     int pontosBoss = claimsBoss.stream().mapToInt(ClaimBossSemanalPerfil::rewardStatPoints).sum();
@@ -144,8 +135,6 @@ public class SincronizacaoPerfilService {
     perfil.put("bestStreak", streaks.best());
     perfil.put("lastQuestCompletionDate", ultimoOuNulo(historicoAtividade));
     perfil.put("activityHistory", historicoAtividade);
-    perfil.put("lastCompetitiveQuestCompletionDate", ultimoOuNulo(historicoCompetitivo));
-    perfil.put("competitiveActivityHistory", historicoCompetitivo);
     perfil.put("primaryFocus", dados.primaryFocus());
     perfil.put("hasCompletedOnboarding", dados.hasCompletedOnboarding());
     perfil.put("weeklyBossLastClaimedAt", claimsBoss.isEmpty()

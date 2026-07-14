@@ -53,7 +53,9 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey('onboarding-starter-quest-health-personal')),
+        find.byKey(
+          const ValueKey('onboarding-starter-quest-health-personal-1'),
+        ),
         findsOneWidget,
       );
       expect(find.text('Bater a meta de agua do dia'), findsAtLeastNWidgets(1));

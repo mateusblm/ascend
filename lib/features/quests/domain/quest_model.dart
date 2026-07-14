@@ -4,8 +4,6 @@ part 'quest_model.g.dart';
 
 enum AttributeType { strength, intelligence, vitality, agility }
 
-enum QuestCategory { personal, competitive }
-
 enum QuestTemplateType {
   custom,
   focusSession,
@@ -39,9 +37,6 @@ class Quest {
   final AttributeType rewardAttribute;
 
   final int xpReward;
-
-  @enumerated
-  final QuestCategory category;
 
   @enumerated
   final QuestTemplateType templateType;
@@ -78,7 +73,6 @@ class Quest {
     required this.title,
     required this.rewardAttribute,
     required this.xpReward,
-    this.category = QuestCategory.personal,
     this.templateType = QuestTemplateType.custom,
     this.verificationMode = QuestVerificationMode.manual,
     this.verificationStatus = QuestVerificationStatus.none,
@@ -101,11 +95,6 @@ class Quest {
 
   bool get hasPreRewardSnapshot => preRewardLevel != null;
 
-  bool get isCompetitive => category == QuestCategory.competitive;
-
-  bool get countsTowardCompetitive =>
-      isCompetitive && verificationStatus == QuestVerificationStatus.verified;
-
   bool get requiresTimer =>
       verificationMode == QuestVerificationMode.timer ||
       verificationMode == QuestVerificationMode.timerWithReflection;
@@ -116,7 +105,6 @@ class Quest {
   Quest copyWith({
     String? ownerUid,
     bool? isCompleted,
-    QuestCategory? category,
     QuestTemplateType? templateType,
     QuestVerificationMode? verificationMode,
     QuestVerificationStatus? verificationStatus,
@@ -144,7 +132,6 @@ class Quest {
       title: title,
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
-      category: category ?? this.category,
       templateType: templateType ?? this.templateType,
       verificationMode: verificationMode ?? this.verificationMode,
       verificationStatus: verificationStatus ?? this.verificationStatus,

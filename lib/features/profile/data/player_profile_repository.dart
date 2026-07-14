@@ -3,7 +3,6 @@ import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 bool shouldUploadPlayerProfileWhenRemoteMissing(
@@ -67,12 +66,6 @@ Player parsePlayerProfileData(
     bestStreak: bestStreak,
     lastQuestCompletionDate: _dateFrom(data['lastQuestCompletionDate']),
     activityHistory: _dateListFrom(data['activityHistory']),
-    lastCompetitiveQuestCompletionDate: _dateFrom(
-      data['lastCompetitiveQuestCompletionDate'],
-    ),
-    competitiveActivityHistory: _dateListFrom(
-      data['competitiveActivityHistory'],
-    ),
     primaryFocus: _focusFrom(data['primaryFocus']),
     hasCompletedOnboarding: data['hasCompletedOnboarding'] as bool? ?? false,
     weeklyBossLastClaimedAt: _dateFrom(data['weeklyBossLastClaimedAt']),
@@ -80,8 +73,7 @@ Player parsePlayerProfileData(
 }
 
 class PlayerProfileRepository {
-  PlayerProfileRepository(
-    this._firestore, {
+  PlayerProfileRepository({
     FirebaseAuth? auth,
     JavaBackendClient? javaBackendClient,
     required ActiveSessionRepository sessionRepository,
@@ -89,7 +81,6 @@ class PlayerProfileRepository {
        _javaBackendClient = BackendRouteSelector.javaClient(javaBackendClient),
        _sessionRepository = sessionRepository;
 
-  final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final JavaBackendClient? _javaBackendClient;
   final ActiveSessionRepository _sessionRepository;
@@ -98,12 +89,9 @@ class PlayerProfileRepository {
     required String uid,
     required String fallbackName,
   }) {
-    return _profileDoc(uid).snapshots().map((snapshot) {
-      if (!snapshot.exists) return null;
-      final data = snapshot.data();
-      if (data == null) return null;
-      return parsePlayerProfileData(data, uid: uid, fallbackName: fallbackName);
-    });
+    return Stream.fromFuture(
+      _buscarPerfil(uid: uid, fallbackName: fallbackName),
+    );
   }
 
   Future<void> upsertProfile({
@@ -227,12 +215,22 @@ class PlayerProfileRepository {
     }
   }
 
-  DocumentReference<Map<String, dynamic>> _profileDoc(String uid) {
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('profile')
-        .doc('current');
+  Future<Player?> _buscarPerfil({
+    required String uid,
+    required String fallbackName,
+  }) async {
+    final token = await _auth.currentUser?.getIdToken();
+    if (token == null || token.isEmpty) return null;
+    final estado = await _javaBackendClientObrigatorio(
+      'carregar perfil',
+    ).fetchGameState(idToken: token);
+    final perfil = estado['profile'];
+    if (perfil is! Map || perfil.isEmpty) return null;
+    return parsePlayerProfileData(
+      Map<String, dynamic>.from(perfil.cast<Object?, Object?>()),
+      uid: uid,
+      fallbackName: fallbackName,
+    );
   }
 
   JavaBackendClient _javaBackendClientObrigatorio(String acao) {
@@ -303,7 +301,7 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'title': quest.title,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
-    'category': quest.category.name,
+    'category': 'personal',
     'templateType': quest.templateType.name,
     'verificationMode': quest.verificationMode.name,
     'verificationStatus': quest.verificationStatus.name,
@@ -326,7 +324,6 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
 }
 
 DateTime? _dateFrom(Object? value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   if (value is String) {
     final parsed = DateTime.tryParse(value);

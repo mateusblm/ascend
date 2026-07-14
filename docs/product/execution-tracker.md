@@ -636,6 +636,10 @@ Recurring missions:
 - the backend materializes the next 30 days idempotently, so each occurrence can be concluded, revoked, rescheduled, or archived without changing its routine or historical siblings;
 - the mission composer creates weekly routines and a recurring occurrence exposes a pause action; remote staging smoke remains pending.
 
+Mission route filters:
+- the mission terminal now separates today's actionable route, planned upcoming occurrences, completed record, and archived missions;
+- recommendations remain confined to the immediate route, so future recurring occurrences do not compete with the next step.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

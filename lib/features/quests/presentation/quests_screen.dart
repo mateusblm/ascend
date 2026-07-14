@@ -18,7 +18,7 @@ class QuestsScreen extends ConsumerStatefulWidget {
 }
 
 class _QuestsScreenState extends ConsumerState<QuestsScreen> {
-  bool _mostrarConcluidas = false;
+  _FiltroRota _filtro = _FiltroRota.hoje;
   late Future<Map<String, dynamic>?> _recomendada;
 
   @override
@@ -35,8 +35,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   @override
   Widget build(BuildContext context) {
     final quests = ref.watch(questProvider);
+    final hoje = DateUtils.dateOnly(DateTime.now());
     final filtradas = quests
-        .where((quest) => !quest.isArchived && quest.isCompleted == _mostrarConcluidas)
+        .where((quest) => _pertenceAoFiltro(quest, _filtro, hoje))
         .toList();
     final pendentes = quests.where((quest) => !quest.isArchived && !quest.isCompleted).length;
 
@@ -68,19 +69,18 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                 delegate: SliverChildListDelegate([
                   _CabecalhoMissoes(pendentes: pendentes),
                   const SizedBox(height: 24),
-                  if (!_mostrarConcluidas) FutureBuilder<Map<String, dynamic>?>(
+                  if (_filtro == _FiltroRota.hoje) FutureBuilder<Map<String, dynamic>?>(
                     future: _recomendada,
                     builder: (context, snapshot) => snapshot.data == null ? const SizedBox.shrink() : _ProximoPasso(dados: snapshot.data!),
                   ),
-                  if (!_mostrarConcluidas) const SizedBox(height: 18),
+                  if (_filtro == _FiltroRota.hoje) const SizedBox(height: 18),
                   _AlternadorRotas(
-                    mostrarConcluidas: _mostrarConcluidas,
-                    onChanged: (valor) =>
-                        setState(() => _mostrarConcluidas = valor),
+                    filtro: _filtro,
+                    onChanged: (valor) => setState(() => _filtro = valor),
                   ),
                   const SizedBox(height: 22),
                   if (filtradas.isEmpty)
-                    _RotaVazia(mostrarConcluidas: _mostrarConcluidas)
+                    _RotaVazia(filtro: _filtro)
                   else
                     _ListaDeRota(quests: filtradas, aoAtualizar: () => setState(() => _recomendada = _buscarRecomendada())),
                 ]),
@@ -91,7 +91,19 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
       ),
     );
   }
+
+  bool _pertenceAoFiltro(Quest quest, _FiltroRota filtro, DateTime hoje) {
+    final data = quest.plannedFor ?? quest.occursOn;
+    return switch (filtro) {
+      _FiltroRota.hoje => !quest.isArchived && !quest.isCompleted && (data == null || !DateUtils.dateOnly(data).isAfter(hoje)),
+      _FiltroRota.proximas => !quest.isArchived && !quest.isCompleted && data != null && DateUtils.dateOnly(data).isAfter(hoje),
+      _FiltroRota.registro => !quest.isArchived && quest.isCompleted,
+      _FiltroRota.arquivadas => quest.isArchived,
+    };
+  }
 }
+
+enum _FiltroRota { hoje, proximas, registro, arquivadas }
 
 class _ProximoPasso extends StatelessWidget {
   const _ProximoPasso({required this.dados});
@@ -152,27 +164,27 @@ class _CabecalhoMissoes extends StatelessWidget {
 
 class _AlternadorRotas extends StatelessWidget {
   const _AlternadorRotas({
-    required this.mostrarConcluidas,
+    required this.filtro,
     required this.onChanged,
   });
-  final bool mostrarConcluidas;
-  final ValueChanged<bool> onChanged;
+  final _FiltroRota filtro;
+  final ValueChanged<_FiltroRota> onChanged;
 
   @override
   Widget build(BuildContext context) => Row(
-    children: [
-      _AbaRota(
-        label: 'EM ROTA',
-        selecionada: !mostrarConcluidas,
-        onTap: () => onChanged(false),
+    children: _FiltroRota.values.map((item) => Padding(
+      padding: const EdgeInsets.only(right: 18),
+      child: _AbaRota(
+        label: switch (item) {
+          _FiltroRota.hoje => 'HOJE',
+          _FiltroRota.proximas => 'PRÓXIMAS',
+          _FiltroRota.registro => 'REGISTRO',
+          _FiltroRota.arquivadas => 'ARQUIVADAS',
+        },
+        selecionada: filtro == item,
+        onTap: () => onChanged(item),
       ),
-      const SizedBox(width: 22),
-      _AbaRota(
-        label: 'REGISTRO',
-        selecionada: mostrarConcluidas,
-        onTap: () => onChanged(true),
-      ),
-    ],
+    )).toList(),
   );
 }
 
@@ -426,8 +438,8 @@ class _FaixaMissao extends ConsumerWidget {
 }
 
 class _RotaVazia extends StatelessWidget {
-  const _RotaVazia({required this.mostrarConcluidas});
-  final bool mostrarConcluidas;
+  const _RotaVazia({required this.filtro});
+  final _FiltroRota filtro;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -436,9 +448,12 @@ class _RotaVazia extends StatelessWidget {
       const SizedBox(width: 8),
       Expanded(
         child: Text(
-          mostrarConcluidas
-              ? 'Nenhum marco registrado hoje. A rota continua quando você quiser.'
-              : 'Nenhum passo pendente. Use + para desenhar a próxima etapa.',
+          switch (filtro) {
+            _FiltroRota.hoje => 'Nenhum passo para hoje. Use + para desenhar a próxima etapa.',
+            _FiltroRota.proximas => 'Nenhuma ocorrência planejada adiante.',
+            _FiltroRota.registro => 'Nenhuma missão concluída registrada ainda.',
+            _FiltroRota.arquivadas => 'Nenhuma missão arquivada.',
+          },
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),

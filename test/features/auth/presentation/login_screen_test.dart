@@ -66,5 +66,8 @@ class _FakeAuthController extends StateNotifier<AuthState>
   }
 
   @override
+  Future<void> signInAsTester() async {}
+
+  @override
   Future<void> signOut() async {}
 }

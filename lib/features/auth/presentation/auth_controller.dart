@@ -113,6 +113,20 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// Cria uma sessao temporaria para validar o produto sem depender do Google.
+  Future<void> signInAsTester() async {
+    state = AuthLoading();
+    _loginFlowInProgress = true;
+    await _analytics.logAuthLoginStarted();
+    try {
+      await _auth.signInAnonymously();
+    } catch (error) {
+      _loginFlowInProgress = false;
+      await _analytics.logAuthLoginFailed(reason: error.runtimeType.toString());
+      state = AuthFailure('Nao foi possivel iniciar o modo de teste: $error');
+    }
+  }
+
   Future<void> signOut() async {
     _stopSessionHeartbeat();
     _pendingSignOutFailureMessage = null;
@@ -132,7 +146,7 @@ class AuthController extends StateNotifier<AuthState> {
   AuthSuccess _successStateFor(User user) {
     return AuthSuccess(
       uid: user.uid,
-      displayName: user.displayName ?? 'Jogador',
+      displayName: user.displayName ?? (user.isAnonymous ? 'Testador' : 'Jogador'),
       photoUrl: user.photoURL ?? '',
       email: user.email,
     );

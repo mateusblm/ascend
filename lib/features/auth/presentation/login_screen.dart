@@ -145,20 +145,29 @@ class LoginScreen extends ConsumerWidget {
                                 ),
                               )
                             else
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  key: const ValueKey('login-google-button'),
-                                  onPressed: () => ref
-                                      .read(authProvider.notifier)
-                                      .signInWithGoogle(),
-                                  icon: const Icon(Icons.login_rounded),
-                                  label: const Text('Continuar com Google'),
-                                ),
+                              Column(
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton.icon(
+                                      key: const ValueKey('login-google-button'),
+                                      onPressed: () => ref.read(authProvider.notifier).signInWithGoogle(),
+                                      icon: const Icon(Icons.login_rounded),
+                                      label: const Text('Continuar com Google'),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextButton.icon(
+                                    key: const ValueKey('login-tester-button'),
+                                    onPressed: () => ref.read(authProvider.notifier).signInAsTester(),
+                                    icon: const Icon(Icons.science_outlined, size: 18),
+                                    label: const Text('Entrar em modo de teste'),
+                                  ),
+                                ],
                               ),
                             const SizedBox(height: 12),
                             Text(
-                              'A configuracao inicial leva poucos segundos.',
+                              'O modo de teste usa uma conta temporaria neste aparelho.',
                               style: textTheme.bodySmall,
                             ),
                             if (state is AuthFailure) ...[

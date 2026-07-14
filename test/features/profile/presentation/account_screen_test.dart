@@ -104,6 +104,9 @@ class _FakeAuthController extends StateNotifier<AuthState>
   Future<void> signInWithGoogle() async {}
 
   @override
+  Future<void> signInAsTester() async {}
+
+  @override
   Future<void> signOut() async {
     signOutCalls += 1;
     state = AuthInitial();

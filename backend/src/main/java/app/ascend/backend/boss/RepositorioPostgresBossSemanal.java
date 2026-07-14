@@ -71,7 +71,7 @@ public class RepositorioPostgresBossSemanal extends SuporteRepositorioPostgres
         """, claimId, uid, inicioSemana, textoOu(resgate.get("title"), "Boss pessoal"),
         inteiro(resgate.get("activeDays")), inteiro(resgate.get("targetActiveDays")),
         inteiro(resgate.get("rewardXp")), inteiro(resgate.get("rewardStatPoints")),
-        instanteOuAgora(resgate.get("claimedAt")), json(resgate));
+        timestampJdbc(instanteOuAgora(resgate.get("claimedAt"))), json(resgate));
   }
 
   private LocalDate inicioSemana(String claimId) {
@@ -94,5 +94,10 @@ public class RepositorioPostgresBossSemanal extends SuporteRepositorioPostgres
     return valor instanceof com.google.cloud.Timestamp timestamp
         ? timestamp.toDate().toInstant()
         : Instant.now();
+  }
+
+  /** Converte o instante de dominio para o tipo temporal aceito pelo driver JDBC. */
+  private java.sql.Timestamp timestampJdbc(Instant instant) {
+    return java.sql.Timestamp.from(instant);
   }
 }

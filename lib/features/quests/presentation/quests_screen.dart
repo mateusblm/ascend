@@ -1,108 +1,70 @@
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Terminal de missões pessoais organizado como uma rota de ascensão.
 class QuestsScreen extends ConsumerStatefulWidget {
   const QuestsScreen({super.key});
+
   @override
   ConsumerState<QuestsScreen> createState() => _QuestsScreenState();
 }
 
 class _QuestsScreenState extends ConsumerState<QuestsScreen> {
-  bool _showCompleted = false;
+  bool _mostrarConcluidas = false;
 
   @override
   Widget build(BuildContext context) {
     final quests = ref.watch(questProvider);
-    final filtered = quests
-        .where((quest) => quest.isCompleted == _showCompleted)
+    final filtradas = quests
+        .where((quest) => quest.isCompleted == _mostrarConcluidas)
         .toList();
-    final pending = quests.where((quest) => !quest.isCompleted).length;
+    final pendentes = quests.where((quest) => !quest.isCompleted).length;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: Tooltip(
-        message: 'Nova missao',
-        child: FloatingActionButton(
+        message: 'Nova missão',
+        child: FloatingActionButton.small(
           onPressed: () => showModalBottomSheet<void>(
             context: context,
             isScrollControlled: true,
             builder: (_) => const AddQuestModal(),
           ),
-          backgroundColor: AppColors.questAccent,
+          backgroundColor: AppColors.amber,
           foregroundColor: AppColors.background,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
           child: const Icon(Icons.add_rounded),
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 118),
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TERMINAL DE MISSOES',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'ESCOLHA A PROXIMA ACAO',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 118),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _CabecalhoMissoes(pendentes: pendentes),
+                  const SizedBox(height: 24),
+                  _AlternadorRotas(
+                    mostrarConcluidas: _mostrarConcluidas,
+                    onChanged: (valor) =>
+                        setState(() => _mostrarConcluidas = valor),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.questAccent.withValues(alpha: 0.10),
-                    border: Border.all(
-                      color: AppColors.questAccent.withValues(alpha: 0.25),
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$pending ATIVAS',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.questAccent,
-                    ),
-                  ),
-                ),
-              ],
+                  const SizedBox(height: 22),
+                  if (filtradas.isEmpty)
+                    _RotaVazia(mostrarConcluidas: _mostrarConcluidas)
+                  else
+                    _ListaDeRota(quests: filtradas),
+                ]),
+              ),
             ),
-            const SizedBox(height: 20),
-            _MissionFilter(
-              selectedCompleted: _showCompleted,
-              onChanged: (value) => setState(() => _showCompleted = value),
-            ),
-            const SizedBox(height: 16),
-            if (filtered.isEmpty)
-              _EmptyTerminal(showCompleted: _showCompleted)
-            else ...[
-              for (final quest in filtered)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _QuestRow(quest: quest),
-                ),
-            ],
           ],
         ),
       ),
@@ -110,85 +72,140 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   }
 }
 
-class _MissionFilter extends StatelessWidget {
-  const _MissionFilter({
-    required this.selectedCompleted,
-    required this.onChanged,
-  });
-  final bool selectedCompleted;
-  final ValueChanged<bool> onChanged;
+class _CabecalhoMissoes extends StatelessWidget {
+  const _CabecalhoMissoes({required this.pendentes});
+  final int pendentes;
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: AppColors.surface.withValues(alpha: 0.90),
-      border: Border.all(color: AppColors.borderStrong),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: _FilterButton(
-            label: 'ATIVAS',
-            selected: !selectedCompleted,
-            onTap: () => onChanged(false),
-          ),
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      const GlifoAscensao(tamanho: 34, cor: AppColors.amber),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('MISSÕES', style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 3),
+            Text(
+              pendentes == 0
+                  ? 'rota livre para hoje'
+                  : '$pendentes passos na sua rota',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: _FilterButton(
-            label: 'CONCLUIDAS',
-            selected: selectedCompleted,
-            onTap: () => onChanged(true),
-          ),
+      ),
+      Text(
+        '$pendentes',
+        style: const TextStyle(
+          fontSize: 28,
+          height: 1,
+          fontWeight: FontWeight.w800,
+          color: AppColors.amber,
         ),
-      ],
-    ),
+      ),
+    ],
   );
 }
 
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({
+class _AlternadorRotas extends StatelessWidget {
+  const _AlternadorRotas({
+    required this.mostrarConcluidas,
+    required this.onChanged,
+  });
+  final bool mostrarConcluidas;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      _AbaRota(
+        label: 'EM ROTA',
+        selecionada: !mostrarConcluidas,
+        onTap: () => onChanged(false),
+      ),
+      const SizedBox(width: 22),
+      _AbaRota(
+        label: 'REGISTRO',
+        selecionada: mostrarConcluidas,
+        onTap: () => onChanged(true),
+      ),
+    ],
+  );
+}
+
+class _AbaRota extends StatelessWidget {
+  const _AbaRota({
     required this.label,
-    required this.selected,
+    required this.selecionada,
     required this.onTap,
   });
   final String label;
-  final bool selected;
+  final bool selecionada;
   final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.transparent,
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.questAccent.withValues(alpha: 0.13)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            color: selected ? AppColors.questAccent : AppColors.textMuted,
-          ),
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: selecionada ? AppColors.amber : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 7),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: selecionada ? 28 : 8,
+              height: 2,
+              color: selecionada ? AppColors.amber : AppColors.borderStrong,
+            ),
+          ],
         ),
       ),
     ),
   );
 }
 
-class _QuestRow extends ConsumerWidget {
-  const _QuestRow({required this.quest});
+class _ListaDeRota extends StatelessWidget {
+  const _ListaDeRota({required this.quests});
+  final List<Quest> quests;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (var indice = 0; indice < quests.length; indice++)
+        _FaixaMissao(
+          quest: quests[indice],
+          ultima: indice == quests.length - 1,
+        ),
+    ],
+  );
+}
+
+class _FaixaMissao extends ConsumerWidget {
+  const _FaixaMissao({required this.quest, required this.ultima});
   final Quest quest;
+  final bool ultima;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accent = _attributeColor(quest.rewardAttribute);
+    final cor = _corAtributo(quest.rewardAttribute);
     return Dismissible(
       key: ValueKey(quest.id),
       direction: DismissDirection.endToStart,
@@ -197,76 +214,125 @@ class _QuestRow extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(8),
+        color: AppColors.boss.withValues(alpha: .78),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: AppColors.background,
         ),
-        child: const Icon(Icons.delete_outline_rounded),
       ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(13, 12, 8, 12),
-        decoration: BoxDecoration(
-          color: quest.isCompleted
-              ? AppColors.surfaceMuted.withValues(alpha: 0.68)
-              : AppColors.surface.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: quest.isCompleted
-                ? AppColors.borderSubtle
-                : accent.withValues(alpha: 0.20),
-          ),
-        ),
+      child: SizedBox(
+        height: ultima ? 100 : 118,
         child: Row(
           children: [
-            Container(
-              width: 4,
-              height: 42,
-              color: quest.isCompleted ? AppColors.textMuted : accent,
+            EixoAscensao(
+              cor: cor,
+              concluido: quest.isCompleted,
+              altura: ultima ? 100 : 118,
             ),
-            const SizedBox(width: 11),
+            const SizedBox(width: 8),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    quest.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: quest.isCompleted
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
-                      decoration: quest.isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
+              child: Container(
+                margin: EdgeInsets.only(bottom: ultima ? 0 : 4),
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                decoration: BoxDecoration(
+                  color: quest.isCompleted
+                      ? AppColors.surfaceMuted.withValues(alpha: .72)
+                      : AppColors.surface,
+                  border: Border(
+                    left: BorderSide(color: cor, width: 2),
+                    top: const BorderSide(color: AppColors.borderStrong),
+                    bottom: const BorderSide(color: AppColors.borderStrong),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '+${quest.xpReward} XP  |  ${_attributeLabel(quest.rewardAttribute)}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: quest.isCompleted ? AppColors.textMuted : accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Tooltip(
-              message: quest.isCompleted ? 'Reabrir missao' : 'Concluir missao',
-              child: IconButton(
-                onPressed: () =>
-                    ref.read(questProvider.notifier).toggleQuest(quest.id),
-                icon: Icon(
-                  quest.isCompleted
-                      ? Icons.check_circle_rounded
-                      : Icons.radio_button_unchecked_rounded,
                 ),
-                color: quest.isCompleted
-                    ? AppColors.questAccent
-                    : AppColors.textSecondary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _iconeAtributo(quest.rewardAttribute),
+                          size: 15,
+                          color: cor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _nomeAtributo(quest.rewardAttribute),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: cor,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '+${quest.xpReward} XP',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.amber,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      quest.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: quest.isCompleted
+                            ? AppColors.textSecondary
+                            : AppColors.textPrimary,
+                        decoration: quest.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 9),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Tooltip(
+                        message: quest.isCompleted
+                            ? 'Reabrir missão'
+                            : 'Concluir missão',
+                        child: IconButton(
+                          onPressed: () async {
+                            final resultado = await ref
+                                .read(questProvider.notifier)
+                                .toggleQuest(quest.id);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  questResultSnackBarMessage(quest, resultado),
+                                ),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            quest.isCompleted
+                                ? Icons.undo_rounded
+                                : Icons.check_rounded,
+                            size: 18,
+                          ),
+                          color: quest.isCompleted
+                              ? AppColors.textSecondary
+                              : AppColors.background,
+                          style: IconButton.styleFrom(
+                            backgroundColor: quest.isCompleted
+                                ? AppColors.surfaceStrong
+                                : cor,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -276,54 +342,44 @@ class _QuestRow extends ConsumerWidget {
   }
 }
 
-class _EmptyTerminal extends StatelessWidget {
-  const _EmptyTerminal({required this.showCompleted});
-  final bool showCompleted;
+class _RotaVazia extends StatelessWidget {
+  const _RotaVazia({required this.mostrarConcluidas});
+  final bool mostrarConcluidas;
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: AppColors.surface.withValues(alpha: 0.82),
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: AppColors.borderStrong),
-    ),
-    child: Column(
-      children: [
-        Icon(
-          showCompleted ? Icons.inventory_2_outlined : Icons.add_task_rounded,
-          size: 32,
-          color: AppColors.questAccent,
+  Widget build(BuildContext context) => Row(
+    children: [
+      const EixoAscensao(cor: AppColors.amber, altura: 94),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          mostrarConcluidas
+              ? 'Nenhum marco registrado hoje. A rota continua quando você quiser.'
+              : 'Nenhum passo pendente. Use + para desenhar a próxima etapa.',
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
-        const SizedBox(height: 12),
-        Text(
-          showCompleted
-              ? 'Nenhuma missao concluida ainda.'
-              : 'Nenhuma missao ativa.',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          showCompleted
-              ? 'Suas vitorias aparecerao aqui.'
-              : 'Use o botao + para criar sua proxima ordem.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }
 
-String _attributeLabel(AttributeType attribute) => switch (attribute) {
-  AttributeType.strength => 'FORCA',
+String _nomeAtributo(AttributeType atributo) => switch (atributo) {
+  AttributeType.strength => 'FORÇA',
   AttributeType.intelligence => 'INTELECTO',
   AttributeType.vitality => 'VITALIDADE',
   AttributeType.agility => 'AGILIDADE',
 };
 
-Color _attributeColor(AttributeType attribute) => switch (attribute) {
-  AttributeType.strength => const Color(0xFFF18B72),
-  AttributeType.intelligence => AppColors.neonBlue,
-  AttributeType.vitality => AppColors.questAccent,
-  AttributeType.agility => const Color(0xFFF0C76C),
+Color _corAtributo(AttributeType atributo) => switch (atributo) {
+  AttributeType.strength => AppColors.strength,
+  AttributeType.intelligence => AppColors.intellect,
+  AttributeType.vitality => AppColors.vitality,
+  AttributeType.agility => AppColors.agility,
+};
+
+IconData _iconeAtributo(AttributeType atributo) => switch (atributo) {
+  AttributeType.strength => Icons.fitness_center_rounded,
+  AttributeType.intelligence => Icons.psychology_outlined,
+  AttributeType.vitality => Icons.favorite_outline_rounded,
+  AttributeType.agility => Icons.bolt_rounded,
 };

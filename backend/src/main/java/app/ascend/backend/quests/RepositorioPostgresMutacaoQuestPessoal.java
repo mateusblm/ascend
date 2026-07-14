@@ -83,7 +83,8 @@ public class RepositorioPostgresMutacaoQuestPessoal extends SuporteRepositorioPo
         on conflict (id) do update set dados = excluded.dados, concluida_em = excluded.concluida_em
         """, "pessoal-" + uid + "-" + questId, uid, questId,
         textoOu(conclusao.get("title"), "Quest"), textoOu(conclusao.get("rewardAttribute"), "strength"),
-        inteiro(conclusao.get("xpReward")), instanteOuAgora(conclusao.get("completedAt")), json(conclusao));
+        inteiro(conclusao.get("xpReward")), timestampJdbc(instanteOuAgora(conclusao.get("completedAt"))),
+        json(conclusao));
   }
 
   private int inteiro(Object valor) {
@@ -98,5 +99,10 @@ public class RepositorioPostgresMutacaoQuestPessoal extends SuporteRepositorioPo
     return valor instanceof com.google.cloud.Timestamp timestamp
         ? timestamp.toDate().toInstant()
         : Instant.now();
+  }
+
+  /** Converte o instante de dominio para o tipo temporal aceito pelo driver JDBC. */
+  private java.sql.Timestamp timestampJdbc(Instant instant) {
+    return java.sql.Timestamp.from(instant);
   }
 }

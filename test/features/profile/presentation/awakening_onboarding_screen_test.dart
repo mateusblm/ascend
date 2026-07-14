@@ -54,11 +54,15 @@ void main() {
       );
       expect(
         find.byKey(
-          const ValueKey('onboarding-starter-quest-health-personal-1'),
+          const ValueKey('onboarding-starter-quest-health-inicial'),
+          skipOffstage: false,
         ),
         findsOneWidget,
       );
-      expect(find.text('Bater a meta de agua do dia'), findsAtLeastNWidgets(1));
+      expect(
+        find.text('Bater a meta de agua do dia', skipOffstage: false),
+        findsAtLeastNWidgets(1),
+      );
     },
   );
 }

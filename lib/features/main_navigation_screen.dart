@@ -29,13 +29,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       label: 'Base',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      accent: AppColors.neonBlue,
+      accent: AppColors.ascension,
     ),
     _NavigationDestination(
       label: 'Quests',
       icon: Icons.bolt_outlined,
       activeIcon: Icons.bolt_rounded,
-      accent: AppColors.questAccent,
+      accent: AppColors.amber,
     ),
   ];
 
@@ -45,8 +45,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     WidgetsBinding.instance.addObserver(this);
 
     ref.listenManual(authProvider, (previous, next) {
-      if (previous is AuthSuccess && next is! AuthSuccess) {
-      }
+      if (previous is AuthSuccess && next is! AuthSuccess) {}
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -76,24 +75,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     final requiresOnboarding = _requiresOnboarding(player, quests.isNotEmpty);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
-    final screens = <Widget>[
-      const HomeScreen(),
-      const QuestsScreen(),
-    ];
+    final screens = <Widget>[const HomeScreen(), const QuestsScreen()];
     final safeIndex = currentIndex.clamp(0, screens.length - 1);
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.background,
-            AppColors.backgroundElevated,
-            Color(0xFF050A0F),
-          ],
-        ),
-      ),
+      decoration: BoxDecoration(color: AppColors.background),
       child: Stack(
         children: [
           const Positioned.fill(child: _SystemAtmosphere()),
@@ -106,7 +92,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
             bottomNavigationBar: requiresOnboarding || keyboardOpen
                 ? null
                 : Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
                     child: _FloatingBottomDock(
                       currentIndex: safeIndex,
                       destinations: _destinations,
@@ -133,7 +119,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
 
     return !hasProgress;
   }
-
 }
 
 class _FloatingBottomDock extends StatelessWidget {
@@ -153,30 +138,12 @@ class _FloatingBottomDock extends StatelessWidget {
       top: false,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          color: AppColors.surfaceStrong.withValues(alpha: 0.90),
+          borderRadius: BorderRadius.circular(8),
+          color: AppColors.surfaceStrong.withValues(alpha: 0.96),
           border: Border.all(color: AppColors.borderStrong),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.22),
-              blurRadius: 24,
-              offset: const Offset(0, 14),
-            ),
-          ],
         ),
         child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white.withValues(alpha: 0.03),
-                Colors.white.withValues(alpha: 0.01),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           child: Row(
             children: [
               for (var index = 0; index < destinations.length; index++)
@@ -214,21 +181,21 @@ class _DockItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(6),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: selected
                 ? accent.withValues(alpha: 0.10)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: selected
-                  ? accent.withValues(alpha: 0.18)
-                  : Colors.transparent,
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? accent : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
           child: Column(
@@ -237,10 +204,13 @@ class _DockItem extends StatelessWidget {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(5),
+                    bottomRight: Radius.circular(10),
+                  ),
                   color: selected
                       ? AppColors.surfaceMuted
                       : Colors.white.withValues(alpha: 0.03),
@@ -256,7 +226,7 @@ class _DockItem extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: 5),
               Text(
                 destination.label,
                 maxLines: 1,
@@ -265,7 +235,7 @@ class _DockItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                  letterSpacing: 0.2,
+                  letterSpacing: 0,
                   color: selected ? Colors.white : AppColors.textMuted,
                 ),
               ),
@@ -295,21 +265,22 @@ class _SystemAtmospherePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFF070A10), Color(0xFF0B111A), Color(0xFF07080D)],
+        colors: [
+          AppColors.background,
+          AppColors.backgroundElevated,
+          AppColors.background,
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, backgroundWash);
 
     final riftPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.1
-      ..color = AppColors.neonBlue.withValues(alpha: 0.075);
+      ..color = AppColors.ascension.withValues(alpha: 0.075);
     final amberPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.9
-      ..color = AppColors.arenaAccent.withValues(alpha: 0.052);
-    final veilPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = AppColors.neonPurple.withValues(alpha: 0.032);
+      ..color = AppColors.amber.withValues(alpha: 0.052);
 
     final leftRift = Path()
       ..moveTo(size.width * 0.08, 0)
@@ -324,15 +295,6 @@ class _SystemAtmospherePainter extends CustomPainter {
       ..lineTo(size.width * 0.83, size.height * 0.58)
       ..lineTo(size.width * 0.58, size.height);
     canvas.drawPath(rightRift, amberPaint);
-
-    final veil = Path()
-      ..moveTo(size.width * 0.58, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height * 0.64)
-      ..lineTo(size.width * 0.78, size.height * 0.46)
-      ..lineTo(size.width * 0.90, size.height * 0.18)
-      ..close();
-    canvas.drawPath(veil, veilPaint);
 
     final gridPaint = Paint()
       ..style = PaintingStyle.stroke

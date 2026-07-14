@@ -653,6 +653,10 @@ Journey route review:
 - active Journeys now surface a single compact review signal only when linked missions were rescheduled or archived;
 - the detail is progressive: it identifies exceptions and routes the player to the existing adjustment controls without duplicating progress, chapters, or the daily mission list.
 
+Personal weekly boss claim:
+- the Base now exposes the weekly victory action only after its personal active-day target is reached;
+- the Java backend remains the sole authority for the idempotent extra reward of XP and attribute points, and the Flutter profile is reconciled from its response.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

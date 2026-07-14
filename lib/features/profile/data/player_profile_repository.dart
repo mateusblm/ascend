@@ -215,6 +215,27 @@ class PlayerProfileRepository {
     }
   }
 
+  /// Resgata a recompensa semanal apenas pela decisao autoritativa do backend.
+  Future<Player> resgatarBossPessoalSemanal({
+    required String uid,
+    required String fallbackName,
+  }) async {
+    await _sessionRepository.registerActiveSession();
+    final resposta = await _javaBackendClientObrigatorio(
+      'resgatar marco semanal',
+    ).claimPersonalWeeklyBoss(
+      idToken: await _idTokenObrigatorio('resgatar marco semanal'),
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+    );
+    return _profileFromResponse(
+      resposta,
+      uid: uid,
+      fallbackName: fallbackName,
+      invalidResponseMessage: 'Resposta invalida ao resgatar marco semanal.',
+      invalidProfileMessage: 'Perfil remoto invalido apos marco semanal.',
+    );
+  }
+
   Future<Player?> _buscarPerfil({
     required String uid,
     required String fallbackName,

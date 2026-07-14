@@ -577,28 +577,30 @@ class PlayerNotifier extends StateNotifier<Player> {
     }
   }
 
-  bool claimWeeklyBossReward(
+  Future<bool> resgatarBossPessoalSemanal(
     WeeklyBossDefinition weeklyBoss, {
     void Function(int level)? onLevelUp,
-  }) {
+  }) async {
     if (!weeklyBoss.isCompleted(state) || weeklyBoss.isClaimedThisWeek(state)) {
       return false;
     }
-
-    _applyXpReward(
-      weeklyBoss.rewardXp,
-      bonusStatPoints: weeklyBoss.rewardStatPoints,
-      onLevelUp: onLevelUp,
+    final uid = _activeUid;
+    final repositorio = _profileRepository;
+    final usuario = _auth?.currentUser;
+    if (uid == null || repositorio == null || usuario == null) return false;
+    final atualizado = await repositorio.resgatarBossPessoalSemanal(
+      uid: uid,
+      fallbackName: _fallbackNameFor(usuario),
     );
-
-    state = state.copyWith(weeklyBossLastClaimedAt: DateTime.now());
-    _saveToDb();
+    applyAuthoritativeProfile(atualizado, onLevelUp: onLevelUp);
+    unawaited(
+      _analytics.logWeeklyBossClaimed(
+        bossId: 'personal-weekly',
+        rank: 'personal',
+        status: 'claimed',
+      ),
+    );
     return true;
-  }
-
-  void markWeeklyBossClaimedNow() {
-    state = state.copyWith(weeklyBossLastClaimedAt: DateTime.now());
-    _saveToDb();
   }
 
   @override

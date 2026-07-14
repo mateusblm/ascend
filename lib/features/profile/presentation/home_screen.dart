@@ -83,6 +83,7 @@ class HomeScreen extends ConsumerWidget {
                   boss: boss,
                   progresso: boss.progressFor(jogador),
                   resgatado: boss.isClaimedThisWeek(jogador),
+                  onResgatar: () => _resgatarBoss(context, ref, boss),
                 ),
               ]),
             ),
@@ -146,6 +147,30 @@ class HomeScreen extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(mensagem)));
+  }
+
+  Future<void> _resgatarBoss(
+    BuildContext context,
+    WidgetRef ref,
+    WeeklyBossDefinition boss,
+  ) async {
+    try {
+      final resgatado = await ref
+          .read(playerProvider.notifier)
+          .resgatarBossPessoalSemanal(boss);
+      if (!context.mounted || !resgatado) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Marco superado: +120 XP e +2 pontos de atributo.'),
+        ),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível registrar a vitória agora.')),
+        );
+      }
+    }
   }
 }
 
@@ -528,10 +553,12 @@ class _MarcoSemanal extends StatelessWidget {
     required this.boss,
     required this.progresso,
     required this.resgatado,
+    required this.onResgatar,
   });
   final WeeklyBossDefinition boss;
   final int progresso;
   final bool resgatado;
+  final Future<void> Function() onResgatar;
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +629,20 @@ class _MarcoSemanal extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
+          if (!resgatado && progresso >= boss.targetActiveDays) ...[
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: onResgatar,
+              icon: const Icon(Icons.workspace_premium_rounded),
+              label: const Text('Superar marco'),
+            ),
+          ] else if (!resgatado) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Cada dia com uma missão concluída enfraquece este marco.',
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
+          ],
         ],
       ),
     );

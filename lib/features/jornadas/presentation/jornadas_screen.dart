@@ -4,6 +4,7 @@ import 'package:ascend/core/widgets/system/ascend_system_panel.dart';
 import 'package:ascend/features/jornadas/domain/jornada.dart';
 import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -185,7 +186,9 @@ class _CartaoJornada extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progresso = calcularProgressoJornada(jornada, ref.watch(questProvider));
+    final quests = ref.watch(questProvider);
+    final progresso = calcularProgressoJornada(jornada, quests);
+    final marcos = quests.where((quest) => quest.journeyId == jornada.id).toList();
     return AscendSystemPanel(
       accent: jornada.estaAtiva ? AppColors.intellect : AppColors.textMuted,
       child: Column(
@@ -227,6 +230,10 @@ class _CartaoJornada extends ConsumerWidget {
         Text(jornada.objetivo, style: const TextStyle(color: AppColors.textSecondary)),
         const SizedBox(height: 18),
         _TrilhaDeCapitulo(progresso: progresso, ativa: jornada.estaAtiva),
+        if (marcos.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _MarcosDoCapitulo(marcos: marcos),
+        ],
         if (jornada.motivacao?.isNotEmpty == true) ...[
           const SizedBox(height: 16),
           Text(
@@ -259,6 +266,43 @@ class _CartaoJornada extends ConsumerWidget {
       }
     }
   }
+}
+
+class _MarcosDoCapitulo extends StatelessWidget {
+  const _MarcosDoCapitulo({required this.marcos});
+  final List<Quest> marcos;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      for (final marco in marcos)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            children: [
+              Icon(
+                marco.isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                color: marco.isCompleted ? AppColors.intellect : AppColors.textMuted,
+                size: 16,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  marco.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: marco.isCompleted ? AppColors.textMuted : AppColors.textSecondary,
+                    decoration: marco.isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  );
 }
 
 class _TrilhaDeCapitulo extends StatelessWidget {

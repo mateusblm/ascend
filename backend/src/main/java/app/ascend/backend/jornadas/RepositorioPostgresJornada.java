@@ -36,6 +36,10 @@ public class RepositorioPostgresJornada extends SuporteRepositorioPostgres
         values (?, ?, ?, ?, ?, ?, cast(? as jsonb), ?)
         """, jornada.id(), uid, jornada.titulo(), jornada.objetivo(), jornada.motivacao(),
         jornada.status().name(), json(documento(jornada)), Timestamp.from(jornada.criadaEm()));
+    jdbcTemplate.update("""
+        insert into capitulos_jornada (id, jornada_id, titulo, indice_ordem)
+        values (md5(?), ?, ?, ?)
+        """, jornada.id() + ":capitulo-inicial", jornada.id(), "Primeiro avanço", 0);
     return jornada;
   }
 

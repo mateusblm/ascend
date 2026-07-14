@@ -2,7 +2,6 @@ import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
-import 'package:ascend/features/profile/domain/retomada.dart';
 import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
@@ -40,14 +39,20 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
                 _HeroAscensao(jogador: jogador),
-                if (precisaDeRetomada(jogador)) ...[
-                  const SizedBox(height: 18),
-                  _PainelRetomada(
-                    onLeve: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Retomada leve: avance somente no próximo passo.'))),
-                    onPlano: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Seu plano atual foi preservado.'))),
-                    onReorganizar: () => ref.read(navigationProvider.notifier).state = 2,
-                  ),
-                ],
+                FutureBuilder<Map<String, dynamic>?>(
+                  future: _buscarRetomada(),
+                  builder: (context, snapshot) {
+                    if (snapshot.data?['needsRecovery'] != true) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 18),
+                      child: _PainelRetomada(
+                        onLeve: () => _escolherRetomada(context, ref, snapshot.data!, 'leve'),
+                        onPlano: () => _escolherRetomada(context, ref, snapshot.data!, 'manter_plano'),
+                        onReorganizar: () => _escolherRetomada(context, ref, snapshot.data!, 'reorganizar_jornada'),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 30),
                 _TituloSecao(
                   etiqueta: 'ROTA ATUAL',
@@ -94,6 +99,33 @@ class HomeScreen extends ConsumerWidget {
       return dados.isEmpty ? null : dados;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _buscarRetomada() async {
+    final cliente = BackendRouteSelector.javaClient(null);
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (cliente == null || token == null) return null;
+    try { return await cliente.fetchRecovery(idToken: token); } catch (_) { return null; }
+  }
+
+  Future<void> _escolherRetomada(BuildContext context, WidgetRef ref, Map<String, dynamic> dados, String escolha) async {
+    final cliente = BackendRouteSelector.javaClient(null);
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    final periodo = dados['periodKey'] as String?;
+    if (cliente == null || token == null || periodo == null) return;
+    try {
+      await cliente.chooseRecovery(idToken: token, periodKey: periodo, choice: escolha);
+      if (!context.mounted) return;
+      if (escolha == 'reorganizar_jornada') {
+        ref.read(navigationProvider.notifier).state = 2;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+          escolha == 'leve' ? 'Retomada leve registrada. Siga apenas o próximo passo.' : 'Plano mantido. Sua fila continua preservada.',
+        )));
+      }
+    } catch (_) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível registrar sua escolha agora.')));
     }
   }
 

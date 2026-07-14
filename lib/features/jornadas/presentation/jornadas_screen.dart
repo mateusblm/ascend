@@ -280,6 +280,15 @@ class _CartaoJornada extends ConsumerWidget {
         if (marcos.isNotEmpty) ...[
           const SizedBox(height: 16),
           _MarcosDoCapitulo(marcos: marcos),
+          if (jornada.estaAtiva)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _ajustarMissoes(context, ref, marcos),
+                icon: const Icon(Icons.tune_rounded, size: 17),
+                label: const Text('Ajustar missões da rota'),
+              ),
+            ),
         ],
         if (jornada.motivacao?.isNotEmpty == true) ...[
           const SizedBox(height: 16),
@@ -372,6 +381,44 @@ class _CartaoJornada extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _ajustarMissoes(BuildContext context, WidgetRef ref, List<Quest> quests) => showModalBottomSheet<void>(
+    context: context,
+    builder: (contexto) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('AJUSTAR ROTA', style: TextStyle(color: AppColors.intellect, fontSize: 11, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          const Text('Reagende ou arquive passos sem apagar seu progresso.'),
+          const SizedBox(height: 8),
+          for (final quest in quests.where((quest) => !quest.isCompleted && !quest.isArchived))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(quest.title),
+              trailing: Wrap(spacing: 2, children: [
+                IconButton(
+                  tooltip: 'Reagendar',
+                  icon: const Icon(Icons.event_outlined),
+                  onPressed: () async {
+                    final data = await showDatePicker(context: contexto, initialDate: DateTime.now().add(const Duration(days: 1)), firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
+                    if (data != null) await ref.read(questProvider.notifier).reagendarQuest(quest.id, data);
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Arquivar',
+                  icon: const Icon(Icons.archive_outlined),
+                  onPressed: () async {
+                    await ref.read(questProvider.notifier).arquivarQuest(quest.id);
+                    if (contexto.mounted) Navigator.pop(contexto);
+                  },
+                ),
+              ]),
+            ),
+        ]),
+      ),
+    ),
+  );
 
   Future<void> _criarCapitulo(BuildContext context, RepositorioJornada repositorio) async {
     final campo = TextEditingController();

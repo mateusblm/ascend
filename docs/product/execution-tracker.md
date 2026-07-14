@@ -621,6 +621,13 @@ Recovery actions:
 - Journey reorganization routes the player directly to Jornadas;
 - validation passed: `flutter analyze` and `flutter test`.
 
+Recovery P0 completion:
+- PostgreSQL now records the player choice per authoritative absence period; the Camp is only returned while the current period has no recorded choice;
+- the backend exposes the explicit `retomando` Momentum read-model without changing XP, attributes, Legacy, or completion history;
+- light return and plan maintenance persist their selection; Journey reorganization persists first, then opens the Journey surface;
+- personal missions can now be archived idempotently or rescheduled by date through authoritative commands; archived missions are excluded from the active route and recommendations while historical completions are preserved;
+- remote Railway/Firebase Anonymous Auth smoke remains pending: verify `FIREBASE_SERVICE_ACCOUNT_JSON` matches the staging APK Firebase project.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

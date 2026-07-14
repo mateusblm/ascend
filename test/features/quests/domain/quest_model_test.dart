@@ -14,4 +14,19 @@ void main() {
     expect(quest.copyWith(isCompleted: true).journeyId, 'jornada-1');
     expect(quest.copyWith(clearJourney: true).journeyId, isNull);
   });
+
+  test('mantem o ciclo de vida sem alterar a conclusao', () {
+    final quest = Quest(
+      id: 'quest-2',
+      title: 'Revisar rota',
+      rewardAttribute: AttributeType.vitality,
+      xpReward: 12,
+    );
+    final reagendada = quest.copyWith(plannedFor: DateTime(2026, 7, 20));
+    final arquivada = reagendada.copyWith(isArchived: true);
+
+    expect(reagendada.plannedFor, DateTime(2026, 7, 20));
+    expect(arquivada.isArchived, isTrue);
+    expect(arquivada.isCompleted, isFalse);
+  });
 }

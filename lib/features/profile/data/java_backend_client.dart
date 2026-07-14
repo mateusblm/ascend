@@ -177,6 +177,46 @@ class JavaBackendClient {
     body: {'deviceSessionId': deviceSessionId, 'questId': questId},
   );
 
+  Future<Map<String, dynamic>> archivePersonalQuest({
+    required String idToken,
+    required String deviceSessionId,
+    required String questId,
+  }) => _postJson(
+    endpointPath: '/api/v1/quests/personal:archive',
+    idToken: idToken,
+    body: {'deviceSessionId': deviceSessionId, 'questId': questId},
+  );
+
+  Future<Map<String, dynamic>> reschedulePersonalQuest({
+    required String idToken,
+    required String deviceSessionId,
+    required String questId,
+    required DateTime plannedFor,
+  }) => _postJson(
+    endpointPath: '/api/v1/quests/personal:reschedule',
+    idToken: idToken,
+    body: {
+      'deviceSessionId': deviceSessionId,
+      'questId': questId,
+      'plannedFor': plannedFor.toIso8601String(),
+    },
+  );
+
+  Future<Map<String, dynamic>> fetchRecovery({required String idToken}) async {
+    final response = await _httpClient.get(_uri('/api/v1/recovery'), headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> chooseRecovery({
+    required String idToken,
+    required String periodKey,
+    required String choice,
+  }) => _postJson(
+    endpointPath: '/api/v1/recovery:choose',
+    idToken: idToken,
+    body: {'periodKey': periodKey, 'choice': choice},
+  );
+
   Future<Map<String, dynamic>> updateProfileSettings({
     required String idToken,
     required String deviceSessionId,

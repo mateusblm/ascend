@@ -12,13 +12,16 @@ public class InventarioQuestController {
 
   private final SincronizacaoInventarioQuestService service;
   private final MutacaoQuestPessoalService mutacaoQuestPessoalService;
+  private final CicloVidaQuestPessoalService cicloVidaQuestPessoalService;
 
   public InventarioQuestController(
       SincronizacaoInventarioQuestService service,
-      MutacaoQuestPessoalService mutacaoQuestPessoalService
+      MutacaoQuestPessoalService mutacaoQuestPessoalService,
+      CicloVidaQuestPessoalService cicloVidaQuestPessoalService
   ) {
     this.service = service;
     this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
+    this.cicloVidaQuestPessoalService = cicloVidaQuestPessoalService;
   }
 
   @PostMapping("/inventory:sync")
@@ -43,6 +46,16 @@ public class InventarioQuestController {
       @RequestBody RequisicaoMutacaoQuestPessoal request
   ) {
     return mutacaoQuestPessoalService.revogar(user.uid(), user.email(), request);
+  }
+
+  @PostMapping("/personal:archive")
+  public java.util.Map<String, Object> arquivarQuestPessoal(UsuarioAutenticado user, @RequestBody RequisicaoCicloVidaQuest request) {
+    return cicloVidaQuestPessoalService.arquivar(user.uid(), request);
+  }
+
+  @PostMapping("/personal:reschedule")
+  public java.util.Map<String, Object> reagendarQuestPessoal(UsuarioAutenticado user, @RequestBody RequisicaoCicloVidaQuest request) {
+    return cicloVidaQuestPessoalService.reagendar(user.uid(), request);
   }
 
 }

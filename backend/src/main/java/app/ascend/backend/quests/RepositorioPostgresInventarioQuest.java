@@ -66,8 +66,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
   void salvarQuest(String uid, String questId, Map<String, Object> quest) {
     jdbcTemplate.update("""
         insert into quests (id, uid, titulo, atributo_recompensa, xp_recompensa, categoria,
-          tipo_template, modo_verificacao, status_verificacao, concluida, indice_ordem, jornada_id, dados)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
+          tipo_template, modo_verificacao, status_verificacao, concluida, arquivada, planejada_para, indice_ordem, jornada_id, dados)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
         on conflict (id) do update set
           uid = excluded.uid,
           titulo = excluded.titulo,
@@ -78,6 +78,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
           modo_verificacao = excluded.modo_verificacao,
           status_verificacao = excluded.status_verificacao,
           concluida = excluded.concluida,
+          arquivada = excluded.arquivada,
+          planejada_para = excluded.planejada_para,
           indice_ordem = excluded.indice_ordem,
           jornada_id = excluded.jornada_id,
           dados = excluded.dados,
@@ -87,7 +89,7 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
         inteiro(quest.get("xpReward")), textoOu(quest.get("category"), "personal"),
         textoOu(quest.get("templateType"), "custom"), textoOu(quest.get("verificationMode"), "manual"),
         textoOu(quest.get("verificationStatus"), "none"), booleano(quest.get("isCompleted")),
-        inteiro(quest.get("orderIndex")), textoNulo(quest.get("journeyId")), json(quest));
+        booleano(quest.get("isArchived")), dataJdbc(quest.get("plannedFor")), inteiro(quest.get("orderIndex")), textoNulo(quest.get("journeyId")), json(quest));
   }
 
   private String textoOu(Object valor, String padrao) {
@@ -110,7 +112,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
                when j.id is not null then 'missao_da_jornada' else 'missao_pendente' end as motivo
         from quests q left join jornadas j on j.id = q.jornada_id and j.uid = q.uid and j.status = 'ativa'
         left join marcos_capitulo m on m.quest_id = q.id and m.concluido = false
-        where q.uid = ? and q.concluida = false
+        where q.uid = ? and q.concluida = false and q.arquivada = false
+          and (q.planejada_para is null or q.planejada_para <= current_date)
         order by case when m.id is not null then 0 when j.id is not null then 1 else 2 end, q.indice_ordem, q.criado_em
         limit 1
         """, (r, n) -> Map.<String, Object>of("questId", r.getString("id"), "titulo", r.getString("titulo"),
@@ -126,5 +129,12 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
 
   private Timestamp timestamp(Instant instant) {
     return Timestamp.ofTimeSecondsAndNanos(instant.getEpochSecond(), instant.getNano());
+  }
+
+  private java.sql.Date dataJdbc(Object valor) {
+    if (valor instanceof Timestamp timestamp) {
+      return java.sql.Date.valueOf(timestamp.toDate().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+    }
+    return null;
   }
 }

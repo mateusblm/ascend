@@ -186,6 +186,28 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     }
   }
 
+  Future<bool> arquivarQuest(String id) async {
+    final quest = state.where((item) => item.id == id).firstOrNull;
+    if (quest == null || _uid == null || quest.isCompleted) return false;
+    try {
+      final atualizada = await _repositorio.archivePersonalQuest(uid: _uid!, quest: quest);
+      state = state.map((item) => item.id == id ? atualizada : item).toList();
+      _persistirLocal();
+      return true;
+    } catch (_) { return false; }
+  }
+
+  Future<bool> reagendarQuest(String id, DateTime quando) async {
+    final quest = state.where((item) => item.id == id).firstOrNull;
+    if (quest == null || _uid == null || quest.isCompleted || quest.isArchived) return false;
+    try {
+      final atualizada = await _repositorio.reschedulePersonalQuest(uid: _uid!, quest: quest, plannedFor: quando);
+      state = state.map((item) => item.id == id ? atualizada : item).toList();
+      _persistirLocal();
+      return true;
+    } catch (_) { return false; }
+  }
+
   void ensureDailyReset() {}
 
   void _substituir(List<Quest> quests, {bool sincronizar = true}) {

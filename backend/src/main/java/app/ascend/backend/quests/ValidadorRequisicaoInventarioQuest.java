@@ -52,11 +52,17 @@ public class ValidadorRequisicaoInventarioQuest {
         optionalNonNegativeInt(quest.preRewardIntelligence(), prefixo + ".preRewardIntelligence"),
         optionalNonNegativeInt(quest.preRewardVitality(), prefixo + ".preRewardVitality"),
         optionalNonNegativeInt(quest.preRewardAgility(), prefixo + ".preRewardAgility"),
-        jornadaId(quest.journeyId(), prefixo));
+        jornadaId(quest.journeyId(), prefixo),
+        optionalBoolean(quest.isArchived()),
+        optionalTimestamp(quest.plannedFor(), prefixo + ".plannedFor"));
   }
 
   private String jornadaId(Object valor, String prefixo) {
     String id = optionalString(valor, prefixo + ".journeyId", 36, "");
     return id.isBlank() ? null : id;
+  }
+
+  private boolean optionalBoolean(Object valor) {
+    return valor instanceof Boolean resultado && resultado;
   }
 }

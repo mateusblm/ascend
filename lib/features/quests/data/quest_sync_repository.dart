@@ -54,7 +54,9 @@ Quest parseQuestSyncData(
     verificationStartedAt: _dateFrom(data['verificationStartedAt']),
     completedAt: _dateFrom(data['completedAt']),
     verifiedAt: _dateFrom(data['verifiedAt']),
+    plannedFor: _dateFrom(data['plannedFor']),
     isCompleted: data['isCompleted'] as bool? ?? false,
+    isArchived: data['isArchived'] as bool? ?? false,
     preRewardLevel: (data['preRewardLevel'] as num?)?.toInt(),
     preRewardXp: (data['preRewardXp'] as num?)?.toInt(),
     preRewardMaxXp: (data['preRewardMaxXp'] as num?)?.toInt(),
@@ -204,6 +206,23 @@ class QuestSyncRepository {
     }
   }
 
+  Future<Quest> archivePersonalQuest({required String uid, required Quest quest}) =>
+      _mutateLifecycle(uid: uid, quest: quest, action: 'arquivar');
+
+  Future<Quest> reschedulePersonalQuest({required String uid, required Quest quest, required DateTime plannedFor}) =>
+      _mutateLifecycle(uid: uid, quest: quest, action: 'reagendar', plannedFor: plannedFor);
+
+  Future<Quest> _mutateLifecycle({required String uid, required Quest quest, required String action, DateTime? plannedFor}) async {
+    await _sessionRepository.registerActiveSession();
+    final client = _javaBackendClientObrigatorio('$action quest pessoal');
+    final token = await _idTokenObrigatorio('$action quest pessoal');
+    final sessionId = await _sessionRepository.deviceSessionId();
+    final response = action == 'arquivar'
+        ? await client.archivePersonalQuest(idToken: token, deviceSessionId: sessionId, questId: quest.id)
+        : await client.reschedulePersonalQuest(idToken: token, deviceSessionId: sessionId, questId: quest.id, plannedFor: plannedFor!);
+    return parseQuestSyncData(response, uid: uid, questId: quest.id);
+  }
+
   Future<List<Quest>> _buscarQuests(String uid) async {
     final token = await _auth.currentUser?.getIdToken();
     if (token == null || token.isEmpty) return const <Quest>[];
@@ -300,7 +319,9 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'verificationStartedAt': _timestampOrNull(quest.verificationStartedAt),
     'completedAt': _timestampOrNull(quest.completedAt),
     'verifiedAt': _timestampOrNull(quest.verifiedAt),
+    'plannedFor': _timestampOrNull(quest.plannedFor),
     'isCompleted': quest.isCompleted,
+    'isArchived': quest.isArchived,
     'preRewardLevel': quest.preRewardLevel,
     'preRewardXp': quest.preRewardXp,
     'preRewardMaxXp': quest.preRewardMaxXp,

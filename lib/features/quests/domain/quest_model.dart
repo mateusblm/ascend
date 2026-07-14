@@ -54,7 +54,9 @@ class Quest {
   final DateTime? verificationStartedAt;
   final DateTime? completedAt;
   final DateTime? verifiedAt;
+  final DateTime? plannedFor;
   final bool isCompleted;
+  final bool isArchived;
 
   // Snapshot do estado do jogador antes da recompensa ser aplicada.
   // Usado para reverter completamente ao desfazer uma quest.
@@ -84,7 +86,9 @@ class Quest {
     this.verificationStartedAt,
     this.completedAt,
     this.verifiedAt,
+    this.plannedFor,
     this.isCompleted = false,
+    this.isArchived = false,
     this.preRewardLevel,
     this.preRewardXp,
     this.preRewardMaxXp,
@@ -118,6 +122,7 @@ class Quest {
     DateTime? verificationStartedAt,
     DateTime? completedAt,
     DateTime? verifiedAt,
+    DateTime? plannedFor,
     int? preRewardLevel,
     int? preRewardXp,
     int? preRewardMaxXp,
@@ -128,6 +133,7 @@ class Quest {
     int? preRewardAgility,
     bool clearPreRewardSnapshot = false,
     bool clearVerificationProgress = false,
+    bool? isArchived,
   }) {
     return Quest(
       isarId: isarId,
@@ -155,7 +161,9 @@ class Quest {
       verifiedAt: clearVerificationProgress
           ? null
           : (verifiedAt ?? this.verifiedAt),
+      plannedFor: plannedFor ?? this.plannedFor,
       isCompleted: isCompleted ?? this.isCompleted,
+      isArchived: isArchived ?? this.isArchived,
       preRewardLevel: clearPreRewardSnapshot
           ? null
           : (preRewardLevel ?? this.preRewardLevel),

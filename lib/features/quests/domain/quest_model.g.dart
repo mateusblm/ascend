@@ -32,127 +32,137 @@ const QuestSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'isCompleted': PropertySchema(
+    r'isArchived': PropertySchema(
       id: 3,
+      name: r'isArchived',
+      type: IsarType.bool,
+    ),
+    r'isCompleted': PropertySchema(
+      id: 4,
       name: r'isCompleted',
       type: IsarType.bool,
     ),
     r'journeyId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'journeyId',
       type: IsarType.string,
     ),
     r'ownerUid': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'ownerUid',
       type: IsarType.string,
     ),
+    r'plannedFor': PropertySchema(
+      id: 7,
+      name: r'plannedFor',
+      type: IsarType.dateTime,
+    ),
     r'preRewardAgility': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'preRewardAgility',
       type: IsarType.long,
     ),
     r'preRewardIntelligence': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'preRewardIntelligence',
       type: IsarType.long,
     ),
     r'preRewardLevel': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'preRewardLevel',
       type: IsarType.long,
     ),
     r'preRewardMaxXp': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'preRewardMaxXp',
       type: IsarType.long,
     ),
     r'preRewardStatPoints': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'preRewardStatPoints',
       type: IsarType.long,
     ),
     r'preRewardStrength': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'preRewardStrength',
       type: IsarType.long,
     ),
     r'preRewardVitality': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'preRewardVitality',
       type: IsarType.long,
     ),
     r'preRewardXp': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'preRewardXp',
       type: IsarType.long,
     ),
     r'reflectionAnswer': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'reflectionAnswer',
       type: IsarType.string,
     ),
     r'reflectionPrompt': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'reflectionPrompt',
       type: IsarType.string,
     ),
     r'requiresReflection': PropertySchema(
-      id: 16,
+      id: 18,
       name: r'requiresReflection',
       type: IsarType.bool,
     ),
     r'requiresTimer': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'requiresTimer',
       type: IsarType.bool,
     ),
     r'rewardAttribute': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'rewardAttribute',
       type: IsarType.byte,
       enumMap: _QuestrewardAttributeEnumValueMap,
     ),
     r'targetDurationMinutes': PropertySchema(
-      id: 19,
+      id: 21,
       name: r'targetDurationMinutes',
       type: IsarType.long,
     ),
     r'templateType': PropertySchema(
-      id: 20,
+      id: 22,
       name: r'templateType',
       type: IsarType.byte,
       enumMap: _QuesttemplateTypeEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 21,
+      id: 23,
       name: r'title',
       type: IsarType.string,
     ),
     r'verificationMode': PropertySchema(
-      id: 22,
+      id: 24,
       name: r'verificationMode',
       type: IsarType.byte,
       enumMap: _QuestverificationModeEnumValueMap,
     ),
     r'verificationStartedAt': PropertySchema(
-      id: 23,
+      id: 25,
       name: r'verificationStartedAt',
       type: IsarType.dateTime,
     ),
     r'verificationStatus': PropertySchema(
-      id: 24,
+      id: 26,
       name: r'verificationStatus',
       type: IsarType.byte,
       enumMap: _QuestverificationStatusEnumValueMap,
     ),
     r'verifiedAt': PropertySchema(
-      id: 25,
+      id: 27,
       name: r'verifiedAt',
       type: IsarType.dateTime,
     ),
     r'xpReward': PropertySchema(
-      id: 26,
+      id: 28,
       name: r'xpReward',
       type: IsarType.long,
     )
@@ -215,30 +225,32 @@ void _questSerialize(
   writer.writeDateTime(offsets[0], object.completedAt);
   writer.writeBool(offsets[1], object.hasPreRewardSnapshot);
   writer.writeString(offsets[2], object.id);
-  writer.writeBool(offsets[3], object.isCompleted);
-  writer.writeString(offsets[4], object.journeyId);
-  writer.writeString(offsets[5], object.ownerUid);
-  writer.writeLong(offsets[6], object.preRewardAgility);
-  writer.writeLong(offsets[7], object.preRewardIntelligence);
-  writer.writeLong(offsets[8], object.preRewardLevel);
-  writer.writeLong(offsets[9], object.preRewardMaxXp);
-  writer.writeLong(offsets[10], object.preRewardStatPoints);
-  writer.writeLong(offsets[11], object.preRewardStrength);
-  writer.writeLong(offsets[12], object.preRewardVitality);
-  writer.writeLong(offsets[13], object.preRewardXp);
-  writer.writeString(offsets[14], object.reflectionAnswer);
-  writer.writeString(offsets[15], object.reflectionPrompt);
-  writer.writeBool(offsets[16], object.requiresReflection);
-  writer.writeBool(offsets[17], object.requiresTimer);
-  writer.writeByte(offsets[18], object.rewardAttribute.index);
-  writer.writeLong(offsets[19], object.targetDurationMinutes);
-  writer.writeByte(offsets[20], object.templateType.index);
-  writer.writeString(offsets[21], object.title);
-  writer.writeByte(offsets[22], object.verificationMode.index);
-  writer.writeDateTime(offsets[23], object.verificationStartedAt);
-  writer.writeByte(offsets[24], object.verificationStatus.index);
-  writer.writeDateTime(offsets[25], object.verifiedAt);
-  writer.writeLong(offsets[26], object.xpReward);
+  writer.writeBool(offsets[3], object.isArchived);
+  writer.writeBool(offsets[4], object.isCompleted);
+  writer.writeString(offsets[5], object.journeyId);
+  writer.writeString(offsets[6], object.ownerUid);
+  writer.writeDateTime(offsets[7], object.plannedFor);
+  writer.writeLong(offsets[8], object.preRewardAgility);
+  writer.writeLong(offsets[9], object.preRewardIntelligence);
+  writer.writeLong(offsets[10], object.preRewardLevel);
+  writer.writeLong(offsets[11], object.preRewardMaxXp);
+  writer.writeLong(offsets[12], object.preRewardStatPoints);
+  writer.writeLong(offsets[13], object.preRewardStrength);
+  writer.writeLong(offsets[14], object.preRewardVitality);
+  writer.writeLong(offsets[15], object.preRewardXp);
+  writer.writeString(offsets[16], object.reflectionAnswer);
+  writer.writeString(offsets[17], object.reflectionPrompt);
+  writer.writeBool(offsets[18], object.requiresReflection);
+  writer.writeBool(offsets[19], object.requiresTimer);
+  writer.writeByte(offsets[20], object.rewardAttribute.index);
+  writer.writeLong(offsets[21], object.targetDurationMinutes);
+  writer.writeByte(offsets[22], object.templateType.index);
+  writer.writeString(offsets[23], object.title);
+  writer.writeByte(offsets[24], object.verificationMode.index);
+  writer.writeDateTime(offsets[25], object.verificationStartedAt);
+  writer.writeByte(offsets[26], object.verificationStatus.index);
+  writer.writeDateTime(offsets[27], object.verifiedAt);
+  writer.writeLong(offsets[28], object.xpReward);
 }
 
 Quest _questDeserialize(
@@ -250,37 +262,39 @@ Quest _questDeserialize(
   final object = Quest(
     completedAt: reader.readDateTimeOrNull(offsets[0]),
     id: reader.readString(offsets[2]),
-    isCompleted: reader.readBoolOrNull(offsets[3]) ?? false,
+    isArchived: reader.readBoolOrNull(offsets[3]) ?? false,
+    isCompleted: reader.readBoolOrNull(offsets[4]) ?? false,
     isarId: id,
-    journeyId: reader.readStringOrNull(offsets[4]),
-    ownerUid: reader.readStringOrNull(offsets[5]),
-    preRewardAgility: reader.readLongOrNull(offsets[6]),
-    preRewardIntelligence: reader.readLongOrNull(offsets[7]),
-    preRewardLevel: reader.readLongOrNull(offsets[8]),
-    preRewardMaxXp: reader.readLongOrNull(offsets[9]),
-    preRewardStatPoints: reader.readLongOrNull(offsets[10]),
-    preRewardStrength: reader.readLongOrNull(offsets[11]),
-    preRewardVitality: reader.readLongOrNull(offsets[12]),
-    preRewardXp: reader.readLongOrNull(offsets[13]),
-    reflectionAnswer: reader.readStringOrNull(offsets[14]),
-    reflectionPrompt: reader.readStringOrNull(offsets[15]),
+    journeyId: reader.readStringOrNull(offsets[5]),
+    ownerUid: reader.readStringOrNull(offsets[6]),
+    plannedFor: reader.readDateTimeOrNull(offsets[7]),
+    preRewardAgility: reader.readLongOrNull(offsets[8]),
+    preRewardIntelligence: reader.readLongOrNull(offsets[9]),
+    preRewardLevel: reader.readLongOrNull(offsets[10]),
+    preRewardMaxXp: reader.readLongOrNull(offsets[11]),
+    preRewardStatPoints: reader.readLongOrNull(offsets[12]),
+    preRewardStrength: reader.readLongOrNull(offsets[13]),
+    preRewardVitality: reader.readLongOrNull(offsets[14]),
+    preRewardXp: reader.readLongOrNull(offsets[15]),
+    reflectionAnswer: reader.readStringOrNull(offsets[16]),
+    reflectionPrompt: reader.readStringOrNull(offsets[17]),
     rewardAttribute:
-        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[18])] ??
+        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[20])] ??
             AttributeType.strength,
-    targetDurationMinutes: reader.readLongOrNull(offsets[19]) ?? 0,
+    targetDurationMinutes: reader.readLongOrNull(offsets[21]) ?? 0,
     templateType:
-        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[20])] ??
+        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[22])] ??
             QuestTemplateType.custom,
-    title: reader.readString(offsets[21]),
+    title: reader.readString(offsets[23]),
     verificationMode: _QuestverificationModeValueEnumMap[
-            reader.readByteOrNull(offsets[22])] ??
-        QuestVerificationMode.manual,
-    verificationStartedAt: reader.readDateTimeOrNull(offsets[23]),
-    verificationStatus: _QuestverificationStatusValueEnumMap[
             reader.readByteOrNull(offsets[24])] ??
+        QuestVerificationMode.manual,
+    verificationStartedAt: reader.readDateTimeOrNull(offsets[25]),
+    verificationStatus: _QuestverificationStatusValueEnumMap[
+            reader.readByteOrNull(offsets[26])] ??
         QuestVerificationStatus.none,
-    verifiedAt: reader.readDateTimeOrNull(offsets[25]),
-    xpReward: reader.readLong(offsets[26]),
+    verifiedAt: reader.readDateTimeOrNull(offsets[27]),
+    xpReward: reader.readLong(offsets[28]),
   );
   return object;
 }
@@ -301,13 +315,13 @@ P _questDeserializeProp<P>(
     case 3:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
       return (reader.readLongOrNull(offset)) as P;
     case 9:
@@ -321,37 +335,41 @@ P _questDeserializeProp<P>(
     case 13:
       return (reader.readLongOrNull(offset)) as P;
     case 14:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 15:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 16:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 17:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 18:
+      return (reader.readBool(offset)) as P;
+    case 19:
+      return (reader.readBool(offset)) as P;
+    case 20:
       return (_QuestrewardAttributeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           AttributeType.strength) as P;
-    case 19:
+    case 21:
       return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 20:
+    case 22:
       return (_QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offset)] ??
           QuestTemplateType.custom) as P;
-    case 21:
+    case 23:
       return (reader.readString(offset)) as P;
-    case 22:
+    case 24:
       return (_QuestverificationModeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationMode.manual) as P;
-    case 23:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 24:
-      return (_QuestverificationStatusValueEnumMap[
-              reader.readByteOrNull(offset)] ??
-          QuestVerificationStatus.none) as P;
     case 25:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 26:
+      return (_QuestverificationStatusValueEnumMap[
+              reader.readByteOrNull(offset)] ??
+          QuestVerificationStatus.none) as P;
+    case 27:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 28:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -700,6 +718,16 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'id',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> isArchivedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isArchived',
+        value: value,
       ));
     });
   }
@@ -1054,6 +1082,75 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'ownerUid',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'plannedFor',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'plannedFor',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'plannedFor',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'plannedFor',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'plannedFor',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> plannedForBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'plannedFor',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -2573,6 +2670,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByIsCompleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isCompleted', Sort.asc);
@@ -2606,6 +2715,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByOwnerUidDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByPlannedFor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plannedFor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByPlannedForDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plannedFor', Sort.desc);
     });
   }
 
@@ -2899,6 +3020,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsCompleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isCompleted', Sort.asc);
@@ -2944,6 +3077,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByOwnerUidDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ownerUid', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByPlannedFor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plannedFor', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByPlannedForDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'plannedFor', Sort.desc);
     });
   }
 
@@ -3220,6 +3365,12 @@ extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QDistinct> distinctByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isArchived');
+    });
+  }
+
   QueryBuilder<Quest, Quest, QDistinct> distinctByIsCompleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isCompleted');
@@ -3237,6 +3388,12 @@ extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'ownerUid', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByPlannedFor() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'plannedFor');
     });
   }
 
@@ -3397,6 +3554,12 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Quest, bool, QQueryOperations> isArchivedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isArchived');
+    });
+  }
+
   QueryBuilder<Quest, bool, QQueryOperations> isCompletedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isCompleted');
@@ -3412,6 +3575,12 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
   QueryBuilder<Quest, String?, QQueryOperations> ownerUidProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'ownerUid');
+    });
+  }
+
+  QueryBuilder<Quest, DateTime?, QQueryOperations> plannedForProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'plannedFor');
     });
   }
 

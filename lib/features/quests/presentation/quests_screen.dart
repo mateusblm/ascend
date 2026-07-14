@@ -36,9 +36,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   Widget build(BuildContext context) {
     final quests = ref.watch(questProvider);
     final filtradas = quests
-        .where((quest) => quest.isCompleted == _mostrarConcluidas)
+        .where((quest) => !quest.isArchived && quest.isCompleted == _mostrarConcluidas)
         .toList();
-    final pendentes = quests.where((quest) => !quest.isCompleted).length;
+    final pendentes = quests.where((quest) => !quest.isArchived && !quest.isCompleted).length;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -248,15 +248,22 @@ class _FaixaMissao extends ConsumerWidget {
     final cor = _corAtributo(quest.rewardAttribute);
     return Dismissible(
       key: ValueKey(quest.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) =>
-          ref.read(questProvider.notifier).deleteQuest(quest.id),
+      direction: quest.isCompleted ? DismissDirection.none : DismissDirection.endToStart,
+      confirmDismiss: (_) async {
+        final arquivada = await ref.read(questProvider.notifier).arquivarQuest(quest.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+            arquivada ? 'Missão arquivada. Seu histórico permanece intacto.' : 'Não foi possível arquivar a missão agora.',
+          )));
+        }
+        return arquivada;
+      },
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: AppColors.boss.withValues(alpha: .78),
         child: const Icon(
-          Icons.delete_outline_rounded,
+          Icons.archive_outlined,
           color: AppColors.background,
         ),
       ),
@@ -312,6 +319,29 @@ class _FaixaMissao extends ConsumerWidget {
                             color: AppColors.amber,
                           ),
                         ),
+                        if (!quest.isCompleted)
+                          PopupMenuButton<String>(
+                            tooltip: 'Ajustar missão',
+                            icon: const Icon(Icons.more_horiz_rounded, size: 18, color: AppColors.textSecondary),
+                            onSelected: (acao) async {
+                              if (acao != 'reagendar') return;
+                              final data = await showDatePicker(
+                                context: context,
+                                initialDate: quest.plannedFor ?? DateTime.now().add(const Duration(days: 1)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                              );
+                              if (data == null) return;
+                              final sucesso = await ref.read(questProvider.notifier).reagendarQuest(quest.id, data);
+                              aoAtualizar();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+                                  sucesso ? 'Missão reagendada para ${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}.' : 'Não foi possível reagendar a missão agora.',
+                                )));
+                              }
+                            },
+                            itemBuilder: (_) => const [PopupMenuItem(value: 'reagendar', child: Text('Reagendar'))],
+                          ),
                       ],
                     ),
                     const SizedBox(height: 7),

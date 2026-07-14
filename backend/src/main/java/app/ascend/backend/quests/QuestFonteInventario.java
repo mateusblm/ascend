@@ -24,6 +24,8 @@ public record QuestFonteInventario(
     Object preRewardIntelligence,
     Object preRewardVitality,
     Object preRewardAgility,
-    Object journeyId
+    Object journeyId,
+    Object isArchived,
+    Object plannedFor
 ) {
 }

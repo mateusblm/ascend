@@ -1,0 +1,70 @@
+name: Distribuir Android Staging
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  distribuir:
+    name: Gerar e distribuir APK de teste
+    runs-on: ubuntu-latest
+    env:
+      ASCEND_JAVA_BACKEND_URL: ${{ vars.ASCEND_JAVA_BACKEND_URL }}
+      FIREBASE_APP_ID: 1:331143433117:android:097ed08659aeb9f3ed3d74
+      FIREBASE_TESTERS: ${{ vars.FIREBASE_APP_DISTRIBUTION_TESTERS }}
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Preparar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Validar aplicativo
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Gerar APK de staging
+        run: >
+          flutter build apk --debug --flavor staging
+          --dart-define=ASCEND_JAVA_BACKEND_URL="$ASCEND_JAVA_BACKEND_URL"
+
+      - name: Autenticar no Firebase
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ASCEND }}
+
+      - name: Distribuir no Firebase App Distribution
+        run: >
+          npx --yes firebase-tools@latest appdistribution:distribute
+          build/app/outputs/flutter-apk/app-staging-debug.apk
+          --app "$FIREBASE_APP_ID"
+          --testers "$FIREBASE_TESTERS"
+          --release-notes "Build automático $GITHUB_REF_NAME"
+
+      - name: Guardar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascend-staging-${{ github.ref_name }}
+          path: build/app/outputs/flutter-apk/app-staging-debug.apk
+          if-no-files-found: error
+          retention-days: 14

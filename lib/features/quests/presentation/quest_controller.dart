@@ -122,11 +122,17 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _substituir(quests);
   }
 
-  void addPersonalQuest(String titulo, AttributeType atributo, int xp) {
+  void addPersonalQuest(
+    String titulo,
+    AttributeType atributo,
+    int xp, {
+    String? jornadaId,
+  }) {
     final quest = Quest(
       ownerUid: _uid,
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: titulo,
+      journeyId: jornadaId,
       rewardAttribute: atributo,
       xpReward: normalizePersonalQuestXp(xp),
     );

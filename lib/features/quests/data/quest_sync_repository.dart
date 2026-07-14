@@ -40,6 +40,7 @@ Quest parseQuestSyncData(
     title: (data['title'] as String?)?.trim().isNotEmpty == true
         ? (data['title'] as String).trim()
         : 'Quest',
+    journeyId: data['journeyId'] as String?,
     rewardAttribute: _attributeFrom(data['rewardAttribute']),
     xpReward: ((data['xpReward'] as num?)?.toInt() ?? personalQuestDefaultXp)
         .clamp(personalQuestMinXp, 1000000),
@@ -286,6 +287,7 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
   return <String, dynamic>{
     'id': quest.id,
     'title': quest.title,
+    'journeyId': quest.journeyId,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
     'category': 'personal',

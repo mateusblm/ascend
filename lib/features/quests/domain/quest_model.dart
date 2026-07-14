@@ -32,6 +32,7 @@ class Quest {
   final String? ownerUid;
   final String id;
   final String title;
+  final String? journeyId;
 
   @enumerated
   final AttributeType rewardAttribute;
@@ -71,6 +72,7 @@ class Quest {
     this.ownerUid,
     required this.id,
     required this.title,
+    this.journeyId,
     required this.rewardAttribute,
     required this.xpReward,
     this.templateType = QuestTemplateType.custom,
@@ -104,6 +106,8 @@ class Quest {
 
   Quest copyWith({
     String? ownerUid,
+    String? journeyId,
+    bool clearJourney = false,
     bool? isCompleted,
     QuestTemplateType? templateType,
     QuestVerificationMode? verificationMode,
@@ -130,6 +134,7 @@ class Quest {
       ownerUid: ownerUid ?? this.ownerUid,
       id: id,
       title: title,
+      journeyId: clearJourney ? null : (journeyId ?? this.journeyId),
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
       templateType: templateType ?? this.templateType,

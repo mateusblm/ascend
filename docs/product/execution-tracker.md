@@ -529,6 +529,16 @@ Renewal foundation started:
   recoverable error and empty states;
 - the next slice is chapters, milestones and the first mission-to-Jornada link.
 
+Progress note recorded on `2026-07-14`
+
+Mission-to-Journey link delivered:
+- a personal quest can now be attached to an active Journey at creation time;
+- the reference is persisted in Isar and PostgreSQL, and preserved through
+  inventory synchronization and authoritative completion/revocation;
+- migration V5 also creates the chapter persistence boundary for the next
+  Journey slice;
+- focused tests now cover Journey service rules and local quest-link retention.
+
 Planned completion note:
 - record release identity/environment readiness
 - record smoke-test and operational validation state

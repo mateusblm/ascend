@@ -1,6 +1,8 @@
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/jornadas/presentation/jornada_controller.dart';
+import 'package:ascend/features/jornadas/domain/jornada.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +16,7 @@ class AddQuestModal extends ConsumerStatefulWidget {
 class _AddQuestModalState extends ConsumerState<AddQuestModal> {
   final _controller = TextEditingController();
   AttributeType _selectedAttribute = AttributeType.strength;
+  String? _jornadaSelecionada;
 
   @override
   void dispose() {
@@ -23,6 +26,9 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
 
   @override
   Widget build(BuildContext context) {
+    final jornadas = ref.watch(jornadaProvider).jornadas
+        .where((jornada) => jornada.estaAtiva)
+        .toList(growable: false);
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -63,7 +69,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildPersonalForm(),
+          _buildPersonalForm(jornadas),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -76,6 +82,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                       _controller.text.trim(),
                       _selectedAttribute,
                       personalQuestDefaultXp,
+                      jornadaId: _jornadaSelecionada,
                     );
                 Navigator.pop(context);
               },
@@ -87,7 +94,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
     );
   }
 
-  Widget _buildPersonalForm() {
+  Widget _buildPersonalForm(List<Jornada> jornadas) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,6 +136,24 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
           onChanged: (val) => setState(() => _selectedAttribute = val!),
           decoration: const InputDecoration(labelText: 'Atributo'),
         ),
+        if (jornadas.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String?>(
+            initialValue: _jornadaSelecionada,
+            dropdownColor: AppColors.backgroundElevated,
+            decoration: const InputDecoration(labelText: 'Vincular a Jornada'),
+            items: [
+              const DropdownMenuItem<String?>(value: null, child: Text('Sem Jornada')),
+              ...jornadas.map(
+                (jornada) => DropdownMenuItem<String?>(
+                  value: jornada.id,
+                  child: Text(jornada.titulo),
+                ),
+              ),
+            ],
+            onChanged: (valor) => setState(() => _jornadaSelecionada = valor),
+          ),
+        ],
       ],
     );
   }

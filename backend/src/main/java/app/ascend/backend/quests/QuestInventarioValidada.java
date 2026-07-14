@@ -25,6 +25,7 @@ public record QuestInventarioValidada(
     Integer preRewardStrength,
     Integer preRewardIntelligence,
     Integer preRewardVitality,
-    Integer preRewardAgility
+    Integer preRewardAgility,
+    String journeyId
 ) {
 }

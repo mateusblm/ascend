@@ -66,8 +66,8 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
   void salvarQuest(String uid, String questId, Map<String, Object> quest) {
     jdbcTemplate.update("""
         insert into quests (id, uid, titulo, atributo_recompensa, xp_recompensa, categoria,
-          tipo_template, modo_verificacao, status_verificacao, concluida, indice_ordem, dados)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
+          tipo_template, modo_verificacao, status_verificacao, concluida, indice_ordem, jornada_id, dados)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, cast(? as jsonb))
         on conflict (id) do update set
           uid = excluded.uid,
           titulo = excluded.titulo,
@@ -79,6 +79,7 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
           status_verificacao = excluded.status_verificacao,
           concluida = excluded.concluida,
           indice_ordem = excluded.indice_ordem,
+          jornada_id = excluded.jornada_id,
           dados = excluded.dados,
           atualizado_em = current_timestamp
         """,
@@ -86,7 +87,7 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
         inteiro(quest.get("xpReward")), textoOu(quest.get("category"), "personal"),
         textoOu(quest.get("templateType"), "custom"), textoOu(quest.get("verificationMode"), "manual"),
         textoOu(quest.get("verificationStatus"), "none"), booleano(quest.get("isCompleted")),
-        inteiro(quest.get("orderIndex")), json(quest));
+        inteiro(quest.get("orderIndex")), textoNulo(quest.get("journeyId")), json(quest));
   }
 
   private String textoOu(Object valor, String padrao) {
@@ -99,6 +100,10 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
 
   private boolean booleano(Object valor) {
     return valor instanceof Boolean valorBooleano && valorBooleano;
+  }
+
+  private String textoNulo(Object valor) {
+    return valor instanceof String texto && !texto.isBlank() ? texto : null;
   }
 
   private Timestamp timestamp(Instant instant) {

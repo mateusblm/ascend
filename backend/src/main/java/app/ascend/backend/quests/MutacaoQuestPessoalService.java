@@ -161,7 +161,8 @@ public class MutacaoQuestPessoalService {
         perfilAtual.attributes().strength(),
         perfilAtual.attributes().intelligence(),
         perfilAtual.attributes().vitality(),
-        perfilAtual.attributes().agility()
+        perfilAtual.attributes().agility(),
+        quest.journeyId()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -262,7 +263,8 @@ public class MutacaoQuestPessoalService {
         null,
         null,
         null,
-        null
+        null,
+        quest.journeyId()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -374,7 +376,8 @@ public class MutacaoQuestPessoalService {
         data.get("preRewardStrength"),
         data.get("preRewardIntelligence"),
         data.get("preRewardVitality"),
-        data.get("preRewardAgility")
+        data.get("preRewardAgility"),
+        data.get("journeyId")
     ));
   }
 
@@ -407,6 +410,7 @@ public class MutacaoQuestPessoalService {
     data.put("preRewardIntelligence", quest.preRewardIntelligence());
     data.put("preRewardVitality", quest.preRewardVitality());
     data.put("preRewardAgility", quest.preRewardAgility());
+    data.put("journeyId", quest.journeyId());
     data.put("orderIndex", indiceOrdem);
     data.put("syncSchemaVersion", 1);
     data.put("syncSource", SYNC_SOURCE);
@@ -448,7 +452,7 @@ public class MutacaoQuestPessoalService {
         quest.verifiedAt() == null ? now : quest.verifiedAt(),
         true, quest.preRewardLevel(), quest.preRewardXp(), quest.preRewardMaxXp(),
         quest.preRewardStatPoints(), quest.preRewardStrength(), quest.preRewardIntelligence(),
-        quest.preRewardVitality(), quest.preRewardAgility()
+        quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId()
     );
   }
 

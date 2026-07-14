@@ -398,7 +398,7 @@ class _ProximaMissao extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 8, 8),
+              padding: const EdgeInsets.fromLTRB(14, 8, 8, 6),
               decoration: BoxDecoration(
                 color: AppColors.surface.withValues(alpha: .92),
                 border: Border(

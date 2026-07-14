@@ -42,10 +42,11 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
         color: AppColors.backgroundElevated,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Center(
             child: Container(
               width: 40,
@@ -96,12 +97,14 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                     _controller.text.trim(), _selectedAttribute, personalQuestDefaultXp, jornadaId: _jornadaSelecionada,
                   );
                 }
+                FocusScope.of(context).unfocus();
                 if (context.mounted) Navigator.pop(context);
               },
               child: Text(_recorrente ? 'Criar rotina' : 'Criar quest'),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

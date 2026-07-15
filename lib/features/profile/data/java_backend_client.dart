@@ -61,6 +61,26 @@ class JavaBackendClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> fetchBuild({required String idToken}) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/build'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> selectStrategistBuild({
+    required String idToken,
+    required String deviceSessionId,
+  }) => _postJson(
+    endpointPath: '/api/v1/build/select',
+    idToken: idToken,
+    body: {'buildId': 'estrategista', 'deviceSessionId': deviceSessionId},
+  );
+
   Future<Map<String, dynamic>> confirmWeeklyReview({
     required String idToken,
     required String deviceSessionId,

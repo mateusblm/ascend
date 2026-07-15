@@ -72,6 +72,13 @@ class _TestPlayerNotifier extends PlayerNotifier {
     'confirmada': false,
     'orientacao': 'Mantenha uma ação clara por dia até fechar o ciclo.',
   };
+
+  @override
+  Future<Map<String, dynamic>> consultarBuild() async => {
+    'buildId': null,
+    'talentosDesbloqueados': const [],
+    'horizonteDisponivel': false,
+  };
 }
 
 class _FakeIsar implements Isar {

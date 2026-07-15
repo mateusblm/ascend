@@ -113,6 +113,21 @@ class PlayerNotifier extends StateNotifier<Player> {
     return repositorio.confirmarRevisaoSemanal();
   }
 
+  Future<Map<String, dynamic>> consultarBuild() =>
+      _profileRepositoryObrigatorio('consultar Build').consultarBuild();
+  Future<Map<String, dynamic>> selecionarBuildEstrategista() =>
+      _profileRepositoryObrigatorio(
+        'selecionar Build',
+      ).selecionarBuildEstrategista();
+
+  PlayerProfileRepository _profileRepositoryObrigatorio(String acao) {
+    final repositorio = _profileRepository;
+    if (repositorio == null) {
+      throw StateError('Repositório de perfil não disponível para $acao.');
+    }
+    return repositorio;
+  }
+
   void _bindCloudProfile() {
     final auth = _auth;
     if (auth == null) {

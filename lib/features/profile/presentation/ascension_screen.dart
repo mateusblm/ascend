@@ -50,6 +50,8 @@ class AscensionScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   const _WeeklyReviewPanel(),
                   const SizedBox(height: 24),
+                  const _BuildPanel(),
+                  const SizedBox(height: 24),
                   _AscensionReadout(player: player),
                   const SizedBox(height: 24),
                   FutureBuilder<Map<String, dynamic>>(
@@ -321,6 +323,140 @@ class _WeeklyBossPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BuildPanel extends ConsumerStatefulWidget {
+  const _BuildPanel();
+  @override
+  ConsumerState<_BuildPanel> createState() => _BuildPanelState();
+}
+
+class _BuildPanelState extends ConsumerState<_BuildPanel> {
+  late Future<Map<String, dynamic>> _status;
+  @override
+  void initState() {
+    super.initState();
+    _status = ref.read(playerProvider.notifier).consultarBuild();
+  }
+
+  Future<void> _select() async {
+    try {
+      final status = await ref
+          .read(playerProvider.notifier)
+          .selecionarBuildEstrategista();
+      if (mounted) {
+        setState(() => _status = Future.value(status));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível selecionar a Build agora.'),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Map<String, dynamic>>(
+    future: _status,
+    builder: (context, snapshot) {
+      final status = snapshot.data;
+      if (status == null) return const SizedBox.shrink();
+      final selected = status['buildId'] as String?;
+      final talents = (status['talentosDesbloqueados'] as List? ?? const [])
+          .whereType<String>()
+          .toSet();
+      return Semantics(
+        label: selected == null
+            ? 'Build disponível: Estrategista.'
+            : 'Build ativa: Estrategista.',
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: AppColors.systemLayer,
+            border: Border(
+              left: BorderSide(color: AppColors.energyViolet, width: 2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'BUILD',
+                style: TextStyle(
+                  color: AppColors.energyViolet,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .7,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Estrategista',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Transforme objetivos em uma rota clara.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              _TalentLine(
+                'Rota Clara',
+                talents.contains('rota-clara'),
+                'Explica a próxima missão.',
+              ),
+              _TalentLine(
+                'Horizonte',
+                talents.contains('horizonte'),
+                'Disponível após uma Revisão Semanal.',
+              ),
+              if (selected == null) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _select,
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: const Text('ESCOLHER ESTRATEGISTA'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _TalentLine extends StatelessWidget {
+  const _TalentLine(this.title, this.unlocked, this.detail);
+  final String title;
+  final bool unlocked;
+  final String detail;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 7),
+    child: Row(
+      children: [
+        Icon(
+          unlocked ? Icons.check_circle_outline : Icons.lock_outline,
+          size: 16,
+          color: unlocked ? AppColors.successGreen : AppColors.textMuted,
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            '$title · $detail',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _WeeklyReviewPanel extends ConsumerStatefulWidget {

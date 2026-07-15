@@ -216,13 +216,7 @@ class HomeScreen extends ConsumerWidget {
       }
     } catch (_) {
       await outbox.save(pendente);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível registrar sua escolha agora.'),
-          ),
-        );
-      }
+      if (context.mounted) _mostrarRetomadaPendente(context);
     }
   }
 

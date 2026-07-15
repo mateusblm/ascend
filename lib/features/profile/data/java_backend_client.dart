@@ -35,6 +35,19 @@ class JavaBackendClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> fetchAscensionStatus({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/ascension/status'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return _decode(response);
+  }
+
   Future<List<Map<String, dynamic>>> fetchJourneys({
     required String idToken,
   }) async {
@@ -361,6 +374,15 @@ class JavaBackendClient {
       'deviceSessionId': deviceSessionId,
       if (deviceLabel != null) 'deviceLabel': deviceLabel,
     },
+  );
+
+  Future<Map<String, dynamic>> claimConsistentRhythmTrial({
+    required String idToken,
+    required String deviceSessionId,
+  }) => _postJson(
+    endpointPath: '/api/v1/ascension/trials/consistent-rhythm:claim',
+    idToken: idToken,
+    body: {'deviceSessionId': deviceSessionId},
   );
 
   Future<Map<String, dynamic>> _postJson({

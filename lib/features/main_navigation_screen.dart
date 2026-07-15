@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'profile/presentation/home_screen.dart';
+import 'profile/presentation/ascension_screen.dart';
 import 'jornadas/presentation/jornadas_screen.dart';
 import 'quests/presentation/quests_screen.dart';
 
@@ -42,6 +43,12 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       label: 'Jornadas',
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore_rounded,
+      accent: AppColors.ascension,
+    ),
+    _NavigationDestination(
+      label: 'Ascensão',
+      icon: Icons.auto_awesome_outlined,
+      activeIcon: Icons.auto_awesome_rounded,
       accent: AppColors.ascension,
     ),
   ];
@@ -86,6 +93,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       const HomeScreen(),
       const QuestsScreen(),
       const JornadasScreen(),
+      const AscensionScreen(),
     ];
     final safeIndex = currentIndex.clamp(0, screens.length - 1);
 

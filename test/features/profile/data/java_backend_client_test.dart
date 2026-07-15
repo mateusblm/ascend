@@ -43,4 +43,27 @@ void main() {
     expect(captured.method, 'POST');
     expect(captured.headers['authorization'], 'Bearer token');
   });
+
+  test('prova de Ascensão usa consulta e resgate autoritativos', () async {
+    final requests = <http.Request>[];
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        requests.add(request);
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await client.fetchAscensionStatus(idToken: 'token');
+    await client.claimConsistentRhythmTrial(
+      idToken: 'token',
+      deviceSessionId: 'device-1',
+    );
+
+    expect(requests[0].url.path, '/api/v1/ascension/status');
+    expect(requests[0].method, 'GET');
+    expect(requests[1].url.path, '/api/v1/ascension/trials/consistent-rhythm:claim');
+    expect(requests[1].method, 'POST');
+    expect(jsonDecode(requests[1].body), {'deviceSessionId': 'device-1'});
+  });
 }

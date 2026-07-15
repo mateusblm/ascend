@@ -77,6 +77,22 @@ class PlayerNotifier extends StateNotifier<Player> {
   bool _handledMissingRemoteForActiveUser = false;
   bool _attributeAllocationInFlight = false;
 
+  Future<Map<String, dynamic>> consultarAscensao() async {
+    final repositorio = _profileRepository;
+    if (repositorio == null) {
+      throw StateError('Repositório de perfil não disponível para Ascensão.');
+    }
+    return repositorio.consultarAscensao();
+  }
+
+  Future<Map<String, dynamic>> resgatarProvaRitmoConstante() async {
+    final repositorio = _profileRepository;
+    if (repositorio == null) {
+      throw StateError('Repositório de perfil não disponível para Ascensão.');
+    }
+    return repositorio.resgatarProvaRitmoConstante();
+  }
+
   void _bindCloudProfile() {
     final auth = _auth;
     if (auth == null) {

@@ -23,7 +23,7 @@ class AscendSystemBackground extends StatelessWidget {
   );
 }
 
-enum AscendSystemSurface { base, missions, journeys }
+enum AscendSystemSurface { base, missions, journeys, ascension }
 
 class _ProductionBackgroundPainter extends CustomPainter {
   const _ProductionBackgroundPainter(this.variant);
@@ -39,6 +39,10 @@ class _ProductionBackgroundPainter extends CustomPainter {
       AscendSystemSurface.journeys => Offset(
         size.width * .68,
         size.height * .30,
+      ),
+      AscendSystemSurface.ascension => Offset(
+        size.width * .72,
+        size.height * .22,
       ),
     };
     canvas.drawRect(
@@ -56,7 +60,11 @@ class _ProductionBackgroundPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = .5
       ..color = AppColors.systemCyan.withValues(alpha: .035);
-    final spacing = variant == AscendSystemSurface.journeys ? 76.0 : 52.0;
+    final spacing = switch (variant) {
+      AscendSystemSurface.journeys => 76.0,
+      AscendSystemSurface.ascension => 68.0,
+      _ => 52.0,
+    };
     for (var x = 0.0; x < size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
     }

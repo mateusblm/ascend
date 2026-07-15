@@ -236,6 +236,21 @@ class PlayerProfileRepository {
     );
   }
 
+  Future<Map<String, dynamic>> consultarAscensao() async {
+    return _javaBackendClientObrigatorio('consultar Ascensão').fetchAscensionStatus(
+      idToken: await _idTokenObrigatorio('consultar Ascensão'),
+    );
+  }
+
+  Future<Map<String, dynamic>> resgatarProvaRitmoConstante() async {
+    await _sessionRepository.registerActiveSession();
+    return _javaBackendClientObrigatorio('resgatar Prova de Ascensão')
+        .claimConsistentRhythmTrial(
+          idToken: await _idTokenObrigatorio('resgatar Prova de Ascensão'),
+          deviceSessionId: await _sessionRepository.deviceSessionId(),
+        );
+  }
+
   Future<Player?> _buscarPerfil({
     required String uid,
     required String fallbackName,

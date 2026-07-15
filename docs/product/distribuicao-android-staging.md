@@ -15,7 +15,7 @@ Actions**, cadastre:
 | Tipo | Nome | Valor |
 | --- | --- | --- |
 | Secret | `FIREBASE_SERVICE_ACCOUNT_ASCEND` | JSON da conta de servico do projeto `ascend-b7c20` |
-| Variable | `ASCEND_JAVA_BACKEND_URL` | URL publica HTTPS do backend no Cloud Run |
+| Variable | `ASCEND_JAVA_BACKEND_URL` | URL pública HTTPS do backend no Railway |
 | Variable | `FIREBASE_APP_DISTRIBUTION_TESTERS` | E-mail do testador, por exemplo `voce@email.com` |
 
 Crie a conta de servico no Google Cloud do projeto `ascend-b7c20` com o papel
@@ -38,4 +38,6 @@ Ao final de uma funcionalidade:
    nova versao de staging.
 
 O APK recebe a URL remota pelo `ASCEND_JAVA_BACKEND_URL`; portanto, o backend
-Cloud Run precisa estar publicado antes de testar fora da rede local.
+Railway precisa estar publicado antes de testar fora da rede local. O workflow
+interrompe a distribuição quando essa variável está ausente ou não usa HTTPS,
+para nunca entregar um APK com o cliente Java desabilitado.

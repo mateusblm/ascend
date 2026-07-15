@@ -38,6 +38,20 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      - name: Validar URL do backend de staging
+        run: |
+          if [ -z "${ASCEND_JAVA_BACKEND_URL:-}" ]; then
+            echo "::error::ASCEND_JAVA_BACKEND_URL não está configurada nas Variables do GitHub Actions."
+            exit 1
+          fi
+          case "$ASCEND_JAVA_BACKEND_URL" in
+            https://*) ;;
+            *)
+              echo "::error::ASCEND_JAVA_BACKEND_URL deve usar uma URL HTTPS pública."
+              exit 1
+              ;;
+          esac
+
       - name: Validar aplicativo
         run: |
           flutter analyze

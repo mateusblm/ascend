@@ -93,6 +93,26 @@ class PlayerNotifier extends StateNotifier<Player> {
     return repositorio.resgatarProvaRitmoConstante();
   }
 
+  Future<Map<String, dynamic>> consultarRevisaoSemanal() async {
+    final repositorio = _profileRepository;
+    if (repositorio == null) {
+      throw StateError(
+        'Repositório de perfil não disponível para Revisão Semanal.',
+      );
+    }
+    return repositorio.consultarRevisaoSemanal();
+  }
+
+  Future<Map<String, dynamic>> confirmarRevisaoSemanal() async {
+    final repositorio = _profileRepository;
+    if (repositorio == null) {
+      throw StateError(
+        'Repositório de perfil não disponível para Revisão Semanal.',
+      );
+    }
+    return repositorio.confirmarRevisaoSemanal();
+  }
+
   void _bindCloudProfile() {
     final auth = _auth;
     if (auth == null) {

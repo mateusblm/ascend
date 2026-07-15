@@ -22,6 +22,17 @@ void main() {
 
     expect(find.text('Ascensão'), findsOneWidget);
     expect(find.text('Ruptura Semanal'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('Objetivo semanal Ruptura Semanal')),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('REVISÃO SEMANAL'),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('REVISÃO SEMANAL'), findsOneWidget);
+    expect(find.text('2 de 4 dias ativos'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Ritmo Constante'),
       220,
@@ -31,10 +42,6 @@ void main() {
     expect(find.text('PATAMAR ATUAL'), findsOneWidget);
     expect(find.text('Explorador'), findsOneWidget);
     expect(find.text('LEGADO PESSOAL · 0'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel(RegExp('Objetivo semanal Ruptura Semanal')),
-      findsOneWidget,
-    );
   });
 }
 
@@ -54,6 +61,16 @@ class _TestPlayerNotifier extends PlayerNotifier {
     },
     'patamar': {'sigla': 'E', 'titulo': 'Explorador', 'nivelMinimo': 5},
     'legado': const [],
+  };
+
+  @override
+  Future<Map<String, dynamic>> consultarRevisaoSemanal() async => {
+    'chaveSemana': '2026-07-13',
+    'diasAtivos': 2,
+    'alvoDiasAtivos': 4,
+    'statusBoss': 'in_progress',
+    'confirmada': false,
+    'orientacao': 'Mantenha uma ação clara por dia até fechar o ciclo.',
   };
 }
 

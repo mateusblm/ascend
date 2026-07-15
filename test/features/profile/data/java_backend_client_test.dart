@@ -62,8 +62,37 @@ void main() {
 
     expect(requests[0].url.path, '/api/v1/ascension/status');
     expect(requests[0].method, 'GET');
-    expect(requests[1].url.path, '/api/v1/ascension/trials/consistent-rhythm:claim');
+    expect(
+      requests[1].url.path,
+      '/api/v1/ascension/trials/consistent-rhythm:claim',
+    );
     expect(requests[1].method, 'POST');
     expect(jsonDecode(requests[1].body), {'deviceSessionId': 'device-1'});
   });
+
+  test(
+    'revisão semanal consulta e confirma no contrato autoritativo',
+    () async {
+      final requests = <http.Request>[];
+      final client = JavaBackendClient(
+        baseUrl: 'https://backend.example.com',
+        httpClient: MockClient((request) async {
+          requests.add(request);
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await client.fetchWeeklyReview(idToken: 'token');
+      await client.confirmWeeklyReview(
+        idToken: 'token',
+        deviceSessionId: 'device-1',
+      );
+
+      expect(requests[0].url.path, '/api/v1/weekly-review');
+      expect(requests[0].method, 'GET');
+      expect(requests[1].url.path, '/api/v1/weekly-review/confirm');
+      expect(requests[1].method, 'POST');
+      expect(jsonDecode(requests[1].body), {'deviceSessionId': 'device-1'});
+    },
+  );
 }

@@ -48,6 +48,28 @@ class JavaBackendClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> fetchWeeklyReview({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/weekly-review'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> confirmWeeklyReview({
+    required String idToken,
+    required String deviceSessionId,
+  }) => _postJson(
+    endpointPath: '/api/v1/weekly-review/confirm',
+    idToken: idToken,
+    body: {'deviceSessionId': deviceSessionId},
+  );
+
   Future<List<Map<String, dynamic>>> fetchJourneys({
     required String idToken,
   }) async {

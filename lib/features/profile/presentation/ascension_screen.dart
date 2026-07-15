@@ -48,6 +48,8 @@ class AscensionScreen extends ConsumerWidget {
                         : null,
                   ),
                   const SizedBox(height: 24),
+                  const _WeeklyReviewPanel(),
+                  const SizedBox(height: 24),
                   _AscensionReadout(player: player),
                   const SizedBox(height: 24),
                   FutureBuilder<Map<String, dynamic>>(
@@ -319,6 +321,169 @@ class _WeeklyBossPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WeeklyReviewPanel extends ConsumerStatefulWidget {
+  const _WeeklyReviewPanel();
+
+  @override
+  ConsumerState<_WeeklyReviewPanel> createState() => _WeeklyReviewPanelState();
+}
+
+class _WeeklyReviewPanelState extends ConsumerState<_WeeklyReviewPanel> {
+  late Future<Map<String, dynamic>> _review;
+  bool _confirming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _review = ref.read(playerProvider.notifier).consultarRevisaoSemanal();
+  }
+
+  Future<void> _confirm() async {
+    if (_confirming) return;
+    setState(() => _confirming = true);
+    try {
+      final response = await ref
+          .read(playerProvider.notifier)
+          .confirmarRevisaoSemanal();
+      if (!mounted) return;
+      setState(() => _review = Future.value(response));
+      final preferences = ref.read(systemPreferencesProvider);
+      await showAscendSystemEventOverlay(
+        context,
+        event: const AscendSystemEvent(
+          kind: AscendSystemEventKind.alert,
+          title: 'Revisão registrada',
+          message: 'Ciclo semanal consolidado',
+          detail: 'O Sistema preservou a direção para o próximo passo.',
+        ),
+        reduceMotion: preferences.reduceMotion,
+        hapticsEnabled: preferences.hapticsEnabled,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível registrar a revisão agora.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Map<String, dynamic>>(
+    future: _review,
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return const SizedBox.shrink();
+      final data = snapshot.data!;
+      final days = (data['diasAtivos'] as num?)?.toInt() ?? 0;
+      final target = (data['alvoDiasAtivos'] as num?)?.toInt() ?? 4;
+      final confirmed = data['confirmada'] == true;
+      final bossStatus = data['statusBoss'] as String? ?? 'in_progress';
+      final bossLabel = switch (bossStatus) {
+        'claimed' => 'CHEFE CONFIRMADO',
+        'ready' => 'CHEFE PRONTO',
+        _ => 'CICLO EM CURSO',
+      };
+      final orientation = data['orientacao'] as String? ?? '';
+      return Semantics(
+        label: 'Revisão semanal. $days de $target dias ativos. $bossLabel.',
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.systemLayer.withValues(alpha: .84),
+            border: Border(
+              left: BorderSide(
+                color: confirmed
+                    ? AppColors.successGreen
+                    : AppColors.systemCyan,
+                width: 2,
+              ),
+              bottom: BorderSide(
+                color: AppColors.textMuted.withValues(alpha: .28),
+              ),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                confirmed ? 'REVISÃO REGISTRADA' : 'REVISÃO SEMANAL',
+                style: TextStyle(
+                  color: confirmed
+                      ? AppColors.successGreen
+                      : AppColors.systemCyan,
+                  fontSize: 10,
+                  letterSpacing: .7,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 9),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$days de $target dias ativos',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  Text(
+                    bossLabel,
+                    style: const TextStyle(
+                      color: AppColors.rewardGold,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                value: (days / target).clamp(0.0, 1.0),
+                minHeight: 5,
+                color: confirmed
+                    ? AppColors.successGreen
+                    : AppColors.systemCyan,
+                backgroundColor: AppColors.deepSystem,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                orientation,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              if (!confirmed) ...[
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _confirming ? null : _confirm,
+                    icon: _confirming
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.fact_check_outlined),
+                    label: Text(
+                      _confirming ? 'REGISTRANDO' : 'REGISTRAR REVISÃO',
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _AscensionReadout extends StatelessWidget {

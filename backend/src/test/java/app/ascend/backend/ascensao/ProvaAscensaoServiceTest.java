@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @ExtendWith(MockitoExtension.class)
 class ProvaAscensaoServiceTest {
@@ -75,6 +76,20 @@ class ProvaAscensaoServiceTest {
 
     assertEquals("ascension_trial_incomplete", erro.codigo());
     verify(provas, never()).registrarResgate(any(), any(), any(), any());
+  }
+
+  @Test
+  void springInstanciaServicoComDependenciasDeProducao() {
+    try (AnnotationConfigApplicationContext contexto = new AnnotationConfigApplicationContext()) {
+      contexto.registerBean(RepositorioPostgresPerfil.class, () -> org.mockito.Mockito.mock(RepositorioPostgresPerfil.class));
+      contexto.registerBean(RepositorioProvasAscensao.class, () -> org.mockito.Mockito.mock(RepositorioProvasAscensao.class));
+      contexto.registerBean(GuardaSessaoAtiva.class, () -> org.mockito.Mockito.mock(GuardaSessaoAtiva.class));
+      contexto.registerBean(ProvaAscensaoService.class);
+
+      contexto.refresh();
+
+      org.junit.jupiter.api.Assertions.assertNotNull(contexto.getBean(ProvaAscensaoService.class));
+    }
   }
 
   private Map<String, Object> perfilComDias(int quantidade) {

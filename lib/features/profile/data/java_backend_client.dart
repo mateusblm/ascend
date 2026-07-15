@@ -341,12 +341,17 @@ class JavaBackendClient {
 
   Future<Map<String, dynamic>> chooseRecovery({
     required String idToken,
+    required String deviceSessionId,
     required String periodKey,
     required String choice,
   }) => _postJson(
     endpointPath: '/api/v1/recovery:choose',
     idToken: idToken,
-    body: {'periodKey': periodKey, 'choice': choice},
+    body: {
+      'deviceSessionId': deviceSessionId,
+      'periodKey': periodKey,
+      'choice': choice,
+    },
   );
 
   Future<Map<String, dynamic>> updateProfileSettings({

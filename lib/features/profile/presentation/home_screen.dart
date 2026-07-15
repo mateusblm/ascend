@@ -5,8 +5,10 @@ import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
+import 'package:ascend/features/profile/data/recovery_choice_outbox.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/data/backend_route_selector.dart';
 import 'package:ascend/core/navigation/navigation_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -139,14 +141,37 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Future<Map<String, dynamic>?> _buscarRetomada() async {
+    final outbox = RecoveryChoiceOutbox();
+    final pendente = await outbox.load();
     final cliente = BackendRouteSelector.javaClient(null);
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (cliente == null || token == null) return null;
+    if (cliente == null || token == null) return _estadoPendente(pendente);
     try {
+      if (pendente != null) {
+        final sessao = ActiveSessionRepository();
+        await sessao.registerActiveSession();
+        await cliente.chooseRecovery(
+          idToken: token,
+          deviceSessionId: await sessao.deviceSessionId(),
+          periodKey: pendente.periodKey,
+          choice: pendente.choice,
+        );
+        await outbox.clear();
+      }
       return await cliente.fetchRecovery(idToken: token);
     } catch (_) {
-      return null;
+      return _estadoPendente(pendente);
     }
+  }
+
+  Map<String, dynamic>? _estadoPendente(PendingRecoveryChoice? pendente) {
+    if (pendente == null) return null;
+    return {
+      'needsRecovery': true,
+      'periodKey': pendente.periodKey,
+      'choice': pendente.choice,
+      'syncPending': true,
+    };
   }
 
   Future<void> _escolherRetomada(
@@ -158,10 +183,20 @@ class HomeScreen extends ConsumerWidget {
     final cliente = BackendRouteSelector.javaClient(null);
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     final periodo = dados['periodKey'] as String?;
-    if (cliente == null || token == null || periodo == null) return;
+    if (periodo == null) return;
+    final outbox = RecoveryChoiceOutbox();
+    final pendente = PendingRecoveryChoice(periodKey: periodo, choice: escolha);
+    if (cliente == null || token == null) {
+      await outbox.save(pendente);
+      if (context.mounted) _mostrarRetomadaPendente(context);
+      return;
+    }
     try {
+      final sessao = ActiveSessionRepository();
+      await sessao.registerActiveSession();
       await cliente.chooseRecovery(
         idToken: token,
+        deviceSessionId: await sessao.deviceSessionId(),
         periodKey: periodo,
         choice: escolha,
       );
@@ -180,6 +215,7 @@ class HomeScreen extends ConsumerWidget {
         );
       }
     } catch (_) {
+      await outbox.save(pendente);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -188,6 +224,16 @@ class HomeScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  void _mostrarRetomadaPendente(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Escolha preservada neste dispositivo. A sincronização será retomada ao reconectar.',
+        ),
+      ),
+    );
   }
 
   // Mantido temporariamente para compatibilidade com o fluxo legado da Base.

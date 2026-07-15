@@ -2,6 +2,7 @@ package app.ascend.backend.retomada;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.perfil.RepositorioPostgresPerfil;
+import app.ascend.backend.quests.GuardaSessaoAtiva;
 import com.google.cloud.Timestamp;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Read-model autoritativo de Momentum para retornos apos ausencia. */
@@ -20,10 +22,17 @@ public class RetomadaService {
   private static final Set<String> ESCOLHAS = Set.of("leve", "manter_plano", "reorganizar_jornada");
   private final RepositorioPostgresPerfil repositorioPerfil;
   private final JdbcTemplate jdbcTemplate;
+  private final GuardaSessaoAtiva guardaSessaoAtiva;
 
-  public RetomadaService(RepositorioPostgresPerfil repositorioPerfil, JdbcTemplate jdbcTemplate) {
+  @Autowired
+  public RetomadaService(
+      RepositorioPostgresPerfil repositorioPerfil,
+      JdbcTemplate jdbcTemplate,
+      GuardaSessaoAtiva guardaSessaoAtiva
+  ) {
     this.repositorioPerfil = repositorioPerfil;
     this.jdbcTemplate = jdbcTemplate;
+    this.guardaSessaoAtiva = guardaSessaoAtiva;
   }
 
   public Map<String, Object> estado(String uid) {
@@ -40,6 +49,10 @@ public class RetomadaService {
     if (requisicao == null || !ESCOLHAS.contains(requisicao.choice())) {
       throw new ExcecaoApi(HttpStatus.BAD_REQUEST, "invalid_recovery_choice", "Escolha de retomada invalida.");
     }
+    if (requisicao.deviceSessionId() == null || requisicao.deviceSessionId().isBlank()) {
+      throw new ExcecaoApi(HttpStatus.BAD_REQUEST, "invalid_recovery_payload", "Sessao do dispositivo e obrigatoria.");
+    }
+    guardaSessaoAtiva.exigirSessaoAtiva(uid, requisicao.deviceSessionId());
     LocalDate periodo = periodoAtual(uid);
     if (periodo == null || !periodo.toString().equals(requisicao.periodKey())) {
       throw new ExcecaoApi(HttpStatus.CONFLICT, "stale_recovery_period", "Este periodo de retomada ja nao esta ativo.");

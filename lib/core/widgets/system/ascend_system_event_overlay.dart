@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 enum AscendSystemEventKind { reward, levelUp, trialUnlocked, bossDefeated, alert }
 
@@ -24,15 +25,18 @@ class AscendSystemEvent {
 Future<void> showAscendSystemEventOverlay(
   BuildContext context, {
   required AscendSystemEvent event,
+  bool reduceMotion = false,
+  bool hapticsEnabled = true,
 }) {
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Fechar evento do Sistema',
     barrierColor: Colors.black.withValues(alpha: .42),
-    transitionDuration: const Duration(milliseconds: 180),
+    transitionDuration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
     pageBuilder: (dialogContext, _, __) => AscendSystemEventOverlay(
       event: event,
+      hapticsEnabled: hapticsEnabled,
       onDismiss: () => Navigator.of(dialogContext).pop(),
     ),
     transitionBuilder: (_, animation, __, child) => FadeTransition(
@@ -50,10 +54,12 @@ class AscendSystemEventOverlay extends StatefulWidget {
     super.key,
     required this.event,
     required this.onDismiss,
+    this.hapticsEnabled = true,
   });
 
   final AscendSystemEvent event;
   final VoidCallback onDismiss;
+  final bool hapticsEnabled;
 
   @override
   State<AscendSystemEventOverlay> createState() => _AscendSystemEventOverlayState();
@@ -67,6 +73,9 @@ class _AscendSystemEventOverlayState extends State<AscendSystemEventOverlay> {
     super.initState();
     final delay = widget.event.autoDismissAfter;
     if (delay != null) _timer = Timer(delay, widget.onDismiss);
+    if (widget.hapticsEnabled) {
+      unawaited(HapticFeedback.mediumImpact());
+    }
   }
 
   @override

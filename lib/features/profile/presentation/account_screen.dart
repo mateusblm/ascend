@@ -1,5 +1,7 @@
 import 'package:ascend/core/config/release_contact_config.dart';
+import 'package:ascend/core/settings/system_preferences.dart';
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/system/ascend_system_production.dart';
 import 'package:ascend/core/widgets/reveal_block.dart';
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
@@ -27,9 +29,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final authState = ref.watch(authProvider);
     final authProfile = authState is AuthSuccess ? authState : null;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return AscendSystemBackground(
+      variant: AscendSystemSurface.base,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Column(
@@ -44,13 +48,13 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                     const SizedBox(width: 4),
                     const Expanded(
-                      child: Text(
-                        'CONTA',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.6,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('MÓDULO DO USUÁRIO', style: TextStyle(color: AppColors.systemCyan, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: .6)),
+                          SizedBox(height: 4),
+                          Text('Conta', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+                        ],
                       ),
                     ),
                   ],
@@ -60,9 +64,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               const RevealBlock(
                 delay: Duration(milliseconds: 60),
                 child: Text(
-                  'Ajuste os dados basicos do jogador, veja a conta conectada e controle a sessao atual.',
+                  'Identidade, preferências e sessão do Sistema.',
                   style: TextStyle(
-                    color: Colors.white60,
+                    color: AppColors.textSecondary,
                     fontSize: 12.5,
                     height: 1.45,
                   ),
@@ -115,6 +119,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               ),
               const SizedBox(height: 14),
               const _RitualRotaPanel(),
+              const SizedBox(height: 14),
+              const _SystemPreferencesPanel(),
               const SizedBox(height: 14),
               RevealBlock(
                 delay: const Duration(milliseconds: 180),
@@ -363,6 +369,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -543,6 +550,65 @@ Future<bool> _disable(RitualRotaService service) async {
   return true;
 }
 
+class _SystemPreferencesPanel extends ConsumerWidget {
+  const _SystemPreferencesPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preferences = ref.watch(systemPreferencesProvider);
+    final controller = ref.read(systemPreferencesProvider.notifier);
+    return RevealBlock(
+      delay: const Duration(milliseconds: 225),
+      child: _AccountPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'PREFERÊNCIAS DO SISTEMA',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.systemCyan,
+                letterSpacing: .8,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              'Ajustes locais para feedback e movimento da interface.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.vibration_rounded, color: AppColors.systemCyan),
+              title: const Text('Haptics'),
+              subtitle: const Text('Resposta tátil em confirmações importantes.'),
+              value: preferences.hapticsEnabled,
+              onChanged: controller.setHapticsEnabled,
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.volume_up_outlined, color: AppColors.systemCyan),
+              title: const Text('Som do Sistema'),
+              subtitle: const Text('Preparado para eventos sonoros futuros.'),
+              value: preferences.soundEnabled,
+              onChanged: controller.setSoundEnabled,
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.motion_photos_off_outlined, color: AppColors.systemCyan),
+              title: const Text('Reduzir movimento'),
+              subtitle: const Text('Encurta transições e eventos animados.'),
+              value: preferences.reduceMotion,
+              onChanged: controller.setReduceMotion,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 const String _privacyPolicySummary =
     'Ascend coleta somente os dados necessarios para autenticacao, progresso do jogador, quests, analytics operacionais e erros de execucao. '
     'O objetivo e operar o produto e medir o funil principal. '
@@ -600,9 +666,12 @@ class _AccountPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: AppColors.panelCore.withValues(alpha: .92),
+        border: Border(
+          left: const BorderSide(color: AppColors.systemCyan, width: 2),
+          top: BorderSide(color: AppColors.systemCyan.withValues(alpha: .38)),
+          bottom: BorderSide(color: AppColors.ascendBlue.withValues(alpha: .20)),
+        ),
       ),
       child: child,
     );
@@ -629,9 +698,11 @@ class _SettingRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.025),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: AppColors.systemLayer.withValues(alpha: .68),
+        border: Border(
+          left: BorderSide(color: AppColors.ascendBlue.withValues(alpha: .48)),
+          bottom: BorderSide(color: AppColors.textMuted.withValues(alpha: .22)),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

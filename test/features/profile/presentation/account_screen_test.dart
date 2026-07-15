@@ -33,6 +33,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('account-profile-panel')), findsOneWidget);
+    expect(find.text('PREFERÊNCIAS DO SISTEMA'), findsOneWidget);
     expect(find.byKey(const ValueKey('account-privacy-panel')), findsOneWidget);
     expect(find.byKey(const ValueKey('account-support-panel')), findsOneWidget);
     expect(find.byKey(const ValueKey('account-session-panel')), findsOneWidget);

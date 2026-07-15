@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/settings/system_preferences.dart';
 import 'package:ascend/core/widgets/system/ascend_system_event_overlay.dart';
 import 'package:ascend/core/widgets/system/ascend_system_production.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
@@ -20,6 +21,7 @@ class AscensionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
+    final preferences = ref.watch(systemPreferencesProvider);
     final boss = weeklyBossForPlayer(player);
     final progress = boss.progressFor(player);
     final claimed = boss.isClaimedThisWeek(player);
@@ -41,7 +43,7 @@ class AscensionScreen extends ConsumerWidget {
                     progress: progress,
                     claimed: claimed,
                     onClaim: ready
-                        ? () => _claimWeeklyBoss(context, ref, boss)
+                        ? () => _claimWeeklyBoss(context, ref, boss, preferences)
                         : null,
                   ),
                   const SizedBox(height: 24),
@@ -56,7 +58,7 @@ class AscensionScreen extends ConsumerWidget {
                       return _TrialPanel(
                         prova: prova,
                         onClaim: prova['estado'] == 'available'
-                            ? () => _claimTrial(context, ref)
+                            ? () => _claimTrial(context, ref, preferences)
                             : null,
                       );
                     },
@@ -74,6 +76,7 @@ class AscensionScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     WeeklyBossDefinition boss,
+    SystemPreferences preferences,
   ) async {
     try {
       final claimed = await ref
@@ -88,6 +91,8 @@ class AscensionScreen extends ConsumerWidget {
           message: '+${boss.rewardXp} XP',
           detail: '+${boss.rewardStatPoints} pontos de atributo confirmados.',
         ),
+        reduceMotion: preferences.reduceMotion,
+        hapticsEnabled: preferences.hapticsEnabled,
       );
     } catch (_) {
       if (!context.mounted) return;
@@ -99,7 +104,11 @@ class AscensionScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _claimTrial(BuildContext context, WidgetRef ref) async {
+  Future<void> _claimTrial(
+    BuildContext context,
+    WidgetRef ref,
+    SystemPreferences preferences,
+  ) async {
     try {
       await ref.read(playerProvider.notifier).resgatarProvaRitmoConstante();
       if (!context.mounted) return;
@@ -111,6 +120,8 @@ class AscensionScreen extends ConsumerWidget {
           message: 'Ritmo Constante',
           detail: 'Título permanente confirmado pelo Sistema.',
         ),
+        reduceMotion: preferences.reduceMotion,
+        hapticsEnabled: preferences.hapticsEnabled,
       );
     } catch (_) {
       if (!context.mounted) return;

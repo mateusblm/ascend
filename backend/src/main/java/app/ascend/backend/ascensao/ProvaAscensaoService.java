@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /** Fonte canônica das provas pessoais. Não concede XP ou atributos no cliente. */
@@ -28,6 +29,7 @@ public class ProvaAscensaoService {
   private final GuardaSessaoAtiva guardaSessaoAtiva;
   private final Clock clock;
 
+  @Autowired
   public ProvaAscensaoService(
       RepositorioPostgresPerfil perfis,
       RepositorioProvasAscensao provas,

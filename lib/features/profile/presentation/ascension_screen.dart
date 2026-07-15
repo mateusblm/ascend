@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/system/ascend_system_event_overlay.dart';
 import 'package:ascend/core/widgets/system/ascend_system_production.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
@@ -79,11 +80,13 @@ class AscensionScreen extends ConsumerWidget {
           .read(playerProvider.notifier)
           .resgatarBossPessoalSemanal(boss);
       if (!context.mounted || !claimed) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Objetivo superado: +${boss.rewardXp} XP e +${boss.rewardStatPoints} pontos de atributo.',
-          ),
+      await showAscendSystemEventOverlay(
+        context,
+        event: AscendSystemEvent(
+          kind: AscendSystemEventKind.bossDefeated,
+          title: 'Objetivo superado',
+          message: '+${boss.rewardXp} XP',
+          detail: '+${boss.rewardStatPoints} pontos de atributo confirmados.',
         ),
       );
     } catch (_) {
@@ -100,8 +103,14 @@ class AscensionScreen extends ConsumerWidget {
     try {
       await ref.read(playerProvider.notifier).resgatarProvaRitmoConstante();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Talento Ritmo Constante desbloqueado.')),
+      await showAscendSystemEventOverlay(
+        context,
+        event: const AscendSystemEvent(
+          kind: AscendSystemEventKind.trialUnlocked,
+          title: 'Talento desbloqueado',
+          message: 'Ritmo Constante',
+          detail: 'Título permanente confirmado pelo Sistema.',
+        ),
       );
     } catch (_) {
       if (!context.mounted) return;

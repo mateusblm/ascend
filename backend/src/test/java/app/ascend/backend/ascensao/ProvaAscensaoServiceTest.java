@@ -43,6 +43,7 @@ class ProvaAscensaoServiceTest {
   void consultaMantemProvaBloqueadaAteCincoDiasAtivos() {
     when(perfis.buscarPerfil("uid-1")).thenReturn(perfilComDias(4));
     when(provas.talentoDesbloqueado("uid-1", "ritmo-constante")).thenReturn(false);
+    when(provas.listarLegado("uid-1")).thenReturn(List.of());
 
     ProvaAscensao prova = service.consultar("uid-1", "Jogador").prova();
 
@@ -55,6 +56,7 @@ class ProvaAscensaoServiceTest {
   void resgateDisponivelRegistraTalentoUmaUnicaVez() {
     when(perfis.buscarPerfil("uid-1")).thenReturn(perfilComDias(5));
     when(provas.talentoDesbloqueado("uid-1", "ritmo-constante")).thenReturn(false, true);
+    when(provas.listarLegado("uid-1")).thenReturn(List.of());
     when(provas.registrarResgate(eq("uid-1"), eq("ritmo-constante"), eq("ritmo-constante"), any()))
         .thenReturn(true);
 
@@ -79,6 +81,23 @@ class ProvaAscensaoServiceTest {
   }
 
   @Test
+  void consultaExpoePatamarEConquistasPermanentesDoServidor() {
+    when(perfis.buscarPerfil("uid-1")).thenReturn(perfilComDias(2, 10));
+    when(provas.talentoDesbloqueado("uid-1", "ritmo-constante")).thenReturn(false);
+    when(provas.listarLegado("uid-1")).thenReturn(List.of(
+        new RegistroLegadoAscensao(
+            "ritmo-constante", "ritmo-constante", "Ritmo Constante",
+            Instant.parse("2026-07-14T12:00:00Z"))));
+
+    RespostaAscensao resposta = service.consultar("uid-1", "Jogador");
+
+    assertEquals("D", resposta.patamar().sigla());
+    assertEquals("Praticante", resposta.patamar().titulo());
+    assertEquals(1, resposta.legado().size());
+    assertEquals("Ritmo Constante", resposta.legado().getFirst().titulo());
+  }
+
+  @Test
   void springInstanciaServicoComDependenciasDeProducao() {
     try (AnnotationConfigApplicationContext contexto = new AnnotationConfigApplicationContext()) {
       contexto.registerBean(RepositorioPostgresPerfil.class, () -> org.mockito.Mockito.mock(RepositorioPostgresPerfil.class));
@@ -93,10 +112,14 @@ class ProvaAscensaoServiceTest {
   }
 
   private Map<String, Object> perfilComDias(int quantidade) {
+    return perfilComDias(quantidade, 1);
+  }
+
+  private Map<String, Object> perfilComDias(int quantidade, int level) {
     List<Timestamp> dias = java.util.stream.IntStream.range(0, quantidade)
         .mapToObj(indice -> Timestamp.ofTimeSecondsAndNanos(
             Instant.parse("2026-07-13T12:00:00Z").plusSeconds(indice * 86_400L).getEpochSecond(), 0))
         .toList();
-    return Map.of("name", "Jogador", "activityHistory", dias, "maxXp", 100);
+    return Map.of("name", "Jogador", "activityHistory", dias, "maxXp", 100, "level", level);
   }
 }

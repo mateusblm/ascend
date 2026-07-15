@@ -28,7 +28,13 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Ritmo Constante'), findsWidgets);
-    expect(find.bySemanticsLabel(RegExp('Objetivo semanal Ruptura Semanal')), findsOneWidget);
+    expect(find.text('PATAMAR ATUAL'), findsOneWidget);
+    expect(find.text('Explorador'), findsOneWidget);
+    expect(find.text('LEGADO PESSOAL · 0'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('Objetivo semanal Ruptura Semanal')),
+      findsOneWidget,
+    );
   });
 }
 
@@ -46,6 +52,8 @@ class _TestPlayerNotifier extends PlayerNotifier {
       'estado': 'locked',
       'talento': {'nome': 'Ritmo Constante'},
     },
+    'patamar': {'sigla': 'E', 'titulo': 'Explorador', 'nivelMinimo': 5},
+    'legado': const [],
   };
 }
 

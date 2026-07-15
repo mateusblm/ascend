@@ -46,7 +46,9 @@ class ProvaAscensaoControllerTest {
 
     mockMvc.perform(get("/api/v1/ascension/status").header("Authorization", "Bearer valid-token"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.prova.estado", is("available")));
+        .andExpect(jsonPath("$.prova.estado", is("available")))
+        .andExpect(jsonPath("$.patamar.sigla", is("F")))
+        .andExpect(jsonPath("$.legado.length()", is(0)));
 
     mockMvc.perform(post("/api/v1/ascension/trials/consistent-rhythm:claim")
             .header("Authorization", "Bearer valid-token")
@@ -60,6 +62,6 @@ class ProvaAscensaoControllerTest {
     return new RespostaAscensao(new ProvaAscensao(
         "ritmo-constante", "Ritmo Constante", "Cinco dias ativos.", 5, 5, estado,
         new TalentoAscensao("ritmo-constante", "Ritmo Constante", "Título permanente.")
-    ));
+    ), new PatamarAscensao("F", "Iniciante", 1), java.util.List.of());
   }
 }

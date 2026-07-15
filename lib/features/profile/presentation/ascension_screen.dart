@@ -43,23 +43,46 @@ class AscensionScreen extends ConsumerWidget {
                     progress: progress,
                     claimed: claimed,
                     onClaim: ready
-                        ? () => _claimWeeklyBoss(context, ref, boss, preferences)
+                        ? () =>
+                              _claimWeeklyBoss(context, ref, boss, preferences)
                         : null,
                   ),
                   const SizedBox(height: 24),
                   _AscensionReadout(player: player),
                   const SizedBox(height: 24),
                   FutureBuilder<Map<String, dynamic>>(
-                    future: ref.read(playerProvider.notifier).consultarAscensao(),
+                    future: ref
+                        .read(playerProvider.notifier)
+                        .consultarAscensao(),
                     builder: (context, snapshot) {
                       final raw = snapshot.data?['prova'];
                       if (raw is! Map) return const _UnavailableTrialPanel();
                       final prova = Map<String, dynamic>.from(raw);
-                      return _TrialPanel(
-                        prova: prova,
-                        onClaim: prova['estado'] == 'available'
-                            ? () => _claimTrial(context, ref, preferences)
-                            : null,
+                      final patamar = snapshot.data?['patamar'] is Map
+                          ? Map<String, dynamic>.from(
+                              snapshot.data!['patamar'] as Map,
+                            )
+                          : const <String, dynamic>{};
+                      final legado = snapshot.data?['legado'] is List
+                          ? (snapshot.data!['legado'] as List)
+                                .whereType<Map>()
+                                .map((item) => Map<String, dynamic>.from(item))
+                                .toList(growable: false)
+                          : const <Map<String, dynamic>>[];
+                      return Column(
+                        children: [
+                          _AscensionLegacyPanel(
+                            patamar: patamar,
+                            legado: legado,
+                          ),
+                          const SizedBox(height: 24),
+                          _TrialPanel(
+                            prova: prova,
+                            onClaim: prova['estado'] == 'available'
+                                ? () => _claimTrial(context, ref, preferences)
+                                : null,
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -126,7 +149,9 @@ class AscensionScreen extends ConsumerWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível confirmar a prova agora.')),
+        const SnackBar(
+          content: Text('Não foi possível confirmar a prova agora.'),
+        ),
       );
     }
   }
@@ -156,7 +181,10 @@ class _AscensionHeader extends StatelessWidget {
           children: [
             Icon(Icons.auto_awesome_rounded, color: AppColors.rewardGold),
             SizedBox(width: 10),
-            Text('Ascensão', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+            Text(
+              'Ascensão',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+            ),
           ],
         ),
         SizedBox(height: 5),
@@ -197,7 +225,8 @@ class _WeeklyBossPanel extends StatelessWidget {
         ? 'O objetivo foi atingido. Confirme a recompensa para consolidar o ciclo.'
         : 'Faltam $remaining ${remaining == 1 ? 'dia ativo' : 'dias ativos'} nesta semana.';
     return Semantics(
-      label: 'Objetivo semanal ${boss.title}. $progress de ${boss.targetActiveDays} dias ativos. $status.',
+      label:
+          'Objetivo semanal ${boss.title}. $progress de ${boss.targetActiveDays} dias ativos. $status.',
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -215,7 +244,10 @@ class _WeeklyBossPanel extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, color: AppColors.dangerRed),
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.dangerRed,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -238,13 +270,23 @@ class _WeeklyBossPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            SizedBox(height: 118, width: double.infinity, child: CustomPaint(painter: _BossSignalPainter(fraction))),
+            SizedBox(
+              height: 118,
+              width: double.infinity,
+              child: CustomPaint(painter: _BossSignalPainter(fraction)),
+            ),
             const SizedBox(height: 12),
             Text(boss.title, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 6),
-            Text(boss.description, style: const TextStyle(color: AppColors.textSecondary)),
+            Text(
+              boss.description,
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 12),
-            Text(description, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            Text(
+              description,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            ),
             const SizedBox(height: 16),
             LinearProgressIndicator(
               value: fraction,
@@ -255,7 +297,11 @@ class _WeeklyBossPanel extends StatelessWidget {
             const SizedBox(height: 13),
             Text(
               'RECOMPENSA · +${boss.rewardXp} XP · +${boss.rewardStatPoints} PONTOS DE ATRIBUTO',
-              style: const TextStyle(color: AppColors.rewardGold, fontSize: 10, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: AppColors.rewardGold,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             if (onClaim != null) ...[
               const SizedBox(height: 17),
@@ -289,11 +335,21 @@ class _AscensionReadout extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('ESTADO DE ASCENSÃO', style: TextStyle(color: AppColors.systemCyan, fontSize: 10, fontWeight: FontWeight.w800)),
+        const Text(
+          'ESTADO DE ASCENSÃO',
+          style: TextStyle(
+            color: AppColors.systemCyan,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 13),
         _ReadoutRow(label: 'Nível atual', value: '${player.level}'),
         const SizedBox(height: 9),
-        _ReadoutRow(label: 'XP atual', value: '${player.xp} / ${player.maxXp} XP'),
+        _ReadoutRow(
+          label: 'XP atual',
+          value: '${player.xp} / ${player.maxXp} XP',
+        ),
         const SizedBox(height: 9),
         _ReadoutRow(label: 'Pontos disponíveis', value: '${player.statPoints}'),
       ],
@@ -309,8 +365,19 @@ class _ReadoutRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Expanded(child: Text(label, style: const TextStyle(color: AppColors.textSecondary))),
-      Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+      Expanded(
+        child: Text(
+          label,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+      ),
+      Text(
+        value,
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     ],
   );
 }
@@ -324,14 +391,23 @@ class _UnavailableTrialPanel extends StatelessWidget {
     child: DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.deepSystem,
-        border: Border(left: BorderSide(color: AppColors.energyViolet, width: 2)),
+        border: Border(
+          left: BorderSide(color: AppColors.energyViolet, width: 2),
+        ),
       ),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('PROVAS DE ASCENSÃO', style: TextStyle(color: AppColors.energyViolet, fontSize: 10, fontWeight: FontWeight.w800)),
+            Text(
+              'PROVAS DE ASCENSÃO',
+              style: TextStyle(
+                color: AppColors.energyViolet,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             SizedBox(height: 8),
             Text('Nenhuma prova disponível'),
             SizedBox(height: 4),
@@ -344,6 +420,141 @@ class _UnavailableTrialPanel extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _AscensionLegacyPanel extends StatelessWidget {
+  const _AscensionLegacyPanel({required this.patamar, required this.legado});
+
+  final Map<String, dynamic> patamar;
+  final List<Map<String, dynamic>> legado;
+
+  @override
+  Widget build(BuildContext context) {
+    final sigla = patamar['sigla'] as String? ?? '—';
+    final titulo = patamar['titulo'] as String? ?? 'Patamar em análise';
+    return Semantics(
+      label:
+          'Patamar atual $sigla, $titulo. ${legado.length} conquistas permanentes.',
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.panelCore.withValues(alpha: .92),
+          border: Border(
+            left: const BorderSide(color: AppColors.rewardGold, width: 2),
+            top: BorderSide(color: AppColors.rewardGold.withValues(alpha: .42)),
+            bottom: BorderSide(
+              color: AppColors.energyViolet.withValues(alpha: .32),
+            ),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'PATAMAR ATUAL',
+              style: TextStyle(
+                color: AppColors.rewardGold,
+                fontSize: 10,
+                letterSpacing: .7,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.rewardGold),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(3),
+                      bottomRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    sigla,
+                    style: const TextStyle(
+                      color: AppColors.rewardGold,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Definido pelo nível confirmado pelo Sistema.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'LEGADO PESSOAL · ${legado.length}',
+              style: const TextStyle(
+                color: AppColors.energyViolet,
+                fontSize: 10,
+                letterSpacing: .7,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (legado.isEmpty)
+              const Text(
+                'Talentos e títulos confirmados aparecerão aqui.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              )
+            else
+              for (final registro in legado.take(3))
+                Padding(
+                  padding: const EdgeInsets.only(top: 7),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.workspace_premium_rounded,
+                        color: AppColors.rewardGold,
+                        size: 17,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          registro['titulo'] as String? ??
+                              'Conquista confirmada',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const Text(
+                        'Confirmado',
+                        style: TextStyle(
+                          color: AppColors.successGreen,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _TrialPanel extends StatelessWidget {
@@ -374,22 +585,54 @@ class _TrialPanel extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(
           color: AppColors.deepSystem,
-          border: Border(left: BorderSide(color: AppColors.energyViolet, width: 2)),
+          border: Border(
+            left: BorderSide(color: AppColors.energyViolet, width: 2),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.energyViolet, fontSize: 10, fontWeight: FontWeight.w800)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.energyViolet,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(titulo, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
-            Text(descricao, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text(
+              descricao,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
             const SizedBox(height: 12),
-            LinearProgressIndicator(value: fracao, color: AppColors.energyViolet, backgroundColor: AppColors.panelCore),
+            LinearProgressIndicator(
+              value: fracao,
+              color: AppColors.energyViolet,
+              backgroundColor: AppColors.panelCore,
+            ),
             const SizedBox(height: 8),
-            Text('$progresso de $alvo dias ativos', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text(
+              '$progresso de $alvo dias ativos',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
             const SizedBox(height: 12),
-            Text('TALENTO · $nomeTalento', style: const TextStyle(color: AppColors.rewardGold, fontSize: 10, fontWeight: FontWeight.w800)),
+            Text(
+              'TALENTO · $nomeTalento',
+              style: const TextStyle(
+                color: AppColors.rewardGold,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             if (onClaim != null) ...[
               const SizedBox(height: 14),
               SizedBox(
@@ -425,7 +668,13 @@ class _BossSignalPainter extends CustomPainter {
       ..color = AppColors.dangerRed.withValues(alpha: .20);
     for (var i = 0; i < 3; i++) {
       final radius = 26.0 + (i * 16);
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), .25 + i, math.pi * 1.1, false, muted);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        .25 + i,
+        math.pi * 1.1,
+        false,
+        muted,
+      );
     }
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: 42),
@@ -434,11 +683,24 @@ class _BossSignalPainter extends CustomPainter {
       false,
       hostile,
     );
-    canvas.drawCircle(center, 10, Paint()..color = AppColors.dangerRed.withValues(alpha: .8));
-    canvas.drawLine(Offset(center.dx - 62, center.dy + 22), Offset(center.dx - 18, center.dy + 8), hostile);
-    canvas.drawLine(Offset(center.dx + 18, center.dy - 9), Offset(center.dx + 62, center.dy - 32), hostile);
+    canvas.drawCircle(
+      center,
+      10,
+      Paint()..color = AppColors.dangerRed.withValues(alpha: .8),
+    );
+    canvas.drawLine(
+      Offset(center.dx - 62, center.dy + 22),
+      Offset(center.dx - 18, center.dy + 8),
+      hostile,
+    );
+    canvas.drawLine(
+      Offset(center.dx + 18, center.dy - 9),
+      Offset(center.dx + 62, center.dy - 32),
+      hostile,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _BossSignalPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _BossSignalPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

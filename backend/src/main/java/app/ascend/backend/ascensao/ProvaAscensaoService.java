@@ -51,7 +51,12 @@ public class ProvaAscensaoService {
   }
 
   public RespostaAscensao consultar(String uid, String nome) {
-    return new RespostaAscensao(prova(uid, nome));
+    PerfilUsuario perfil = PerfilUsuario.deDocumento(perfis.buscarPerfil(uid), nome);
+    return new RespostaAscensao(
+        prova(uid, perfil),
+        PatamarAscensao.paraNivel(perfil.level()),
+        provas.listarLegado(uid)
+    );
   }
 
   public RespostaAscensao resgatar(
@@ -65,7 +70,8 @@ public class ProvaAscensaoService {
       );
     }
     guardaSessaoAtiva.exigirSessaoAtiva(uid, requisicao.deviceSessionId());
-    ProvaAscensao prova = prova(uid, nome);
+    PerfilUsuario perfil = PerfilUsuario.deDocumento(perfis.buscarPerfil(uid), nome);
+    ProvaAscensao prova = prova(uid, perfil);
     if ("locked".equals(prova.estado())) {
       throw new ExcecaoApi(
           HttpStatus.PRECONDITION_FAILED, "ascension_trial_incomplete",
@@ -81,8 +87,7 @@ public class ProvaAscensaoService {
     return consultar(uid, nome);
   }
 
-  private ProvaAscensao prova(String uid, String nome) {
-    PerfilUsuario perfil = PerfilUsuario.deDocumento(perfis.buscarPerfil(uid), nome);
+  private ProvaAscensao prova(String uid, PerfilUsuario perfil) {
     int progresso = diasAtivosNoCiclo(perfil, LocalDate.now(clock));
     boolean talentoDesbloqueado = provas.talentoDesbloqueado(uid, TALENTO_RITMO_CONSTANTE);
     String estado = talentoDesbloqueado ? "claimed"

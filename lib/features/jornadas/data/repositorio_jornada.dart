@@ -19,14 +19,16 @@ class RepositorioJornada {
   final ActiveSessionRepository _repositorioSessao;
 
   Future<List<Jornada>> listar() async {
-    final resposta = await _clienteObrigatorio('carregar Jornadas').fetchJourneys(
-      idToken: await _tokenObrigatorio('carregar Jornadas'),
-    );
+    final resposta = await _clienteObrigatorio(
+      'carregar Jornadas',
+    ).fetchJourneys(idToken: await _tokenObrigatorio('carregar Jornadas'));
     return resposta.map(Jornada.fromJson).toList(growable: false);
   }
 
   Future<List<RegistroLegadoJornada>> listarLegado() async {
-    final resposta = await _clienteObrigatorio('carregar Legado').fetchJourneyLegacy(idToken: await _tokenObrigatorio('carregar Legado'));
+    final resposta = await _clienteObrigatorio(
+      'carregar Legado',
+    ).fetchJourneyLegacy(idToken: await _tokenObrigatorio('carregar Legado'));
     return resposta.map(RegistroLegadoJornada.fromJson).toList(growable: false);
   }
 
@@ -54,31 +56,58 @@ class RepositorioJornada {
     return Jornada.fromJson(resposta);
   }
 
-  Future<Jornada> atualizar({required String jornadaId, required String titulo, required String objetivo, String? motivacao}) async {
+  Future<Jornada> retomar(String jornadaId) async {
+    await _repositorioSessao.registerActiveSession();
+    final resposta = await _clienteObrigatorio('retomar Jornada').resumeJourney(
+      idToken: await _tokenObrigatorio('retomar Jornada'),
+      journeyId: jornadaId,
+    );
+    return Jornada.fromJson(resposta);
+  }
+
+  Future<Jornada> atualizar({
+    required String jornadaId,
+    required String titulo,
+    required String objetivo,
+    String? motivacao,
+  }) async {
     await _repositorioSessao.registerActiveSession();
     final resposta = await _clienteObrigatorio('ajustar Jornada').updateJourney(
-      idToken: await _tokenObrigatorio('ajustar Jornada'), journeyId: jornadaId,
-      title: titulo, objective: objetivo, motivation: motivacao,
+      idToken: await _tokenObrigatorio('ajustar Jornada'),
+      journeyId: jornadaId,
+      title: titulo,
+      objective: objetivo,
+      motivation: motivacao,
     );
     return Jornada.fromJson(resposta);
   }
 
   Future<List<CapituloJornada>> listarCapitulos(String jornadaId) async {
-    final resposta = await _clienteObrigatorio('carregar capítulos').fetchJourneyChapters(
-      idToken: await _tokenObrigatorio('carregar capítulos'), journeyId: jornadaId);
+    final resposta = await _clienteObrigatorio('carregar capítulos')
+        .fetchJourneyChapters(
+          idToken: await _tokenObrigatorio('carregar capítulos'),
+          journeyId: jornadaId,
+        );
     return resposta.map(CapituloJornada.fromJson).toList(growable: false);
   }
 
   Future<CapituloJornada> criarCapitulo(String jornadaId, String titulo) async {
     await _repositorioSessao.registerActiveSession();
-    final resposta = await _clienteObrigatorio('criar capítulo').createJourneyChapter(
-      idToken: await _tokenObrigatorio('criar capítulo'), journeyId: jornadaId, title: titulo);
+    final resposta = await _clienteObrigatorio('criar capítulo')
+        .createJourneyChapter(
+          idToken: await _tokenObrigatorio('criar capítulo'),
+          journeyId: jornadaId,
+          title: titulo,
+        );
     return CapituloJornada.fromJson(resposta);
   }
 
   Future<List<MarcoCapitulo>> listarMarcos(String capituloId) async {
-    final resposta = await _clienteObrigatorio('carregar marcos').fetchChapterMilestones(
-      idToken: await _tokenObrigatorio('carregar marcos'), chapterId: capituloId);
+    final resposta = await _clienteObrigatorio('carregar marcos')
+        .fetchChapterMilestones(
+          idToken: await _tokenObrigatorio('carregar marcos'),
+          chapterId: capituloId,
+        );
     return resposta.map(MarcoCapitulo.fromJson).toList(growable: false);
   }
 
@@ -88,34 +117,51 @@ class RepositorioJornada {
     String? questId,
   }) async {
     await _repositorioSessao.registerActiveSession();
-    final resposta = await _clienteObrigatorio('criar marco').createChapterMilestone(
-      idToken: await _tokenObrigatorio('criar marco'), chapterId: capituloId,
-      title: titulo, questId: questId);
+    final resposta = await _clienteObrigatorio('criar marco')
+        .createChapterMilestone(
+          idToken: await _tokenObrigatorio('criar marco'),
+          chapterId: capituloId,
+          title: titulo,
+          questId: questId,
+        );
     return MarcoCapitulo.fromJson(resposta);
   }
 
   Future<MarcoCapitulo> concluirMarco(String marcoId) async {
     await _repositorioSessao.registerActiveSession();
-    final resposta = await _clienteObrigatorio('concluir marco').completeChapterMilestone(
-      idToken: await _tokenObrigatorio('concluir marco'), milestoneId: marcoId);
+    final resposta = await _clienteObrigatorio('concluir marco')
+        .completeChapterMilestone(
+          idToken: await _tokenObrigatorio('concluir marco'),
+          milestoneId: marcoId,
+        );
     return MarcoCapitulo.fromJson(resposta);
   }
 
   Future<CapituloJornada> concluirCapitulo(String capituloId) async {
     await _repositorioSessao.registerActiveSession();
-    final resposta = await _clienteObrigatorio('concluir capitulo').completeJourneyChapter(idToken: await _tokenObrigatorio('concluir capitulo'), chapterId: capituloId);
+    final resposta = await _clienteObrigatorio('concluir capitulo')
+        .completeJourneyChapter(
+          idToken: await _tokenObrigatorio('concluir capitulo'),
+          chapterId: capituloId,
+        );
     return CapituloJornada.fromJson(resposta);
   }
 
   Future<Jornada> concluirJornada(String jornadaId) async {
     await _repositorioSessao.registerActiveSession();
-    final resposta = await _clienteObrigatorio('concluir Jornada').completeJourney(idToken: await _tokenObrigatorio('concluir Jornada'), journeyId: jornadaId);
+    final resposta = await _clienteObrigatorio('concluir Jornada')
+        .completeJourney(
+          idToken: await _tokenObrigatorio('concluir Jornada'),
+          journeyId: jornadaId,
+        );
     return Jornada.fromJson(resposta);
   }
 
   JavaBackendClient _clienteObrigatorio(String acao) {
     final cliente = _clienteJava;
-    if (cliente == null) throw StateError('Backend Java nao configurado para $acao.');
+    if (cliente == null) {
+      throw StateError('Backend Java nao configurado para $acao.');
+    }
     return cliente;
   }
 

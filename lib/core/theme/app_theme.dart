@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static ThemeData dark() {
     final base = ThemeData.dark(useMaterial3: true);
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme)
+    final textTheme = GoogleFonts.manropeTextTheme(base.textTheme)
         .apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
@@ -22,13 +22,13 @@ class AppTheme {
       textTheme: textTheme.copyWith(
         headlineLarge: GoogleFonts.sora(
           fontSize: 32,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           height: 1.05,
         ),
         headlineMedium: GoogleFonts.sora(
           fontSize: 26,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           height: 1.1,
         ),
@@ -73,7 +73,7 @@ class AppTheme {
         modalBackgroundColor: AppColors.backgroundElevated,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -86,15 +86,15 @@ class AppTheme {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.borderSubtle),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.borderSubtle),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.neonBlue),
         ),
       ),

@@ -62,6 +62,17 @@ class JornadaServiceTest {
   }
 
   @Test
+  void retomarAtualizaJornadaPausadaEConservaAtivaIdempotente() {
+    Jornada pausada = new Jornada("jornada-1", "TCC", "Entregar", null, StatusJornada.pausada, Instant.now());
+    Jornada ativa = new Jornada("jornada-1", "TCC", "Entregar", null, StatusJornada.ativa, Instant.now());
+    when(repositorio.buscarPorId("user-1", "jornada-1")).thenReturn(Optional.of(pausada));
+    when(repositorio.atualizarStatus("user-1", "jornada-1", StatusJornada.ativa)).thenReturn(ativa);
+
+    assertEquals(StatusJornada.ativa, service.retomar("user-1", "jornada-1").status());
+    verify(repositorio).atualizarStatus("user-1", "jornada-1", StatusJornada.ativa);
+  }
+
+  @Test
   void adicionarCapituloRejeitaJornadaPausada() {
     when(repositorio.buscarPorId("user-1", "jornada-1")).thenReturn(Optional.of(new Jornada(
         "jornada-1", "TCC", "Entregar", null, StatusJornada.pausada, Instant.now())));

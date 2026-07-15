@@ -1,4 +1,5 @@
 import 'package:ascend/core/theme/app_colors.dart';
+import 'package:ascend/core/widgets/system/ascend_system_production.dart';
 import 'package:ascend/core/widgets/ascension_visuals.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
@@ -25,70 +26,102 @@ class HomeScreen extends ConsumerWidget {
         .toList();
     final boss = weeklyBossForPlayer(jogador);
 
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _CabecalhoBase(
-                  onAccount: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AccountScreen(),
+    return AscendSystemBackground(
+      child: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _CabecalhoBase(
+                    onAccount: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AccountScreen(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _HeroAscensao(jogador: jogador),
-                FutureBuilder<Map<String, dynamic>?>(
-                  future: _buscarRetomada(),
-                  builder: (context, snapshot) {
-                    if (snapshot.data?['needsRecovery'] != true) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 18),
-                      child: _PainelRetomada(
-                        onLeve: () => _escolherRetomada(context, ref, snapshot.data!, 'leve'),
-                        onPlano: () => _escolherRetomada(context, ref, snapshot.data!, 'manter_plano'),
-                        onReorganizar: () => _escolherRetomada(context, ref, snapshot.data!, 'reorganizar_jornada'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 30),
-                _TituloSecao(
-                  etiqueta: 'ROTA ATUAL',
-                  detalhe: pendentes.isEmpty
-                      ? 'SEM PENDÊNCIAS'
-                      : '${pendentes.length} PASSOS',
-                ),
-                const SizedBox(height: 10),
-                FutureBuilder<Map<String, dynamic>?>(
-                  future: _buscarRecomendada(),
-                  builder: (context, snapshot) {
-                    final id = snapshot.data?['questId'] as String?;
-                    final quest = pendentes.where((item) => item.id == id).firstOrNull ?? (pendentes.isEmpty ? null : pendentes.first);
-                    return _ProximaMissao(
-                      quest: quest,
-                      onComplete: quest == null ? null : () => _concluirMissao(context, ref, quest),
-                    );
-                  },
-                ),
-                const SizedBox(height: 28),
-                _TituloSecao(etiqueta: 'CAPACIDADES', detalhe: 'NÚCLEO'),
-                const SizedBox(height: 10),
-                _Capacidades(attributes: jogador.attributes),
-                const SizedBox(height: 30),
-                _MarcoSemanal(
-                  boss: boss,
-                  progresso: boss.progressFor(jogador),
-                  resgatado: boss.isClaimedThisWeek(jogador),
-                  onResgatar: () => _resgatarBoss(context, ref, boss),
-                ),
-              ]),
+                  const SizedBox(height: 20),
+                  _HeroAscensao(jogador: jogador),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: _buscarRetomada(),
+                    builder: (context, snapshot) {
+                      if (snapshot.data?['needsRecovery'] != true) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 18),
+                        child: _PainelRetomada(
+                          onLeve: () => _escolherRetomada(
+                            context,
+                            ref,
+                            snapshot.data!,
+                            'leve',
+                          ),
+                          onPlano: () => _escolherRetomada(
+                            context,
+                            ref,
+                            snapshot.data!,
+                            'manter_plano',
+                          ),
+                          onReorganizar: () => _escolherRetomada(
+                            context,
+                            ref,
+                            snapshot.data!,
+                            'reorganizar_jornada',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                  _TituloSecao(
+                    etiqueta: 'ROTA ATUAL',
+                    detalhe: pendentes.isEmpty
+                        ? 'SEM PENDÊNCIAS'
+                        : '${pendentes.length} PASSOS',
+                  ),
+                  const SizedBox(height: 10),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: _buscarRecomendada(),
+                    builder: (context, snapshot) {
+                      final id = snapshot.data?['questId'] as String?;
+                      final quest =
+                          pendentes
+                              .where((item) => item.id == id)
+                              .firstOrNull ??
+                          (pendentes.isEmpty ? null : pendentes.first);
+                      return _ProximaMissao(
+                        quest: quest,
+                        onView: quest == null
+                            ? null
+                            : () =>
+                                  ref.read(navigationProvider.notifier).state =
+                                      1,
+                        onCreate: quest == null
+                            ? () =>
+                                  ref.read(navigationProvider.notifier).state =
+                                      1
+                            : null,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 28),
+                  const _TituloSecao(etiqueta: 'CAPACIDADES'),
+                  const SizedBox(height: 10),
+                  _Capacidades(attributes: jogador.attributes),
+                  const SizedBox(height: 30),
+                  _MarcoSemanal(
+                    boss: boss,
+                    progresso: boss.progressFor(jogador),
+                    resgatado: boss.isClaimedThisWeek(jogador),
+                    onResgatar: () => _resgatarBoss(context, ref, boss),
+                  ),
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -109,29 +142,56 @@ class HomeScreen extends ConsumerWidget {
     final cliente = BackendRouteSelector.javaClient(null);
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     if (cliente == null || token == null) return null;
-    try { return await cliente.fetchRecovery(idToken: token); } catch (_) { return null; }
+    try {
+      return await cliente.fetchRecovery(idToken: token);
+    } catch (_) {
+      return null;
+    }
   }
 
-  Future<void> _escolherRetomada(BuildContext context, WidgetRef ref, Map<String, dynamic> dados, String escolha) async {
+  Future<void> _escolherRetomada(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> dados,
+    String escolha,
+  ) async {
     final cliente = BackendRouteSelector.javaClient(null);
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     final periodo = dados['periodKey'] as String?;
     if (cliente == null || token == null || periodo == null) return;
     try {
-      await cliente.chooseRecovery(idToken: token, periodKey: periodo, choice: escolha);
+      await cliente.chooseRecovery(
+        idToken: token,
+        periodKey: periodo,
+        choice: escolha,
+      );
       if (!context.mounted) return;
       if (escolha == 'reorganizar_jornada') {
         ref.read(navigationProvider.notifier).state = 2;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
-          escolha == 'leve' ? 'Retomada leve registrada. Siga apenas o próximo passo.' : 'Plano mantido. Sua fila continua preservada.',
-        )));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              escolha == 'leve'
+                  ? 'Retomada leve registrada. Siga apenas o próximo passo.'
+                  : 'Plano mantido. Sua fila continua preservada.',
+            ),
+          ),
+        );
       }
     } catch (_) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível registrar sua escolha agora.')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível registrar sua escolha agora.'),
+          ),
+        );
+      }
     }
   }
 
+  // Mantido temporariamente para compatibilidade com o fluxo legado da Base.
+  // ignore: unused_element
   Future<void> _concluirMissao(
     BuildContext context,
     WidgetRef ref,
@@ -167,7 +227,9 @@ class HomeScreen extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível registrar a vitória agora.')),
+          const SnackBar(
+            content: Text('Não foi possível registrar a vitória agora.'),
+          ),
         );
       }
     }
@@ -175,22 +237,54 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _PainelRetomada extends StatelessWidget {
-  const _PainelRetomada({required this.onLeve, required this.onPlano, required this.onReorganizar});
+  const _PainelRetomada({
+    required this.onLeve,
+    required this.onPlano,
+    required this.onReorganizar,
+  });
   final VoidCallback onLeve;
   final VoidCallback onPlano;
   final VoidCallback onReorganizar;
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.surfaceMuted, border: Border.all(color: AppColors.amber.withValues(alpha: .4))),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('ACAMPAMENTO', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 6), const Text('Seu progresso foi preservado. Escolha como retomar.'),
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        OutlinedButton(onPressed: onLeve, child: const Text('Retomada leve')),
-        TextButton(onPressed: onPlano, child: const Text('Voltar ao plano')),
-        TextButton(onPressed: onReorganizar, child: const Text('Reorganizar Jornada')),
-      ]),
-    ]),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceMuted,
+      border: Border.all(color: AppColors.amber.withValues(alpha: .4)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ACAMPAMENTO',
+          style: TextStyle(
+            color: AppColors.amber,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text('Seu progresso foi preservado. Escolha como retomar.'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton(
+              onPressed: onLeve,
+              child: const Text('Retomada leve'),
+            ),
+            TextButton(
+              onPressed: onPlano,
+              child: const Text('Voltar ao plano'),
+            ),
+            TextButton(
+              onPressed: onReorganizar,
+              child: const Text('Reorganizar Jornada'),
+            ),
+          ],
+        ),
+      ],
+    ),
   );
 }
 
@@ -243,6 +337,34 @@ class _HeroAscensao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final patamar = PatamarPessoal.paraNivel(jogador.level);
+    return AscendSystemCore(
+      name: jogador.name,
+      level: jogador.level,
+      tier: patamar.sigla,
+      primaryFocus: jogador.primaryFocus.label,
+      xp: jogador.xp,
+      maxXp: jogador.maxXp,
+      momentum: jogador.currentStreak > 0 ? 'Crescente' : 'Adormecido',
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildSystemCoreLegacy(BuildContext context) {
+    final patamar = PatamarPessoal.paraNivel(jogador.level);
+    return AscendSystemCore(
+      name: jogador.name,
+      level: jogador.level,
+      tier: patamar.sigla,
+      primaryFocus: jogador.primaryFocus.label,
+      xp: jogador.xp,
+      maxXp: jogador.maxXp,
+      momentum: jogador.currentStreak > 0 ? 'Crescente' : 'Adormecido',
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildLegacy(BuildContext context) {
     final patamar = PatamarPessoal.paraNivel(jogador.level);
     final xp = jogador.maxXp == 0
         ? 0.0
@@ -380,15 +502,37 @@ class _SeloPatamar extends StatelessWidget {
 }
 
 class _ProximaMissao extends StatelessWidget {
-  const _ProximaMissao({required this.quest, required this.onComplete});
+  const _ProximaMissao({
+    required this.quest,
+    required this.onView,
+    required this.onCreate,
+  });
   final Quest? quest;
-  final Future<void> Function()? onComplete;
+  final VoidCallback? onView;
+  final VoidCallback? onCreate;
 
   @override
   Widget build(BuildContext context) {
     if (quest == null) {
-      return const _FaixaVazia();
+      return AscendSystemMissionPanel(
+        title: 'Nenhuma missão ativa',
+        reward: '',
+        attribute: 'O Sistema aguarda a definição do próximo passo.',
+        empty: true,
+        onPressed: onCreate,
+      );
     }
+    return AscendSystemMissionPanel(
+      title: quest!.title,
+      reward: '+${quest!.xpReward} XP',
+      attribute: _nomeAtributo(quest!.rewardAttribute),
+      onPressed: onView,
+      actionLabel: 'VER MISSÃO',
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildLegacy(BuildContext context) {
     final cor = _corAtributo(quest!.rewardAttribute);
     return SizedBox(
       height: 112,
@@ -440,7 +584,7 @@ class _ProximaMissao extends StatelessWidget {
                       Tooltip(
                         message: 'Concluir missão',
                         child: IconButton(
-                          onPressed: onComplete,
+                          onPressed: onView,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints.tightFor(
                             width: 34,
@@ -473,6 +617,7 @@ class _ProximaMissao extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _FaixaVazia extends StatelessWidget {
   const _FaixaVazia();
 
@@ -503,35 +648,79 @@ class _Capacidades extends StatelessWidget {
       (AttributeType.vitality, attributes.vitality),
       (AttributeType.agility, attributes.agility),
     ];
-    return Column(
-      children: [
-        for (final dado in dados)
-          _LinhaCapacidade(atributo: dado.$1, valor: dado.$2),
-      ],
+    final maiorValor = dados
+        .map((dado) => dado.$2)
+        .reduce((a, b) => a > b ? a : b);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.panelCore,
+        border: Border.all(color: AppColors.systemCyan.withValues(alpha: .28)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(4),
+        ),
+      ),
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 1,
+        crossAxisSpacing: 1,
+        childAspectRatio: 2.35,
+        children: [
+          for (final dado in dados)
+            _LinhaCapacidade(
+              atributo: dado.$1,
+              valor: dado.$2,
+              dominante: dado.$2 == maiorValor,
+            ),
+        ],
+      ),
     );
   }
 }
 
 class _LinhaCapacidade extends StatelessWidget {
-  const _LinhaCapacidade({required this.atributo, required this.valor});
+  const _LinhaCapacidade({
+    required this.atributo,
+    required this.valor,
+    required this.dominante,
+  });
   final AttributeType atributo;
   final int valor;
+  final bool dominante;
 
   @override
   Widget build(BuildContext context) {
     final cor = _corAtributo(atributo);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.deepSystem,
+        border: Border(
+          left: BorderSide(color: cor, width: 2),
+          top: dominante
+              ? BorderSide(color: cor.withValues(alpha: .55))
+              : BorderSide.none,
+        ),
+      ),
       child: Row(
         children: [
-          Container(width: 4, height: 32, color: cor),
-          const SizedBox(width: 10),
           Icon(_iconeAtributo(atributo), size: 18, color: cor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              _nomeAtributo(atributo),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              dominante
+                  ? '${_nomeAtributo(atributo)} · DOMINANTE'
+                  : _nomeAtributo(atributo),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: dominante ? cor : AppColors.textPrimary,
+              ),
             ),
           ),
           Text(
@@ -650,9 +839,9 @@ class _MarcoSemanal extends StatelessWidget {
 }
 
 class _TituloSecao extends StatelessWidget {
-  const _TituloSecao({required this.etiqueta, required this.detalhe});
+  const _TituloSecao({required this.etiqueta, this.detalhe});
   final String etiqueta;
-  final String detalhe;
+  final String? detalhe;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -667,15 +856,17 @@ class _TituloSecao extends StatelessWidget {
           color: AppColors.textSecondary,
         ),
       ),
-      const Spacer(),
-      Text(
-        detalhe,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textMuted,
+      if (detalhe != null && detalhe!.isNotEmpty) ...[
+        const Spacer(),
+        Text(
+          detalhe!,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textMuted,
+          ),
         ),
-      ),
+      ],
     ],
   );
 }
@@ -686,7 +877,7 @@ class _MapaTopograficoPainter extends CustomPainter {
     final tinta = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = .7
-      ..color = AppColors.ascension.withValues(alpha: .12);
+      ..color = AppColors.ascension.withValues(alpha: .045);
     for (var indice = 0; indice < 4; indice++) {
       final caminho = Path()
         ..moveTo(size.width * .42, size.height * (.12 + indice * .16))

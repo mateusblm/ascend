@@ -58,6 +58,18 @@ public class JornadaService {
     return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.pausada);
   }
 
+  /** Retoma somente uma rota pausada; a transição é idempotente no repositório. */
+  public Jornada retomar(String uid, String jornadaId) {
+    Jornada jornada = repositorio.buscarPorId(uid, jornadaId).orElseThrow(() ->
+        new ExcecaoApi(HttpStatus.NOT_FOUND, "jornada_nao_encontrada", "Jornada nao encontrada."));
+    if (jornada.status() == StatusJornada.ativa) return jornada;
+    if (jornada.status() != StatusJornada.pausada) {
+      throw new ExcecaoApi(HttpStatus.CONFLICT, "jornada_nao_pode_ser_retomada",
+          "Somente uma Jornada pausada pode ser retomada.");
+    }
+    return repositorio.atualizarStatus(uid, jornadaId, StatusJornada.ativa);
+  }
+
   /** Atualiza o proposito de uma Jornada ativa sem reescrever capitulos ou missoes. */
   public Jornada atualizar(String uid, String jornadaId, RequisicaoAtualizacaoJornada requisicao) {
     Jornada jornada = repositorio.buscarPorId(uid, jornadaId).orElseThrow(() ->

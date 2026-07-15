@@ -33,16 +33,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
       accent: AppColors.ascension,
     ),
     _NavigationDestination(
-      label: 'Quests',
+      label: 'Missões',
       icon: Icons.bolt_outlined,
       activeIcon: Icons.bolt_rounded,
-      accent: AppColors.amber,
+      accent: AppColors.ascension,
     ),
     _NavigationDestination(
       label: 'Jornadas',
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore_rounded,
-      accent: AppColors.intellect,
+      accent: AppColors.ascension,
     ),
   ];
 
@@ -102,14 +102,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
                 : IndexedStack(index: safeIndex, children: screens),
             bottomNavigationBar: requiresOnboarding || keyboardOpen
                 ? null
-                : Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-                    child: _FloatingBottomDock(
-                      currentIndex: safeIndex,
-                      destinations: _destinations,
-                      onTap: (index) =>
-                          ref.read(navigationProvider.notifier).state = index,
-                    ),
+                : _FloatingBottomDock(
+                    currentIndex: safeIndex,
+                    destinations: _destinations,
+                    onTap: (index) =>
+                        ref.read(navigationProvider.notifier).state = index,
                   ),
           ),
         ],
@@ -148,13 +145,12 @@ class _FloatingBottomDock extends StatelessWidget {
     return SafeArea(
       top: false,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: AppColors.surfaceStrong.withValues(alpha: 0.96),
-          border: Border.all(color: AppColors.borderStrong),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.borderStrong)),
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(
             children: [
               for (var index = 0; index < destinations.length; index++)
@@ -192,16 +188,13 @@ class _DockItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.zero,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           decoration: BoxDecoration(
-            color: selected
-                ? accent.withValues(alpha: 0.10)
-                : Colors.transparent,
+            color: Colors.transparent,
             border: Border(
               bottom: BorderSide(
                 color: selected ? accent : Colors.transparent,
@@ -212,30 +205,10 @@ class _DockItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(5),
-                    bottomRight: Radius.circular(10),
-                  ),
-                  color: selected
-                      ? AppColors.surfaceMuted
-                      : Colors.white.withValues(alpha: 0.03),
-                  border: Border.all(
-                    color: selected
-                        ? accent.withValues(alpha: 0.26)
-                        : AppColors.borderSubtle,
-                  ),
-                ),
-                child: Icon(
-                  selected ? destination.activeIcon : destination.icon,
-                  color: selected ? accent : AppColors.textMuted,
-                  size: 20,
-                ),
+              Icon(
+                selected ? destination.activeIcon : destination.icon,
+                color: selected ? accent : AppColors.textSecondary,
+                size: 22,
               ),
               const SizedBox(height: 5),
               Text(
@@ -247,7 +220,9 @@ class _DockItem extends StatelessWidget {
                   fontSize: 10.5,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
                   letterSpacing: 0,
-                  color: selected ? Colors.white : AppColors.textMuted,
+                  color: selected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -278,11 +253,6 @@ class _SystemAtmospherePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = .8
       ..color = AppColors.textPrimary.withValues(alpha: .055);
-    final contornoAscensao = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = AppColors.ascension.withValues(alpha: .11);
-
     _desenharIlhaDeRelevo(
       canvas,
       size,
@@ -297,30 +267,6 @@ class _SystemAtmospherePainter extends CustomPainter {
       raio: size.width * .50,
       tinta: contorno,
     );
-
-    final rota = Path()
-      ..moveTo(size.width * .50, size.height * .04)
-      ..cubicTo(
-        size.width * .39,
-        size.height * .22,
-        size.width * .66,
-        size.height * .38,
-        size.width * .51,
-        size.height * .55,
-      )
-      ..cubicTo(
-        size.width * .37,
-        size.height * .72,
-        size.width * .63,
-        size.height * .84,
-        size.width * .48,
-        size.height,
-      );
-    canvas.drawPath(rota, contornoAscensao);
-    final marco = Paint()..color = AppColors.ascension.withValues(alpha: .2);
-    for (final fator in [.18, .48, .76]) {
-      canvas.drawCircle(Offset(size.width * .5, size.height * fator), 3, marco);
-    }
   }
 
   void _desenharIlhaDeRelevo(

@@ -9,13 +9,13 @@ final repositorioJornadaProvider = Provider<RepositorioJornada>(
   (ref) => RepositorioJornada(),
 );
 
-final jornadaProvider = StateNotifierProvider<JornadaNotifier, EstadoJornadas>(
-  (ref) {
-    final notifier = JornadaNotifier(ref.read(repositorioJornadaProvider));
-    ref.onDispose(notifier.dispose);
-    return notifier;
-  },
-);
+final jornadaProvider = StateNotifierProvider<JornadaNotifier, EstadoJornadas>((
+  ref,
+) {
+  final notifier = JornadaNotifier(ref.read(repositorioJornadaProvider));
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
 
 class EstadoJornadas {
   const EstadoJornadas({
@@ -63,7 +63,10 @@ class JornadaNotifier extends StateNotifier<EstadoJornadas> {
   Future<void> recarregar() async {
     state = state.copiarCom(carregando: true, erro: null);
     try {
-      state = EstadoJornadas(jornadas: await _repositorio.listar(), carregando: false);
+      state = EstadoJornadas(
+        jornadas: await _repositorio.listar(),
+        carregando: false,
+      );
     } catch (erro) {
       state = state.copiarCom(carregando: false, erro: erro);
     }
@@ -79,7 +82,10 @@ class JornadaNotifier extends StateNotifier<EstadoJornadas> {
       objetivo: objetivo,
       motivacao: motivacao,
     );
-    state = EstadoJornadas(jornadas: [jornada, ...state.jornadas], carregando: false);
+    state = EstadoJornadas(
+      jornadas: [jornada, ...state.jornadas],
+      carregando: false,
+    );
   }
 
   Future<void> pausar(String jornadaId) async {
@@ -92,10 +98,32 @@ class JornadaNotifier extends StateNotifier<EstadoJornadas> {
     );
   }
 
-  Future<void> atualizar({required String jornadaId, required String titulo, required String objetivo, String? motivacao}) async {
-    final atualizada = await _repositorio.atualizar(jornadaId: jornadaId, titulo: titulo, objetivo: objetivo, motivacao: motivacao);
+  Future<void> retomar(String jornadaId) async {
+    final atualizada = await _repositorio.retomar(jornadaId);
     state = EstadoJornadas(
-      jornadas: state.jornadas.map((jornada) => jornada.id == jornadaId ? atualizada : jornada).toList(growable: false),
+      jornadas: state.jornadas
+          .map((jornada) => jornada.id == jornadaId ? atualizada : jornada)
+          .toList(growable: false),
+      carregando: false,
+    );
+  }
+
+  Future<void> atualizar({
+    required String jornadaId,
+    required String titulo,
+    required String objetivo,
+    String? motivacao,
+  }) async {
+    final atualizada = await _repositorio.atualizar(
+      jornadaId: jornadaId,
+      titulo: titulo,
+      objetivo: objetivo,
+      motivacao: motivacao,
+    );
+    state = EstadoJornadas(
+      jornadas: state.jornadas
+          .map((jornada) => jornada.id == jornadaId ? atualizada : jornada)
+          .toList(growable: false),
       carregando: false,
     );
   }

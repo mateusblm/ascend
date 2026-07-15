@@ -1,13 +1,12 @@
 import 'package:ascend/core/theme/app_colors.dart';
-import 'package:ascend/core/theme/ascend_design_tokens.dart';
 import 'package:flutter/material.dart';
 
 class AscendSystemPanel extends StatelessWidget {
   const AscendSystemPanel({
     super.key,
     required this.child,
-    this.accent = AscendDesignTokens.systemLine,
-    this.padding = const EdgeInsets.all(20),
+    this.accent = AppColors.ascension,
+    this.padding = const EdgeInsets.all(16),
   });
 
   final Widget child;
@@ -20,18 +19,9 @@ class AscendSystemPanel extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AscendDesignTokens.radiusPanel),
-        border: Border.all(color: accent.withValues(alpha: 0.26)),
-        boxShadow: AscendDesignTokens.elevatedSystemShadow(accent),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.075),
-            AppColors.surface.withValues(alpha: 0.98),
-            AppColors.background.withValues(alpha: 0.98),
-          ],
-        ),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderStrong),
       ),
       child: Stack(
         children: [
@@ -40,9 +30,9 @@ class AscendSystemPanel extends StatelessWidget {
             right: 0,
             child: IgnorePointer(
               child: Container(
-                width: 92,
-                height: 1,
-                color: accent.withValues(alpha: 0.34),
+                width: 28,
+                height: 2,
+                color: accent,
               ),
             ),
           ),
@@ -52,8 +42,8 @@ class AscendSystemPanel extends StatelessWidget {
             child: IgnorePointer(
               child: Container(
                 width: 1,
-                height: 92,
-                color: accent.withValues(alpha: 0.18),
+                height: 28,
+                color: AppColors.borderStrong,
               ),
             ),
           ),

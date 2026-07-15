@@ -81,10 +81,25 @@ String questResultSnackBarMessage(Quest quest, QuestCompletionResult result) {
 
 enum QuestCompletionResult { success, notFound, alreadyCompleted, invalidFlow }
 
+/// Uma confirmação idempotente do backend é uma reconciliação válida, não erro.
+bool isQuestMutationReconciled(QuestCompletionResult result) =>
+    result == QuestCompletionResult.success ||
+    result == QuestCompletionResult.alreadyCompleted;
+
+/// Reconstitui o inventário sem descartar uma escrita local ainda ausente no
+/// backend. Para o mesmo id, o registro remoto continua canônico.
+List<Quest> mergeQuestInventoriesForRestore({
+  required List<Quest> remote,
+  required List<Quest> local,
+}) {
+  final remoteIds = remote.map((quest) => quest.id).toSet();
+  return [...remote, ...local.where((quest) => !remoteIds.contains(quest.id))];
+}
+
 /// Controla apenas quests pessoais. XP e atributos sao confirmados pelo backend Java.
 class QuestNotifier extends StateNotifier<List<Quest>> {
   QuestNotifier(this.ref, this._isar, this._repositorio, this._ritualRota)
-      : super(const []) {
+    : super(const []) {
     _assinaturaAuth = FirebaseAuth.instance.authStateChanges().listen(
       _carregarUsuario,
     );
@@ -97,8 +112,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   final RitualRotaService _ritualRota;
   StreamSubscription<User?>? _assinaturaAuth;
   String? _uid;
+  int _versaoCarregamento = 0;
+  String? _ultimaFalhaMutacao;
+
+  String? get ultimaFalhaMutacao => _ultimaFalhaMutacao;
 
   Future<void> _carregarUsuario(User? usuario) async {
+    final versao = ++_versaoCarregamento;
     _uid = usuario?.uid;
     if (usuario == null) {
       state = const [];
@@ -112,7 +132,18 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     state = locais;
     try {
       final remotas = await _repositorio.watchQuests(usuario.uid).first;
-      if (remotas.isNotEmpty) _substituir(remotas, sincronizar: false);
+      if (versao != _versaoCarregamento || _uid != usuario.uid) return;
+      final locaisAtuais = state
+          .where((quest) => quest.ownerUid == usuario.uid)
+          .toList(growable: false);
+      final restauradas = mergeQuestInventoriesForRestore(
+        remote: remotas,
+        local: locaisAtuais,
+      );
+      _substituir(restauradas, sincronizar: false);
+      if (restauradas.length > remotas.length) {
+        unawaited(_sincronizarInventario(usuario.uid, restauradas));
+      }
     } catch (_) {
       // O cache local preserva o fluxo quando a rede estiver indisponivel.
     }
@@ -131,12 +162,14 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     AttributeType atributo,
     int xp, {
     String? jornadaId,
+    DateTime? plannedFor,
   }) {
     final quest = Quest(
       ownerUid: _uid,
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: titulo,
       journeyId: jornadaId,
+      plannedFor: plannedFor,
       rewardAttribute: atributo,
       xpReward: normalizePersonalQuestXp(xp),
     );
@@ -158,8 +191,12 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       }
     }
     final uid = _uid;
+    _ultimaFalhaMutacao = null;
     if (quest == null) return QuestCompletionResult.notFound;
-    if (uid == null) return QuestCompletionResult.invalidFlow;
+    if (uid == null) {
+      _ultimaFalhaMutacao = 'Sessão do usuário indisponível. Entre novamente.';
+      return QuestCompletionResult.invalidFlow;
+    }
     try {
       final resultado = quest.isCompleted
           ? await _repositorio.revokePersonalQuestCompletion(
@@ -183,21 +220,36 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
           ? QuestCompletionResult.alreadyCompleted
           : QuestCompletionResult.success;
     } on ActiveSessionConflictException {
+      _ultimaFalhaMutacao =
+          'A sessão ativa mudou. Atualize a conta e tente novamente.';
       return QuestCompletionResult.invalidFlow;
-    } catch (_) {
-      // A recompensa permanece autoritativa: em falha remota, nada e alterado localmente.
+    } catch (error) {
+      _ultimaFalhaMutacao = error.toString().replaceFirst('Exception: ', '');
+      // A recompensa permanece autoritativa: em falha remota, nada é alterado localmente.
       return QuestCompletionResult.invalidFlow;
     }
   }
 
-  Future<bool> addRecurringQuest(String titulo, AttributeType atributo, List<int> diasSemana, {String? jornadaId}) async {
+  Future<bool> addRecurringQuest(
+    String titulo,
+    AttributeType atributo,
+    List<int> diasSemana, {
+    String? jornadaId,
+  }) async {
     if (_uid == null || diasSemana.isEmpty) return false;
     try {
-      await _repositorio.createRecurringQuest(title: titulo, attribute: atributo, weekdays: diasSemana, journeyId: jornadaId);
+      await _repositorio.createRecurringQuest(
+        title: titulo,
+        attribute: atributo,
+        weekdays: diasSemana,
+        journeyId: jornadaId,
+      );
       final remotas = await _repositorio.watchQuests(_uid!).first;
       _substituir(remotas, sincronizar: false);
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> pausarRotina(String recurrenceId) async {
@@ -206,29 +258,47 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       final remotas = await _repositorio.watchQuests(_uid!).first;
       _substituir(remotas, sincronizar: false);
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> arquivarQuest(String id) async {
     final quest = state.where((item) => item.id == id).firstOrNull;
     if (quest == null || _uid == null || quest.isCompleted) return false;
     try {
-      final atualizada = await _repositorio.archivePersonalQuest(uid: _uid!, quest: quest);
+      final atualizada = await _repositorio.archivePersonalQuest(
+        uid: _uid!,
+        quest: quest,
+      );
       state = state.map((item) => item.id == id ? atualizada : item).toList();
       _persistirLocal();
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> reagendarQuest(String id, DateTime quando) async {
     final quest = state.where((item) => item.id == id).firstOrNull;
-    if (quest == null || _uid == null || quest.isCompleted || quest.isArchived) return false;
+    if (quest == null ||
+        _uid == null ||
+        quest.isCompleted ||
+        quest.isArchived) {
+      return false;
+    }
     try {
-      final atualizada = await _repositorio.reschedulePersonalQuest(uid: _uid!, quest: quest, plannedFor: quando);
+      final atualizada = await _repositorio.reschedulePersonalQuest(
+        uid: _uid!,
+        quest: quest,
+        plannedFor: quando,
+      );
       state = state.map((item) => item.id == id ? atualizada : item).toList();
       _persistirLocal();
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      return false;
+    }
   }
 
   void ensureDailyReset() {}
@@ -238,7 +308,16 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _persistirLocal();
     unawaited(_ritualRota.sync(state));
     if (sincronizar && _uid != null) {
-      unawaited(_repositorio.replaceQuests(uid: _uid!, quests: state));
+      unawaited(_sincronizarInventario(_uid!, state));
+    }
+  }
+
+  Future<void> _sincronizarInventario(String uid, List<Quest> quests) async {
+    try {
+      await _repositorio.replaceQuests(uid: uid, quests: quests);
+    } catch (_) {
+      // O inventário em Isar permanece como fonte de restauração até a próxima
+      // sincronização bem-sucedida.
     }
   }
 

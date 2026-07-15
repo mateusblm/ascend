@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:ascend/core/widgets/system/ascend_system_catalog_screen.dart';
+
 import 'package:ascend/core/analytics/analytics_service.dart';
 import 'package:ascend/core/crash/crash_reporting_service.dart';
 import 'package:ascend/core/database/isar_provider.dart';
@@ -20,57 +22,58 @@ import 'package:path_provider/path_provider.dart';
 void main() {
   AppCrashReporter crashReporter = const NoopAppCrashReporter();
 
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp();
-    crashReporter = buildAppCrashReporter();
-    await crashReporter.initialize();
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp();
+      crashReporter = buildAppCrashReporter();
+      await crashReporter.initialize();
 
-    final dir = await getApplicationDocumentsDirectory();
-    final isar = await Isar.open(
-      [PlayerSchema, QuestSchema],
-      directory: dir.path,
-    );
+      final dir = await getApplicationDocumentsDirectory();
+      final isar = await Isar.open([
+        PlayerSchema,
+        QuestSchema,
+      ], directory: dir.path);
 
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      unawaited(crashReporter.recordFlutterFatal(details));
-    };
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        unawaited(crashReporter.recordFlutterFatal(details));
+      };
 
-    PlatformDispatcher.instance.onError = (error, stack) {
+      PlatformDispatcher.instance.onError = (error, stack) {
+        unawaited(
+          crashReporter.recordError(
+            error,
+            stack,
+            reason: 'platform_dispatcher',
+            fatal: true,
+          ),
+        );
+        return true;
+      };
+
+      runApp(
+        ProviderScope(
+          overrides: [
+            isarProvider.overrideWithValue(isar),
+            crashReportingProvider.overrideWithValue(crashReporter),
+          ],
+          observers: [CrashReportingObserver(crashReporter)],
+          child: const AscendApp(),
+        ),
+      );
+    },
+    (error, stack) {
       unawaited(
         crashReporter.recordError(
           error,
           stack,
-          reason: 'platform_dispatcher',
+          reason: 'run_zoned_guarded',
           fatal: true,
         ),
       );
-      return true;
-    };
-
-    runApp(
-      ProviderScope(
-        overrides: [
-          isarProvider.overrideWithValue(isar),
-          crashReportingProvider.overrideWithValue(crashReporter),
-        ],
-        observers: [
-          CrashReportingObserver(crashReporter),
-        ],
-        child: const AscendApp(),
-      ),
-    );
-  }, (error, stack) {
-    unawaited(
-      crashReporter.recordError(
-        error,
-        stack,
-        reason: 'run_zoned_guarded',
-        fatal: true,
-      ),
-    );
-  });
+    },
+  );
 }
 
 class AscendApp extends ConsumerWidget {
@@ -84,11 +87,15 @@ class AscendApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Ascend RPG',
       debugShowCheckedModeBanner: false,
-      navigatorObservers: [
-        if (analyticsObserver != null) analyticsObserver,
-      ],
+      navigatorObservers: [if (analyticsObserver != null) analyticsObserver],
+      routes: {
+        if (const bool.fromEnvironment('dart.vm.product') == false)
+          '/system-catalog': (_) => const AscendSystemCatalogScreen(),
+      },
       theme: AppTheme.dark(),
-      home: authState is AuthSuccess ? const MainNavigationScreen() : const LoginScreen(),
+      home: authState is AuthSuccess
+          ? const MainNavigationScreen()
+          : const LoginScreen(),
     );
   }
 }

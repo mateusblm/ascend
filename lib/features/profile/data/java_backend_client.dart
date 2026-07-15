@@ -22,8 +22,16 @@ class JavaBackendClient {
     return _decode(response);
   }
 
-  Future<Map<String, dynamic>> fetchRecommendedMission({required String idToken}) async {
-    final response = await _httpClient.get(_uri('/api/v1/recommended-mission'), headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+  Future<Map<String, dynamic>> fetchRecommendedMission({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/recommended-mission'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
     return _decode(response);
   }
 
@@ -40,9 +48,16 @@ class JavaBackendClient {
     return _decodeList(response);
   }
 
-  Future<List<Map<String, dynamic>>> fetchJourneyLegacy({required String idToken}) async {
-    final response = await _httpClient.get(_uri('/api/v1/journeys/legacy'),
-      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+  Future<List<Map<String, dynamic>>> fetchJourneyLegacy({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/journeys/legacy'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
     return _decodeList(response);
   }
 
@@ -71,6 +86,15 @@ class JavaBackendClient {
     body: const {},
   );
 
+  Future<Map<String, dynamic>> resumeJourney({
+    required String idToken,
+    required String journeyId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/$journeyId/resume',
+    idToken: idToken,
+    body: const {},
+  );
+
   Future<Map<String, dynamic>> updateJourney({
     required String idToken,
     required String journeyId,
@@ -80,7 +104,11 @@ class JavaBackendClient {
   }) => _postJson(
     endpointPath: '/api/v1/journeys/$journeyId/update',
     idToken: idToken,
-    body: {'titulo': title, 'objetivo': objective, 'motivacao': motivation ?? ''},
+    body: {
+      'titulo': title,
+      'objetivo': objective,
+      'motivacao': motivation ?? '',
+    },
   );
 
   Future<List<Map<String, dynamic>>> fetchJourneyChapters({
@@ -89,7 +117,10 @@ class JavaBackendClient {
   }) async {
     final response = await _httpClient.get(
       _uri('/api/v1/journeys/$journeyId/chapters'),
-      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'},
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
     );
     return _decodeList(response);
   }
@@ -121,7 +152,10 @@ class JavaBackendClient {
   }) async {
     final response = await _httpClient.get(
       _uri('/api/v1/journeys/chapters/$chapterId/milestones'),
-      headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'},
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
     );
     return _decodeList(response);
   }
@@ -135,9 +169,23 @@ class JavaBackendClient {
     body: const {},
   );
 
-  Future<Map<String, dynamic>> completeJourneyChapter({required String idToken, required String chapterId}) => _postJson(endpointPath: '/api/v1/journeys/chapters/$chapterId/complete', idToken: idToken, body: const {});
+  Future<Map<String, dynamic>> completeJourneyChapter({
+    required String idToken,
+    required String chapterId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/chapters/$chapterId/complete',
+    idToken: idToken,
+    body: const {},
+  );
 
-  Future<Map<String, dynamic>> completeJourney({required String idToken, required String journeyId}) => _postJson(endpointPath: '/api/v1/journeys/$journeyId/complete', idToken: idToken, body: const {});
+  Future<Map<String, dynamic>> completeJourney({
+    required String idToken,
+    required String journeyId,
+  }) => _postJson(
+    endpointPath: '/api/v1/journeys/$journeyId/complete',
+    idToken: idToken,
+    body: const {},
+  );
 
   Future<void> syncQuestInventory({
     required String idToken,
@@ -210,7 +258,7 @@ class JavaBackendClient {
     body: {
       'deviceSessionId': deviceSessionId,
       'questId': questId,
-      'plannedFor': plannedFor.toIso8601String(),
+      'plannedFor': plannedFor.toUtc().toIso8601String(),
     },
   );
 
@@ -233,13 +281,26 @@ class JavaBackendClient {
     },
   );
 
-  Future<void> pauseRecurringQuest({required String idToken, required String deviceSessionId, required String recurrenceId}) async {
-    await _postJson(endpointPath: '/api/v1/quests/recurring/$recurrenceId:pause', idToken: idToken,
-      body: {'deviceSessionId': deviceSessionId, 'questId': recurrenceId});
+  Future<void> pauseRecurringQuest({
+    required String idToken,
+    required String deviceSessionId,
+    required String recurrenceId,
+  }) async {
+    await _postJson(
+      endpointPath: '/api/v1/quests/recurring/$recurrenceId:pause',
+      idToken: idToken,
+      body: {'deviceSessionId': deviceSessionId, 'questId': recurrenceId},
+    );
   }
 
   Future<Map<String, dynamic>> fetchRecovery({required String idToken}) async {
-    final response = await _httpClient.get(_uri('/api/v1/recovery'), headers: {'Authorization': 'Bearer $idToken', 'Accept': 'application/json'});
+    final response = await _httpClient.get(
+      _uri('/api/v1/recovery'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
     return _decode(response);
   }
 

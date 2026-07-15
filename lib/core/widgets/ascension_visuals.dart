@@ -38,10 +38,13 @@ class GlifoAscensao extends StatelessWidget {
   final Color cor;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: tamanho,
-    height: tamanho,
-    child: CustomPaint(painter: _GlifoAscensaoPainter(cor)),
+  Widget build(BuildContext context) => Semantics(
+    label: 'Glifo de Ascensão',
+    child: SizedBox(
+      width: tamanho,
+      height: tamanho,
+      child: CustomPaint(painter: _GlifoAscensaoPainter(cor)),
+    ),
   );
 }
 
@@ -95,10 +98,13 @@ class EixoAscensao extends StatelessWidget {
   final double altura;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 28,
-    height: altura,
-    child: CustomPaint(painter: _EixoAscensaoPainter(cor, concluido)),
+  Widget build(BuildContext context) => Semantics(
+    label: concluido ? 'Etapa concluída' : 'Etapa pendente',
+    child: SizedBox(
+      width: 28,
+      height: altura,
+      child: CustomPaint(painter: _EixoAscensaoPainter(cor, concluido)),
+    ),
   );
 }
 

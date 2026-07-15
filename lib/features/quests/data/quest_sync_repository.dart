@@ -208,13 +208,28 @@ class QuestSyncRepository {
     }
   }
 
-  Future<Quest> archivePersonalQuest({required String uid, required Quest quest}) =>
-      _mutateLifecycle(uid: uid, quest: quest, action: 'arquivar');
+  Future<Quest> archivePersonalQuest({
+    required String uid,
+    required Quest quest,
+  }) => _mutateLifecycle(uid: uid, quest: quest, action: 'arquivar');
 
-  Future<Quest> reschedulePersonalQuest({required String uid, required Quest quest, required DateTime plannedFor}) =>
-      _mutateLifecycle(uid: uid, quest: quest, action: 'reagendar', plannedFor: plannedFor);
+  Future<Quest> reschedulePersonalQuest({
+    required String uid,
+    required Quest quest,
+    required DateTime plannedFor,
+  }) => _mutateLifecycle(
+    uid: uid,
+    quest: quest,
+    action: 'reagendar',
+    plannedFor: plannedFor,
+  );
 
-  Future<void> createRecurringQuest({required String title, required AttributeType attribute, required List<int> weekdays, String? journeyId}) async {
+  Future<void> createRecurringQuest({
+    required String title,
+    required AttributeType attribute,
+    required List<int> weekdays,
+    String? journeyId,
+  }) async {
     await _sessionRepository.registerActiveSession();
     final client = _javaBackendClientObrigatorio('criar rotina semanal');
     final token = await _idTokenObrigatorio('criar rotina semanal');
@@ -230,20 +245,37 @@ class QuestSyncRepository {
 
   Future<void> pauseRecurringQuest(String recurrenceId) async {
     await _sessionRepository.registerActiveSession();
-    await _javaBackendClientObrigatorio('pausar rotina semanal').pauseRecurringQuest(
+    await _javaBackendClientObrigatorio(
+      'pausar rotina semanal',
+    ).pauseRecurringQuest(
       idToken: await _idTokenObrigatorio('pausar rotina semanal'),
-      deviceSessionId: await _sessionRepository.deviceSessionId(), recurrenceId: recurrenceId,
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+      recurrenceId: recurrenceId,
     );
   }
 
-  Future<Quest> _mutateLifecycle({required String uid, required Quest quest, required String action, DateTime? plannedFor}) async {
+  Future<Quest> _mutateLifecycle({
+    required String uid,
+    required Quest quest,
+    required String action,
+    DateTime? plannedFor,
+  }) async {
     await _sessionRepository.registerActiveSession();
     final client = _javaBackendClientObrigatorio('$action quest pessoal');
     final token = await _idTokenObrigatorio('$action quest pessoal');
     final sessionId = await _sessionRepository.deviceSessionId();
     final response = action == 'arquivar'
-        ? await client.archivePersonalQuest(idToken: token, deviceSessionId: sessionId, questId: quest.id)
-        : await client.reschedulePersonalQuest(idToken: token, deviceSessionId: sessionId, questId: quest.id, plannedFor: plannedFor!);
+        ? await client.archivePersonalQuest(
+            idToken: token,
+            deviceSessionId: sessionId,
+            questId: quest.id,
+          )
+        : await client.reschedulePersonalQuest(
+            idToken: token,
+            deviceSessionId: sessionId,
+            questId: quest.id,
+            plannedFor: plannedFor!,
+          );
     return parseQuestSyncData(response, uid: uid, questId: quest.id);
   }
 
@@ -361,7 +393,8 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
 
 String? _timestampOrNull(DateTime? value) {
   if (value == null) return null;
-  return value.toIso8601String();
+  // O contrato Java valida datas com Instant.parse, que exige offset/fuso.
+  return value.toUtc().toIso8601String();
 }
 
 DateTime? _dateFrom(Object? value) {

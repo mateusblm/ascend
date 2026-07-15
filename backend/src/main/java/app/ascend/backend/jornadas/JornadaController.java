@@ -44,6 +44,11 @@ public class JornadaController {
     return service.pausar(usuario.uid(), jornadaId);
   }
 
+  @PostMapping("/{jornadaId}/resume")
+  public Jornada retomar(UsuarioAutenticado usuario, @PathVariable String jornadaId) {
+    return service.retomar(usuario.uid(), jornadaId);
+  }
+
   @PostMapping("/{jornadaId}/update")
   public Jornada atualizar(UsuarioAutenticado usuario, @PathVariable String jornadaId,
       @Valid @RequestBody RequisicaoAtualizacaoJornada requisicao) {

@@ -4,6 +4,7 @@ import app.ascend.backend.compartilhado.ExcecaoApi;
 import com.google.cloud.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,8 @@ public class RecorrenciaQuestService {
         insert into recorrencias_quest(id, uid, titulo, atributo_recompensa, xp_recompensa, jornada_id, dias_semana)
         values (?, ?, ?, ?, ?, ?, ?)
         """, id, uid, requisicao.title().trim(), requisicao.rewardAttribute(), 12,
-        textoNulo(requisicao.journeyId()), requisicao.weekdays().toArray(Integer[]::new));
+        textoNulo(requisicao.journeyId()), requisicao.weekdays().stream()
+            .map(Integer::shortValue).toArray(Short[]::new));
     gerarOcorrencias(uid);
     return Map.of("id", id, "active", true);
   }
@@ -67,7 +69,7 @@ public class RecorrenciaQuestService {
         from recorrencias_quest where uid = ? and ativa = true
         """, (resultado, linha) -> new Definicao(resultado.getString(1), resultado.getString(2),
         resultado.getString(3), resultado.getInt(4), resultado.getString(5),
-        resultado.getArray(6) == null ? List.of() : List.of((Integer[]) resultado.getArray(6).getArray())), uid);
+        diasSemana(resultado.getArray(6))), uid);
     LocalDate hoje = LocalDate.now(ZoneId.systemDefault());
     for (Definicao definicao : definicoes) {
       for (int deslocamento = 0; deslocamento < 30; deslocamento++) {
@@ -92,5 +94,16 @@ public class RecorrenciaQuestService {
   }
 
   private String textoNulo(String valor) { return valor == null || valor.isBlank() ? null : valor; }
+
+  /** PostgreSQL retorna smallint[] como Short[]; a API trabalha com inteiros de 1 a 7. */
+  private List<Integer> diasSemana(java.sql.Array array) throws java.sql.SQLException {
+    if (array == null || !(array.getArray() instanceof Object[] valores)) return List.of();
+    return Arrays.stream(valores)
+        .filter(Number.class::isInstance)
+        .map(Number.class::cast)
+        .map(Number::intValue)
+        .toList();
+  }
+
   private record Definicao(String id, String titulo, String atributo, int xp, String jornadaId, List<Integer> diasSemana) { }
 }

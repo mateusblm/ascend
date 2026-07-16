@@ -42,35 +42,39 @@ class _ActivityExecutionModalState
   @override
   Widget build(BuildContext context) {
     final catalog = ref.watch(activityCatalogProvider);
-    return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.deepSystem,
-        border: Border(top: BorderSide(color: AppColors.systemCyan)),
-        borderRadius: BorderRadius.only(topRight: Radius.circular(24)),
-      ),
-      child: catalog.when(
-        loading: () => Semantics(
-          label: 'Carregando formulário de execução',
-          child: Center(child: CircularProgressIndicator()),
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         ),
-        error: (_, __) => ActivityExecutionErrorState(
-          onRetry: () => ref.invalidate(activityCatalogProvider),
+        decoration: const BoxDecoration(
+          color: AppColors.deepSystem,
+          border: Border(top: BorderSide(color: AppColors.systemCyan)),
+          borderRadius: BorderRadius.only(topRight: Radius.circular(24)),
         ),
-        data: (value) {
-          final activity = value.findActivity(widget.quest.activityId ?? '');
-          if (activity == null ||
-              activity.executionType != widget.quest.executionType ||
-              activity.schemaVersion != widget.quest.activitySchemaVersion) {
-            return const _InvalidActivityState();
-          }
-          return _buildForm(activity);
-        },
+        child: catalog.when(
+          loading: () => Semantics(
+            label: 'Carregando formulário de execução',
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, __) => ActivityExecutionErrorState(
+            onRetry: () => ref.invalidate(activityCatalogProvider),
+          ),
+          data: (value) {
+            final activity = value.findActivity(widget.quest.activityId ?? '');
+            if (activity == null ||
+                activity.executionType != widget.quest.executionType ||
+                activity.schemaVersion != widget.quest.activitySchemaVersion) {
+              return const _InvalidActivityState();
+            }
+            return _buildForm(activity);
+          },
+        ),
       ),
     );
   }
@@ -86,11 +90,6 @@ class _ActivityExecutionModalState
           Text(
             widget.quest.title,
             style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Os resultados calculados e qualquer recompensa são confirmados pelo servidor.',
-            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 18),
           ..._executionFields(activity, inputs),
@@ -210,13 +209,16 @@ class _ActivityExecutionModalState
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: '${_metricLabel(metric.id)}${metric.required ? ' *' : ''}',
-          helperText: '${metric.unit} · ${metric.minimum}–${metric.maximum}',
+          helperText:
+              '${_metricUnit(metric.unit)} · ${_metricNumber(metric.minimum)}–${_metricNumber(metric.maximum)}',
         ),
       ),
     );
   }
 
   String _metricLabel(String id) => switch (id) {
+    'repetitions' => 'Repetições',
+    'loadKg' => 'Carga (kg)',
     'distanceKm' => 'Distância (km)',
     'durationMinutes' => 'Duração (minutos)',
     'perceivedExertion' => 'Esforço percebido (1–10)',
@@ -226,6 +228,18 @@ class _ActivityExecutionModalState
     'learning' => 'Principal aprendizado',
     _ => id,
   };
+
+  String _metricUnit(String unit) => switch (unit) {
+    'reps' => 'repetições',
+    'questions' => 'questões',
+    'score' => 'nível',
+    'text' => 'texto',
+    _ => unit,
+  };
+
+  String _metricNumber(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 
   Future<void> _submit(
     ActivityDefinition activity,

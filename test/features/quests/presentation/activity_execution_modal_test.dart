@@ -17,6 +17,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('SÉRIES'), findsOneWidget);
+    expect(find.byType(SafeArea), findsOneWidget);
+    expect(find.textContaining('confirmados pelo servidor'), findsNothing);
     expect(find.byTooltip('Copiar série anterior'), findsOneWidget);
     expect(
       find.bySemanticsLabel('Registrar execução da atividade'),

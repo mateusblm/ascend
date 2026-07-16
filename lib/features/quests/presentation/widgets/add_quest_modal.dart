@@ -59,179 +59,184 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
         (isGuided
             ? _controller.text.trim().isNotEmpty && _selectedActivity != null
             : _controller.text.trim().isNotEmpty);
-    return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 14,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.deepSystem,
-        border: Border(top: BorderSide(color: AppColors.systemCyan)),
-        borderRadius: BorderRadius.only(topRight: Radius.circular(24)),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'NOVA MISSÃO',
-              style: TextStyle(
-                color: AppColors.systemCyan,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: .8,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _mode == null
-                  ? 'Como deseja criar sua missão?'
-                  : isGuided
-                  ? 'Configure sua missão guiada'
-                  : 'Qual ação será executada?',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _mode == null
-                  ? 'Você pode registrar um passo livre ou partir de uma atividade do catálogo.'
-                  : isGuided
-                  ? 'A atividade define o modelo de execução e a distribuição de atributos.'
-                  : 'Registre um passo claro. A recompensa segue as regras atuais do Sistema.',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12.5,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (_mode == null) _buildModeSelection(),
-            if (_mode == _QuestCreationMode.quick) _buildPersonalForm(jornadas),
-            if (isGuided) _buildGuidedForm(jornadas, catalog!),
-            const SizedBox(height: 24),
-            if (_mode != null)
-              SizedBox(
-                width: double.infinity,
-                child: Semantics(
-                  button: true,
-                  enabled: canSubmit,
-                  label: _enviando ? 'Registrando missão' : 'Criar missão',
-                  child: FilledButton(
-                    onPressed: !canSubmit
-                        ? null
-                        : () async {
-                            setState(() => _enviando = true);
-                            try {
-                              if (isGuided) {
-                                final category = _selectedCategory!;
-                                final modality = _selectedModality!;
-                                final activity = _selectedActivity!;
-                                ref
-                                    .read(questProvider.notifier)
-                                    .addGuidedQuest(
-                                      title: _controller.text.trim(),
-                                      rewardAttribute: _primaryAttribute(
-                                        activity.attributeDistribution,
-                                      ),
-                                      categoryId: category.id,
-                                      modalityId: modality.id,
-                                      activityId: activity.id,
-                                      executionType: activity.executionType,
-                                      schemaVersion: activity.schemaVersion,
-                                      jornadaId: _jornadaSelecionada,
-                                      plannedFor: _planejadaPara,
-                                    );
-                              } else if (_recorrente) {
-                                if (_diasSemana.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Escolha ao menos um dia da semana.',
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                final criada = await ref
-                                    .read(questProvider.notifier)
-                                    .addRecurringQuest(
-                                      _controller.text.trim(),
-                                      _selectedAttribute,
-                                      _diasSemana.toList(),
-                                      jornadaId: _jornadaSelecionada,
-                                    );
-                                if (!context.mounted) return;
-                                if (!criada) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Não foi possível criar a rotina agora.',
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                              } else {
-                                ref
-                                    .read(questProvider.notifier)
-                                    .addPersonalQuest(
-                                      _controller.text.trim(),
-                                      _selectedAttribute,
-                                      personalQuestDefaultXp,
-                                      jornadaId: _jornadaSelecionada,
-                                      plannedFor: _planejadaPara,
-                                    );
-                              }
-                              FocusScope.of(context).unfocus();
-                              if (context.mounted) Navigator.pop(context);
-                            } finally {
-                              if (mounted) setState(() => _enviando = false);
-                            }
-                          },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.ascendBlue,
-                      foregroundColor: AppColors.voidBlue,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          bottomRight: Radius.circular(16),
-                        ),
-                      ),
-                    ),
-                    child: _enviando
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.voidBlue,
-                            ),
-                          )
-                        : Text(
-                            isGuided
-                                ? 'CRIAR MISSÃO GUIADA'
-                                : _recorrente
-                                ? 'REGISTRAR ROTINA'
-                                : 'REGISTRAR MISSÃO',
-                          ),
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 14,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.deepSystem,
+          border: Border(top: BorderSide(color: AppColors.systemCyan)),
+          borderRadius: BorderRadius.only(topRight: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 16),
+              const Text(
+                'NOVA MISSÃO',
+                style: TextStyle(
+                  color: AppColors.systemCyan,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .8,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _mode == null
+                    ? 'Como deseja criar sua missão?'
+                    : isGuided
+                    ? 'Configure sua missão guiada'
+                    : 'Qual ação será executada?',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _mode == null
+                    ? 'Você pode registrar um passo livre ou partir de uma atividade do catálogo.'
+                    : isGuided
+                    ? 'A atividade define o modelo de execução e a distribuição de atributos.'
+                    : 'Registre um passo claro. A recompensa segue as regras atuais do Sistema.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (_mode == null) _buildModeSelection(),
+              if (_mode == _QuestCreationMode.quick)
+                _buildPersonalForm(jornadas),
+              if (isGuided) _buildGuidedForm(jornadas, catalog!),
+              const SizedBox(height: 24),
+              if (_mode != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: Semantics(
+                    button: true,
+                    enabled: canSubmit,
+                    label: _enviando ? 'Registrando missão' : 'Criar missão',
+                    child: FilledButton(
+                      onPressed: !canSubmit
+                          ? null
+                          : () async {
+                              setState(() => _enviando = true);
+                              try {
+                                if (isGuided) {
+                                  final category = _selectedCategory!;
+                                  final modality = _selectedModality!;
+                                  final activity = _selectedActivity!;
+                                  ref
+                                      .read(questProvider.notifier)
+                                      .addGuidedQuest(
+                                        title: _controller.text.trim(),
+                                        rewardAttribute: _primaryAttribute(
+                                          activity.attributeDistribution,
+                                        ),
+                                        categoryId: category.id,
+                                        modalityId: modality.id,
+                                        activityId: activity.id,
+                                        executionType: activity.executionType,
+                                        schemaVersion: activity.schemaVersion,
+                                        jornadaId: _jornadaSelecionada,
+                                        plannedFor: _planejadaPara,
+                                      );
+                                } else if (_recorrente) {
+                                  if (_diasSemana.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Escolha ao menos um dia da semana.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  final criada = await ref
+                                      .read(questProvider.notifier)
+                                      .addRecurringQuest(
+                                        _controller.text.trim(),
+                                        _selectedAttribute,
+                                        _diasSemana.toList(),
+                                        jornadaId: _jornadaSelecionada,
+                                      );
+                                  if (!context.mounted) return;
+                                  if (!criada) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Não foi possível criar a rotina agora.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                } else {
+                                  ref
+                                      .read(questProvider.notifier)
+                                      .addPersonalQuest(
+                                        _controller.text.trim(),
+                                        _selectedAttribute,
+                                        personalQuestDefaultXp,
+                                        jornadaId: _jornadaSelecionada,
+                                        plannedFor: _planejadaPara,
+                                      );
+                                }
+                                FocusScope.of(context).unfocus();
+                                if (context.mounted) Navigator.pop(context);
+                              } finally {
+                                if (mounted) setState(() => _enviando = false);
+                              }
+                            },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.ascendBlue,
+                        foregroundColor: AppColors.voidBlue,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(4),
+                            bottomRight: Radius.circular(16),
+                          ),
+                        ),
+                      ),
+                      child: _enviando
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.voidBlue,
+                              ),
+                            )
+                          : Text(
+                              isGuided
+                                  ? 'CRIAR MISSÃO GUIADA'
+                                  : _recorrente
+                                  ? 'REGISTRAR ROTINA'
+                                  : 'REGISTRAR MISSÃO',
+                            ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -356,10 +361,6 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
             decoration: const InputDecoration(labelText: 'Título da missão'),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Modelo: ${_selectedActivity!.executionType}',
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
           const SizedBox(height: 12),
           _buildPlanningAndJourney(jornadas),
         ],

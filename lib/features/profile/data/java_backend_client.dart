@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ascend/features/quests/domain/activity_catalog.dart';
 import 'package:http/http.dart' as http;
 
 /// Cliente dos endpoints autoritativos do backend Java.
@@ -70,6 +71,19 @@ class JavaBackendClient {
       },
     );
     return _decode(response);
+  }
+
+  Future<ActivityCatalog> fetchActivityCatalog({
+    required String idToken,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/activity-catalog'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return ActivityCatalog.fromJson(_decode(response));
   }
 
   Future<Map<String, dynamic>> selectStrategistBuild({

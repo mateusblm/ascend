@@ -1,11 +1,35 @@
 import 'dart:convert';
 
+import 'package:ascend/features/quests/domain/activity_catalog.dart';
 import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test('consulta catálogo de atividades autenticado', () async {
+    late http.Request captured;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode(<String, dynamic>{
+            'versao': 1,
+            'categorias': const <Object?>[],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final catalog = await client.fetchActivityCatalog(idToken: 'token');
+
+    expect(catalog, isA<ActivityCatalog>());
+    expect(captured.url.path, '/api/v1/activity-catalog');
+    expect(captured.headers['authorization'], 'Bearer token');
+  });
+
   test('reagendamento envia Instant UTC aceito pelo backend', () async {
     late Map<String, dynamic> body;
     final client = JavaBackendClient(

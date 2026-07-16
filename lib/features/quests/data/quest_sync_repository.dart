@@ -463,6 +463,19 @@ DateTime? _dateFrom(Object? value) {
   if (value is String) {
     return DateTime.tryParse(value);
   }
+  if (value is Map) {
+    final seconds = value['seconds'] ?? value['_seconds'];
+    final nanoseconds = value['nanos'] ?? value['_nanoseconds'] ?? 0;
+    if (seconds is num && nanoseconds is num) {
+      final milliseconds =
+          seconds * Duration.millisecondsPerSecond +
+          nanoseconds / Duration.microsecondsPerMillisecond / 1000;
+      return DateTime.fromMillisecondsSinceEpoch(
+        milliseconds.round(),
+        isUtc: true,
+      ).toLocal();
+    }
+  }
   return null;
 }
 

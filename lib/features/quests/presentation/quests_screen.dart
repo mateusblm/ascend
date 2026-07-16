@@ -10,6 +10,7 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/mission_route_grouping.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:ascend/features/quests/presentation/widgets/activity_execution_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -166,6 +167,10 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
   void _fecharRecompensa() => setState(() => _recompensaVisivel = null);
 
   Future<void> _concluirQuest(Quest quest) async {
+    if (quest.isGuided && !quest.isCompleted) {
+      _abrirExecucao(quest);
+      return;
+    }
     final controlador = ref.read(questProvider.notifier);
     final resultado = await controlador.toggleQuest(quest.id);
     if (!mounted) return;
@@ -192,6 +197,14 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (_) => const AddQuestModal(),
+  );
+
+  void _abrirExecucao(Quest quest) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => ActivityExecutionModal(quest: quest),
   );
 
   bool _pertenceAoDiaAtual(Quest quest, DateTime hoje) {
@@ -815,6 +828,18 @@ class _FaixaMissao extends ConsumerWidget {
                             child: OutlinedButton(
                               onPressed: () async {
                                 await HapticFeedback.lightImpact();
+                                if (quest.isGuided && !quest.isCompleted) {
+                                  if (!context.mounted) return;
+                                  await showModalBottomSheet<void>(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    useSafeArea: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) =>
+                                        ActivityExecutionModal(quest: quest),
+                                  );
+                                  return;
+                                }
                                 final controlador = ref.read(
                                   questProvider.notifier,
                                 );

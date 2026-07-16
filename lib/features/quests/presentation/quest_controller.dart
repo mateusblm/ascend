@@ -236,6 +236,17 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _substituir([...state, quest]);
   }
 
+  Future<Map<String, dynamic>> registerGuidedExecution({
+    required Quest quest,
+    required Map<String, num> metrics,
+    String? observation,
+  }) => _repositorio.registerActivityExecution(
+    quest: quest,
+    executionId: '${quest.id}-${DateTime.now().microsecondsSinceEpoch}',
+    metrics: metrics,
+    observation: observation,
+  );
+
   void deleteQuest(String id) =>
       _substituir(state.where((quest) => quest.id != id).toList());
 

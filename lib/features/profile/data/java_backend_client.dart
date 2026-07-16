@@ -86,6 +86,32 @@ class JavaBackendClient {
     return ActivityCatalog.fromJson(_decode(response));
   }
 
+  Future<Map<String, dynamic>> registerActivityExecution({
+    required String idToken,
+    required String deviceSessionId,
+    required String executionId,
+    required String questId,
+    required String activityId,
+    required String executionType,
+    required int schemaVersion,
+    required Map<String, num> metrics,
+    String? observation,
+  }) => _postJson(
+    endpointPath: '/api/v1/activity-executions',
+    idToken: idToken,
+    body: {
+      'deviceSessionId': deviceSessionId,
+      'executionId': executionId,
+      'questId': questId,
+      'activityId': activityId,
+      'executionType': executionType,
+      'schemaVersion': schemaVersion,
+      'metrics': metrics,
+      if (observation != null && observation.trim().isNotEmpty)
+        'observation': observation.trim(),
+    },
+  );
+
   Future<Map<String, dynamic>> selectStrategistBuild({
     required String idToken,
     required String deviceSessionId,

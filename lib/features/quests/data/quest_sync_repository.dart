@@ -104,6 +104,44 @@ class QuestSyncRepository {
     return (await _buscarQuests(uid)).isNotEmpty;
   }
 
+  Future<Map<String, dynamic>> registerActivityExecution({
+    required Quest quest,
+    required String executionId,
+    required Map<String, num> metrics,
+    String? observation,
+  }) async {
+    final activityId = quest.activityId;
+    final executionType = quest.executionType;
+    if (!quest.isGuided || activityId == null || executionType == null) {
+      throw StateError('Esta missão não possui uma atividade guiada válida.');
+    }
+    await _sessionRepository.registerActiveSession();
+    final client = _javaBackendClientObrigatorio(
+      'registrar execução de atividade',
+    );
+    final idToken = await _idTokenObrigatorio(
+      'registrar execução de atividade',
+    );
+    try {
+      return await client.registerActivityExecution(
+        idToken: idToken,
+        deviceSessionId: await _sessionRepository.deviceSessionId(),
+        executionId: executionId,
+        questId: quest.id,
+        activityId: activityId,
+        executionType: executionType,
+        schemaVersion: quest.activitySchemaVersion,
+        metrics: metrics,
+        observation: observation,
+      );
+    } on JavaBackendException catch (error) {
+      if (error.isActiveSessionConflict) {
+        throw const ActiveSessionConflictException();
+      }
+      rethrow;
+    }
+  }
+
   Stream<List<Quest>> watchQuests(String uid) {
     return Stream.fromFuture(_buscarQuests(uid));
   }

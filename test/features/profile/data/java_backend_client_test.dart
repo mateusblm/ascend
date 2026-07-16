@@ -51,6 +51,43 @@ void main() {
     expect(body['plannedFor'], '2026-07-15T08:30:00.000Z');
   });
 
+  test('registra execução guiada sem enviar métricas derivadas', () async {
+    late http.Request captured;
+    final client = JavaBackendClient(
+      baseUrl: 'https://backend.example.com',
+      httpClient: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode({
+            'status': 'recorded',
+            'executionId': 'execution-1',
+            'calculatedMetrics': {'volumeKg': 400},
+          }),
+          200,
+        );
+      }),
+    );
+
+    await client.registerActivityExecution(
+      idToken: 'token',
+      deviceSessionId: 'device-1',
+      executionId: 'execution-1',
+      questId: 'quest-1',
+      activityId: 'supino-reto',
+      executionType: 'strengthSets',
+      schemaVersion: 1,
+      metrics: {'repetitions': 8, 'loadKg': 50},
+      observation: 'Série controlada',
+    );
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.url.path, '/api/v1/activity-executions');
+    expect(captured.headers['authorization'], 'Bearer token');
+    expect(body['executionId'], 'execution-1');
+    expect(body['metrics'], {'repetitions': 8, 'loadKg': 50});
+    expect(body['metrics'], isNot(contains('volumeKg')));
+  });
+
   test('retomada usa comando autoritativo de Jornada', () async {
     late http.Request captured;
     final client = JavaBackendClient(

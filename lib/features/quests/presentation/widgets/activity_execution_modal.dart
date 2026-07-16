@@ -159,7 +159,7 @@ class _ActivityExecutionModalState
     }
     setState(() => _submitting = true);
     try {
-      final response = await ref
+      await ref
           .read(questProvider.notifier)
           .registerGuidedExecution(
             quest: widget.quest,
@@ -170,9 +170,7 @@ class _ActivityExecutionModalState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            response['status'] == 'already_recorded'
-                ? 'Execução já registrada.'
-                : 'Execução registrada. A missão continua pendente de conclusão.',
+            'Execução registrada e missão concluída com recompensa confirmada.',
           ),
         ),
       );

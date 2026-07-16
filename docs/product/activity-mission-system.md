@@ -80,9 +80,9 @@ observação e horários. O backend deve:
 3. validar métricas, unidades e limites;
 4. ignorar métricas derivadas enviadas pelo cliente e recalculá-las;
 5. persistir a execução de forma idempotente;
-6. atualizar agregados e recordes pessoais;
-7. aplicar apenas a recompensa permitida pela regra canônica;
-8. devolver perfil, quest e resultado autoritativos.
+6. concluir a Quest e aplicar apenas a recompensa permitida pela regra canônica;
+7. atualizar agregados e recordes pessoais;
+8. devolver perfil, Quest e resultado autoritativos.
 
 Uma série de musculação é um fato separado dentro da execução. Volume,
 ritmo, percentual de acerto e outros derivados são calculados no servidor.
@@ -114,7 +114,8 @@ ou mensal quando aplicável.
 1. **Fundação:** contratos de catálogo e execução, compatibilidade `quick`,
    migration de fatos/agregados e validação canônica.
 2. **Vertical slice:** supino, corrida e estudo com execução, cálculos,
-   recordes e tela genérica de progresso.
+   conclusão transacional, recordes e superfícies de progresso específicas por
+   atividade, sustentadas por um núcleo reutilizável.
 3. **Expansão de modelos:** leitura, sono, finanças e reflexão.
 4. **Catálogo completo e offline:** demais atividades, customização limitada,
    cache, rascunhos e sincronização idempotente.

@@ -123,7 +123,7 @@ class QuestSyncRepository {
       'registrar execução de atividade',
     );
     try {
-      return await client.registerActivityExecution(
+      return await client.completeActivityExecution(
         idToken: idToken,
         deviceSessionId: await _sessionRepository.deviceSessionId(),
         executionId: executionId,

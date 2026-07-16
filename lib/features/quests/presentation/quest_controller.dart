@@ -5,6 +5,7 @@ import 'package:ascend/features/notifications/ritual_rota_service.dart';
 import 'package:ascend/features/auth/data/active_session_repository.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
+import 'package:ascend/features/profile/data/player_profile_repository.dart';
 import 'package:ascend/features/quests/data/quest_sync_repository.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -236,16 +237,46 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _substituir([...state, quest]);
   }
 
-  Future<Map<String, dynamic>> registerGuidedExecution({
+  Future<PersonalQuestMutationResult> registerGuidedExecution({
     required Quest quest,
     required Map<String, num> metrics,
     String? observation,
-  }) => _repositorio.registerActivityExecution(
-    quest: quest,
-    executionId: '${quest.id}-${DateTime.now().microsecondsSinceEpoch}',
-    metrics: metrics,
-    observation: observation,
-  );
+  }) async {
+    final response = await _repositorio.registerActivityExecution(
+      quest: quest,
+      executionId: '${quest.id}-${DateTime.now().microsecondsSinceEpoch}',
+      metrics: metrics,
+      observation: observation,
+    );
+    final completion = Map<String, dynamic>.from(
+      (response['completion'] as Map).cast<Object?, Object?>(),
+    );
+    final uid = _uid;
+    if (uid == null) throw StateError('Sessão do usuário indisponível.');
+    final result = PersonalQuestMutationResult(
+      status: PersonalQuestMutationStatus.completed,
+      player: parsePlayerProfileData(
+        Map<String, dynamic>.from(
+          (completion['profile'] as Map).cast<Object?, Object?>(),
+        ),
+        uid: uid,
+        fallbackName: ref.read(playerProvider).name,
+      ),
+      quest: parseQuestSyncData(
+        Map<String, dynamic>.from(
+          (completion['quest'] as Map).cast<Object?, Object?>(),
+        ),
+        uid: uid,
+        questId: quest.id,
+      ),
+    );
+    state = state
+        .map((item) => item.id == quest.id ? result.quest : item)
+        .toList();
+    _persistirLocal();
+    ref.read(playerProvider.notifier).applyAuthoritativeProfile(result.player);
+    return result;
+  }
 
   void deleteQuest(String id) =>
       _substituir(state.where((quest) => quest.id != id).toList());

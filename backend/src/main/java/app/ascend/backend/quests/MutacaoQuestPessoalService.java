@@ -51,6 +51,28 @@ public class MutacaoQuestPessoalService {
     );
   }
 
+  /** Conclusão interna de missão guiada: a configuração é lida do inventário
+   * canônico, nunca reenviada pelo cliente. */
+  public RespostaMutacaoQuestPessoal concluirGuiada(
+      String uid, String nomeFallback, String idSessaoDispositivo, String questId,
+      String activityId, String executionType, int schemaVersion
+  ) {
+    guardaSessaoAtiva.exigirSessaoAtiva(uid, idSessaoDispositivo);
+    DadosComando dados = new DadosComando(idSessaoDispositivo, "device", questId, null);
+    Timestamp now = Timestamp.now();
+    return repositorio.executarMutacao(uid, questId, contexto -> {
+      if (!contexto.questExiste() || !"guided".equals(contexto.quest().get("mode"))
+          || !activityId.equals(contexto.quest().get("activityId"))
+          || !executionType.equals(contexto.quest().get("executionType"))
+          || !(contexto.quest().get("activitySchemaVersion") instanceof Number versao)
+          || versao.intValue() != schemaVersion) {
+        throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_guided_quest_contract",
+            "A missão guiada não corresponde à atividade executada.");
+      }
+      return concluirNoContexto(contexto, dados, nomeFallback, now);
+    });
+  }
+
   /**
    * Revoga uma conclusao pessoal restaurando o snapshot salvo antes da
    * recompensa. O historico e o XP autoritativo sao recompostos a partir dos
@@ -162,7 +184,9 @@ public class MutacaoQuestPessoalService {
         perfilAtual.attributes().intelligence(),
         perfilAtual.attributes().vitality(),
         perfilAtual.attributes().agility(),
-        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
+        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
+        quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
+        quest.executionType(), quest.activitySchemaVersion()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -264,7 +288,9 @@ public class MutacaoQuestPessoalService {
         null,
         null,
         null,
-        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
+        quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
+        quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
+        quest.executionType(), quest.activitySchemaVersion()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -381,7 +407,9 @@ public class MutacaoQuestPessoalService {
         data.get("isArchived"),
         data.get("plannedFor"),
         data.get("recurrenceId"),
-        data.get("occursOn")
+        data.get("occursOn"),
+        data.get("mode"), data.get("activityCategoryId"), data.get("activityModalityId"),
+        data.get("activityId"), data.get("executionType"), data.get("activitySchemaVersion")
     ));
   }
 
@@ -419,6 +447,12 @@ public class MutacaoQuestPessoalService {
     data.put("plannedFor", quest.plannedFor());
     data.put("recurrenceId", quest.recurrenceId());
     data.put("occursOn", quest.occursOn());
+    data.put("mode", quest.mode());
+    data.put("activityCategoryId", quest.activityCategoryId());
+    data.put("activityModalityId", quest.activityModalityId());
+    data.put("activityId", quest.activityId());
+    data.put("executionType", quest.executionType());
+    data.put("activitySchemaVersion", quest.activitySchemaVersion());
     data.put("orderIndex", indiceOrdem);
     data.put("syncSchemaVersion", 1);
     data.put("syncSource", SYNC_SOURCE);
@@ -460,7 +494,9 @@ public class MutacaoQuestPessoalService {
         quest.verifiedAt() == null ? now : quest.verifiedAt(),
         true, quest.preRewardLevel(), quest.preRewardXp(), quest.preRewardMaxXp(),
         quest.preRewardStatPoints(), quest.preRewardStrength(), quest.preRewardIntelligence(),
-        quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn()
+        quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
+        quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
+        quest.executionType(), quest.activitySchemaVersion()
     );
   }
 

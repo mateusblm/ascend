@@ -2,6 +2,7 @@ package app.ascend.backend.atividades;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
+import app.ascend.backend.quests.MutacaoQuestPessoalService;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,9 @@ public class ExecucaoAtividadeService {
   private final JdbcTemplate jdbc;
   private final GuardaSessaoAtiva sessoes;
   private final CatalogoAtividadesService catalogo;
-  public ExecucaoAtividadeService(JdbcTemplate jdbc, GuardaSessaoAtiva sessoes, CatalogoAtividadesService catalogo) {
-    this.jdbc = jdbc; this.sessoes = sessoes; this.catalogo = catalogo;
+  private final MutacaoQuestPessoalService mutacoes;
+  public ExecucaoAtividadeService(JdbcTemplate jdbc, GuardaSessaoAtiva sessoes, CatalogoAtividadesService catalogo, MutacaoQuestPessoalService mutacoes) {
+    this.jdbc = jdbc; this.sessoes = sessoes; this.catalogo = catalogo; this.mutacoes = mutacoes;
   }
   @Transactional
   public RespostaExecucaoAtividade registrar(String uid, RequisicaoExecucaoAtividade request) {
@@ -43,6 +45,13 @@ public class ExecucaoAtividadeService {
         """,
         uid, request.executionId(), request.questId(), atividade.id(), atividade.modeloExecucao(), atividade.versaoSchema(), json(metricas), json(calculadas), request.observation());
     return new RespostaExecucaoAtividade(inserida == 1 ? "recorded" : "already_recorded", request.executionId(), calculadas);
+  }
+  @Transactional
+  public RespostaExecucaoConcluida registrarEConcluir(String uid, String email, RequisicaoExecucaoAtividade request) {
+    RespostaExecucaoAtividade execucao = registrar(uid, request);
+    var conclusao = mutacoes.concluirGuiada(uid, email, request.deviceSessionId(), request.questId(),
+        request.activityId(), request.executionType(), request.schemaVersion());
+    return new RespostaExecucaoConcluida(execucao.status(), execucao.executionId(), execucao.calculatedMetrics(), conclusao);
   }
   private Map<String, Object> calcular(String tipo, Map<String, Object> metricas) {
     Map<String, Object> calculadas = new LinkedHashMap<>();

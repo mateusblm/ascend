@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
+import app.ascend.backend.quests.MutacaoQuestPessoalService;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,7 +17,7 @@ class ExecucaoAtividadeServiceTest {
   @Test void exigeMetricaObrigatoriaAntesDePersistir() {
     JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
     GuardaSessaoAtiva sessoes = Mockito.mock(GuardaSessaoAtiva.class);
-    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, sessoes, new CatalogoAtividadesService());
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, sessoes, new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
 
     ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.registrar("u1",
         new RequisicaoExecucaoAtividade("d1", "e1", "q1", "supino-reto", "strengthSets", 1, Map.of("loadKg", 50), null)));
@@ -28,7 +29,7 @@ class ExecucaoAtividadeServiceTest {
 
   @Test void rejeitaModeloQueNaoCorrespondeAoCatalogo() {
     ExecucaoAtividadeService service = new ExecucaoAtividadeService(Mockito.mock(JdbcTemplate.class),
-        Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService());
+        Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
 
     ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.registrar("u1",
         new RequisicaoExecucaoAtividade("d1", "e1", "q1", "corrida-livre", "strengthSets", 1, Map.of(), null)));

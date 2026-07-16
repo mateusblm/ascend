@@ -9,4 +9,7 @@ public class ExecucaoAtividadeController {
   private final ExecucaoAtividadeService service;
   public ExecucaoAtividadeController(ExecucaoAtividadeService service) { this.service = service; }
   @PostMapping public RespostaExecucaoAtividade registrar(UsuarioAutenticado user, @RequestBody RequisicaoExecucaoAtividade request) { return service.registrar(user.uid(), request); }
+  @PostMapping("/complete") public RespostaExecucaoConcluida registrarEConcluir(UsuarioAutenticado user, @RequestBody RequisicaoExecucaoAtividade request) {
+    return service.registrarEConcluir(user.uid(), user.email(), request);
+  }
 }

@@ -45,7 +45,7 @@ class BuildServiceTest {
     BuildService service = new BuildService(jdbc, sessoes);
 
     ExcecaoApi erro = assertThrows(ExcecaoApi.class,
-        () -> service.selecionar("u1", new RequisicaoBuild("vanguarda", "d1")));
+        () -> service.selecionar("u1", new RequisicaoBuild("inexistente", "d1")));
 
     verify(sessoes).exigirSessaoAtiva("u1", "d1");
     assertEquals("build_indisponivel", erro.codigo());

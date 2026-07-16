@@ -3,6 +3,7 @@ package app.ascend.backend.build;
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,8 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BuildService {
   static final String ESTRATEGISTA = "estrategista";
+  static final String ERUDITO = "erudito";
+  static final String VANGUARDA = "vanguarda";
   static final String ROTA_CLARA = "rota-clara";
+  static final String MENTE_ABERTA = "mente-aberta";
+  static final String PASSO_FIRME = "passo-firme";
   static final String HORIZONTE = "horizonte";
+  private static final Map<String, String> TALENTO_INICIAL = Map.of(
+      ESTRATEGISTA, ROTA_CLARA, ERUDITO, MENTE_ABERTA, VANGUARDA, PASSO_FIRME);
   private final JdbcTemplate jdbc;
   private final GuardaSessaoAtiva sessoes;
 
@@ -32,9 +39,11 @@ public class BuildService {
   @Transactional
   public RespostaBuild selecionar(String uid, RequisicaoBuild request) {
     exigirSessao(uid, request);
-    if (!ESTRATEGISTA.equals(request.buildId())) throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "build_indisponivel", "Esta Build ainda nao esta disponivel.");
-    jdbc.update("insert into builds_usuario(uid, build_id) values (?, ?) on conflict (uid) do update set build_id = excluded.build_id, selecionada_em = current_timestamp", uid, ESTRATEGISTA);
-    jdbc.update("insert into talentos_usuario(uid, talento_id) values (?, ?) on conflict do nothing", uid, ROTA_CLARA);
+    String build = request == null ? null : request.buildId();
+    if (!TALENTO_INICIAL.containsKey(build)) throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "build_indisponivel", "Esta Build nao esta disponivel.");
+    jdbc.update("insert into builds_usuario(uid, build_id) values (?, ?) on conflict (uid) do update set build_id = excluded.build_id, selecionada_em = current_timestamp", uid, build);
+    jdbc.update("delete from talentos_usuario where uid = ?", uid);
+    jdbc.update("insert into talentos_usuario(uid, talento_id) values (?, ?) on conflict do nothing", uid, TALENTO_INICIAL.get(build));
     return consultar(uid);
   }
 

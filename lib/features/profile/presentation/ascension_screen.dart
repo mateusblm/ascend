@@ -339,11 +339,11 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
     _status = ref.read(playerProvider.notifier).consultarBuild();
   }
 
-  Future<void> _select() async {
+  Future<void> _select(String buildId) async {
     try {
       final status = await ref
           .read(playerProvider.notifier)
-          .selecionarBuildEstrategista();
+          .selecionarBuild(buildId);
       if (mounted) {
         setState(() => _status = Future.value(status));
       }
@@ -394,12 +394,16 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Estrategista',
+                _buildName(selected),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Transforme objetivos em uma rota clara.',
+              Text(
+                selected == 'erudito'
+                    ? 'Consolide estudo e aprendizado em ciclos claros.'
+                    : selected == 'vanguarda'
+                    ? 'Converta ação e vitalidade em impulso constante.'
+                    : 'Transforme objetivos em uma rota clara.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 12),
@@ -416,10 +420,14 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
               if (selected == null) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: _select,
+                  onPressed: () => _select('estrategista'),
                   icon: const Icon(Icons.account_tree_outlined),
                   label: const Text('ESCOLHER ESTRATEGISTA'),
                 ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(onPressed: () => _select('erudito'), icon: const Icon(Icons.auto_stories_outlined), label: const Text('ESCOLHER ERUDITO')),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(onPressed: () => _select('vanguarda'), icon: const Icon(Icons.directions_run_rounded), label: const Text('ESCOLHER VANGUARDA')),
               ],
             ],
           ),
@@ -427,6 +435,12 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
       );
     },
   );
+
+  String _buildName(String? build) => switch (build) {
+    'erudito' => 'Erudito',
+    'vanguarda' => 'Vanguarda',
+    _ => 'Estrategista',
+  };
 }
 
 class _TalentLine extends StatelessWidget {

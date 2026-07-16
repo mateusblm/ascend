@@ -278,6 +278,15 @@ class PlayerProfileRepository {
     );
   }
 
+  Future<Map<String, dynamic>> selecionarBuild(String buildId) async {
+    await _sessionRepository.registerActiveSession();
+    return _javaBackendClientObrigatorio('selecionar Build').selectBuild(
+      idToken: await _idTokenObrigatorio('selecionar Build'),
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+      buildId: buildId,
+    );
+  }
+
   Future<Map<String, dynamic>> confirmarRevisaoSemanal() async {
     await _sessionRepository.registerActiveSession();
     return _javaBackendClientObrigatorio(

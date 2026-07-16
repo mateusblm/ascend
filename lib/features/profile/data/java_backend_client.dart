@@ -81,6 +81,16 @@ class JavaBackendClient {
     body: {'buildId': 'estrategista', 'deviceSessionId': deviceSessionId},
   );
 
+  Future<Map<String, dynamic>> selectBuild({
+    required String idToken,
+    required String deviceSessionId,
+    required String buildId,
+  }) => _postJson(
+    endpointPath: '/api/v1/build/select',
+    idToken: idToken,
+    body: {'buildId': buildId, 'deviceSessionId': deviceSessionId},
+  );
+
   Future<Map<String, dynamic>> confirmWeeklyReview({
     required String idToken,
     required String deviceSessionId,

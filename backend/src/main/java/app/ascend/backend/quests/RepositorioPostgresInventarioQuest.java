@@ -109,6 +109,13 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
     return valor instanceof Boolean valorBooleano && valorBooleano;
   }
 
+  @Override
+  @Transactional
+  public void salvarQuestIndividual(String uid, EscritaInventarioQuest escrita) {
+    garantirUsuario(uid);
+    salvarQuest(uid, escrita.id(), escrita.data());
+  }
+
   /** Resolve o proximo passo pela rota ativa antes de considerar o inventario geral. */
   public Map<String, Object> buscarMissaoRecomendada(String uid) {
     return jdbcTemplate.query("""

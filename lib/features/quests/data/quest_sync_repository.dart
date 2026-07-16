@@ -181,6 +181,30 @@ class QuestSyncRepository {
     }
   }
 
+  Future<Quest> createPersonalQuest({
+    required String uid,
+    required Quest quest,
+  }) async {
+    await _sessionRepository.registerActiveSession();
+    final client = _javaBackendClientObrigatorio('criar missão');
+    final response = await client.createPersonalQuest(
+      idToken: await _idTokenObrigatorio('criar missão'),
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+      quest: _questSourceFor(quest),
+    );
+    final data = response['quest'];
+    if (data is! Map) {
+      throw const JavaBackendException(
+        'Resposta da criação da missão é inválida.',
+      );
+    }
+    return parseQuestSyncData(
+      Map<String, dynamic>.from(data.cast<Object?, Object?>()),
+      uid: uid,
+      questId: quest.id,
+    );
+  }
+
   Future<PersonalQuestMutationResult> completePersonalQuest({
     required String uid,
     required String fallbackName,

@@ -36,6 +36,16 @@ public class MapeadorDocumentoInventarioQuest {
     return escritas;
   }
 
+  public EscritaInventarioQuest paraEscrita(
+      QuestInventarioValidada quest,
+      String idSessaoDispositivo,
+      String rotuloDispositivo,
+      Timestamp now
+  ) {
+    return new EscritaInventarioQuest(
+        quest.id(), paraDocumentoQuest(quest, 0, idSessaoDispositivo, rotuloDispositivo, now));
+  }
+
   /**
    * Cria o documento de metadados que marca o inventario como inicializado e
    * registra qual sessao de dispositivo produziu a sincronizacao.

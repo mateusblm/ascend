@@ -357,6 +357,16 @@ class JavaBackendClient {
     );
   }
 
+  Future<Map<String, dynamic>> createPersonalQuest({
+    required String idToken,
+    required String deviceSessionId,
+    required Map<String, dynamic> quest,
+  }) => _postJson(
+    endpointPath: '/api/v1/quests/personal:create',
+    idToken: idToken,
+    body: {'deviceSessionId': deviceSessionId, 'quest': quest},
+  );
+
   Future<Map<String, dynamic>> syncPlayerProfile({
     required String idToken,
     required String deviceSessionId,

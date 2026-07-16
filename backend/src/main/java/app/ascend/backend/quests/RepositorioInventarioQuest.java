@@ -17,4 +17,8 @@ public interface RepositorioInventarioQuest {
       Map<String, Object> meta,
       Set<String> idsQuestsParaExcluir
   );
+
+  default void salvarQuestIndividual(String uid, EscritaInventarioQuest escrita) {
+    throw new UnsupportedOperationException("Comando individual de quest não disponível.");
+  }
 }

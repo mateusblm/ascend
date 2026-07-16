@@ -51,6 +51,34 @@ void main() {
     expect(body['plannedFor'], '2026-07-15T08:30:00.000Z');
   });
 
+  test(
+    'cria missão individual sem sincronizar o inventário completo',
+    () async {
+      late http.Request captured;
+      final client = JavaBackendClient(
+        baseUrl: 'https://backend.example.com',
+        httpClient: MockClient((request) async {
+          captured = request;
+          return http.Response(
+            jsonEncode({'quest': const <String, Object?>{}}),
+            200,
+          );
+        }),
+      );
+
+      await client.createPersonalQuest(
+        idToken: 'token',
+        deviceSessionId: 'device-1',
+        quest: const {'id': 'quest-1', 'title': 'Supino reto'},
+      );
+
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(captured.url.path, '/api/v1/quests/personal:create');
+      expect(body['quest'], {'id': 'quest-1', 'title': 'Supino reto'});
+      expect(body.containsKey('source'), isFalse);
+    },
+  );
+
   test('registra execução guiada sem enviar métricas derivadas', () async {
     late http.Request captured;
     final client = JavaBackendClient(

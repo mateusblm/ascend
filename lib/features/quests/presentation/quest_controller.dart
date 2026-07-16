@@ -208,7 +208,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _substituir([...state, quest]);
   }
 
-  void addGuidedQuest({
+  Future<void> addGuidedQuest({
     required String title,
     required AttributeType rewardAttribute,
     required String categoryId,
@@ -218,7 +218,7 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     required int schemaVersion,
     String? jornadaId,
     DateTime? plannedFor,
-  }) {
+  }) async {
     final quest = guidedQuestFromCatalog(
       ownerUid: _uid,
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -234,7 +234,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       // catálogo autoritativo e nunca é escolhido no formulário guiado.
       rewardAttribute: rewardAttribute,
     );
-    _substituir([...state, quest]);
+    final uid = _uid;
+    if (uid == null) throw StateError('Sessão do usuário indisponível.');
+    final confirmada = await _repositorio.createPersonalQuest(
+      uid: uid,
+      quest: quest,
+    );
+    _substituir([...state, confirmada], sincronizar: false);
   }
 
   Future<GuidedExecutionResult> registerGuidedExecution({
@@ -244,9 +250,6 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
   }) async {
     final uid = _uid;
     if (uid == null) throw StateError('Sessão do usuário indisponível.');
-    // A criação local é otimista. Antes de concluir, aguarda o inventário
-    // autoritativo para que o backend localize a Quest desta execução.
-    await _repositorio.replaceQuests(uid: uid, quests: state);
     final response = await _repositorio.registerActivityExecution(
       quest: quest,
       executionId: '${quest.id}-${DateTime.now().microsecondsSinceEpoch}',

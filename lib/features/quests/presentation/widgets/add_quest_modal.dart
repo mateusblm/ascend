@@ -144,7 +144,7 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                                   final category = _selectedCategory!;
                                   final modality = _selectedModality!;
                                   final activity = _selectedActivity!;
-                                  ref
+                                  await ref
                                       .read(questProvider.notifier)
                                       .addGuidedQuest(
                                         title: _controller.text.trim(),
@@ -200,8 +200,21 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                                         plannedFor: _planejadaPara,
                                       );
                                 }
+                                if (!context.mounted) return;
                                 FocusScope.of(context).unfocus();
-                                if (context.mounted) Navigator.pop(context);
+                                Navigator.pop(context);
+                              } catch (error) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      error.toString().replaceFirst(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                    ),
+                                  ),
+                                );
                               } finally {
                                 if (mounted) setState(() => _enviando = false);
                               }

@@ -16,19 +16,22 @@ public class InventarioQuestController {
   private final CicloVidaQuestPessoalService cicloVidaQuestPessoalService;
   private final RecorrenciaQuestService recorrenciaQuestService;
   private final ExecucaoAtividadeService execucaoAtividadeService;
+  private final CriacaoQuestPessoalService criacaoQuestPessoalService;
 
   public InventarioQuestController(
       SincronizacaoInventarioQuestService service,
       MutacaoQuestPessoalService mutacaoQuestPessoalService,
       CicloVidaQuestPessoalService cicloVidaQuestPessoalService,
       RecorrenciaQuestService recorrenciaQuestService,
-      ExecucaoAtividadeService execucaoAtividadeService
+      ExecucaoAtividadeService execucaoAtividadeService,
+      CriacaoQuestPessoalService criacaoQuestPessoalService
   ) {
     this.service = service;
     this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
     this.cicloVidaQuestPessoalService = cicloVidaQuestPessoalService;
     this.recorrenciaQuestService = recorrenciaQuestService;
     this.execucaoAtividadeService = execucaoAtividadeService;
+    this.criacaoQuestPessoalService = criacaoQuestPessoalService;
   }
 
   @PostMapping("/inventory:sync")
@@ -57,6 +60,14 @@ public class InventarioQuestController {
       execucaoAtividadeService.marcarExecucoesRevogadas(user.uid(), resposta.questId());
     }
     return resposta;
+  }
+
+  @PostMapping("/personal:create")
+  public java.util.Map<String, Object> criarQuestPessoal(
+      UsuarioAutenticado user,
+      @RequestBody RequisicaoCriacaoQuestPessoal request
+  ) {
+    return criacaoQuestPessoalService.criar(user.uid(), request);
   }
 
   @PostMapping("/personal:archive")

@@ -141,14 +141,33 @@ class _TrendSummary extends StatelessWidget {
       color: AppColors.panelCore,
       child: Row(
         children: [
-          Expanded(child: _trend('Últimos 7 dias', values['weekly'], unit)),
-          Expanded(child: _trend('Últimos 30 dias', values['monthly'], unit)),
+          Expanded(
+            child: _trend(
+              'Últimos 7 dias',
+              values['weekly'],
+              values['previousWeekly'],
+              unit,
+            ),
+          ),
+          Expanded(
+            child: _trend(
+              'Últimos 30 dias',
+              values['monthly'],
+              values['previousMonthly'],
+              unit,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _trend(String label, Object? value, String unit) => Column(
+  Widget _trend(
+    String label,
+    Object? value,
+    Object? previous,
+    String unit,
+  ) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
@@ -157,6 +176,10 @@ class _TrendSummary extends StatelessWidget {
       ),
       const SizedBox(height: 4),
       Text('${_format(value)} $unit'),
+      Text(
+        _comparison(value, previous),
+        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+      ),
     ],
   );
 }
@@ -164,6 +187,18 @@ class _TrendSummary extends StatelessWidget {
 String _format(Object? value) => value is num
     ? (value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1))
     : '—';
+String _comparison(Object? current, Object? previous) {
+  if (current is! num || previous is! num) return 'Sem período anterior';
+  final delta = current - previous;
+  return '${delta > 0 ? '+' : ''}${_format(delta)} vs. período anterior';
+}
+
+String formatPaceSecondsPerKm(Object? value) {
+  if (value is! num || value <= 0) return '—';
+  final seconds = value.round();
+  return '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}/km';
+}
+
 String _recordLabel(String key) => switch (key) {
   'maxLoadKg' => 'Maior carga',
   'maxVolumeKg' => 'Maior volume',
@@ -188,7 +223,7 @@ class _Highlights extends StatelessWidget {
       ],
       'distanceDuration' => [
         ('Distância acumulada', values['totalDistanceKm'], 'km'),
-        ('Melhor ritmo', values['bestPaceSecondsPerKm'], 's/km'),
+        ('Melhor ritmo', values['bestPaceSecondsPerKm'], ''),
       ],
       'studySession' => [
         ('Tempo acumulado', values['totalMinutes'], 'min'),
@@ -216,7 +251,9 @@ class _Highlights extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${_number(item.$2)} ${item.$3}',
+                      item.$1 == 'Melhor ritmo'
+                          ? formatPaceSecondsPerKm(item.$2)
+                          : '${_number(item.$2)} ${item.$3}',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ],

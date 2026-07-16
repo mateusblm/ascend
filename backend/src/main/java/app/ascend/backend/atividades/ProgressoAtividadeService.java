@@ -67,7 +67,7 @@ public class ProgressoAtividadeService {
   }
   @SuppressWarnings("unchecked")
   private Map<String, Object> tendencias(String type, List<Map<String, Object>> history) {
-    Instant now = Instant.now(); double weekly = 0, monthly = 0;
+    Instant now = Instant.now(); double weekly = 0, previousWeekly = 0, monthly = 0, previousMonthly = 0;
     for (Map<String, Object> row : history) {
       Instant at = Instant.parse(String.valueOf(row.get("recordedAt")));
       Map<String, Object> input = (Map<String, Object>) row.get("metrics");
@@ -75,9 +75,12 @@ public class ProgressoAtividadeService {
       double value = "strengthSets".equals(type) ? number(derived.get("volumeKg")) :
           "distanceDuration".equals(type) ? number(input.get("distanceKm")) : number(input.get("durationMinutes"));
       if (!at.isBefore(now.minus(7, ChronoUnit.DAYS))) weekly += value;
+      else if (!at.isBefore(now.minus(14, ChronoUnit.DAYS))) previousWeekly += value;
       if (!at.isBefore(now.minus(30, ChronoUnit.DAYS))) monthly += value;
+      else if (!at.isBefore(now.minus(60, ChronoUnit.DAYS))) previousMonthly += value;
     }
-    return Map.of("weekly", weekly, "monthly", monthly);
+    return Map.of("weekly", weekly, "previousWeekly", previousWeekly,
+        "monthly", monthly, "previousMonthly", previousMonthly);
   }
   private void maior(Map<String, Object> values, String key, double value) { values.put(key, Math.max(number(values.get(key)), value)); }
   private void menor(Map<String, Object> values, String key, double value) { if (value > 0 && (number(values.get(key)) == 0 || value < number(values.get(key)))) values.put(key, value); }

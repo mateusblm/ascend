@@ -131,7 +131,9 @@ ou mensal quando aplicável.
 
 O recibo exibe apenas as metricas calculadas retornadas pela conclusao. O
 read-model de progresso retorna recordes pessoais e totais dos ultimos 7 e 30
-dias; a tela apenas os apresenta.
+dias, incluindo o periodo anterior equivalente; a tela apenas os apresenta.
+Ritmos sao formatados no cliente apenas para exibicao (min:seg/km), a partir
+do valor em segundos por quilometro calculado pelo servidor.
 
 ## Entregas incrementais
 

@@ -3,6 +3,8 @@ import 'package:ascend/features/quests/data/activity_catalog_repository.dart';
 import 'package:ascend/features/quests/domain/activity_catalog.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/quests/presentation/activity_progress_screen.dart'
+    show formatPaceSecondsPerKm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,8 +59,9 @@ class _ActivityExecutionModalState
           label: 'Carregando formulário de execução',
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (_, __) =>
-            _ErrorState(onRetry: () => ref.invalidate(activityCatalogProvider)),
+        error: (_, __) => ActivityExecutionErrorState(
+          onRetry: () => ref.invalidate(activityCatalogProvider),
+        ),
         data: (value) {
           final activity = value.findActivity(widget.quest.activityId ?? '');
           if (activity == null ||
@@ -307,7 +310,7 @@ String _receipt(String type, Map<String, dynamic> metrics) => switch (type) {
   'strengthSets' =>
     'Treino confirmado · ${metrics['volumeKg'] ?? '—'} kg de volume · 1RM ${metrics['estimatedOneRepMaxKg'] ?? '—'} kg',
   'distanceDuration' =>
-    'Corrida confirmada · ritmo ${metrics['paceSecondsPerKm'] ?? '—'} s/km',
+    'Corrida confirmada · ritmo ${formatPaceSecondsPerKm(metrics['paceSecondsPerKm'])}',
   'studySession' =>
     'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
   _ => 'Execução registrada e missão concluída com recompensa confirmada.',
@@ -334,8 +337,8 @@ const _eyebrowStyle = TextStyle(
   letterSpacing: .8,
 );
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
+class ActivityExecutionErrorState extends StatelessWidget {
+  const ActivityExecutionErrorState({required this.onRetry, super.key});
   final VoidCallback onRetry;
   @override
   Widget build(BuildContext context) => Center(

@@ -5,6 +5,7 @@ import com.google.cloud.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Mantem definicoes semanais e materializa ocorrencias independentes por 30 dias. */
+/** Mantem definicoes semanais e materializa a ocorrencia somente no dia devido. */
 @Service
 public class RecorrenciaQuestService {
   private static final Set<String> ATRIBUTOS = Set.of("strength", "intelligence", "vitality", "agility");
@@ -61,7 +62,11 @@ public class RecorrenciaQuestService {
         """, uid, recorrenciaId);
   }
 
-  /** Materializa somente os proximos 30 dias; repetidas leituras nao duplicam ocorrencias. */
+  /**
+   * Materializa somente a ocorrencia do dia atual. A definicao recorrente nao
+   * deve preencher "Proximas" com copias de dias que ainda nao chegaram.
+   * A restricao unica em quests garante idempotencia entre leituras repetidas.
+   */
   @Transactional
   public void gerarOcorrencias(String uid) {
     List<Definicao> definicoes = jdbcTemplate.query("""
@@ -72,11 +77,17 @@ public class RecorrenciaQuestService {
         diasSemana(resultado.getArray(6))), uid);
     LocalDate hoje = LocalDate.now(ZoneId.systemDefault());
     for (Definicao definicao : definicoes) {
-      for (int deslocamento = 0; deslocamento < 30; deslocamento++) {
-        LocalDate dia = hoje.plusDays(deslocamento);
-        if (definicao.diasSemana().contains(dia.getDayOfWeek().getValue())) criarOcorrenciaSeAusente(uid, definicao, dia);
+      for (LocalDate dia : datasOcorrenciasPara(hoje, definicao.diasSemana())) {
+        criarOcorrenciaSeAusente(uid, definicao, dia);
       }
     }
+  }
+
+  static List<LocalDate> datasOcorrenciasPara(LocalDate hoje, List<Integer> diasSemana) {
+    if (diasSemana == null || !diasSemana.contains(hoje.getDayOfWeek().getValue())) {
+      return Collections.emptyList();
+    }
+    return List.of(hoje);
   }
 
   private void criarOcorrenciaSeAusente(String uid, Definicao definicao, LocalDate dia) {

@@ -1,6 +1,7 @@
 import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/features/quests/data/activity_catalog_repository.dart';
 import 'package:ascend/features/quests/domain/quest_model.dart';
+import 'package:ascend/features/quests/presentation/widgets/activity_progress_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -86,6 +87,16 @@ class _ProgressBody extends StatelessWidget {
         _Highlights(type: type, values: highlights),
         const SizedBox(height: 20),
         _TrendSummary(type: type, values: trends),
+        const SizedBox(height: 20),
+        ActivityProgressChart(
+          executionType: type,
+          history: history
+              .map(
+                (entry) =>
+                    Map<String, dynamic>.from(entry.cast<Object?, Object?>()),
+              )
+              .toList(growable: false),
+        ),
         if (records.isNotEmpty) ...[
           const SizedBox(height: 20),
           const Text(

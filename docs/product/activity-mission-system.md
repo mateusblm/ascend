@@ -131,6 +131,10 @@ ou mensal quando aplicável.
 - **Leitura:** obra ou material, pagina inicial/final e duracao podem ser
   registrados. O servidor calcula as paginas lidas a partir do intervalo;
   clientes legados que enviam apenas `pagesRead` continuam compativeis.
+- **Sono:** horarios de dormir e acordar, despertares e qualidade percebida
+  podem ser registrados. O servidor calcula a duracao, inclusive quando a
+  janela atravessa a meia-noite; registros legados por duracao permanecem
+  compativeis.
 
 O recibo exibe apenas as metricas calculadas retornadas pela conclusao. O
 read-model de progresso retorna recordes pessoais e totais dos ultimos 7 e 30

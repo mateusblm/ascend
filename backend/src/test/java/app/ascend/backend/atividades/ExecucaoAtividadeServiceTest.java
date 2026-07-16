@@ -104,4 +104,28 @@ class ExecucaoAtividadeServiceTest {
 
     assertEquals("invalid_reading_progress", erro.codigo());
   }
+
+  @Test void calculaDuracaoDoSonoAtravesDaMeiaNoite() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    when(jdbc.queryForObject(Mockito.anyString(), Mockito.eq(Boolean.class), Mockito.any(), Mockito.any())).thenReturn(true);
+    when(jdbc.update(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, Mockito.mock(GuardaSessaoAtiva.class),
+        new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
+
+    var resposta = service.registrar("u1", new RequisicaoExecucaoAtividade("d1", "e1", "q1", "registrar-sono", "sleepTracking", 1,
+        Map.of("sleepStart", "23:30", "wakeEnd", "07:15", "sleepQuality", 4), null));
+
+    assertEquals(465d, resposta.calculatedMetrics().get("durationMinutes"));
+  }
+
+  @Test void rejeitaHorarioDeSonoInvalido() {
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(Mockito.mock(JdbcTemplate.class),
+        Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.registrar("u1",
+        new RequisicaoExecucaoAtividade("d1", "e1", "q1", "registrar-sono", "sleepTracking", 1,
+            Map.of("sleepStart", "25:00", "wakeEnd", "07:15"), null)));
+
+    assertEquals("invalid_sleep_window", erro.codigo());
+  }
 }

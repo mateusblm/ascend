@@ -60,6 +60,17 @@ void main() {
     expect(find.text('Páginas lidas'), findsNothing);
   });
 
+  testWidgets('sono apresenta horarios e campos opcionais', (tester) async {
+    await tester.pumpWidget(_modal('sleepTracking'));
+    await tester.pump();
+
+    expect(find.text('REGISTRO DE SONO'), findsOneWidget);
+    expect(find.text('Dormiu às'), findsOneWidget);
+    expect(find.text('Acordou às'), findsOneWidget);
+    expect(find.text('Despertares'), findsOneWidget);
+    expect(find.text('Qualidade do sono (1–5)'), findsOneWidget);
+  });
+
   testWidgets('loading possui Semantics e erro oferece retomada', (
     tester,
   ) async {
@@ -251,6 +262,58 @@ List<ActivityMetricDefinition> _metrics(String type) => switch (type) {
       minimum: 1,
       maximum: 1440,
       evolution: 'ACCUMULATIVE',
+    ),
+  ],
+  'sleepTracking' => const [
+    ActivityMetricDefinition(
+      id: 'sleepStart',
+      type: 'timeOfDay',
+      unit: 'time',
+      required: false,
+      derived: false,
+      minimum: 0,
+      maximum: 0,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'wakeEnd',
+      type: 'timeOfDay',
+      unit: 'time',
+      required: false,
+      derived: false,
+      minimum: 0,
+      maximum: 0,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'awakenings',
+      type: 'integer',
+      unit: 'count',
+      required: false,
+      derived: false,
+      minimum: 0,
+      maximum: 20,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'sleepQuality',
+      type: 'rating',
+      unit: 'score',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 5,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'durationMinutes',
+      type: 'integer',
+      unit: 'min',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 1440,
+      evolution: 'CONSISTENCY',
     ),
   ],
   _ => const [

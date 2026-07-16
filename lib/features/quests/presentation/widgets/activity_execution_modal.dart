@@ -25,6 +25,8 @@ class _ActivityExecutionModalState
   final _observation = TextEditingController();
   final Map<String, TextEditingController> _metrics = {};
   final List<_StrengthSetInputs> _sets = [_StrengthSetInputs()];
+  TimeOfDay? _sleepStart;
+  TimeOfDay? _wakeEnd;
   bool _submitting = false;
 
   @override
@@ -155,6 +157,41 @@ class _ActivityExecutionModalState
         ...inputs.where((metric) => metric.id != 'pagesRead').map(_metricField),
       ];
     }
+    if (activity.executionType == 'sleepTracking') {
+      return [
+        const Text('REGISTRO DE SONO', style: _eyebrowStyle),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _sleepTimeField(
+                'Dormiu às',
+                _sleepStart,
+                (value) => setState(() => _sleepStart = value),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _sleepTimeField(
+                'Acordou às',
+                _wakeEnd,
+                (value) => setState(() => _wakeEnd = value),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        ...inputs
+            .where(
+              (metric) => !{
+                'sleepStart',
+                'wakeEnd',
+                'durationMinutes',
+              }.contains(metric.id),
+            )
+            .map(_metricField),
+      ];
+    }
     return inputs.map(_metricField).toList();
   }
 
@@ -204,6 +241,22 @@ class _ActivityExecutionModalState
     _sets.add(set);
   });
 
+  Widget _sleepTimeField(
+    String label,
+    TimeOfDay? value,
+    ValueChanged<TimeOfDay> onChanged,
+  ) => OutlinedButton.icon(
+    onPressed: () async {
+      final selected = await showTimePicker(
+        context: context,
+        initialTime: value ?? TimeOfDay.now(),
+      );
+      if (selected != null) onChanged(selected);
+    },
+    icon: const Icon(Icons.schedule_outlined, size: 18),
+    label: Text(value == null ? label : value.format(context)),
+  );
+
   Widget _metricField(ActivityMetricDefinition metric) {
     final controller = _metrics.putIfAbsent(
       metric.id,
@@ -239,6 +292,8 @@ class _ActivityExecutionModalState
     'startPage' => 'Página inicial',
     'endPage' => 'Página final',
     'pagesRead' => 'Páginas lidas',
+    'awakenings' => 'Despertares',
+    'sleepQuality' => 'Qualidade do sono (1–5)',
     _ => id,
   };
 
@@ -247,6 +302,7 @@ class _ActivityExecutionModalState
     'questions' => 'questões',
     'score' => 'nível',
     'text' => 'texto',
+    'count' => 'vezes',
     _ => unit,
   };
 
@@ -275,9 +331,21 @@ class _ActivityExecutionModalState
       }
       values['sets'] = sets;
     }
+    if (activity.executionType == 'sleepTracking') {
+      if (_sleepStart == null || _wakeEnd == null) {
+        _showError('Informe os horários em que dormiu e acordou.');
+        return;
+      }
+      values['sleepStart'] = _timeValue(_sleepStart!);
+      values['wakeEnd'] = _timeValue(_wakeEnd!);
+    }
     for (final metric in inputs) {
       if (activity.executionType == 'strengthSets' &&
           (metric.id == 'repetitions' || metric.id == 'loadKg')) {
+        continue;
+      }
+      if (activity.executionType == 'sleepTracking' &&
+          {'sleepStart', 'wakeEnd', 'durationMinutes'}.contains(metric.id)) {
         continue;
       }
       final raw = _metrics[metric.id]!.text.trim().replaceAll(',', '.');
@@ -328,6 +396,9 @@ class _ActivityExecutionModalState
     }
   }
 
+  String _timeValue(TimeOfDay time) =>
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
   void _showError(String message) => ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(message)));
@@ -342,6 +413,8 @@ String _receipt(String type, Map<String, dynamic> metrics) => switch (type) {
     'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
   'readingProgress' =>
     'Leitura registrada · ${metrics['pagesRead'] ?? '—'} páginas lidas',
+  'sleepTracking' =>
+    'Sono registrado · ${metrics['durationMinutes'] ?? '—'} minutos de descanso',
   _ => 'Execução registrada e missão concluída com recompensa confirmada.',
 };
 

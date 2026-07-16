@@ -115,7 +115,15 @@ public class CatalogoAtividadesService {
         metrica("durationMinutes", "integer", "min", false, false, 1, 1440, "ACCUMULATIVE"));
   }
   private List<DefinicaoMetricaAtividade> metricasTempo() { return List.of(metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "ACCUMULATIVE")); }
-  private List<DefinicaoMetricaAtividade> metricasSono() { return List.of(metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "CONSISTENCY")); }
+  private List<DefinicaoMetricaAtividade> metricasSono() {
+    return List.of(
+        metrica("sleepStart", "timeOfDay", "time", false, false, 0, 0, "INFORMATIONAL"),
+        metrica("wakeEnd", "timeOfDay", "time", false, false, 0, 0, "INFORMATIONAL"),
+        metrica("awakenings", "integer", "count", false, false, 0, 20, "INFORMATIONAL"),
+        metrica("sleepQuality", "rating", "score", false, false, 1, 5, "INFORMATIONAL"),
+        // Compatibilidade com o registro legado de duração direta.
+        metrica("durationMinutes", "integer", "min", false, false, 1, 1440, "CONSISTENCY"));
+  }
   private List<DefinicaoMetricaAtividade> metricasFinanceiras() { return List.of(metrica("amount", "decimal", "BRL", true, false, 0.01, 10000000, "INFORMATIONAL")); }
   private List<DefinicaoMetricaAtividade> metricasReflexao() { return List.of(metrica("rating", "integer", "score", false, false, 1, 5, "INFORMATIONAL")); }
   private DefinicaoMetricaAtividade metrica(String id, String tipo, String unidade, boolean obrigatoria, boolean calculada,

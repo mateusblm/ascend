@@ -42,6 +42,8 @@ public class ExecucaoAtividadeService {
       throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_study_answers", "Os acertos nao podem exceder as questoes.");
     if ("readingProgress".equals(atividade.modeloExecucao()) && numero(metricas, "pagesRead") < 1)
       throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "required_reading_progress", "Informe as paginas lidas.");
+    if ("sleepTracking".equals(atividade.modeloExecucao()) && numero(metricas, "durationMinutes") < 1)
+      throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "required_sleep_window", "Informe os horarios de sono.");
     if (!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from quests where uid = ? and id = ?)", Boolean.class, uid, request.questId())))
       throw new ExcecaoApi(HttpStatus.NOT_FOUND, "personal_quest_not_found", "Missão não encontrada.");
     Map<String, Object> calculadas = calcular(atividade.modeloExecucao(), metricas);
@@ -80,6 +82,17 @@ public class ExecucaoAtividadeService {
       metricas.put("pagesRead", paginaFinal.doubleValue() - paginaInicial.doubleValue() + 1);
       return metricas;
     }
+    if ("sleepTracking".equals(tipo)) {
+      Object inicio = metricas.get("sleepStart"); Object fim = metricas.get("wakeEnd");
+      if (inicio == null && fim == null) return metricas;
+      int inicioMinutos = minutosDoHorario(inicio); int fimMinutos = minutosDoHorario(fim);
+      if (inicioMinutos < 0 || fimMinutos < 0)
+        throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_sleep_window", "Horario de sono invalido.");
+      int duracao = fimMinutos - inicioMinutos;
+      if (duracao <= 0) duracao += 24 * 60;
+      metricas.put("durationMinutes", duracao);
+      return metricas;
+    }
     if (!"strengthSets".equals(tipo) || !(metricas.get("sets") instanceof List<?> series)) return metricas;
     double repeticoes = 0, maiorCarga = 0;
     for (Object item : series) {
@@ -96,6 +109,7 @@ public class ExecucaoAtividadeService {
   private boolean valorValido(DefinicaoMetricaAtividade metrica, Object valor) {
     if ("text".equals(metrica.tipo()))
       return valor instanceof String texto && !texto.isBlank() && texto.length() <= metrica.maximo();
+    if ("timeOfDay".equals(metrica.tipo())) return minutosDoHorario(valor) >= 0;
     return valor instanceof Number;
   }
   @SuppressWarnings("unchecked")
@@ -113,9 +127,15 @@ public class ExecucaoAtividadeService {
     if ("studySession".equals(tipo) && metricas.get("questionsAnswered") instanceof Number)
       calculadas.put("accuracyPercent", numero(metricas, "correctAnswers") * 100 / numero(metricas, "questionsAnswered"));
     if ("readingProgress".equals(tipo)) calculadas.put("pagesRead", numero(metricas, "pagesRead"));
+    if ("sleepTracking".equals(tipo)) calculadas.put("durationMinutes", numero(metricas, "durationMinutes"));
     return calculadas;
   }
   private double numero(Map<String, Object> metricas, String chave) { Object valor = metricas.get(chave); return valor instanceof Number n ? n.doubleValue() : 0; }
+  private int minutosDoHorario(Object valor) {
+    if (!(valor instanceof String horario) || !horario.matches("\\d{2}:\\d{2}")) return -1;
+    int horas = Integer.parseInt(horario.substring(0, 2)); int minutos = Integer.parseInt(horario.substring(3, 5));
+    return horas < 24 && minutos < 60 ? horas * 60 + minutos : -1;
+  }
   private boolean emBranco(String valor) { return valor == null || valor.isBlank(); }
   private String json(Map<String, Object> valor) { try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(valor); } catch (Exception e) { throw new IllegalStateException(e); } }
 }

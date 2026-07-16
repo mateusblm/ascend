@@ -4,6 +4,7 @@ import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
 import app.ascend.backend.quests.MutacaoQuestPessoalService;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,14 +29,17 @@ public class ExecucaoAtividadeService {
     DefinicaoAtividade atividade = catalogo.atividade(request.activityId());
     if (atividade == null || !atividade.modeloExecucao().equals(request.executionType()) || atividade.versaoSchema() != request.schemaVersion())
       throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_activity_contract", "Atividade ou modelo de execução inválido.");
-    Map<String, Object> metricas = request.metrics() == null ? Map.of() : request.metrics();
+    Map<String, Object> metricas = normalizarMetricas(atividade, request.metrics());
     for (DefinicaoMetricaAtividade metrica : atividade.metricas()) {
       Object valor = metricas.get(metrica.id());
-      if (metrica.obrigatoria() && !metrica.calculada() && !(valor instanceof Number))
+      if (metrica.obrigatoria() && !metrica.calculada() && !valorValido(metrica, valor))
         throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "required_activity_metric", "Métrica obrigatória ausente: " + metrica.id());
       if (valor instanceof Number numero && (numero.doubleValue() < metrica.minimo() || numero.doubleValue() > metrica.maximo()))
         throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_activity_metric", "Métrica fora do limite: " + metrica.id());
     }
+    if ("studySession".equals(atividade.modeloExecucao())
+        && numero(metricas, "correctAnswers") > numero(metricas, "questionsAnswered"))
+      throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_study_answers", "Os acertos nao podem exceder as questoes.");
     if (!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from quests where uid = ? and id = ?)", Boolean.class, uid, request.questId())))
       throw new ExcecaoApi(HttpStatus.NOT_FOUND, "personal_quest_not_found", "Missão não encontrada.");
     Map<String, Object> calculadas = calcular(atividade.modeloExecucao(), metricas);
@@ -53,9 +57,41 @@ public class ExecucaoAtividadeService {
         request.activityId(), request.executionType(), request.schemaVersion());
     return new RespostaExecucaoConcluida(execucao.status(), execucao.executionId(), execucao.calculatedMetrics(), conclusao);
   }
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> normalizarMetricas(DefinicaoAtividade atividade, Map<String, Object> recebidas) {
+    Map<String, Object> metricas = new LinkedHashMap<>(recebidas == null ? Map.of() : recebidas);
+    atividade.metricas().stream().filter(DefinicaoMetricaAtividade::calculada)
+        .map(DefinicaoMetricaAtividade::id).forEach(metricas::remove);
+    String tipo = atividade.modeloExecucao();
+    if (!"strengthSets".equals(tipo) || !(metricas.get("sets") instanceof List<?> series)) return metricas;
+    double repeticoes = 0, maiorCarga = 0;
+    for (Object item : series) {
+      if (!(item instanceof Map<?, ?> serie) || !(serie.get("repetitions") instanceof Number reps)
+          || !(serie.get("loadKg") instanceof Number carga) || reps.doubleValue() < 1 || reps.doubleValue() > 500
+          || carga.doubleValue() < 0 || carga.doubleValue() > 1000)
+        throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_strength_set", "Série de musculação inválida.");
+      repeticoes += reps.doubleValue(); maiorCarga = Math.max(maiorCarga, carga.doubleValue());
+    }
+    if (series.isEmpty()) throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "required_strength_sets", "Informe ao menos uma série.");
+    metricas.put("repetitions", repeticoes); metricas.put("loadKg", maiorCarga);
+    return metricas;
+  }
+  private boolean valorValido(DefinicaoMetricaAtividade metrica, Object valor) {
+    if ("text".equals(metrica.tipo()))
+      return valor instanceof String texto && !texto.isBlank() && texto.length() <= metrica.maximo();
+    return valor instanceof Number;
+  }
+  @SuppressWarnings("unchecked")
   private Map<String, Object> calcular(String tipo, Map<String, Object> metricas) {
     Map<String, Object> calculadas = new LinkedHashMap<>();
-    if ("strengthSets".equals(tipo)) calculadas.put("volumeKg", numero(metricas, "repetitions") * numero(metricas, "loadKg"));
+    if ("strengthSets".equals(tipo)) {
+      double volume = 0, estimado = 0;
+      if (metricas.get("sets") instanceof List<?> series) for (Object item : series) {
+        Map<?, ?> serie = (Map<?, ?>) item; double carga = numero((Map<String, Object>) serie, "loadKg"); double reps = numero((Map<String, Object>) serie, "repetitions");
+        volume += carga * reps; estimado = Math.max(estimado, carga * (1 + reps / 30));
+      } else volume = numero(metricas, "repetitions") * numero(metricas, "loadKg");
+      calculadas.put("volumeKg", volume); calculadas.put("maxLoadKg", numero(metricas, "loadKg")); calculadas.put("estimatedOneRepMaxKg", estimado);
+    }
     if ("distanceDuration".equals(tipo)) calculadas.put("paceSecondsPerKm", numero(metricas, "durationMinutes") * 60 / numero(metricas, "distanceKm"));
     if ("studySession".equals(tipo) && metricas.get("questionsAnswered") instanceof Number)
       calculadas.put("accuracyPercent", numero(metricas, "correctAnswers") * 100 / numero(metricas, "questionsAnswered"));

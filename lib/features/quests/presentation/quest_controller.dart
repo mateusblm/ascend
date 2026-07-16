@@ -237,9 +237,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _substituir([...state, quest]);
   }
 
-  Future<PersonalQuestMutationResult> registerGuidedExecution({
+  Future<GuidedExecutionResult> registerGuidedExecution({
     required Quest quest,
-    required Map<String, num> metrics,
+    required Map<String, Object?> metrics,
     String? observation,
   }) async {
     final response = await _repositorio.registerActivityExecution(
@@ -275,7 +275,13 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
         .toList();
     _persistirLocal();
     ref.read(playerProvider.notifier).applyAuthoritativeProfile(result.player);
-    return result;
+    final calculated = response['calculatedMetrics'];
+    return GuidedExecutionResult(
+      completion: result,
+      calculatedMetrics: calculated is Map
+          ? Map<String, dynamic>.from(calculated.cast<Object?, Object?>())
+          : const {},
+    );
   }
 
   void deleteQuest(String id) =>
@@ -432,4 +438,14 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _assinaturaAuth?.cancel();
     super.dispose();
   }
+}
+
+class GuidedExecutionResult {
+  const GuidedExecutionResult({
+    required this.completion,
+    required this.calculatedMetrics,
+  });
+
+  final PersonalQuestMutationResult completion;
+  final Map<String, dynamic> calculatedMetrics;
 }

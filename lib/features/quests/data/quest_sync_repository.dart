@@ -107,7 +107,7 @@ class QuestSyncRepository {
   Future<Map<String, dynamic>> registerActivityExecution({
     required Quest quest,
     required String executionId,
-    required Map<String, num> metrics,
+    required Map<String, Object?> metrics,
     String? observation,
   }) async {
     final activityId = quest.activityId;

@@ -94,7 +94,7 @@ class JavaBackendClient {
     required String activityId,
     required String executionType,
     required int schemaVersion,
-    required Map<String, num> metrics,
+    required Map<String, Object?> metrics,
     String? observation,
   }) => _postJson(
     endpointPath: '/api/v1/activity-executions',
@@ -120,7 +120,7 @@ class JavaBackendClient {
     required String activityId,
     required String executionType,
     required int schemaVersion,
-    required Map<String, num> metrics,
+    required Map<String, Object?> metrics,
     String? observation,
   }) => _postJson(
     endpointPath: '/api/v1/activity-executions/complete',

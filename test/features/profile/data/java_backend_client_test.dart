@@ -76,7 +76,13 @@ void main() {
       activityId: 'supino-reto',
       executionType: 'strengthSets',
       schemaVersion: 1,
-      metrics: {'repetitions': 8, 'loadKg': 50},
+      metrics: {
+        'sets': [
+          {'loadKg': 50, 'repetitions': 8},
+          {'loadKg': 47.5, 'repetitions': 10},
+        ],
+        'perceivedExertion': 8,
+      },
       observation: 'Série controlada',
     );
 
@@ -84,7 +90,13 @@ void main() {
     expect(captured.url.path, '/api/v1/activity-executions');
     expect(captured.headers['authorization'], 'Bearer token');
     expect(body['executionId'], 'execution-1');
-    expect(body['metrics'], {'repetitions': 8, 'loadKg': 50});
+    expect(body['metrics'], {
+      'sets': [
+        {'loadKg': 50, 'repetitions': 8},
+        {'loadKg': 47.5, 'repetitions': 10},
+      ],
+      'perceivedExertion': 8,
+    });
     expect(body['metrics'], isNot(contains('volumeKg')));
   });
 

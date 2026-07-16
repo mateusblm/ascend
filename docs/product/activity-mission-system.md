@@ -109,6 +109,22 @@ o detalhe também oferece uma superfície de progresso genérica com último
 resultado, melhor resultado, frequência, volume acumulado e tendência semanal
 ou mensal quando aplicável.
 
+## Execucao especializada do primeiro slice
+
+- **Supino reto:** registra uma lista estruturada de series com carga e
+  repeticoes, permite adicionar, remover e copiar a serie anterior e aceita
+  esforco percebido opcional. O servidor valida cada serie e deriva volume,
+  maior carga e 1RM estimado (formula de Epley).
+- **Corrida:** distancia, duracao e esforco percebido sao informados; o ritmo
+  e sempre calculado pelo servidor.
+- **Estudo:** duracao, topico, questoes, acertos e aprendizado podem ser
+  registrados. Acertos nao podem exceder questoes e o percentual e derivado
+  pelo servidor.
+
+O recibo exibe apenas as metricas calculadas retornadas pela conclusao. O
+read-model de progresso retorna recordes pessoais e totais dos ultimos 7 e 30
+dias; a tela apenas os apresenta.
+
 ## Entregas incrementais
 
 1. **Fundação:** contratos de catálogo e execução, compatibilidade `quick`,

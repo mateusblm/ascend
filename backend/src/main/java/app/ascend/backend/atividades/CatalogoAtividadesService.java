@@ -86,17 +86,23 @@ public class CatalogoAtividadesService {
   private List<DefinicaoMetricaAtividade> metricasForca() {
     return List.of(metrica("repetitions", "integer", "reps", true, false, 1, 500, "ACCUMULATIVE"),
         metrica("loadKg", "decimal", "kg", true, false, 0, 1000, "ACCUMULATIVE"),
-        metrica("volumeKg", "decimal", "kg", false, true, 0, 500000, "ACCUMULATIVE"));
+        metrica("perceivedExertion", "rating", "score", false, false, 1, 10, "INFORMATIONAL"),
+        metrica("volumeKg", "decimal", "kg", false, true, 0, 500000, "ACCUMULATIVE"),
+        metrica("maxLoadKg", "decimal", "kg", false, true, 0, 1000, "HIGHER_IS_BETTER"),
+        metrica("estimatedOneRepMaxKg", "decimal", "kg", false, true, 0, 2000, "HIGHER_IS_BETTER"));
   }
   private List<DefinicaoMetricaAtividade> metricasDistancia() {
     return List.of(metrica("distanceKm", "decimal", "km", true, false, .01, 1000, "ACCUMULATIVE"),
         metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "ACCUMULATIVE"),
+        metrica("perceivedExertion", "rating", "score", false, false, 1, 10, "INFORMATIONAL"),
         metrica("paceSecondsPerKm", "decimal", "s/km", false, true, 1, 100000, "INFORMATIONAL"));
   }
   private List<DefinicaoMetricaAtividade> metricasEstudo() {
     return List.of(metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "ACCUMULATIVE"),
+        metrica("topic", "text", "text", false, false, 0, 200, "INFORMATIONAL"),
         metrica("questionsAnswered", "integer", "questions", false, false, 0, 10000, "ACCUMULATIVE"),
         metrica("correctAnswers", "integer", "questions", false, false, 0, 10000, "ACCUMULATIVE"),
+        metrica("learning", "text", "text", false, false, 0, 2000, "INFORMATIONAL"),
         metrica("accuracyPercent", "decimal", "%", false, true, 0, 100, "INFORMATIONAL"));
   }
   private List<DefinicaoMetricaAtividade> metricasLeitura() { return List.of(metrica("pagesRead", "integer", "pages", true, false, 1, 10000, "ACCUMULATIVE")); }

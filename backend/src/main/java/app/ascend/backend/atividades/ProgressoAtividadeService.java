@@ -1,6 +1,8 @@
 package app.ascend.backend.atividades;
 
 import app.ascend.backend.infraestrutura.postgres.ConversorDocumentoPostgres;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,8 @@ public class ProgressoAtividadeService {
     }, uid, activityId);
     String type = history.isEmpty() ? "" : String.valueOf(history.getFirst().get("executionType"));
     Map<String, Object> highlights = highlights(type, history);
-    return new RespostaProgressoAtividade(activityId, type, history.size(), highlights, history);
+    return new RespostaProgressoAtividade(activityId, type, history.size(), highlights,
+        recordes(type, history), tendencias(type, history), history);
   }
 
   @SuppressWarnings("unchecked")
@@ -36,11 +39,47 @@ public class ProgressoAtividadeService {
     for (Map<String, Object> row : history) {
       Map<String, Object> input = (Map<String, Object>) row.get("metrics");
       Map<String, Object> derived = (Map<String, Object>) row.get("calculatedMetrics");
-      if ("strengthSets".equals(type)) { total += number(derived.get("volumeKg")); best = Math.max(best, number(input.get("loadKg"))); totalKey = "totalVolumeKg"; bestKey = "maxLoadKg"; }
+      if ("strengthSets".equals(type)) { total += number(derived.get("volumeKg")); best = Math.max(best, number(derived.get("maxLoadKg"))); totalKey = "totalVolumeKg"; bestKey = "maxLoadKg"; }
       if ("distanceDuration".equals(type)) { total += number(input.get("distanceKm")); double pace = number(derived.get("paceSecondsPerKm")); if (best == 0 || (pace > 0 && pace < best)) best = pace; totalKey = "totalDistanceKm"; bestKey = "bestPaceSecondsPerKm"; }
       if ("studySession".equals(type)) { total += number(input.get("durationMinutes")); best = Math.max(best, number(derived.get("accuracyPercent"))); totalKey = "totalMinutes"; bestKey = "bestAccuracyPercent"; }
     }
     Map<String, Object> result = new LinkedHashMap<>(); result.put(totalKey.isEmpty() ? "total" : totalKey, total); if (!bestKey.isEmpty()) result.put(bestKey, best); return result;
   }
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> recordes(String type, List<Map<String, Object>> history) {
+    Map<String, Object> records = new LinkedHashMap<>();
+    for (Map<String, Object> row : history) {
+      Map<String, Object> input = (Map<String, Object>) row.get("metrics");
+      Map<String, Object> derived = (Map<String, Object>) row.get("calculatedMetrics");
+      if ("strengthSets".equals(type)) {
+        maior(records, "maxLoadKg", number(derived.get("maxLoadKg")));
+        maior(records, "maxVolumeKg", number(derived.get("volumeKg")));
+        maior(records, "maxEstimatedOneRepMaxKg", number(derived.get("estimatedOneRepMaxKg")));
+      } else if ("distanceDuration".equals(type)) {
+        maior(records, "maxDistanceKm", number(input.get("distanceKm")));
+        menor(records, "bestPaceSecondsPerKm", number(derived.get("paceSecondsPerKm")));
+      } else if ("studySession".equals(type)) {
+        maior(records, "maxStudyMinutes", number(input.get("durationMinutes")));
+        maior(records, "bestAccuracyPercent", number(derived.get("accuracyPercent")));
+      }
+    }
+    return records;
+  }
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> tendencias(String type, List<Map<String, Object>> history) {
+    Instant now = Instant.now(); double weekly = 0, monthly = 0;
+    for (Map<String, Object> row : history) {
+      Instant at = Instant.parse(String.valueOf(row.get("recordedAt")));
+      Map<String, Object> input = (Map<String, Object>) row.get("metrics");
+      Map<String, Object> derived = (Map<String, Object>) row.get("calculatedMetrics");
+      double value = "strengthSets".equals(type) ? number(derived.get("volumeKg")) :
+          "distanceDuration".equals(type) ? number(input.get("distanceKm")) : number(input.get("durationMinutes"));
+      if (!at.isBefore(now.minus(7, ChronoUnit.DAYS))) weekly += value;
+      if (!at.isBefore(now.minus(30, ChronoUnit.DAYS))) monthly += value;
+    }
+    return Map.of("weekly", weekly, "monthly", monthly);
+  }
+  private void maior(Map<String, Object> values, String key, double value) { values.put(key, Math.max(number(values.get(key)), value)); }
+  private void menor(Map<String, Object> values, String key, double value) { if (value > 0 && (number(values.get(key)) == 0 || value < number(values.get(key)))) values.put(key, value); }
   private double number(Object value) { return value instanceof Number n ? n.doubleValue() : 0; }
 }

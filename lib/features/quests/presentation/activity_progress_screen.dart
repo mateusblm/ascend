@@ -52,6 +52,12 @@ class _ProgressBody extends StatelessWidget {
         .whereType<Map>()
         .toList();
     final type = data['executionType'] as String? ?? '';
+    final records = Map<String, dynamic>.from(
+      (data['records'] as Map? ?? const {}).cast<Object?, Object?>(),
+    );
+    final trends = Map<String, dynamic>.from(
+      (data['trends'] as Map? ?? const {}).cast<Object?, Object?>(),
+    );
     final heading = switch (type) {
       'strengthSets' => 'FORÇA EM CAMPO',
       'distanceDuration' => 'RITMO EM MOVIMENTO',
@@ -76,6 +82,30 @@ class _ProgressBody extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _Highlights(type: type, values: highlights),
+        const SizedBox(height: 20),
+        _TrendSummary(type: type, values: trends),
+        if (records.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          const Text(
+            'RECORDES PESSOAIS',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...records.entries.map(
+            (entry) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.emoji_events_outlined,
+                color: AppColors.systemCyan,
+              ),
+              title: Text(_recordLabel(entry.key)),
+              trailing: Text(_format(entry.value)),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         const Text(
           'EXECUÇÕES RECENTES',
@@ -94,6 +124,56 @@ class _ProgressBody extends StatelessWidget {
     );
   }
 }
+
+class _TrendSummary extends StatelessWidget {
+  const _TrendSummary({required this.type, required this.values});
+  final String type;
+  final Map<String, dynamic> values;
+  @override
+  Widget build(BuildContext context) {
+    final unit = switch (type) {
+      'strengthSets' => 'kg',
+      'distanceDuration' => 'km',
+      _ => 'min',
+    };
+    return Container(
+      padding: const EdgeInsets.all(14),
+      color: AppColors.panelCore,
+      child: Row(
+        children: [
+          Expanded(child: _trend('Últimos 7 dias', values['weekly'], unit)),
+          Expanded(child: _trend('Últimos 30 dias', values['monthly'], unit)),
+        ],
+      ),
+    );
+  }
+
+  Widget _trend(String label, Object? value, String unit) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+      ),
+      const SizedBox(height: 4),
+      Text('${_format(value)} $unit'),
+    ],
+  );
+}
+
+String _format(Object? value) => value is num
+    ? (value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1))
+    : '—';
+String _recordLabel(String key) => switch (key) {
+  'maxLoadKg' => 'Maior carga',
+  'maxVolumeKg' => 'Maior volume',
+  'maxEstimatedOneRepMaxKg' => 'Melhor 1RM estimado',
+  'maxDistanceKm' => 'Maior distância',
+  'bestPaceSecondsPerKm' => 'Melhor ritmo',
+  'maxStudyMinutes' => 'Maior sessão',
+  'bestAccuracyPercent' => 'Melhor acerto',
+  _ => key,
+};
 
 class _Highlights extends StatelessWidget {
   const _Highlights({required this.type, required this.values});

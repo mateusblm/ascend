@@ -22,6 +22,7 @@ class _ActivityExecutionModalState
     extends ConsumerState<ActivityExecutionModal> {
   final _observation = TextEditingController();
   final Map<String, TextEditingController> _metrics = {};
+  final List<_StrengthSetInputs> _sets = [_StrengthSetInputs()];
   bool _submitting = false;
 
   @override
@@ -29,6 +30,9 @@ class _ActivityExecutionModalState
     _observation.dispose();
     for (final controller in _metrics.values) {
       controller.dispose();
+    }
+    for (final set in _sets) {
+      set.dispose();
     }
     super.dispose();
   }
@@ -86,7 +90,7 @@ class _ActivityExecutionModalState
             style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 18),
-          ...inputs.map(_metricField),
+          ..._executionFields(activity, inputs),
           TextField(
             controller: _observation,
             maxLines: 3,
@@ -118,6 +122,79 @@ class _ActivityExecutionModalState
     );
   }
 
+  List<Widget> _executionFields(
+    ActivityDefinition activity,
+    List<ActivityMetricDefinition> inputs,
+  ) {
+    if (activity.executionType == 'strengthSets') {
+      return [
+        const Text('SÉRIES', style: _eyebrowStyle),
+        const SizedBox(height: 8),
+        ..._sets.asMap().entries.map(
+          (entry) => _strengthSetField(entry.key, entry.value),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _addSet,
+            icon: const Icon(Icons.add),
+            label: const Text('Adicionar série'),
+          ),
+        ),
+        ...inputs
+            .where((metric) => metric.id == 'perceivedExertion')
+            .map(_metricField),
+      ];
+    }
+    return inputs.map(_metricField).toList();
+  }
+
+  Widget _strengthSetField(int index, _StrengthSetInputs set) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: set.load,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Série ${index + 1} · carga (kg)',
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextField(
+            controller: set.repetitions,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Repetições'),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Copiar série anterior',
+          onPressed: index == 0 ? null : () => set.copyFrom(_sets[index - 1]),
+          icon: const Icon(Icons.copy),
+        ),
+        IconButton(
+          tooltip: 'Remover série',
+          onPressed: _sets.length == 1
+              ? null
+              : () => setState(() {
+                  final removed = _sets.removeAt(index);
+                  removed.dispose();
+                }),
+          icon: const Icon(Icons.remove_circle_outline),
+        ),
+      ],
+    ),
+  );
+
+  void _addSet() => setState(() {
+    final set = _StrengthSetInputs();
+    if (_sets.isNotEmpty) set.copyFrom(_sets.last);
+    _sets.add(set);
+  });
+
   Widget _metricField(ActivityMetricDefinition metric) {
     final controller = _metrics.putIfAbsent(
       metric.id,
@@ -129,25 +206,64 @@ class _ActivityExecutionModalState
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
-          labelText: '${metric.id}${metric.required ? ' *' : ''}',
+          labelText: '${_metricLabel(metric.id)}${metric.required ? ' *' : ''}',
           helperText: '${metric.unit} · ${metric.minimum}–${metric.maximum}',
         ),
       ),
     );
   }
 
+  String _metricLabel(String id) => switch (id) {
+    'distanceKm' => 'Distância (km)',
+    'durationMinutes' => 'Duração (minutos)',
+    'perceivedExertion' => 'Esforço percebido (1–10)',
+    'topic' => 'Tópico estudado',
+    'questionsAnswered' => 'Questões respondidas',
+    'correctAnswers' => 'Acertos',
+    'learning' => 'Principal aprendizado',
+    _ => id,
+  };
+
   Future<void> _submit(
     ActivityDefinition activity,
     List<ActivityMetricDefinition> inputs,
   ) async {
-    final values = <String, num>{};
+    final values = <String, Object?>{};
+    if (activity.executionType == 'strengthSets') {
+      final sets = <Map<String, num>>[];
+      for (final set in _sets) {
+        final load = num.tryParse(set.load.text.trim().replaceAll(',', '.'));
+        final repetitions = num.tryParse(set.repetitions.text.trim());
+        if (load == null ||
+            repetitions == null ||
+            load < 0 ||
+            repetitions < 1) {
+          _showError('Informe carga e repetições válidas em cada série.');
+          return;
+        }
+        sets.add({'loadKg': load, 'repetitions': repetitions});
+      }
+      values['sets'] = sets;
+    }
     for (final metric in inputs) {
+      if (activity.executionType == 'strengthSets' &&
+          (metric.id == 'repetitions' || metric.id == 'loadKg')) {
+        continue;
+      }
       final raw = _metrics[metric.id]!.text.trim().replaceAll(',', '.');
       if (raw.isEmpty) {
         if (metric.required) {
           _showError('Informe ${metric.id}.');
           return;
         }
+        continue;
+      }
+      if (metric.type == 'text') {
+        if (raw.length > metric.maximum) {
+          _showError('Texto muito longo para ${_metricLabel(metric.id)}.');
+          return;
+        }
+        values[metric.id] = raw;
         continue;
       }
       final value = num.tryParse(raw);
@@ -159,7 +275,7 @@ class _ActivityExecutionModalState
     }
     setState(() => _submitting = true);
     try {
-      await ref
+      final result = await ref
           .read(questProvider.notifier)
           .registerGuidedExecution(
             quest: widget.quest,
@@ -170,7 +286,7 @@ class _ActivityExecutionModalState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Execução registrada e missão concluída com recompensa confirmada.',
+            _receipt(activity.executionType, result.calculatedMetrics),
           ),
         ),
       );
@@ -185,6 +301,30 @@ class _ActivityExecutionModalState
   void _showError(String message) => ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String _receipt(String type, Map<String, dynamic> metrics) => switch (type) {
+  'strengthSets' =>
+    'Treino confirmado · ${metrics['volumeKg'] ?? '—'} kg de volume · 1RM ${metrics['estimatedOneRepMaxKg'] ?? '—'} kg',
+  'distanceDuration' =>
+    'Corrida confirmada · ritmo ${metrics['paceSecondsPerKm'] ?? '—'} s/km',
+  'studySession' =>
+    'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
+  _ => 'Execução registrada e missão concluída com recompensa confirmada.',
+};
+
+class _StrengthSetInputs {
+  final load = TextEditingController();
+  final repetitions = TextEditingController();
+  void copyFrom(_StrengthSetInputs other) {
+    load.text = other.load.text;
+    repetitions.text = other.repetitions.text;
+  }
+
+  void dispose() {
+    load.dispose();
+    repetitions.dispose();
+  }
 }
 
 const _eyebrowStyle = TextStyle(

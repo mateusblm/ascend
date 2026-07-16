@@ -1,5 +1,7 @@
 import 'package:ascend/features/auth/domain/auth_state.dart';
 import 'package:ascend/features/auth/presentation/auth_controller.dart';
+import 'package:ascend/core/settings/system_preferences.dart';
+import 'package:ascend/features/notifications/ritual_rota_service.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/presentation/account_screen.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
@@ -9,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 void main() {
+  final ritualRota = _TestRitualRotaService();
+
   testWidgets('AccountScreen exposes trust-critical panels and dialogs', (
     tester,
   ) async {
@@ -26,11 +30,16 @@ void main() {
             ),
           ),
           playerProvider.overrideWith((ref) => _TestPlayerNotifier(_player())),
+          ritualRotaProvider.overrideWithValue(ritualRota),
+          systemPreferencesProvider.overrideWith(
+            (ref) => _TestSystemPreferencesNotifier(),
+          ),
         ],
         child: const MaterialApp(home: AccountScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
     expect(find.byKey(const ValueKey('account-profile-panel')), findsOneWidget);
     expect(find.text('PREFERÊNCIAS DO SISTEMA'), findsOneWidget);
@@ -44,7 +53,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(find.byKey(const ValueKey('account-privacy-button')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('Politica de privacidade'), findsOneWidget);
@@ -67,11 +77,16 @@ void main() {
         overrides: [
           authProvider.overrideWith((ref) => authController),
           playerProvider.overrideWith((ref) => _TestPlayerNotifier(_player())),
+          ritualRotaProvider.overrideWithValue(ritualRota),
+          systemPreferencesProvider.overrideWith(
+            (ref) => _TestSystemPreferencesNotifier(),
+          ),
         ],
         child: const MaterialApp(home: AccountScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('account-sign-out-button')),
@@ -79,7 +94,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(find.byKey(const ValueKey('account-sign-out-button')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(authController.signOutCalls, 1);
   });
@@ -87,6 +103,24 @@ void main() {
 
 class _TestPlayerNotifier extends PlayerNotifier {
   _TestPlayerNotifier(Player state) : super(_FakeIsar(), state);
+}
+
+class _TestSystemPreferencesNotifier extends SystemPreferencesNotifier {
+  _TestSystemPreferencesNotifier() : super(_MemorySystemPreferencesService());
+}
+
+class _MemorySystemPreferencesService extends SystemPreferencesService {
+  @override
+  Future<SystemPreferences> load() async => const SystemPreferences();
+
+  @override
+  Future<void> save(SystemPreferences value) async {}
+}
+
+class _TestRitualRotaService extends RitualRotaService {
+  @override
+  Future<RitualRotaSettings> settings() async =>
+      const RitualRotaSettings(enabled: false, minutes: 1140);
 }
 
 class _FakeAuthController extends StateNotifier<AuthState>

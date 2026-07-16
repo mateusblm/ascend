@@ -4,6 +4,8 @@ import 'package:ascend/core/theme/app_colors.dart';
 import 'package:ascend/core/settings/system_preferences.dart';
 import 'package:ascend/core/widgets/system/ascend_system_event_overlay.dart';
 import 'package:ascend/core/widgets/system/ascend_system_production.dart';
+import 'package:ascend/features/auth/data/active_session_repository.dart';
+import 'package:ascend/features/profile/data/java_backend_client.dart';
 import 'package:ascend/features/profile/domain/player_model.dart';
 import 'package:ascend/features/profile/domain/weekly_boss.dart';
 import 'package:ascend/features/profile/presentation/player_controller.dart';
@@ -347,15 +349,23 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
       if (mounted) {
         setState(() => _status = Future.value(status));
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível selecionar a Build agora.'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_buildSelectionError(error))));
       }
     }
+  }
+
+  String _buildSelectionError(Object error) {
+    if (isActiveSessionConflictError(error)) {
+      return 'Sua conta está ativa em outro dispositivo. Encerre a outra sessão e tente novamente.';
+    }
+    if (error is JavaBackendException && error.message.isNotEmpty) {
+      return error.message;
+    }
+    return 'Não foi possível selecionar a Build agora.';
   }
 
   Future<void> _unlock(String talentId) async {

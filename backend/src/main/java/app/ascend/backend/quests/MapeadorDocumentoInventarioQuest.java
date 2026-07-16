@@ -108,6 +108,9 @@ public class MapeadorDocumentoInventarioQuest {
     data.put("activityId", quest.activityId());
     data.put("executionType", quest.executionType());
     data.put("activitySchemaVersion", quest.activitySchemaVersion());
+    data.put("targetStrengthSets", quest.targetStrengthSets());
+    data.put("targetStrengthRepetitions", quest.targetStrengthRepetitions());
+    data.put("targetStrengthLoadKg", quest.targetStrengthLoadKg());
     data.put("orderIndex", orderIndex);
     data.put("syncSchemaVersion", SYNC_SCHEMA_VERSION);
     data.put("syncSource", SYNC_SOURCE);

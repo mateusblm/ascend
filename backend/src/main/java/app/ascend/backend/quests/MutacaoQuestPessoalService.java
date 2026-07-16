@@ -186,7 +186,8 @@ public class MutacaoQuestPessoalService {
         perfilAtual.attributes().agility(),
         quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
         quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
-        quest.executionType(), quest.activitySchemaVersion()
+        quest.executionType(), quest.activitySchemaVersion(), quest.targetStrengthSets(),
+        quest.targetStrengthRepetitions(), quest.targetStrengthLoadKg()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -290,7 +291,8 @@ public class MutacaoQuestPessoalService {
         null,
         quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
         quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
-        quest.executionType(), quest.activitySchemaVersion()
+        quest.executionType(), quest.activitySchemaVersion(), quest.targetStrengthSets(),
+        quest.targetStrengthRepetitions(), quest.targetStrengthLoadKg()
     );
     Map<String, Object> perfilDoc = proximoPerfil.paraDocumento(
         dados.idSessaoDispositivo(),
@@ -409,7 +411,9 @@ public class MutacaoQuestPessoalService {
         data.get("recurrenceId"),
         data.get("occursOn"),
         data.get("mode"), data.get("activityCategoryId"), data.get("activityModalityId"),
-        data.get("activityId"), data.get("executionType"), data.get("activitySchemaVersion")
+        data.get("activityId"), data.get("executionType"), data.get("activitySchemaVersion"),
+        data.get("targetStrengthSets"), data.get("targetStrengthRepetitions"),
+        data.get("targetStrengthLoadKg")
     ));
   }
 
@@ -453,6 +457,9 @@ public class MutacaoQuestPessoalService {
     data.put("activityId", quest.activityId());
     data.put("executionType", quest.executionType());
     data.put("activitySchemaVersion", quest.activitySchemaVersion());
+    data.put("targetStrengthSets", quest.targetStrengthSets());
+    data.put("targetStrengthRepetitions", quest.targetStrengthRepetitions());
+    data.put("targetStrengthLoadKg", quest.targetStrengthLoadKg());
     data.put("orderIndex", indiceOrdem);
     data.put("syncSchemaVersion", 1);
     data.put("syncSource", SYNC_SOURCE);
@@ -496,7 +503,8 @@ public class MutacaoQuestPessoalService {
         quest.preRewardStatPoints(), quest.preRewardStrength(), quest.preRewardIntelligence(),
         quest.preRewardVitality(), quest.preRewardAgility(), quest.journeyId(), quest.isArchived(), quest.plannedFor(), quest.recurrenceId(), quest.occursOn(),
         quest.mode(), quest.activityCategoryId(), quest.activityModalityId(), quest.activityId(),
-        quest.executionType(), quest.activitySchemaVersion()
+        quest.executionType(), quest.activitySchemaVersion(), quest.targetStrengthSets(),
+        quest.targetStrengthRepetitions(), quest.targetStrengthLoadKg()
     );
   }
 

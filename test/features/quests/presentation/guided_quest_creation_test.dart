@@ -18,6 +18,9 @@ void main() {
       schemaVersion: 1,
       jornadaId: 'jornada-1',
       plannedFor: DateTime(2026, 7, 17, 8),
+      targetStrengthSets: 4,
+      targetStrengthRepetitions: 8,
+      targetStrengthLoadKg: 60,
     );
 
     expect(quest.mode, QuestMode.guided);
@@ -27,6 +30,9 @@ void main() {
     expect(quest.executionType, 'strengthSets');
     expect(quest.activitySchemaVersion, 1);
     expect(quest.journeyId, 'jornada-1');
+    expect(quest.targetStrengthSets, 4);
+    expect(quest.targetStrengthRepetitions, 8);
+    expect(quest.targetStrengthLoadKg, 60);
   });
 
   test('categorias guiadas possuem icones representativos', () {

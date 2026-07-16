@@ -174,41 +174,56 @@ const QuestSchema = CollectionSchema(
       name: r'targetDurationMinutes',
       type: IsarType.long,
     ),
-    r'templateType': PropertySchema(
+    r'targetStrengthLoadKg': PropertySchema(
       id: 31,
+      name: r'targetStrengthLoadKg',
+      type: IsarType.double,
+    ),
+    r'targetStrengthRepetitions': PropertySchema(
+      id: 32,
+      name: r'targetStrengthRepetitions',
+      type: IsarType.long,
+    ),
+    r'targetStrengthSets': PropertySchema(
+      id: 33,
+      name: r'targetStrengthSets',
+      type: IsarType.long,
+    ),
+    r'templateType': PropertySchema(
+      id: 34,
       name: r'templateType',
       type: IsarType.byte,
       enumMap: _QuesttemplateTypeEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 32,
+      id: 35,
       name: r'title',
       type: IsarType.string,
     ),
     r'verificationMode': PropertySchema(
-      id: 33,
+      id: 36,
       name: r'verificationMode',
       type: IsarType.byte,
       enumMap: _QuestverificationModeEnumValueMap,
     ),
     r'verificationStartedAt': PropertySchema(
-      id: 34,
+      id: 37,
       name: r'verificationStartedAt',
       type: IsarType.dateTime,
     ),
     r'verificationStatus': PropertySchema(
-      id: 35,
+      id: 38,
       name: r'verificationStatus',
       type: IsarType.byte,
       enumMap: _QuestverificationStatusEnumValueMap,
     ),
     r'verifiedAt': PropertySchema(
-      id: 36,
+      id: 39,
       name: r'verifiedAt',
       type: IsarType.dateTime,
     ),
     r'xpReward': PropertySchema(
-      id: 37,
+      id: 40,
       name: r'xpReward',
       type: IsarType.long,
     )
@@ -329,13 +344,16 @@ void _questSerialize(
   writer.writeBool(offsets[28], object.requiresTimer);
   writer.writeByte(offsets[29], object.rewardAttribute.index);
   writer.writeLong(offsets[30], object.targetDurationMinutes);
-  writer.writeByte(offsets[31], object.templateType.index);
-  writer.writeString(offsets[32], object.title);
-  writer.writeByte(offsets[33], object.verificationMode.index);
-  writer.writeDateTime(offsets[34], object.verificationStartedAt);
-  writer.writeByte(offsets[35], object.verificationStatus.index);
-  writer.writeDateTime(offsets[36], object.verifiedAt);
-  writer.writeLong(offsets[37], object.xpReward);
+  writer.writeDouble(offsets[31], object.targetStrengthLoadKg);
+  writer.writeLong(offsets[32], object.targetStrengthRepetitions);
+  writer.writeLong(offsets[33], object.targetStrengthSets);
+  writer.writeByte(offsets[34], object.templateType.index);
+  writer.writeString(offsets[35], object.title);
+  writer.writeByte(offsets[36], object.verificationMode.index);
+  writer.writeDateTime(offsets[37], object.verificationStartedAt);
+  writer.writeByte(offsets[38], object.verificationStatus.index);
+  writer.writeDateTime(offsets[39], object.verifiedAt);
+  writer.writeLong(offsets[40], object.xpReward);
 }
 
 Quest _questDeserialize(
@@ -376,19 +394,22 @@ Quest _questDeserialize(
         _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[29])] ??
             AttributeType.strength,
     targetDurationMinutes: reader.readLongOrNull(offsets[30]) ?? 0,
+    targetStrengthLoadKg: reader.readDoubleOrNull(offsets[31]),
+    targetStrengthRepetitions: reader.readLongOrNull(offsets[32]) ?? 0,
+    targetStrengthSets: reader.readLongOrNull(offsets[33]) ?? 0,
     templateType:
-        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[31])] ??
+        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[34])] ??
             QuestTemplateType.custom,
-    title: reader.readString(offsets[32]),
+    title: reader.readString(offsets[35]),
     verificationMode: _QuestverificationModeValueEnumMap[
-            reader.readByteOrNull(offsets[33])] ??
+            reader.readByteOrNull(offsets[36])] ??
         QuestVerificationMode.manual,
-    verificationStartedAt: reader.readDateTimeOrNull(offsets[34]),
+    verificationStartedAt: reader.readDateTimeOrNull(offsets[37]),
     verificationStatus: _QuestverificationStatusValueEnumMap[
-            reader.readByteOrNull(offsets[35])] ??
+            reader.readByteOrNull(offsets[38])] ??
         QuestVerificationStatus.none,
-    verifiedAt: reader.readDateTimeOrNull(offsets[36]),
-    xpReward: reader.readLong(offsets[37]),
+    verifiedAt: reader.readDateTimeOrNull(offsets[39]),
+    xpReward: reader.readLong(offsets[40]),
   );
   return object;
 }
@@ -466,23 +487,29 @@ P _questDeserializeProp<P>(
     case 30:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 31:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 32:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 33:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 34:
       return (_QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offset)] ??
           QuestTemplateType.custom) as P;
-    case 32:
+    case 35:
       return (reader.readString(offset)) as P;
-    case 33:
+    case 36:
       return (_QuestverificationModeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationMode.manual) as P;
-    case 34:
+    case 37:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 35:
+    case 38:
       return (_QuestverificationStatusValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationStatus.none) as P;
-    case 36:
+    case 39:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 37:
+    case 40:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -3194,6 +3221,198 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthLoadKgIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'targetStrengthLoadKg',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthLoadKgIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'targetStrengthLoadKg',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> targetStrengthLoadKgEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'targetStrengthLoadKg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthLoadKgGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'targetStrengthLoadKg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthLoadKgLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'targetStrengthLoadKg',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> targetStrengthLoadKgBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'targetStrengthLoadKg',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthRepetitionsEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'targetStrengthRepetitions',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthRepetitionsGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'targetStrengthRepetitions',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthRepetitionsLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'targetStrengthRepetitions',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthRepetitionsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'targetStrengthRepetitions',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> targetStrengthSetsEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'targetStrengthSets',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      targetStrengthSetsGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'targetStrengthSets',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> targetStrengthSetsLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'targetStrengthSets',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> targetStrengthSetsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'targetStrengthSets',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterFilterCondition> templateTypeEqualTo(
       QuestTemplateType value) {
     return QueryBuilder.apply(this, (query) {
@@ -4055,6 +4274,43 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByTargetStrengthLoadKg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthLoadKg', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByTargetStrengthLoadKgDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthLoadKg', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByTargetStrengthRepetitions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthRepetitions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy>
+      sortByTargetStrengthRepetitionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthRepetitions', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByTargetStrengthSets() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthSets', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByTargetStrengthSetsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthSets', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByTemplateType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'templateType', Sort.asc);
@@ -4525,6 +4781,43 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByTargetStrengthLoadKg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthLoadKg', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByTargetStrengthLoadKgDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthLoadKg', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByTargetStrengthRepetitions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthRepetitions', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy>
+      thenByTargetStrengthRepetitionsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthRepetitions', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByTargetStrengthSets() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthSets', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByTargetStrengthSetsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetStrengthSets', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByTemplateType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'templateType', Sort.asc);
@@ -4812,6 +5105,24 @@ extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QDistinct> distinctByTargetStrengthLoadKg() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'targetStrengthLoadKg');
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByTargetStrengthRepetitions() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'targetStrengthRepetitions');
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByTargetStrengthSets() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'targetStrengthSets');
+    });
+  }
+
   QueryBuilder<Quest, Quest, QDistinct> distinctByTemplateType() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'templateType');
@@ -5047,6 +5358,26 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
   QueryBuilder<Quest, int, QQueryOperations> targetDurationMinutesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'targetDurationMinutes');
+    });
+  }
+
+  QueryBuilder<Quest, double?, QQueryOperations>
+      targetStrengthLoadKgProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'targetStrengthLoadKg');
+    });
+  }
+
+  QueryBuilder<Quest, int, QQueryOperations>
+      targetStrengthRepetitionsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'targetStrengthRepetitions');
+    });
+  }
+
+  QueryBuilder<Quest, int, QQueryOperations> targetStrengthSetsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'targetStrengthSets');
     });
   }
 

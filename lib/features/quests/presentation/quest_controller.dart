@@ -99,6 +99,9 @@ Quest guidedQuestFromCatalog({
   required String activityId,
   required String executionType,
   required int schemaVersion,
+  int targetStrengthSets = 0,
+  int targetStrengthRepetitions = 0,
+  double? targetStrengthLoadKg,
   String? ownerUid,
   String? jornadaId,
   DateTime? plannedFor,
@@ -114,6 +117,9 @@ Quest guidedQuestFromCatalog({
   activityId: activityId,
   executionType: executionType,
   activitySchemaVersion: schemaVersion,
+  targetStrengthSets: targetStrengthSets,
+  targetStrengthRepetitions: targetStrengthRepetitions,
+  targetStrengthLoadKg: targetStrengthLoadKg,
   rewardAttribute: rewardAttribute,
   xpReward: personalQuestDefaultXp,
 );
@@ -216,6 +222,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     required String activityId,
     required String executionType,
     required int schemaVersion,
+    int targetStrengthSets = 0,
+    int targetStrengthRepetitions = 0,
+    double? targetStrengthLoadKg,
     String? jornadaId,
     DateTime? plannedFor,
   }) async {
@@ -230,6 +239,9 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       activityId: activityId,
       executionType: executionType,
       schemaVersion: schemaVersion,
+      targetStrengthSets: targetStrengthSets,
+      targetStrengthRepetitions: targetStrengthRepetitions,
+      targetStrengthLoadKg: targetStrengthLoadKg,
       // A compatibilidade legada requer um atributo único. Ele é derivado do
       // catálogo autoritativo e nunca é escolhido no formulário guiado.
       rewardAttribute: rewardAttribute,

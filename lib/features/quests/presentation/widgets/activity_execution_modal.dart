@@ -93,6 +93,18 @@ class _ActivityExecutionModalState
             widget.quest.title,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
+          if (activity.executionType == 'strengthSets' &&
+              widget.quest.targetStrengthSets > 0 &&
+              widget.quest.targetStrengthRepetitions > 0) ...[
+            const SizedBox(height: 8),
+            Semantics(
+              label: 'Meta de hoje: ${_strengthTargetText(widget.quest)}',
+              child: Text(
+                'Meta de hoje: ${_strengthTargetText(widget.quest)}',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           ..._executionFields(activity, inputs),
           TextField(
@@ -406,6 +418,12 @@ class _ActivityExecutionModalState
   void _showError(String message) => ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String _strengthTargetText(Quest quest) {
+  final load = quest.targetStrengthLoadKg;
+  final suffix = load == null ? '' : ' · ${load == load.roundToDouble() ? load.toInt() : load} kg';
+  return '${quest.targetStrengthSets} × ${quest.targetStrengthRepetitions}$suffix';
 }
 
 String activityExecutionReceipt(

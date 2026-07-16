@@ -43,10 +43,13 @@ const _semAlteracao = Object();
 
 /// Mantem a leitura remota de Jornadas isolada do estado visual da tela.
 class JornadaNotifier extends StateNotifier<EstadoJornadas> {
-  JornadaNotifier(this._repositorio) : super(const EstadoJornadas()) {
-    _assinaturaAutenticacao = FirebaseAuth.instance.authStateChanges().listen(
-      _aoMudarAutenticacao,
-    );
+  JornadaNotifier(this._repositorio, {bool observeAuth = true})
+    : super(const EstadoJornadas()) {
+    if (observeAuth) {
+      _assinaturaAutenticacao = FirebaseAuth.instance.authStateChanges().listen(
+        _aoMudarAutenticacao,
+      );
+    }
   }
 
   final RepositorioJornada _repositorio;

@@ -17,6 +17,9 @@ class AddQuestModal extends ConsumerStatefulWidget {
 
 class _AddQuestModalState extends ConsumerState<AddQuestModal> {
   final _controller = TextEditingController();
+  final _strengthSetsController = TextEditingController(text: '4');
+  final _strengthRepetitionsController = TextEditingController(text: '8');
+  final _strengthLoadController = TextEditingController();
   AttributeType _selectedAttribute = AttributeType.strength;
   String? _jornadaSelecionada;
   bool _recorrente = false;
@@ -40,6 +43,9 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
   @override
   void dispose() {
     _controller.dispose();
+    _strengthSetsController.dispose();
+    _strengthRepetitionsController.dispose();
+    _strengthLoadController.dispose();
     super.dispose();
   }
 
@@ -144,6 +150,12 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                                   final category = _selectedCategory!;
                                   final modality = _selectedModality!;
                                   final activity = _selectedActivity!;
+                                  final strengthTarget = _strengthTarget();
+                                  if (activity.executionType == 'strengthSets' &&
+                                      strengthTarget == null) {
+                                    _showStrengthTargetError();
+                                    return;
+                                  }
                                   await ref
                                       .read(questProvider.notifier)
                                       .addGuidedQuest(
@@ -156,6 +168,12 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
                                         activityId: activity.id,
                                         executionType: activity.executionType,
                                         schemaVersion: activity.schemaVersion,
+                                        targetStrengthSets:
+                                            strengthTarget?.sets ?? 0,
+                                        targetStrengthRepetitions:
+                                            strengthTarget?.repetitions ?? 0,
+                                        targetStrengthLoadKg:
+                                            strengthTarget?.loadKg,
                                         jornadaId: _jornadaSelecionada,
                                         plannedFor: _planejadaPara,
                                       );
@@ -394,6 +412,26 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
             onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(labelText: 'Título da missão'),
           ),
+          if (_selectedActivity!.executionType == 'strengthSets') ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _strengthSetsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Séries'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _strengthRepetitionsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Repetições por série'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _strengthLoadController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Carga-alvo (kg)'),
+            ),
+          ],
           const SizedBox(height: 12),
           const SizedBox(height: 12),
           _buildPlanningAndJourney(jornadas),
@@ -401,6 +439,22 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
       ],
     );
   }
+
+  _StrengthTarget? _strengthTarget() {
+    final sets = int.tryParse(_strengthSetsController.text.trim());
+    final repetitions = int.tryParse(_strengthRepetitionsController.text.trim());
+    final rawLoad = _strengthLoadController.text.trim().replaceAll(',', '.');
+    final load = rawLoad.isEmpty ? null : double.tryParse(rawLoad);
+    if (sets == null || sets < 1 || sets > 20 || repetitions == null ||
+        repetitions < 1 || repetitions > 500 || load != null && (load < 0 || load > 1000)) {
+      return null;
+    }
+    return _StrengthTarget(sets, repetitions, load);
+  }
+
+  void _showStrengthTargetError() => ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Informe de 1 a 20 séries, 1 a 500 repetições e carga entre 0 e 1000 kg.')),
+  );
 
   Widget _buildPlanningAndJourney(List<Jornada> jornadas) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,6 +721,14 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
 }
 
 enum _QuestCreationMode { quick, guided }
+
+class _StrengthTarget {
+  const _StrengthTarget(this.sets, this.repetitions, this.loadKg);
+
+  final int sets;
+  final int repetitions;
+  final double? loadKg;
+}
 
 class _ModeCard extends StatelessWidget {
   const _ModeCard({

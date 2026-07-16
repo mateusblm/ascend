@@ -38,6 +38,15 @@ public class ValidadorRequisicaoInventarioQuest {
     Timestamp concluidaEm = optionalTimestamp(quest.completedAt(), prefixo + ".completedAt");
     Timestamp verificadaEm = optionalTimestamp(quest.verifiedAt(), prefixo + ".verifiedAt");
     int xp = Math.max(8, Math.min(15, requireInt(quest.xpReward(), prefixo + ".xpReward", 0)));
+    String executionType = atividadeId(quest.executionType(), prefixo + ".executionType");
+    int targetStrengthSets = 0;
+    int targetStrengthRepetitions = 0;
+    Double targetStrengthLoadKg = null;
+    if ("strengthSets".equals(executionType)) {
+      targetStrengthSets = optionalBoundedInt(quest.targetStrengthSets(), prefixo + ".targetStrengthSets", 20);
+      targetStrengthRepetitions = optionalBoundedInt(quest.targetStrengthRepetitions(), prefixo + ".targetStrengthRepetitions", 500);
+      targetStrengthLoadKg = optionalBoundedDecimal(quest.targetStrengthLoadKg(), prefixo + ".targetStrengthLoadKg", 1000);
+    }
     return new QuestInventarioValidada(
         requireString(quest.id(), prefixo + ".id", 120),
         requireString(quest.title(), prefixo + ".title", 120),
@@ -59,7 +68,8 @@ public class ValidadorRequisicaoInventarioQuest {
         optionalTimestamp(quest.occursOn(), prefixo + ".occursOn"),
         modo(quest.mode(), prefixo), atividadeId(quest.activityCategoryId(), prefixo + ".activityCategoryId"),
         atividadeId(quest.activityModalityId(), prefixo + ".activityModalityId"), atividadeId(quest.activityId(), prefixo + ".activityId"),
-        atividadeId(quest.executionType(), prefixo + ".executionType"), optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion") == null ? 0 : optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion"));
+        executionType, optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion") == null ? 0 : optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion"),
+        targetStrengthSets, targetStrengthRepetitions, targetStrengthLoadKg);
   }
 
   private String jornadaId(Object valor, String prefixo) {
@@ -80,5 +90,21 @@ public class ValidadorRequisicaoInventarioQuest {
   private String atividadeId(Object valor, String campo) {
     String id = optionalString(valor, campo, 100, "");
     return id.isBlank() ? null : id;
+  }
+
+  private int optionalBoundedInt(Object value, String field, int maximum) {
+    if (value == null) return 0;
+    int result = requireInt(value, field, 0);
+    if (result > maximum) throw badRequest("invalid_" + field);
+    return result;
+  }
+
+  private Double optionalBoundedDecimal(Object value, String field, double maximum) {
+    if (value == null) return null;
+    if (!(value instanceof Number number) || !Double.isFinite(number.doubleValue())
+        || number.doubleValue() < 0 || number.doubleValue() > maximum) {
+      throw badRequest("invalid_" + field);
+    }
+    return number.doubleValue();
   }
 }

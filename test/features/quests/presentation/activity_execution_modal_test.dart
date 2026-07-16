@@ -17,6 +17,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('SÉRIES'), findsOneWidget);
+    expect(find.textContaining('Meta de hoje'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Meta de hoje')), findsOneWidget);
     expect(find.byType(SafeArea), findsOneWidget);
     expect(find.textContaining('confirmados pelo servidor'), findsNothing);
     expect(find.byTooltip('Copiar série anterior'), findsOneWidget);
@@ -131,6 +133,9 @@ Quest _quest(String type) => Quest(
   activityId: 'activity-$type',
   executionType: type,
   activitySchemaVersion: 1,
+  targetStrengthSets: type == 'strengthSets' ? 4 : 0,
+  targetStrengthRepetitions: type == 'strengthSets' ? 8 : 0,
+  targetStrengthLoadKg: type == 'strengthSets' ? 60 : null,
   rewardAttribute: AttributeType.vitality,
   xpReward: 12,
 );

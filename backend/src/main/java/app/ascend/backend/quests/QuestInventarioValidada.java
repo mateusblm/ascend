@@ -36,6 +36,9 @@ public record QuestInventarioValidada(
     String activityModalityId,
     String activityId,
     String executionType,
-    int activitySchemaVersion
+    int activitySchemaVersion,
+    int targetStrengthSets,
+    int targetStrengthRepetitions,
+    Double targetStrengthLoadKg
 ) {
 }

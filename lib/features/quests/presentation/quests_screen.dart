@@ -1189,6 +1189,10 @@ class _DetalheMissao extends StatelessWidget {
             const _LinhaDetalhe('Jornada', 'Missão vinculada a uma Jornada'),
           if (quest.targetDurationMinutes > 0)
             _LinhaDetalhe('Duração', '${quest.targetDurationMinutes} min'),
+          if (quest.executionType == 'strengthSets' &&
+              quest.targetStrengthSets > 0 &&
+              quest.targetStrengthRepetitions > 0)
+            _LinhaDetalhe('Meta de força', _metaForca(quest)),
           const SizedBox(height: 14),
           const Text(
             'As ações disponíveis ficam no item da rota para preservar a confirmação e a sincronização existentes.',
@@ -1198,6 +1202,14 @@ class _DetalheMissao extends StatelessWidget {
       ),
     );
   }
+}
+
+String _metaForca(Quest quest) {
+  final carga = quest.targetStrengthLoadKg;
+  final textoCarga = carga == null
+      ? ''
+      : ' · ${carga == carga.roundToDouble() ? carga.toInt() : carga} kg';
+  return '${quest.targetStrengthSets} × ${quest.targetStrengthRepetitions}$textoCarga';
 }
 
 class _LinhaDetalhe extends StatelessWidget {

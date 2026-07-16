@@ -59,6 +59,11 @@ Quest parseQuestSyncData(
     executionType: data['executionType'] as String?,
     activitySchemaVersion:
         (data['activitySchemaVersion'] as num?)?.toInt() ?? 0,
+    targetStrengthSets:
+        ((data['targetStrengthSets'] as num?)?.toInt() ?? 0).clamp(0, 20),
+    targetStrengthRepetitions:
+        ((data['targetStrengthRepetitions'] as num?)?.toInt() ?? 0).clamp(0, 500),
+    targetStrengthLoadKg: (data['targetStrengthLoadKg'] as num?)?.toDouble(),
     rewardAttribute: _attributeFrom(data['rewardAttribute']),
     xpReward: ((data['xpReward'] as num?)?.toInt() ?? personalQuestDefaultXp)
         .clamp(personalQuestMinXp, 1000000),
@@ -449,6 +454,9 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'activityId': quest.activityId,
     'executionType': quest.executionType,
     'activitySchemaVersion': quest.activitySchemaVersion,
+    'targetStrengthSets': quest.targetStrengthSets,
+    'targetStrengthRepetitions': quest.targetStrengthRepetitions,
+    'targetStrengthLoadKg': quest.targetStrengthLoadKg,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
     'category': 'personal',

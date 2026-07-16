@@ -45,6 +45,9 @@ class Quest {
   final String? activityId;
   final String? executionType;
   final int activitySchemaVersion;
+  final int targetStrengthSets;
+  final int targetStrengthRepetitions;
+  final double? targetStrengthLoadKg;
 
   @enumerated
   final AttributeType rewardAttribute;
@@ -95,6 +98,9 @@ class Quest {
     this.activityId,
     this.executionType,
     this.activitySchemaVersion = 0,
+    this.targetStrengthSets = 0,
+    this.targetStrengthRepetitions = 0,
+    this.targetStrengthLoadKg,
     required this.rewardAttribute,
     required this.xpReward,
     this.templateType = QuestTemplateType.custom,
@@ -141,6 +147,10 @@ class Quest {
     String? activityId,
     String? executionType,
     int? activitySchemaVersion,
+    int? targetStrengthSets,
+    int? targetStrengthRepetitions,
+    double? targetStrengthLoadKg,
+    bool clearTargetStrengthLoadKg = false,
     bool clearJourney = false,
     bool? isCompleted,
     QuestTemplateType? templateType,
@@ -180,6 +190,12 @@ class Quest {
       executionType: executionType ?? this.executionType,
       activitySchemaVersion:
           activitySchemaVersion ?? this.activitySchemaVersion,
+      targetStrengthSets: targetStrengthSets ?? this.targetStrengthSets,
+      targetStrengthRepetitions:
+          targetStrengthRepetitions ?? this.targetStrengthRepetitions,
+      targetStrengthLoadKg: clearTargetStrengthLoadKg
+          ? null
+          : (targetStrengthLoadKg ?? this.targetStrengthLoadKg),
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
       templateType: templateType ?? this.templateType,

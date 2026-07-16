@@ -34,6 +34,9 @@ public record QuestFonteInventario(
     Object activityModalityId,
     Object activityId,
     Object executionType,
-    Object activitySchemaVersion
+    Object activitySchemaVersion,
+    Object targetStrengthSets,
+    Object targetStrengthRepetitions,
+    Object targetStrengthLoadKg
 ) {
 }

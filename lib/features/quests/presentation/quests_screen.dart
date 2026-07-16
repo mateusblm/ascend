@@ -786,19 +786,28 @@ class _FaixaMissao extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 7),
-                      Text(
-                        quest.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: quest.isCompleted
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                              decoration: quest.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _MissionTypeIcon(quest: quest, color: corEstado),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              quest.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: quest.isCompleted
+                                        ? AppColors.textSecondary
+                                        : AppColors.textPrimary,
+                                    decoration: quest.isCompleted
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
                             ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -1044,6 +1053,34 @@ class _RotaVazia extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MissionTypeIcon extends StatelessWidget {
+  const _MissionTypeIcon({required this.quest, required this.color});
+  final Quest quest;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final visual = missionTypeVisualFor(quest);
+    return Semantics(
+      label: 'Tipo de missão: ${visual.label}',
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: .12),
+          border: Border.all(color: color.withValues(alpha: .42)),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(8),
+            bottomRight: Radius.circular(10),
+          ),
+        ),
+        child: Icon(visual.icon, size: 18, color: color),
       ),
     );
   }

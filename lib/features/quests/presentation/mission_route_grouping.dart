@@ -35,6 +35,76 @@ Quest? missionPriorityFor(List<Quest> quests, {required DateTime now}) {
 
 enum MissionRouteGroup { inProgress, now, scheduled, unscheduled, completed }
 
+typedef MissionTypeVisual = ({IconData icon, String label});
+
+/// Identidade visual do modelo de execução; não afeta persistência ou regras.
+MissionTypeVisual missionTypeVisualFor(Quest quest) {
+  if (quest.isGuided) {
+    return switch (quest.executionType) {
+      'strengthSets' => (
+        icon: Icons.fitness_center_rounded,
+        label: 'Treino de força',
+      ),
+      'distanceDuration' => (
+        icon: Icons.directions_run_rounded,
+        label: 'Corrida',
+      ),
+      'studySession' => (
+        icon: Icons.school_outlined,
+        label: 'Sessão de estudo',
+      ),
+      'readingProgress' => (icon: Icons.menu_book_rounded, label: 'Leitura'),
+      'timedSession' => (
+        icon: Icons.timer_outlined,
+        label: 'Sessão cronometrada',
+      ),
+      'quantityTracking' => (
+        icon: Icons.add_chart_rounded,
+        label: 'Registro de quantidade',
+      ),
+      'sleepTracking' => (
+        icon: Icons.bedtime_outlined,
+        label: 'Registro de sono',
+      ),
+      'moneyTracking' => (
+        icon: Icons.account_balance_wallet_outlined,
+        label: 'Registro financeiro',
+      ),
+      'reflectionSession' => (
+        icon: Icons.auto_stories_outlined,
+        label: 'Reflexão',
+      ),
+      _ => (icon: Icons.task_alt_rounded, label: 'Missão guiada'),
+    };
+  }
+  return switch (quest.templateType) {
+    QuestTemplateType.custom => (
+      icon: Icons.task_alt_rounded,
+      label: 'Missão rápida',
+    ),
+    QuestTemplateType.focusSession => (
+      icon: Icons.timer_outlined,
+      label: 'Sessão de foco',
+    ),
+    QuestTemplateType.studySession => (
+      icon: Icons.school_outlined,
+      label: 'Sessão de estudo',
+    ),
+    QuestTemplateType.readingSession => (
+      icon: Icons.menu_book_rounded,
+      label: 'Leitura',
+    ),
+    QuestTemplateType.runningSession => (
+      icon: Icons.directions_run_rounded,
+      label: 'Corrida',
+    ),
+    QuestTemplateType.workoutSession => (
+      icon: Icons.fitness_center_rounded,
+      label: 'Treino',
+    ),
+  };
+}
+
 Map<MissionRouteGroup, List<Quest>> missionGroupsFor(
   List<Quest> quests, {
   required DateTime now,

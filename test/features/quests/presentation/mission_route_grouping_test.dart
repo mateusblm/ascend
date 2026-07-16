@@ -1,6 +1,7 @@
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/mission_route_grouping.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 
 Quest quest(
   String id, {
@@ -59,5 +60,21 @@ void main() {
     ]);
     expect(groups[MissionRouteGroup.completed]!.single.id, 'concluída');
     expect(groups[MissionRouteGroup.scheduled], isEmpty);
+  });
+
+  test('define icone representativo para leitura guiada', () {
+    final leitura = Quest(
+      id: 'leitura',
+      title: 'Ler',
+      mode: QuestMode.guided,
+      activityId: 'leitura-livre',
+      executionType: 'readingProgress',
+      activitySchemaVersion: 1,
+      rewardAttribute: AttributeType.intelligence,
+      xpReward: 12,
+    );
+
+    expect(missionTypeVisualFor(leitura).label, 'Leitura');
+    expect(missionTypeVisualFor(leitura).icon, Icons.menu_book_rounded);
   });
 }

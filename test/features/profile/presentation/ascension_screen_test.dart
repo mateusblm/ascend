@@ -76,8 +76,10 @@ class _TestPlayerNotifier extends PlayerNotifier {
   @override
   Future<Map<String, dynamic>> consultarBuild() async => {
     'buildId': null,
-    'talentosDesbloqueados': const [],
-    'horizonteDisponivel': false,
+    'nome': null,
+    'descricao': null,
+    'pontosDisponiveis': 0,
+    'talentos': const [],
   };
 }
 

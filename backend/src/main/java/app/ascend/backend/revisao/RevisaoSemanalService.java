@@ -1,6 +1,7 @@
 package app.ascend.backend.revisao;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
+import app.ascend.backend.build.BuildService;
 import app.ascend.backend.perfil.PerfilUsuario;
 import app.ascend.backend.perfil.RepositorioPostgresPerfil;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
@@ -25,25 +26,27 @@ public class RevisaoSemanalService {
   private final RepositorioRevisaoSemanal revisoes;
   private final GuardaSessaoAtiva guardaSessaoAtiva;
   private final Clock clock;
+  private final BuildService builds;
 
   @Autowired
   public RevisaoSemanalService(
       RepositorioPostgresPerfil perfis,
       RepositorioRevisaoSemanal revisoes,
-      GuardaSessaoAtiva guardaSessaoAtiva
+      GuardaSessaoAtiva guardaSessaoAtiva, BuildService builds
   ) {
-    this(perfis, revisoes, guardaSessaoAtiva, Clock.systemUTC());
+    this(perfis, revisoes, guardaSessaoAtiva, builds, Clock.systemUTC());
   }
 
   RevisaoSemanalService(
       RepositorioPostgresPerfil perfis,
       RepositorioRevisaoSemanal revisoes,
-      GuardaSessaoAtiva guardaSessaoAtiva,
+      GuardaSessaoAtiva guardaSessaoAtiva, BuildService builds,
       Clock clock
   ) {
     this.perfis = perfis;
     this.revisoes = revisoes;
     this.guardaSessaoAtiva = guardaSessaoAtiva;
+    this.builds = builds;
     this.clock = clock;
   }
 
@@ -64,7 +67,9 @@ public class RevisaoSemanalService {
     guardaSessaoAtiva.exigirSessaoAtiva(uid, requisicao.deviceSessionId());
     LocalDate inicio = inicioSemana(LocalDate.now(clock));
     PerfilUsuario perfil = PerfilUsuario.deDocumento(perfis.buscarPerfil(uid), nome);
-    revisoes.registrarConfirmacao(uid, inicio);
+    if (revisoes.registrarConfirmacao(uid, inicio)) {
+      builds.concederPontoPorRevisaoSemanal(uid, inicio.toString());
+    }
     return resposta(uid, perfil, inicio, true);
   }
 

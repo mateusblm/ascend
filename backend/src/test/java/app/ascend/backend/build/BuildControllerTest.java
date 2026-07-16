@@ -36,10 +36,12 @@ class BuildControllerTest {
 
   @Test void encaminhaEscolhaAutenticada() throws Exception {
     when(tokens.verificar("token")).thenReturn(new UsuarioAutenticado("u1", "u@a.com"));
-    when(service.selecionar(eq("u1"), any())).thenReturn(new RespostaBuild("estrategista", List.of("rota-clara"), false));
+    when(service.selecionar(eq("u1"), any())).thenReturn(new RespostaBuild(
+        "estrategista", "Estrategista", "Rota clara.", 0, null,
+        List.of(new RespostaTalento("rota-clara", "Rota Clara", "", "", "acquired", "Adquirido"))));
     mockMvc.perform(post("/api/v1/build/select").header("Authorization", "Bearer token")
         .contentType(MediaType.APPLICATION_JSON).content("{\"buildId\":\"estrategista\",\"deviceSessionId\":\"d1\"}"))
         .andExpect(status().isOk()).andExpect(jsonPath("$.buildId", is("estrategista")))
-        .andExpect(jsonPath("$.talentosDesbloqueados[0]", is("rota-clara")));
+        .andExpect(jsonPath("$.talentos[0].id", is("rota-clara")));
   }
 }

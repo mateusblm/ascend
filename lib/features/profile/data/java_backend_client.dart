@@ -91,6 +91,16 @@ class JavaBackendClient {
     body: {'buildId': buildId, 'deviceSessionId': deviceSessionId},
   );
 
+  Future<Map<String, dynamic>> unlockTalent({
+    required String idToken,
+    required String deviceSessionId,
+    required String talentId,
+  }) => _postJson(
+    endpointPath: '/api/v1/build/talents/unlock',
+    idToken: idToken,
+    body: {'talentoId': talentId, 'deviceSessionId': deviceSessionId},
+  );
+
   Future<Map<String, dynamic>> confirmWeeklyReview({
     required String idToken,
     required String deviceSessionId,

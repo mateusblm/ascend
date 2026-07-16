@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.ArgumentMatchers.eq;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
@@ -50,5 +53,28 @@ class BuildServiceTest {
     verify(sessoes).exigirSessaoAtiva("u1", "d1");
     assertEquals("build_indisponivel", erro.codigo());
     Mockito.verifyNoInteractions(jdbc);
+  }
+
+  @Test void pontoDaRevisaoEConcedidoUmaUnicaVezPeloRegistroCanonico() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    BuildService service = new BuildService(jdbc, Mockito.mock(GuardaSessaoAtiva.class));
+    Mockito.when(jdbc.update(startsWith("insert into concessoes_pontos_talento"), eq("u1"), eq("2026-07-13")))
+        .thenReturn(1);
+
+    service.concederPontoPorRevisaoSemanal("u1", "2026-07-13");
+
+    verify(jdbc).update(startsWith("insert into concessoes_pontos_talento"), eq("u1"), eq("2026-07-13"));
+    verify(jdbc, times(1)).update(startsWith("insert into pontos_talento_usuario"), eq("u1"));
+  }
+
+  @Test void concessaoIdempotenteNaoDuplicaPonto() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    BuildService service = new BuildService(jdbc, Mockito.mock(GuardaSessaoAtiva.class));
+    Mockito.when(jdbc.update(startsWith("insert into concessoes_pontos_talento"), eq("u1"), eq("2026-07-13")))
+        .thenReturn(0);
+
+    service.concederPontoPorRevisaoSemanal("u1", "2026-07-13");
+
+    verify(jdbc, Mockito.never()).update(startsWith("insert into pontos_talento_usuario"), eq("u1"));
   }
 }

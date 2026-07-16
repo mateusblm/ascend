@@ -358,6 +358,23 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
     }
   }
 
+  Future<void> _unlock(String talentId) async {
+    try {
+      final status = await ref
+          .read(playerProvider.notifier)
+          .desbloquearTalento(talentId);
+      if (mounted) setState(() => _status = Future.value(status));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Este talento ainda não pode ser desbloqueado.'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<Map<String, dynamic>>(
     future: _status,
@@ -365,13 +382,18 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
       final status = snapshot.data;
       if (status == null) return const SizedBox.shrink();
       final selected = status['buildId'] as String?;
-      final talents = (status['talentosDesbloqueados'] as List? ?? const [])
-          .whereType<String>()
-          .toSet();
+      final talents = (status['talentos'] as List? ?? const [])
+          .whereType<Map>()
+          .map((talent) => Map<String, dynamic>.from(talent))
+          .toList(growable: false);
+      final name = status['nome'] as String? ?? _buildName(selected);
+      final description = status['descricao'] as String? ?? '';
+      final points = (status['pontosDisponiveis'] as num?)?.toInt() ?? 0;
+      final nextMission = status['proximaMissao'] as String?;
       return Semantics(
         label: selected == null
-            ? 'Build disponível: Estrategista.'
-            : 'Build ativa: Estrategista.',
+            ? 'Escolha uma Build.'
+            : 'Build ativa: $name. $points pontos de talento disponíveis.',
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -393,30 +415,54 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                _buildName(selected),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text(name, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                selected == 'erudito'
-                    ? 'Consolide estudo e aprendizado em ciclos claros.'
-                    : selected == 'vanguarda'
-                    ? 'Converta ação e vitalidade em impulso constante.'
-                    : 'Transforme objetivos em uma rota clara.',
+                selected == null
+                    ? 'Escolha uma direção para começar.'
+                    : description,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 12),
-              _TalentLine(
-                'Rota Clara',
-                talents.contains('rota-clara'),
-                'Explica a próxima missão.',
+              if (selected != null)
+                Text(
+                  '$points PONTO${points == 1 ? '' : 'S'} DE TALENTO DISPONÍVEL${points == 1 ? '' : 'EIS'}',
+                  style: const TextStyle(
+                    color: AppColors.rewardGold,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ...talents.map(
+                (talent) => _TalentLine(
+                  title: talent['nome'] as String? ?? 'Talento',
+                  detail: talent['descricao'] as String? ?? '',
+                  effect: talent['efeito'] as String? ?? '',
+                  state: talent['estado'] as String? ?? 'locked',
+                  requirement: talent['requisito'] as String? ?? '',
+                  onUnlock: talent['estado'] == 'available'
+                      ? () => _unlock(talent['id'] as String)
+                      : null,
+                ),
               ),
-              _TalentLine(
-                'Horizonte',
-                talents.contains('horizonte'),
-                'Disponível após uma Revisão Semanal.',
-              ),
+              if (nextMission != null) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'PRÓXIMA MISSÃO DE JORNADA',
+                  style: TextStyle(
+                    color: AppColors.rewardGold,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  nextMission,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
               if (selected == null) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -425,9 +471,17 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
                   label: const Text('ESCOLHER ESTRATEGISTA'),
                 ),
                 const SizedBox(height: 8),
-                OutlinedButton.icon(onPressed: () => _select('erudito'), icon: const Icon(Icons.auto_stories_outlined), label: const Text('ESCOLHER ERUDITO')),
+                OutlinedButton.icon(
+                  onPressed: () => _select('erudito'),
+                  icon: const Icon(Icons.auto_stories_outlined),
+                  label: const Text('ESCOLHER ERUDITO'),
+                ),
                 const SizedBox(height: 8),
-                OutlinedButton.icon(onPressed: () => _select('vanguarda'), icon: const Icon(Icons.directions_run_rounded), label: const Text('ESCOLHER VANGUARDA')),
+                OutlinedButton.icon(
+                  onPressed: () => _select('vanguarda'),
+                  icon: const Icon(Icons.directions_run_rounded),
+                  label: const Text('ESCOLHER VANGUARDA'),
+                ),
               ],
             ],
           ),
@@ -444,33 +498,92 @@ class _BuildPanelState extends ConsumerState<_BuildPanel> {
 }
 
 class _TalentLine extends StatelessWidget {
-  const _TalentLine(this.title, this.unlocked, this.detail);
+  const _TalentLine({
+    required this.title,
+    required this.detail,
+    required this.effect,
+    required this.state,
+    required this.requirement,
+    this.onUnlock,
+  });
   final String title;
-  final bool unlocked;
+  final String state;
   final String detail;
+  final String effect;
+  final String requirement;
+  final VoidCallback? onUnlock;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 7),
-    child: Row(
-      children: [
-        Icon(
-          unlocked ? Icons.check_circle_outline : Icons.lock_outline,
-          size: 16,
-          color: unlocked ? AppColors.successGreen : AppColors.textMuted,
-        ),
-        const SizedBox(width: 7),
-        Expanded(
-          child: Text(
-            '$title · $detail',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+  Widget build(BuildContext context) {
+    final acquired = state == 'acquired';
+    final available = state == 'available';
+    return Semantics(
+      label:
+          '$title. ${acquired
+              ? 'Adquirido'
+              : available
+              ? 'Disponível para desbloquear'
+              : 'Bloqueado'}. $requirement',
+      child: Padding(
+        padding: const EdgeInsets.only(top: 7),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  acquired
+                      ? Icons.check_circle_outline
+                      : available
+                      ? Icons.lock_open_outlined
+                      : Icons.lock_outline,
+                  size: 16,
+                  color: acquired
+                      ? AppColors.successGreen
+                      : available
+                      ? AppColors.rewardGold
+                      : AppColors.textMuted,
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    '$title · $detail',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
+            if (effect.isNotEmpty)
+              Text(
+                effect,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            if (!acquired)
+              Text(
+                requirement,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            if (available)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: onUnlock,
+                  child: const Text('DESBLOQUEAR'),
+                ),
+              ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _WeeklyReviewPanel extends ConsumerStatefulWidget {

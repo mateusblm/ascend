@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.ascend.backend.build.BuildService;
 import app.ascend.backend.perfil.RepositorioPostgresPerfil;
 import app.ascend.backend.quests.GuardaSessaoAtiva;
 import com.google.cloud.Timestamp;
@@ -24,12 +25,13 @@ class RevisaoSemanalServiceTest {
   @Mock private RepositorioPostgresPerfil perfis;
   @Mock private RepositorioRevisaoSemanal revisoes;
   @Mock private GuardaSessaoAtiva guardaSessaoAtiva;
+  @Mock private BuildService builds;
   private RevisaoSemanalService service;
 
   @BeforeEach
   void preparar() {
     service = new RevisaoSemanalService(
-        perfis, revisoes, guardaSessaoAtiva,
+        perfis, revisoes, guardaSessaoAtiva, builds,
         Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC));
   }
 
@@ -71,6 +73,8 @@ class RevisaoSemanalServiceTest {
           () -> org.mockito.Mockito.mock(RepositorioRevisaoSemanal.class));
       contexto.registerBean(GuardaSessaoAtiva.class,
           () -> org.mockito.Mockito.mock(GuardaSessaoAtiva.class));
+      contexto.registerBean(BuildService.class,
+          () -> org.mockito.Mockito.mock(BuildService.class));
       contexto.registerBean(RevisaoSemanalService.class);
       contexto.refresh();
       org.junit.jupiter.api.Assertions.assertNotNull(contexto.getBean(RevisaoSemanalService.class));

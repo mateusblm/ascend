@@ -287,6 +287,15 @@ class PlayerProfileRepository {
     );
   }
 
+  Future<Map<String, dynamic>> desbloquearTalento(String talentoId) async {
+    await _sessionRepository.registerActiveSession();
+    return _javaBackendClientObrigatorio('desbloquear talento').unlockTalent(
+      idToken: await _idTokenObrigatorio('desbloquear talento'),
+      deviceSessionId: await _sessionRepository.deviceSessionId(),
+      talentId: talentoId,
+    );
+  }
+
   Future<Map<String, dynamic>> confirmarRevisaoSemanal() async {
     await _sessionRepository.registerActiveSession();
     return _javaBackendClientObrigatorio(

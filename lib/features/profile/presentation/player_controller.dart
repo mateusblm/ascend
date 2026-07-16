@@ -120,7 +120,13 @@ class PlayerNotifier extends StateNotifier<Player> {
         'selecionar Build',
       ).selecionarBuildEstrategista();
   Future<Map<String, dynamic>> selecionarBuild(String buildId) =>
-      _profileRepositoryObrigatorio('selecionar Build').selecionarBuild(buildId);
+      _profileRepositoryObrigatorio(
+        'selecionar Build',
+      ).selecionarBuild(buildId);
+  Future<Map<String, dynamic>> desbloquearTalento(String talentoId) =>
+      _profileRepositoryObrigatorio(
+        'desbloquear talento',
+      ).desbloquearTalento(talentoId);
 
   PlayerProfileRepository _profileRepositoryObrigatorio(String acao) {
     final repositorio = _profileRepository;

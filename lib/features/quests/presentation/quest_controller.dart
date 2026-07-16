@@ -242,6 +242,11 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     required Map<String, Object?> metrics,
     String? observation,
   }) async {
+    final uid = _uid;
+    if (uid == null) throw StateError('Sessão do usuário indisponível.');
+    // A criação local é otimista. Antes de concluir, aguarda o inventário
+    // autoritativo para que o backend localize a Quest desta execução.
+    await _repositorio.replaceQuests(uid: uid, quests: state);
     final response = await _repositorio.registerActivityExecution(
       quest: quest,
       executionId: '${quest.id}-${DateTime.now().microsecondsSinceEpoch}',
@@ -251,8 +256,6 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     final completion = Map<String, dynamic>.from(
       (response['completion'] as Map).cast<Object?, Object?>(),
     );
-    final uid = _uid;
-    if (uid == null) throw StateError('Sessão do usuário indisponível.');
     final result = PersonalQuestMutationResult(
       status: PersonalQuestMutationStatus.completed,
       player: parsePlayerProfileData(

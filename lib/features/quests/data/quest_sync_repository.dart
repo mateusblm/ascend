@@ -10,6 +10,15 @@ bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
   return quests.isNotEmpty;
 }
 
+/// O inventario do cliente nao edita ocorrencias recorrentes: elas pertencem ao
+/// backend e sao materializadas no dia devido. Reenviar essas ocorrencias faria
+/// o app competir com a fonte autoritativa e pode invalidar o payload.
+List<Map<String, dynamic>> questSourcesForInventorySync(Iterable<Quest> quests) =>
+    quests
+        .where((quest) => quest.recurrenceId == null)
+        .map(_questSourceFor)
+        .toList(growable: false);
+
 enum PersonalQuestMutationStatus {
   completed,
   alreadyCompleted,
@@ -98,7 +107,7 @@ class QuestSyncRepository {
     try {
       await _sessionRepository.registerActiveSession();
       final deviceSessionId = await _sessionRepository.deviceSessionId();
-      final sourceQuests = quests.map(_questSourceFor).toList(growable: false);
+      final sourceQuests = questSourcesForInventorySync(quests);
       final javaBackendClient = _javaBackendClientObrigatorio(
         'sincronizar inventario de quests',
       );

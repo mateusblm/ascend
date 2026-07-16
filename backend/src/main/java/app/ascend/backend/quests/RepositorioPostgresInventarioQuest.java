@@ -36,7 +36,10 @@ public class RepositorioPostgresInventarioQuest extends SuporteRepositorioPostgr
 
   @Override
   public Set<String> buscarIdsQuests(String uid) {
-    return jdbcTemplate.queryForList("select id from quests where uid = ?", String.class, uid)
+    // A sincronizacao de inventario pertence apenas as quests criadas pelo
+    // cliente. Ocorrencias recorrentes sao autoria do backend e nao podem ser
+    // removidas por estarem ausentes do payload do app.
+    return jdbcTemplate.queryForList("select id from quests where uid = ? and recorrencia_id is null", String.class, uid)
         .stream().collect(Collectors.toSet());
   }
 

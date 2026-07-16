@@ -92,6 +92,12 @@ public class MapeadorDocumentoInventarioQuest {
     data.put("plannedFor", quest.plannedFor());
     data.put("recurrenceId", quest.recurrenceId());
     data.put("occursOn", quest.occursOn());
+    data.put("mode", quest.mode());
+    data.put("activityCategoryId", quest.activityCategoryId());
+    data.put("activityModalityId", quest.activityModalityId());
+    data.put("activityId", quest.activityId());
+    data.put("executionType", quest.executionType());
+    data.put("activitySchemaVersion", quest.activitySchemaVersion());
     data.put("orderIndex", orderIndex);
     data.put("syncSchemaVersion", SYNC_SCHEMA_VERSION);
     data.put("syncSource", SYNC_SOURCE);

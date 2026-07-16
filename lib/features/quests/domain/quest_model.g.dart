@@ -17,162 +17,198 @@ const QuestSchema = CollectionSchema(
   name: r'Quest',
   id: 4554541312824334418,
   properties: {
-    r'completedAt': PropertySchema(
+    r'activityCategoryId': PropertySchema(
       id: 0,
+      name: r'activityCategoryId',
+      type: IsarType.string,
+    ),
+    r'activityId': PropertySchema(
+      id: 1,
+      name: r'activityId',
+      type: IsarType.string,
+    ),
+    r'activityModalityId': PropertySchema(
+      id: 2,
+      name: r'activityModalityId',
+      type: IsarType.string,
+    ),
+    r'activitySchemaVersion': PropertySchema(
+      id: 3,
+      name: r'activitySchemaVersion',
+      type: IsarType.long,
+    ),
+    r'completedAt': PropertySchema(
+      id: 4,
       name: r'completedAt',
       type: IsarType.dateTime,
     ),
+    r'executionType': PropertySchema(
+      id: 5,
+      name: r'executionType',
+      type: IsarType.string,
+    ),
     r'hasPreRewardSnapshot': PropertySchema(
-      id: 1,
+      id: 6,
       name: r'hasPreRewardSnapshot',
       type: IsarType.bool,
     ),
     r'id': PropertySchema(
-      id: 2,
+      id: 7,
       name: r'id',
       type: IsarType.string,
     ),
     r'isArchived': PropertySchema(
-      id: 3,
+      id: 8,
       name: r'isArchived',
       type: IsarType.bool,
     ),
     r'isCompleted': PropertySchema(
-      id: 4,
+      id: 9,
       name: r'isCompleted',
       type: IsarType.bool,
     ),
+    r'isGuided': PropertySchema(
+      id: 10,
+      name: r'isGuided',
+      type: IsarType.bool,
+    ),
     r'journeyId': PropertySchema(
-      id: 5,
+      id: 11,
       name: r'journeyId',
       type: IsarType.string,
     ),
+    r'mode': PropertySchema(
+      id: 12,
+      name: r'mode',
+      type: IsarType.byte,
+      enumMap: _QuestmodeEnumValueMap,
+    ),
     r'occursOn': PropertySchema(
-      id: 6,
+      id: 13,
       name: r'occursOn',
       type: IsarType.dateTime,
     ),
     r'ownerUid': PropertySchema(
-      id: 7,
+      id: 14,
       name: r'ownerUid',
       type: IsarType.string,
     ),
     r'plannedFor': PropertySchema(
-      id: 8,
+      id: 15,
       name: r'plannedFor',
       type: IsarType.dateTime,
     ),
     r'preRewardAgility': PropertySchema(
-      id: 9,
+      id: 16,
       name: r'preRewardAgility',
       type: IsarType.long,
     ),
     r'preRewardIntelligence': PropertySchema(
-      id: 10,
+      id: 17,
       name: r'preRewardIntelligence',
       type: IsarType.long,
     ),
     r'preRewardLevel': PropertySchema(
-      id: 11,
+      id: 18,
       name: r'preRewardLevel',
       type: IsarType.long,
     ),
     r'preRewardMaxXp': PropertySchema(
-      id: 12,
+      id: 19,
       name: r'preRewardMaxXp',
       type: IsarType.long,
     ),
     r'preRewardStatPoints': PropertySchema(
-      id: 13,
+      id: 20,
       name: r'preRewardStatPoints',
       type: IsarType.long,
     ),
     r'preRewardStrength': PropertySchema(
-      id: 14,
+      id: 21,
       name: r'preRewardStrength',
       type: IsarType.long,
     ),
     r'preRewardVitality': PropertySchema(
-      id: 15,
+      id: 22,
       name: r'preRewardVitality',
       type: IsarType.long,
     ),
     r'preRewardXp': PropertySchema(
-      id: 16,
+      id: 23,
       name: r'preRewardXp',
       type: IsarType.long,
     ),
     r'recurrenceId': PropertySchema(
-      id: 17,
+      id: 24,
       name: r'recurrenceId',
       type: IsarType.string,
     ),
     r'reflectionAnswer': PropertySchema(
-      id: 18,
+      id: 25,
       name: r'reflectionAnswer',
       type: IsarType.string,
     ),
     r'reflectionPrompt': PropertySchema(
-      id: 19,
+      id: 26,
       name: r'reflectionPrompt',
       type: IsarType.string,
     ),
     r'requiresReflection': PropertySchema(
-      id: 20,
+      id: 27,
       name: r'requiresReflection',
       type: IsarType.bool,
     ),
     r'requiresTimer': PropertySchema(
-      id: 21,
+      id: 28,
       name: r'requiresTimer',
       type: IsarType.bool,
     ),
     r'rewardAttribute': PropertySchema(
-      id: 22,
+      id: 29,
       name: r'rewardAttribute',
       type: IsarType.byte,
       enumMap: _QuestrewardAttributeEnumValueMap,
     ),
     r'targetDurationMinutes': PropertySchema(
-      id: 23,
+      id: 30,
       name: r'targetDurationMinutes',
       type: IsarType.long,
     ),
     r'templateType': PropertySchema(
-      id: 24,
+      id: 31,
       name: r'templateType',
       type: IsarType.byte,
       enumMap: _QuesttemplateTypeEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 25,
+      id: 32,
       name: r'title',
       type: IsarType.string,
     ),
     r'verificationMode': PropertySchema(
-      id: 26,
+      id: 33,
       name: r'verificationMode',
       type: IsarType.byte,
       enumMap: _QuestverificationModeEnumValueMap,
     ),
     r'verificationStartedAt': PropertySchema(
-      id: 27,
+      id: 34,
       name: r'verificationStartedAt',
       type: IsarType.dateTime,
     ),
     r'verificationStatus': PropertySchema(
-      id: 28,
+      id: 35,
       name: r'verificationStatus',
       type: IsarType.byte,
       enumMap: _QuestverificationStatusEnumValueMap,
     ),
     r'verifiedAt': PropertySchema(
-      id: 29,
+      id: 36,
       name: r'verifiedAt',
       type: IsarType.dateTime,
     ),
     r'xpReward': PropertySchema(
-      id: 30,
+      id: 37,
       name: r'xpReward',
       type: IsarType.long,
     )
@@ -197,6 +233,30 @@ int _questEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.activityCategoryId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.activityId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.activityModalityId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.executionType;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.id.length * 3;
   {
     final value = object.journeyId;
@@ -238,37 +298,44 @@ void _questSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.completedAt);
-  writer.writeBool(offsets[1], object.hasPreRewardSnapshot);
-  writer.writeString(offsets[2], object.id);
-  writer.writeBool(offsets[3], object.isArchived);
-  writer.writeBool(offsets[4], object.isCompleted);
-  writer.writeString(offsets[5], object.journeyId);
-  writer.writeDateTime(offsets[6], object.occursOn);
-  writer.writeString(offsets[7], object.ownerUid);
-  writer.writeDateTime(offsets[8], object.plannedFor);
-  writer.writeLong(offsets[9], object.preRewardAgility);
-  writer.writeLong(offsets[10], object.preRewardIntelligence);
-  writer.writeLong(offsets[11], object.preRewardLevel);
-  writer.writeLong(offsets[12], object.preRewardMaxXp);
-  writer.writeLong(offsets[13], object.preRewardStatPoints);
-  writer.writeLong(offsets[14], object.preRewardStrength);
-  writer.writeLong(offsets[15], object.preRewardVitality);
-  writer.writeLong(offsets[16], object.preRewardXp);
-  writer.writeString(offsets[17], object.recurrenceId);
-  writer.writeString(offsets[18], object.reflectionAnswer);
-  writer.writeString(offsets[19], object.reflectionPrompt);
-  writer.writeBool(offsets[20], object.requiresReflection);
-  writer.writeBool(offsets[21], object.requiresTimer);
-  writer.writeByte(offsets[22], object.rewardAttribute.index);
-  writer.writeLong(offsets[23], object.targetDurationMinutes);
-  writer.writeByte(offsets[24], object.templateType.index);
-  writer.writeString(offsets[25], object.title);
-  writer.writeByte(offsets[26], object.verificationMode.index);
-  writer.writeDateTime(offsets[27], object.verificationStartedAt);
-  writer.writeByte(offsets[28], object.verificationStatus.index);
-  writer.writeDateTime(offsets[29], object.verifiedAt);
-  writer.writeLong(offsets[30], object.xpReward);
+  writer.writeString(offsets[0], object.activityCategoryId);
+  writer.writeString(offsets[1], object.activityId);
+  writer.writeString(offsets[2], object.activityModalityId);
+  writer.writeLong(offsets[3], object.activitySchemaVersion);
+  writer.writeDateTime(offsets[4], object.completedAt);
+  writer.writeString(offsets[5], object.executionType);
+  writer.writeBool(offsets[6], object.hasPreRewardSnapshot);
+  writer.writeString(offsets[7], object.id);
+  writer.writeBool(offsets[8], object.isArchived);
+  writer.writeBool(offsets[9], object.isCompleted);
+  writer.writeBool(offsets[10], object.isGuided);
+  writer.writeString(offsets[11], object.journeyId);
+  writer.writeByte(offsets[12], object.mode.index);
+  writer.writeDateTime(offsets[13], object.occursOn);
+  writer.writeString(offsets[14], object.ownerUid);
+  writer.writeDateTime(offsets[15], object.plannedFor);
+  writer.writeLong(offsets[16], object.preRewardAgility);
+  writer.writeLong(offsets[17], object.preRewardIntelligence);
+  writer.writeLong(offsets[18], object.preRewardLevel);
+  writer.writeLong(offsets[19], object.preRewardMaxXp);
+  writer.writeLong(offsets[20], object.preRewardStatPoints);
+  writer.writeLong(offsets[21], object.preRewardStrength);
+  writer.writeLong(offsets[22], object.preRewardVitality);
+  writer.writeLong(offsets[23], object.preRewardXp);
+  writer.writeString(offsets[24], object.recurrenceId);
+  writer.writeString(offsets[25], object.reflectionAnswer);
+  writer.writeString(offsets[26], object.reflectionPrompt);
+  writer.writeBool(offsets[27], object.requiresReflection);
+  writer.writeBool(offsets[28], object.requiresTimer);
+  writer.writeByte(offsets[29], object.rewardAttribute.index);
+  writer.writeLong(offsets[30], object.targetDurationMinutes);
+  writer.writeByte(offsets[31], object.templateType.index);
+  writer.writeString(offsets[32], object.title);
+  writer.writeByte(offsets[33], object.verificationMode.index);
+  writer.writeDateTime(offsets[34], object.verificationStartedAt);
+  writer.writeByte(offsets[35], object.verificationStatus.index);
+  writer.writeDateTime(offsets[36], object.verifiedAt);
+  writer.writeLong(offsets[37], object.xpReward);
 }
 
 Quest _questDeserialize(
@@ -278,43 +345,50 @@ Quest _questDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Quest(
-    completedAt: reader.readDateTimeOrNull(offsets[0]),
-    id: reader.readString(offsets[2]),
-    isArchived: reader.readBoolOrNull(offsets[3]) ?? false,
-    isCompleted: reader.readBoolOrNull(offsets[4]) ?? false,
+    activityCategoryId: reader.readStringOrNull(offsets[0]),
+    activityId: reader.readStringOrNull(offsets[1]),
+    activityModalityId: reader.readStringOrNull(offsets[2]),
+    activitySchemaVersion: reader.readLongOrNull(offsets[3]) ?? 0,
+    completedAt: reader.readDateTimeOrNull(offsets[4]),
+    executionType: reader.readStringOrNull(offsets[5]),
+    id: reader.readString(offsets[7]),
+    isArchived: reader.readBoolOrNull(offsets[8]) ?? false,
+    isCompleted: reader.readBoolOrNull(offsets[9]) ?? false,
     isarId: id,
-    journeyId: reader.readStringOrNull(offsets[5]),
-    occursOn: reader.readDateTimeOrNull(offsets[6]),
-    ownerUid: reader.readStringOrNull(offsets[7]),
-    plannedFor: reader.readDateTimeOrNull(offsets[8]),
-    preRewardAgility: reader.readLongOrNull(offsets[9]),
-    preRewardIntelligence: reader.readLongOrNull(offsets[10]),
-    preRewardLevel: reader.readLongOrNull(offsets[11]),
-    preRewardMaxXp: reader.readLongOrNull(offsets[12]),
-    preRewardStatPoints: reader.readLongOrNull(offsets[13]),
-    preRewardStrength: reader.readLongOrNull(offsets[14]),
-    preRewardVitality: reader.readLongOrNull(offsets[15]),
-    preRewardXp: reader.readLongOrNull(offsets[16]),
-    recurrenceId: reader.readStringOrNull(offsets[17]),
-    reflectionAnswer: reader.readStringOrNull(offsets[18]),
-    reflectionPrompt: reader.readStringOrNull(offsets[19]),
+    journeyId: reader.readStringOrNull(offsets[11]),
+    mode: _QuestmodeValueEnumMap[reader.readByteOrNull(offsets[12])] ??
+        QuestMode.quick,
+    occursOn: reader.readDateTimeOrNull(offsets[13]),
+    ownerUid: reader.readStringOrNull(offsets[14]),
+    plannedFor: reader.readDateTimeOrNull(offsets[15]),
+    preRewardAgility: reader.readLongOrNull(offsets[16]),
+    preRewardIntelligence: reader.readLongOrNull(offsets[17]),
+    preRewardLevel: reader.readLongOrNull(offsets[18]),
+    preRewardMaxXp: reader.readLongOrNull(offsets[19]),
+    preRewardStatPoints: reader.readLongOrNull(offsets[20]),
+    preRewardStrength: reader.readLongOrNull(offsets[21]),
+    preRewardVitality: reader.readLongOrNull(offsets[22]),
+    preRewardXp: reader.readLongOrNull(offsets[23]),
+    recurrenceId: reader.readStringOrNull(offsets[24]),
+    reflectionAnswer: reader.readStringOrNull(offsets[25]),
+    reflectionPrompt: reader.readStringOrNull(offsets[26]),
     rewardAttribute:
-        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[22])] ??
+        _QuestrewardAttributeValueEnumMap[reader.readByteOrNull(offsets[29])] ??
             AttributeType.strength,
-    targetDurationMinutes: reader.readLongOrNull(offsets[23]) ?? 0,
+    targetDurationMinutes: reader.readLongOrNull(offsets[30]) ?? 0,
     templateType:
-        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[24])] ??
+        _QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offsets[31])] ??
             QuestTemplateType.custom,
-    title: reader.readString(offsets[25]),
+    title: reader.readString(offsets[32]),
     verificationMode: _QuestverificationModeValueEnumMap[
-            reader.readByteOrNull(offsets[26])] ??
+            reader.readByteOrNull(offsets[33])] ??
         QuestVerificationMode.manual,
-    verificationStartedAt: reader.readDateTimeOrNull(offsets[27]),
+    verificationStartedAt: reader.readDateTimeOrNull(offsets[34]),
     verificationStatus: _QuestverificationStatusValueEnumMap[
-            reader.readByteOrNull(offsets[28])] ??
+            reader.readByteOrNull(offsets[35])] ??
         QuestVerificationStatus.none,
-    verifiedAt: reader.readDateTimeOrNull(offsets[29]),
-    xpReward: reader.readLong(offsets[30]),
+    verifiedAt: reader.readDateTimeOrNull(offsets[36]),
+    xpReward: reader.readLong(offsets[37]),
   );
   return object;
 }
@@ -327,79 +401,102 @@ P _questDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 4:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 9:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 10:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 11:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readLongOrNull(offset)) as P;
+      return (_QuestmodeValueEnumMap[reader.readByteOrNull(offset)] ??
+          QuestMode.quick) as P;
     case 13:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 15:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 16:
       return (reader.readLongOrNull(offset)) as P;
     case 17:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 18:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 19:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 20:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 21:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 22:
+      return (reader.readLongOrNull(offset)) as P;
+    case 23:
+      return (reader.readLongOrNull(offset)) as P;
+    case 24:
+      return (reader.readStringOrNull(offset)) as P;
+    case 25:
+      return (reader.readStringOrNull(offset)) as P;
+    case 26:
+      return (reader.readStringOrNull(offset)) as P;
+    case 27:
+      return (reader.readBool(offset)) as P;
+    case 28:
+      return (reader.readBool(offset)) as P;
+    case 29:
       return (_QuestrewardAttributeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           AttributeType.strength) as P;
-    case 23:
+    case 30:
       return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 24:
+    case 31:
       return (_QuesttemplateTypeValueEnumMap[reader.readByteOrNull(offset)] ??
           QuestTemplateType.custom) as P;
-    case 25:
+    case 32:
       return (reader.readString(offset)) as P;
-    case 26:
+    case 33:
       return (_QuestverificationModeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationMode.manual) as P;
-    case 27:
+    case 34:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 28:
+    case 35:
       return (_QuestverificationStatusValueEnumMap[
               reader.readByteOrNull(offset)] ??
           QuestVerificationStatus.none) as P;
-    case 29:
+    case 36:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 30:
+    case 37:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
 
+const _QuestmodeEnumValueMap = {
+  'quick': 0,
+  'guided': 1,
+};
+const _QuestmodeValueEnumMap = {
+  0: QuestMode.quick,
+  1: QuestMode.guided,
+};
 const _QuestrewardAttributeEnumValueMap = {
   'strength': 0,
   'intelligence': 1,
@@ -539,6 +636,510 @@ extension QuestQueryWhere on QueryBuilder<Quest, Quest, QWhereClause> {
 }
 
 extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'activityCategoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityCategoryIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'activityCategoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityCategoryIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activityCategoryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityCategoryIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'activityCategoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityCategoryIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'activityCategoryId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityCategoryIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityCategoryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityCategoryIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'activityCategoryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'activityId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'activityId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activityId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'activityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'activityId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'activityId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'activityModalityId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityModalityIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'activityModalityId',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityModalityIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activityModalityId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityModalityIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'activityModalityId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> activityModalityIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'activityModalityId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityModalityIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activityModalityId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activityModalityIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'activityModalityId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activitySchemaVersionEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activitySchemaVersion',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activitySchemaVersionGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activitySchemaVersion',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activitySchemaVersionLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activitySchemaVersion',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition>
+      activitySchemaVersionBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activitySchemaVersion',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterFilterCondition> completedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -604,6 +1205,152 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'executionType',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'executionType',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'executionType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'executionType',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'executionType',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'executionType',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> executionTypeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'executionType',
+        value: '',
       ));
     });
   }
@@ -761,6 +1508,16 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isCompleted',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> isGuidedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isGuided',
         value: value,
       ));
     });
@@ -960,6 +1717,59 @@ extension QuestQueryFilter on QueryBuilder<Quest, Quest, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'journeyId',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> modeEqualTo(
+      QuestMode value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> modeGreaterThan(
+    QuestMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> modeLessThan(
+    QuestMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterFilterCondition> modeBetween(
+    QuestMode lower,
+    QuestMode upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -2873,6 +3683,54 @@ extension QuestQueryObject on QueryBuilder<Quest, Quest, QFilterCondition> {}
 extension QuestQueryLinks on QueryBuilder<Quest, Quest, QFilterCondition> {}
 
 extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityCategoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityCategoryId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityModalityId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityModalityId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivityModalityIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityModalityId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivitySchemaVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activitySchemaVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByActivitySchemaVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activitySchemaVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByCompletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'completedAt', Sort.asc);
@@ -2882,6 +3740,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByCompletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'completedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByExecutionType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'executionType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByExecutionTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'executionType', Sort.desc);
     });
   }
 
@@ -2933,6 +3803,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByIsGuided() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuided', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByIsGuidedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuided', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByJourneyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'journeyId', Sort.asc);
@@ -2942,6 +3824,18 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> sortByJourneyIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'journeyId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> sortByModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.desc);
     });
   }
 
@@ -3247,6 +4141,54 @@ extension QuestQuerySortBy on QueryBuilder<Quest, Quest, QSortBy> {
 }
 
 extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityCategoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityCategoryId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityModalityId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityModalityId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivityModalityIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activityModalityId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivitySchemaVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activitySchemaVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByActivitySchemaVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activitySchemaVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByCompletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'completedAt', Sort.asc);
@@ -3256,6 +4198,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByCompletedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'completedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByExecutionType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'executionType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByExecutionTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'executionType', Sort.desc);
     });
   }
 
@@ -3307,6 +4261,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsGuided() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuided', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsGuidedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGuided', Sort.desc);
+    });
+  }
+
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.asc);
@@ -3328,6 +4294,18 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
   QueryBuilder<Quest, Quest, QAfterSortBy> thenByJourneyIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'journeyId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QAfterSortBy> thenByModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mode', Sort.desc);
     });
   }
 
@@ -3633,9 +4611,46 @@ extension QuestQuerySortThenBy on QueryBuilder<Quest, Quest, QSortThenBy> {
 }
 
 extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
+  QueryBuilder<Quest, Quest, QDistinct> distinctByActivityCategoryId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activityCategoryId',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByActivityId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activityId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByActivityModalityId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activityModalityId',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByActivitySchemaVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activitySchemaVersion');
+    });
+  }
+
   QueryBuilder<Quest, Quest, QDistinct> distinctByCompletedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'completedAt');
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByExecutionType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'executionType',
+          caseSensitive: caseSensitive);
     });
   }
 
@@ -3664,10 +4679,22 @@ extension QuestQueryWhereDistinct on QueryBuilder<Quest, Quest, QDistinct> {
     });
   }
 
+  QueryBuilder<Quest, Quest, QDistinct> distinctByIsGuided() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isGuided');
+    });
+  }
+
   QueryBuilder<Quest, Quest, QDistinct> distinctByJourneyId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'journeyId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Quest, Quest, QDistinct> distinctByMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mode');
     });
   }
 
@@ -3836,9 +4863,39 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Quest, String?, QQueryOperations> activityCategoryIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activityCategoryId');
+    });
+  }
+
+  QueryBuilder<Quest, String?, QQueryOperations> activityIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activityId');
+    });
+  }
+
+  QueryBuilder<Quest, String?, QQueryOperations> activityModalityIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activityModalityId');
+    });
+  }
+
+  QueryBuilder<Quest, int, QQueryOperations> activitySchemaVersionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activitySchemaVersion');
+    });
+  }
+
   QueryBuilder<Quest, DateTime?, QQueryOperations> completedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'completedAt');
+    });
+  }
+
+  QueryBuilder<Quest, String?, QQueryOperations> executionTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'executionType');
     });
   }
 
@@ -3866,9 +4923,21 @@ extension QuestQueryProperty on QueryBuilder<Quest, Quest, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Quest, bool, QQueryOperations> isGuidedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isGuided');
+    });
+  }
+
   QueryBuilder<Quest, String?, QQueryOperations> journeyIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'journeyId');
+    });
+  }
+
+  QueryBuilder<Quest, QuestMode, QQueryOperations> modeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mode');
     });
   }
 

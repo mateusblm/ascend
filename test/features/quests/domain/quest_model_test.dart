@@ -2,6 +2,37 @@ import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('quest legada permanece uma missão rápida', () {
+    final quest = Quest(
+      id: 'legada',
+      title: 'Arrumar a cama',
+      rewardAttribute: AttributeType.vitality,
+      xpReward: 12,
+    );
+
+    expect(quest.mode, QuestMode.quick);
+    expect(quest.isGuided, isFalse);
+  });
+
+  test('configuração guiada sobrevive ao copyWith', () {
+    final quest = Quest(
+      id: 'supino',
+      title: 'Supino reto',
+      rewardAttribute: AttributeType.strength,
+      xpReward: 12,
+      mode: QuestMode.guided,
+      activityCategoryId: 'corpoMovimento',
+      activityModalityId: 'musculacao',
+      activityId: 'supino-reto',
+      executionType: 'strengthSets',
+      activitySchemaVersion: 1,
+    ).copyWith(isArchived: true);
+
+    expect(quest.isGuided, isTrue);
+    expect(quest.activityId, 'supino-reto');
+    expect(quest.executionType, 'strengthSets');
+  });
+
   test('preserva o vinculo da Jornada ao atualizar uma missao', () {
     final quest = Quest(
       id: 'quest-1',

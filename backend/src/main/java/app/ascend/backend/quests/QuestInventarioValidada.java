@@ -30,6 +30,12 @@ public record QuestInventarioValidada(
     boolean isArchived,
     Timestamp plannedFor,
     String recurrenceId,
-    Timestamp occursOn
+    Timestamp occursOn,
+    String mode,
+    String activityCategoryId,
+    String activityModalityId,
+    String activityId,
+    String executionType,
+    int activitySchemaVersion
 ) {
 }

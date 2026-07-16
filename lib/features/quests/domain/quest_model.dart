@@ -17,6 +17,9 @@ enum QuestVerificationMode { manual, timer, timerWithReflection }
 
 enum QuestVerificationStatus { none, ready, inProgress, verified }
 
+/// Acrescentado ao fim para preservar a codificação Isar das quests existentes.
+enum QuestMode { quick, guided }
+
 const int personalQuestDefaultXp = 12;
 const int personalQuestMinXp = 8;
 const int personalQuestMaxXp = 15;
@@ -34,6 +37,14 @@ class Quest {
   final String title;
   final String? journeyId;
   final String? recurrenceId;
+
+  @enumerated
+  final QuestMode mode;
+  final String? activityCategoryId;
+  final String? activityModalityId;
+  final String? activityId;
+  final String? executionType;
+  final int activitySchemaVersion;
 
   @enumerated
   final AttributeType rewardAttribute;
@@ -78,6 +89,12 @@ class Quest {
     required this.title,
     this.journeyId,
     this.recurrenceId,
+    this.mode = QuestMode.quick,
+    this.activityCategoryId,
+    this.activityModalityId,
+    this.activityId,
+    this.executionType,
+    this.activitySchemaVersion = 0,
     required this.rewardAttribute,
     required this.xpReward,
     this.templateType = QuestTemplateType.custom,
@@ -112,10 +129,18 @@ class Quest {
   bool get requiresReflection =>
       verificationMode == QuestVerificationMode.timerWithReflection;
 
+  bool get isGuided => mode == QuestMode.guided;
+
   Quest copyWith({
     String? ownerUid,
     String? journeyId,
     String? recurrenceId,
+    QuestMode? mode,
+    String? activityCategoryId,
+    String? activityModalityId,
+    String? activityId,
+    String? executionType,
+    int? activitySchemaVersion,
     bool clearJourney = false,
     bool? isCompleted,
     QuestTemplateType? templateType,
@@ -148,6 +173,13 @@ class Quest {
       title: title,
       journeyId: clearJourney ? null : (journeyId ?? this.journeyId),
       recurrenceId: recurrenceId ?? this.recurrenceId,
+      mode: mode ?? this.mode,
+      activityCategoryId: activityCategoryId ?? this.activityCategoryId,
+      activityModalityId: activityModalityId ?? this.activityModalityId,
+      activityId: activityId ?? this.activityId,
+      executionType: executionType ?? this.executionType,
+      activitySchemaVersion:
+          activitySchemaVersion ?? this.activitySchemaVersion,
       rewardAttribute: rewardAttribute,
       xpReward: xpReward,
       templateType: templateType ?? this.templateType,

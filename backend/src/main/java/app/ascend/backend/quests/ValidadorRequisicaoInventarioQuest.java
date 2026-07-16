@@ -56,7 +56,10 @@ public class ValidadorRequisicaoInventarioQuest {
         optionalBoolean(quest.isArchived()),
         optionalTimestamp(quest.plannedFor(), prefixo + ".plannedFor"),
         jornadaId(quest.recurrenceId(), prefixo + ".recurrence"),
-        optionalTimestamp(quest.occursOn(), prefixo + ".occursOn"));
+        optionalTimestamp(quest.occursOn(), prefixo + ".occursOn"),
+        modo(quest.mode(), prefixo), atividadeId(quest.activityCategoryId(), prefixo + ".activityCategoryId"),
+        atividadeId(quest.activityModalityId(), prefixo + ".activityModalityId"), atividadeId(quest.activityId(), prefixo + ".activityId"),
+        atividadeId(quest.executionType(), prefixo + ".executionType"), optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion") == null ? 0 : optionalNonNegativeInt(quest.activitySchemaVersion(), prefixo + ".activitySchemaVersion"));
   }
 
   private String jornadaId(Object valor, String prefixo) {
@@ -66,5 +69,16 @@ public class ValidadorRequisicaoInventarioQuest {
 
   private boolean optionalBoolean(Object valor) {
     return valor instanceof Boolean resultado && resultado;
+  }
+
+  private String modo(Object valor, String prefixo) {
+    String modo = optionalString(valor, prefixo + ".mode", 20, "quick");
+    if (!"quick".equals(modo) && !"guided".equals(modo)) throw badRequest("invalid_quest_mode");
+    return modo;
+  }
+
+  private String atividadeId(Object valor, String campo) {
+    String id = optionalString(valor, campo, 100, "");
+    return id.isBlank() ? null : id;
   }
 }

@@ -13,11 +13,12 @@ bool shouldUploadQuestCacheWhenRemoteMissing(List<Quest> quests) {
 /// O inventario do cliente nao edita ocorrencias recorrentes: elas pertencem ao
 /// backend e sao materializadas no dia devido. Reenviar essas ocorrencias faria
 /// o app competir com a fonte autoritativa e pode invalidar o payload.
-List<Map<String, dynamic>> questSourcesForInventorySync(Iterable<Quest> quests) =>
-    quests
-        .where((quest) => quest.recurrenceId == null)
-        .map(_questSourceFor)
-        .toList(growable: false);
+List<Map<String, dynamic>> questSourcesForInventorySync(
+  Iterable<Quest> quests,
+) => quests
+    .where((quest) => quest.recurrenceId == null)
+    .map(_questSourceFor)
+    .toList(growable: false);
 
 enum PersonalQuestMutationStatus {
   completed,
@@ -51,6 +52,13 @@ Quest parseQuestSyncData(
         : 'Quest',
     journeyId: data['journeyId'] as String?,
     recurrenceId: data['recurrenceId'] as String?,
+    mode: _questModeFrom(data['mode']),
+    activityCategoryId: data['activityCategoryId'] as String?,
+    activityModalityId: data['activityModalityId'] as String?,
+    activityId: data['activityId'] as String?,
+    executionType: data['executionType'] as String?,
+    activitySchemaVersion:
+        (data['activitySchemaVersion'] as num?)?.toInt() ?? 0,
     rewardAttribute: _attributeFrom(data['rewardAttribute']),
     xpReward: ((data['xpReward'] as num?)?.toInt() ?? personalQuestDefaultXp)
         .clamp(personalQuestMinXp, 1000000),
@@ -373,6 +381,12 @@ Map<String, dynamic> _questSourceFor(Quest quest) {
     'title': quest.title,
     'journeyId': quest.journeyId,
     'recurrenceId': quest.recurrenceId,
+    'mode': quest.mode.name,
+    'activityCategoryId': quest.activityCategoryId,
+    'activityModalityId': quest.activityModalityId,
+    'activityId': quest.activityId,
+    'executionType': quest.executionType,
+    'activitySchemaVersion': quest.activitySchemaVersion,
     'rewardAttribute': quest.rewardAttribute.name,
     'xpReward': quest.xpReward,
     'category': 'personal',
@@ -459,3 +473,8 @@ QuestVerificationStatus _verificationStatusFrom(Object? value) {
           .firstOrNull ??
       QuestVerificationStatus.none;
 }
+
+QuestMode _questModeFrom(Object? value) => value is String
+    ? QuestMode.values.where((entry) => entry.name == value).firstOrNull ??
+          QuestMode.quick
+    : QuestMode.quick;

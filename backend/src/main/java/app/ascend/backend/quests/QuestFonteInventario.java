@@ -28,6 +28,12 @@ public record QuestFonteInventario(
     Object isArchived,
     Object plannedFor,
     Object recurrenceId,
-    Object occursOn
+    Object occursOn,
+    Object mode,
+    Object activityCategoryId,
+    Object activityModalityId,
+    Object activityId,
+    Object executionType,
+    Object activitySchemaVersion
 ) {
 }

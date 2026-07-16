@@ -86,6 +86,37 @@ bool isQuestMutationReconciled(QuestCompletionResult result) =>
     result == QuestCompletionResult.success ||
     result == QuestCompletionResult.alreadyCompleted;
 
+/// Constrói o rascunho local de uma missão guiada a partir de fatos já
+/// publicados pelo catálogo. O sincronismo posterior continua submetendo esse
+/// inventário ao backend autoritativo.
+Quest guidedQuestFromCatalog({
+  required String id,
+  required String title,
+  required AttributeType rewardAttribute,
+  required String categoryId,
+  required String modalityId,
+  required String activityId,
+  required String executionType,
+  required int schemaVersion,
+  String? ownerUid,
+  String? jornadaId,
+  DateTime? plannedFor,
+}) => Quest(
+  ownerUid: ownerUid,
+  id: id,
+  title: title,
+  journeyId: jornadaId,
+  plannedFor: plannedFor,
+  mode: QuestMode.guided,
+  activityCategoryId: categoryId,
+  activityModalityId: modalityId,
+  activityId: activityId,
+  executionType: executionType,
+  activitySchemaVersion: schemaVersion,
+  rewardAttribute: rewardAttribute,
+  xpReward: personalQuestDefaultXp,
+);
+
 /// Reconstitui o inventário sem descartar uma escrita local ainda ausente no
 /// backend. Para o mesmo id, o registro remoto continua canônico.
 List<Quest> mergeQuestInventoriesForRestore({
@@ -172,6 +203,35 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
       plannedFor: plannedFor,
       rewardAttribute: atributo,
       xpReward: normalizePersonalQuestXp(xp),
+    );
+    _substituir([...state, quest]);
+  }
+
+  void addGuidedQuest({
+    required String title,
+    required AttributeType rewardAttribute,
+    required String categoryId,
+    required String modalityId,
+    required String activityId,
+    required String executionType,
+    required int schemaVersion,
+    String? jornadaId,
+    DateTime? plannedFor,
+  }) {
+    final quest = guidedQuestFromCatalog(
+      ownerUid: _uid,
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      title: title,
+      jornadaId: jornadaId,
+      plannedFor: plannedFor,
+      categoryId: categoryId,
+      modalityId: modalityId,
+      activityId: activityId,
+      executionType: executionType,
+      schemaVersion: schemaVersion,
+      // A compatibilidade legada requer um atributo único. Ele é derivado do
+      // catálogo autoritativo e nunca é escolhido no formulário guiado.
+      rewardAttribute: rewardAttribute,
     );
     _substituir([...state, quest]);
   }

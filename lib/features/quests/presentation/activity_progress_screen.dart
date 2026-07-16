@@ -131,6 +131,7 @@ class _ProgressBody extends StatelessWidget {
         ...history.map(
           (entry) => _HistoryEntry(
             Map<String, dynamic>.from(entry.cast<Object?, Object?>()),
+            executionType: type,
           ),
         ),
       ],
@@ -296,18 +297,125 @@ class _Highlights extends StatelessWidget {
 }
 
 class _HistoryEntry extends StatelessWidget {
-  const _HistoryEntry(this.entry);
+  const _HistoryEntry(this.entry, {required this.executionType});
+
   final Map<String, dynamic> entry;
+  final String executionType;
+
   @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    leading: const Icon(Icons.timeline, color: AppColors.systemCyan),
-    title: Text(
-      (entry['recordedAt'] as String? ?? '')
-          .replaceFirst('T', ' ')
-          .split('.')
-          .first,
-    ),
-    subtitle: Text(entry['observation'] as String? ?? 'Execução confirmada'),
-  );
+  Widget build(BuildContext context) {
+    final details = activityHistoryDetails(executionType, entry);
+    final observation = entry['observation'] as String?;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      color: AppColors.panelCore,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.timeline, color: AppColors.systemCyan),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  (entry['recordedAt'] as String? ?? '')
+                      .replaceFirst('T', ' ')
+                      .split('.')
+                      .first,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            details.title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          if (details.values.isNotEmpty)
+            Text(
+              details.values.join(' · '),
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+          if (observation != null && observation.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(observation.trim()),
+          ],
+        ],
+      ),
+    );
+  }
 }
+
+class ActivityHistoryDetails {
+  const ActivityHistoryDetails(this.title, this.values);
+
+  final String title;
+  final List<String> values;
+}
+
+/// Formata fatos já retornados pelo backend para o histórico da atividade.
+ActivityHistoryDetails activityHistoryDetails(
+  String executionType,
+  Map<String, dynamic> entry,
+) {
+  final metrics = Map<String, dynamic>.from(
+    (entry['metrics'] as Map? ?? const {}).cast<Object?, Object?>(),
+  );
+  final derived = Map<String, dynamic>.from(
+    (entry['calculatedMetrics'] as Map? ?? const {}).cast<Object?, Object?>(),
+  );
+  return switch (executionType) {
+    'strengthSets' => ActivityHistoryDetails('Treino de força', [
+      '${_whole(metrics['sets'] is List ? (metrics['sets'] as List).length : 0)} séries',
+      '${_whole(metrics['repetitions'])} repetições',
+      '${_decimal(derived['volumeKg'])} kg de volume',
+      '1RM ${_decimal(derived['estimatedOneRepMaxKg'])} kg',
+    ]),
+    'distanceDuration' => ActivityHistoryDetails('Corrida', [
+      '${_decimal(metrics['distanceKm'])} km',
+      '${_whole(metrics['durationMinutes'])} min',
+      'Ritmo ${formatPaceSecondsPerKm(derived['paceSecondsPerKm'])}',
+      if (metrics['perceivedExertion'] is num)
+        'Esforço ${_whole(metrics['perceivedExertion'])}/10',
+    ]),
+    'studySession' => ActivityHistoryDetails(
+      (metrics['topic'] as String?)?.trim().isNotEmpty == true
+          ? (metrics['topic'] as String).trim()
+          : 'Sessão de estudo',
+      [
+        '${_whole(metrics['durationMinutes'])} min',
+        if (metrics['questionsAnswered'] is num)
+          '${_whole(metrics['correctAnswers'])}/${_whole(metrics['questionsAnswered'])} acertos',
+        if (derived['accuracyPercent'] is num)
+          '${_decimal(derived['accuracyPercent'])}% de acerto',
+      ],
+    ),
+    'readingProgress' => ActivityHistoryDetails(
+      (metrics['workTitle'] as String?)?.trim().isNotEmpty == true
+          ? (metrics['workTitle'] as String).trim()
+          : 'Leitura',
+      [
+        '${_whole(metrics['pagesRead'])} páginas',
+        if (metrics['startPage'] is num && metrics['endPage'] is num)
+          'Páginas ${_whole(metrics['startPage'])}–${_whole(metrics['endPage'])}',
+        if (metrics['durationMinutes'] is num)
+          '${_whole(metrics['durationMinutes'])} min',
+      ],
+    ),
+    'sleepTracking' => ActivityHistoryDetails('Sono registrado', [
+      if (metrics['sleepStart'] is String && metrics['wakeEnd'] is String)
+        '${metrics['sleepStart']}–${metrics['wakeEnd']}',
+      '${_whole(derived['durationMinutes'])} min de descanso',
+      if (metrics['sleepQuality'] is num)
+        'Qualidade ${_whole(metrics['sleepQuality'])}/5',
+    ]),
+    _ => const ActivityHistoryDetails('Execução registrada', []),
+  };
+}
+
+String _whole(Object? value) => value is num ? value.toInt().toString() : '—';
+String _decimal(Object? value) => value is num
+    ? (value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1))
+    : '—';

@@ -302,11 +302,32 @@ class _AddQuestModalState extends ConsumerState<AddQuestModal> {
       children: [
         DropdownButtonFormField<ActivityCategory>(
           key: const Key('guided-category'),
-          decoration: const InputDecoration(labelText: 'Categoria'),
+          decoration: InputDecoration(
+            labelText: 'Categoria',
+            prefixIcon: _selectedCategory == null
+                ? null
+                : Icon(
+                    activityCategoryIconFor(_selectedCategory!.id),
+                    color: AppColors.systemCyan,
+                  ),
+          ),
           initialValue: _selectedCategory,
           items: categories
               .map(
-                (item) => DropdownMenuItem(value: item, child: Text(item.name)),
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Row(
+                    children: [
+                      Icon(
+                        activityCategoryIconFor(item.id),
+                        size: 19,
+                        color: AppColors.systemCyan,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(item.name),
+                    ],
+                  ),
+                ),
               )
               .toList(),
           onChanged: (value) => setState(() {
@@ -749,3 +770,16 @@ AttributeType _primaryAttribute(Map<String, int> distribution) {
     _ => AttributeType.vitality,
   };
 }
+
+IconData activityCategoryIconFor(String categoryId) => switch (categoryId) {
+  'corpoMovimento' => Icons.fitness_center_rounded,
+  'estudosFormacao' => Icons.school_outlined,
+  'leituraConhecimento' => Icons.menu_book_rounded,
+  'trabalhoProjetos' => Icons.terminal_rounded,
+  'saudeBemEstar' => Icons.favorite_outline_rounded,
+  'organizacaoPessoalCasa' => Icons.checklist_rounded,
+  'financas' => Icons.account_balance_wallet_outlined,
+  'relacionamentosContribuicao' => Icons.groups_outlined,
+  'criatividadeHabilidades' => Icons.palette_outlined,
+  _ => Icons.category_outlined,
+};

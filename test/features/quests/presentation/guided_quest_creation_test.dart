@@ -1,5 +1,7 @@
 import 'package:ascend/features/quests/domain/quest_model.dart';
 import 'package:ascend/features/quests/presentation/quest_controller.dart';
+import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -25,5 +27,20 @@ void main() {
     expect(quest.executionType, 'strengthSets');
     expect(quest.activitySchemaVersion, 1);
     expect(quest.journeyId, 'jornada-1');
+  });
+
+  test('categorias guiadas possuem icones representativos', () {
+    expect(
+      activityCategoryIconFor('corpoMovimento'),
+      Icons.fitness_center_rounded,
+    );
+    expect(
+      activityCategoryIconFor('leituraConhecimento'),
+      Icons.menu_book_rounded,
+    );
+    expect(
+      activityCategoryIconFor('financas'),
+      Icons.account_balance_wallet_outlined,
+    );
   });
 }

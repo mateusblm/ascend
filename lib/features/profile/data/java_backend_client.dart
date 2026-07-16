@@ -138,6 +138,20 @@ class JavaBackendClient {
     },
   );
 
+  Future<Map<String, dynamic>> fetchActivityProgress({
+    required String idToken,
+    required String activityId,
+  }) async {
+    final response = await _httpClient.get(
+      _uri('/api/v1/activity-executions/progress/$activityId'),
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Accept': 'application/json',
+      },
+    );
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> selectStrategistBuild({
     required String idToken,
     required String deviceSessionId,

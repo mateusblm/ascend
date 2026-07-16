@@ -31,6 +31,21 @@ class ActivityCatalogRepository {
     }
     return client.fetchActivityCatalog(idToken: idToken);
   }
+
+  Future<Map<String, dynamic>> fetchProgress(String activityId) async {
+    final client = _client;
+    if (client == null) {
+      throw StateError('Backend Java não configurado para carregar progresso.');
+    }
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Entre novamente para carregar o progresso.');
+    }
+    return client.fetchActivityProgress(
+      idToken: idToken,
+      activityId: activityId,
+    );
+  }
 }
 
 final activityCatalogRepositoryProvider = Provider<ActivityCatalogRepository>(
@@ -40,3 +55,10 @@ final activityCatalogRepositoryProvider = Provider<ActivityCatalogRepository>(
 final activityCatalogProvider = FutureProvider<ActivityCatalog>(
   (ref) => ref.watch(activityCatalogRepositoryProvider).fetch(),
 );
+
+final activityProgressProvider =
+    FutureProvider.family<Map<String, dynamic>, String>(
+      (ref, activityId) => ref
+          .watch(activityCatalogRepositoryProvider)
+          .fetchProgress(activityId),
+    );

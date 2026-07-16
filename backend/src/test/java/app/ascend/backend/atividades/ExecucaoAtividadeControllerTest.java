@@ -21,6 +21,7 @@ class ExecucaoAtividadeControllerTest {
   @Autowired private MockMvc mockMvc;
   @MockitoBean private VerificadorTokenFirebaseAuth tokens;
   @MockitoBean private ExecucaoAtividadeService service;
+  @MockitoBean private ProgressoAtividadeService progresso;
 
   @Test void exigeAutenticacao() throws Exception {
     mockMvc.perform(post("/api/v1/activity-executions").contentType(MediaType.APPLICATION_JSON).content("{}"))

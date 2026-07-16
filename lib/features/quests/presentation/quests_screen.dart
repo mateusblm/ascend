@@ -11,6 +11,7 @@ import 'package:ascend/features/quests/presentation/quest_controller.dart';
 import 'package:ascend/features/quests/presentation/mission_route_grouping.dart';
 import 'package:ascend/features/quests/presentation/widgets/add_quest_modal.dart';
 import 'package:ascend/features/quests/presentation/widgets/activity_execution_modal.dart';
+import 'package:ascend/features/quests/presentation/activity_progress_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -820,6 +821,18 @@ class _FaixaMissao extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
+                          if (quest.isGuided)
+                            IconButton(
+                              tooltip: 'Ver progresso da atividade',
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      ActivityProgressScreen(quest: quest),
+                                ),
+                              ),
+                              icon: const Icon(Icons.insights_outlined),
+                            ),
                           Semantics(
                             button: true,
                             label: quest.isCompleted

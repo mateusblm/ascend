@@ -62,6 +62,11 @@ public class CatalogoAtividadesService {
     ));
   }
 
+  public DefinicaoAtividade atividade(String activityId) {
+    return consultar().categorias().stream().flatMap(c -> c.modalidades().stream())
+        .flatMap(m -> m.atividades().stream()).filter(a -> a.id().equals(activityId)).findFirst().orElse(null);
+  }
+
   private CategoriaAtividade categoria(String id, String nome, List<ModalidadeAtividade> modalidades) {
     return new CategoriaAtividade(id, nome, modalidades);
   }

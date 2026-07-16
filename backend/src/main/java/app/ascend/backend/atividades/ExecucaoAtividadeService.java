@@ -6,8 +6,10 @@ import app.ascend.backend.quests.MutacaoQuestPessoalService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +20,25 @@ public class ExecucaoAtividadeService {
   private final GuardaSessaoAtiva sessoes;
   private final CatalogoAtividadesService catalogo;
   private final MutacaoQuestPessoalService mutacoes;
+  private final ProgressoAtividadeService progresso;
+
   public ExecucaoAtividadeService(JdbcTemplate jdbc, GuardaSessaoAtiva sessoes, CatalogoAtividadesService catalogo, MutacaoQuestPessoalService mutacoes) {
-    this.jdbc = jdbc; this.sessoes = sessoes; this.catalogo = catalogo; this.mutacoes = mutacoes;
+    this(jdbc, sessoes, catalogo, mutacoes, null);
+  }
+
+  @Autowired
+  public ExecucaoAtividadeService(
+      JdbcTemplate jdbc,
+      GuardaSessaoAtiva sessoes,
+      CatalogoAtividadesService catalogo,
+      MutacaoQuestPessoalService mutacoes,
+      ProgressoAtividadeService progresso
+  ) {
+    this.jdbc = jdbc;
+    this.sessoes = sessoes;
+    this.catalogo = catalogo;
+    this.mutacoes = mutacoes;
+    this.progresso = progresso;
   }
   @Transactional
   public RespostaExecucaoAtividade registrar(String uid, RequisicaoExecucaoAtividade request) {
@@ -47,19 +66,29 @@ public class ExecucaoAtividadeService {
     if (!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from quests where uid = ? and id = ?)", Boolean.class, uid, request.questId())))
       throw new ExcecaoApi(HttpStatus.NOT_FOUND, "personal_quest_not_found", "Missão não encontrada.");
     Map<String, Object> calculadas = calcular(atividade.modeloExecucao(), metricas);
+    Map<String, Object> recordesAnteriores = progresso == null
+        ? Map.of()
+        : progresso.recordesPara(uid, atividade.id());
     int inserida = jdbc.update("""
         insert into execucoes_atividades(uid, id, quest_id, activity_id, execution_type, schema_version, metricas, metricas_calculadas, observacao)
         values (?, ?, ?, ?, ?, ?, cast(? as jsonb), cast(? as jsonb), ?) on conflict (uid, id) do nothing
         """,
         uid, request.executionId(), request.questId(), atividade.id(), atividade.modeloExecucao(), atividade.versaoSchema(), json(metricas), json(calculadas), request.observation());
-    return new RespostaExecucaoAtividade(inserida == 1 ? "recorded" : "already_recorded", request.executionId(), calculadas);
+    List<String> novosRecordes = inserida == 1
+        ? recordesSuperados(atividade.modeloExecucao(), metricas, calculadas, recordesAnteriores)
+        : List.of();
+    return new RespostaExecucaoAtividade(
+        inserida == 1 ? "recorded" : "already_recorded",
+        request.executionId(), calculadas, novosRecordes);
   }
   @Transactional
   public RespostaExecucaoConcluida registrarEConcluir(String uid, String email, RequisicaoExecucaoAtividade request) {
     RespostaExecucaoAtividade execucao = registrar(uid, request);
     var conclusao = mutacoes.concluirGuiada(uid, email, request.deviceSessionId(), request.questId(),
         request.activityId(), request.executionType(), request.schemaVersion());
-    return new RespostaExecucaoConcluida(execucao.status(), execucao.executionId(), execucao.calculatedMetrics(), conclusao);
+    return new RespostaExecucaoConcluida(
+        execucao.status(), execucao.executionId(), execucao.calculatedMetrics(),
+        execucao.personalRecords(), conclusao);
   }
   /** A revogacao da quest invalida seus fatos guiados sem apagar o historico auditavel. */
   @Transactional
@@ -130,7 +159,41 @@ public class ExecucaoAtividadeService {
     if ("sleepTracking".equals(tipo)) calculadas.put("durationMinutes", numero(metricas, "durationMinutes"));
     return calculadas;
   }
-  private double numero(Map<String, Object> metricas, String chave) { Object valor = metricas.get(chave); return valor instanceof Number n ? n.doubleValue() : 0; }
+  private static double numero(Map<String, Object> metricas, String chave) { Object valor = metricas.get(chave); return valor instanceof Number n ? n.doubleValue() : 0; }
+  static List<String> recordesSuperados(
+      String tipo,
+      Map<String, Object> metricas,
+      Map<String, Object> calculadas,
+      Map<String, Object> anteriores
+  ) {
+    List<String> recordes = new ArrayList<>();
+    if ("strengthSets".equals(tipo)) {
+      adicionarSeMaior(recordes, "maxLoadKg", numero(calculadas, "maxLoadKg"), anteriores);
+      adicionarSeMaior(recordes, "maxVolumeKg", numero(calculadas, "volumeKg"), anteriores);
+      adicionarSeMaior(recordes, "maxEstimatedOneRepMaxKg", numero(calculadas, "estimatedOneRepMaxKg"), anteriores);
+    } else if ("distanceDuration".equals(tipo)) {
+      adicionarSeMaior(recordes, "maxDistanceKm", numero(metricas, "distanceKm"), anteriores);
+      adicionarSeMenor(recordes, "bestPaceSecondsPerKm", numero(calculadas, "paceSecondsPerKm"), anteriores);
+    } else if ("studySession".equals(tipo)) {
+      adicionarSeMaior(recordes, "maxStudyMinutes", numero(metricas, "durationMinutes"), anteriores);
+      adicionarSeMaior(recordes, "bestAccuracyPercent", numero(calculadas, "accuracyPercent"), anteriores);
+    } else if ("readingProgress".equals(tipo)) {
+      adicionarSeMaior(recordes, "maxPagesRead", numero(metricas, "pagesRead"), anteriores);
+    } else if ("sleepTracking".equals(tipo)) {
+      adicionarSeMaior(recordes, "longestSleepMinutes", numero(calculadas, "durationMinutes"), anteriores);
+    }
+    return List.copyOf(recordes);
+  }
+
+  private static void adicionarSeMaior(List<String> recordes, String chave, double atual, Map<String, Object> anteriores) {
+    if (atual > 0 && atual > numero(anteriores, chave)) recordes.add(chave);
+  }
+
+  private static void adicionarSeMenor(List<String> recordes, String chave, double atual, Map<String, Object> anteriores) {
+    double anterior = numero(anteriores, chave);
+    if (atual > 0 && (anterior == 0 || atual < anterior)) recordes.add(chave);
+  }
+
   private int minutosDoHorario(Object valor) {
     if (!(valor instanceof String horario) || !horario.matches("\\d{2}:\\d{2}")) return -1;
     int horas = Integer.parseInt(horario.substring(0, 2)); int minutos = Integer.parseInt(horario.substring(3, 5));

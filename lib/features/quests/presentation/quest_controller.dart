@@ -279,11 +279,15 @@ class QuestNotifier extends StateNotifier<List<Quest>> {
     _persistirLocal();
     ref.read(playerProvider.notifier).applyAuthoritativeProfile(result.player);
     final calculated = response['calculatedMetrics'];
+    final records = response['personalRecords'];
     return GuidedExecutionResult(
       completion: result,
       calculatedMetrics: calculated is Map
           ? Map<String, dynamic>.from(calculated.cast<Object?, Object?>())
           : const {},
+      personalRecords: records is List
+          ? records.whereType<String>().toList(growable: false)
+          : const [],
     );
   }
 
@@ -447,8 +451,10 @@ class GuidedExecutionResult {
   const GuidedExecutionResult({
     required this.completion,
     required this.calculatedMetrics,
+    required this.personalRecords,
   });
 
   final PersonalQuestMutationResult completion;
   final Map<String, dynamic> calculatedMetrics;
+  final List<String> personalRecords;
 }

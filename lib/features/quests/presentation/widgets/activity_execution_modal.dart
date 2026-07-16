@@ -384,7 +384,11 @@ class _ActivityExecutionModalState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _receipt(activity.executionType, result.calculatedMetrics),
+            activityExecutionReceipt(
+              activity.executionType,
+              result.calculatedMetrics,
+              result.personalRecords,
+            ),
           ),
         ),
       );
@@ -404,18 +408,39 @@ class _ActivityExecutionModalState
   ).showSnackBar(SnackBar(content: Text(message)));
 }
 
-String _receipt(String type, Map<String, dynamic> metrics) => switch (type) {
-  'strengthSets' =>
-    'Treino confirmado · ${metrics['volumeKg'] ?? '—'} kg de volume · 1RM ${metrics['estimatedOneRepMaxKg'] ?? '—'} kg',
-  'distanceDuration' =>
-    'Corrida confirmada · ritmo ${formatPaceSecondsPerKm(metrics['paceSecondsPerKm'])}',
-  'studySession' =>
-    'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
-  'readingProgress' =>
-    'Leitura registrada · ${metrics['pagesRead'] ?? '—'} páginas lidas',
-  'sleepTracking' =>
-    'Sono registrado · ${metrics['durationMinutes'] ?? '—'} minutos de descanso',
-  _ => 'Execução registrada e missão concluída com recompensa confirmada.',
+String activityExecutionReceipt(
+  String type,
+  Map<String, dynamic> metrics,
+  List<String> personalRecords,
+) {
+  final summary = switch (type) {
+    'strengthSets' =>
+      'Treino confirmado · ${metrics['volumeKg'] ?? '—'} kg de volume · 1RM ${metrics['estimatedOneRepMaxKg'] ?? '—'} kg',
+    'distanceDuration' =>
+      'Corrida confirmada · ritmo ${formatPaceSecondsPerKm(metrics['paceSecondsPerKm'])}',
+    'studySession' =>
+      'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
+    'readingProgress' =>
+      'Leitura registrada · ${metrics['pagesRead'] ?? '—'} páginas lidas',
+    'sleepTracking' =>
+      'Sono registrado · ${metrics['durationMinutes'] ?? '—'} minutos de descanso',
+    _ => 'Execução registrada e missão concluída com recompensa confirmada.',
+  };
+  if (personalRecords.isEmpty) return summary;
+  return '$summary · Novo recorde: ${personalRecords.map(_recordLabel).join(', ')}';
+}
+
+String _recordLabel(String record) => switch (record) {
+  'maxLoadKg' => 'maior carga',
+  'maxVolumeKg' => 'maior volume',
+  'maxEstimatedOneRepMaxKg' => 'melhor 1RM',
+  'maxDistanceKm' => 'maior distância',
+  'bestPaceSecondsPerKm' => 'melhor ritmo',
+  'maxStudyMinutes' => 'maior sessão',
+  'bestAccuracyPercent' => 'melhor acerto',
+  'maxPagesRead' => 'maior sessão de leitura',
+  'longestSleepMinutes' => 'maior duração de sono',
+  _ => 'novo recorde',
 };
 
 class _StrengthSetInputs {

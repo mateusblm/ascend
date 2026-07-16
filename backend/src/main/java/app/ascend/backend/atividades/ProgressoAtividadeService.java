@@ -16,9 +16,24 @@ public class ProgressoAtividadeService {
   public ProgressoAtividadeService(JdbcTemplate jdbc, ConversorDocumentoPostgres json) { this.jdbc = jdbc; this.json = json; }
 
   public RespostaProgressoAtividade consultar(String uid, String activityId) {
-    List<Map<String, Object>> history = jdbc.query("""
+    List<Map<String, Object>> history = historico(uid, activityId, 50);
+    String type = history.isEmpty() ? "" : String.valueOf(history.getFirst().get("executionType"));
+    Map<String, Object> highlights = highlights(type, history);
+    return new RespostaProgressoAtividade(activityId, type, history.size(), highlights,
+        recordes(type, history), tendencias(type, history), history);
+  }
+
+  /** Consulta todos os fatos ativos para comparar recordes, sem o limite da UI. */
+  public Map<String, Object> recordesPara(String uid, String activityId) {
+    List<Map<String, Object>> history = historico(uid, activityId, Integer.MAX_VALUE);
+    String type = history.isEmpty() ? "" : String.valueOf(history.getFirst().get("executionType"));
+    return recordes(type, history);
+  }
+
+  private List<Map<String, Object>> historico(String uid, String activityId, int limite) {
+    return jdbc.query("""
         select id, execution_type, metricas::text, metricas_calculadas::text, observacao, registrada_em
-        from execucoes_atividades where uid = ? and activity_id = ? and revogada_em is null order by registrada_em desc limit 50
+        from execucoes_atividades where uid = ? and activity_id = ? and revogada_em is null order by registrada_em desc limit ?
         """, (rs, row) -> {
       Map<String, Object> item = new LinkedHashMap<>();
       item.put("id", rs.getString("id")); item.put("executionType", rs.getString("execution_type"));
@@ -26,11 +41,7 @@ public class ProgressoAtividadeService {
       item.put("calculatedMetrics", json.paraDocumento(rs.getString("metricas_calculadas")));
       item.put("observation", rs.getString("observacao")); item.put("recordedAt", rs.getTimestamp("registrada_em").toInstant().toString());
       return item;
-    }, uid, activityId);
-    String type = history.isEmpty() ? "" : String.valueOf(history.getFirst().get("executionType"));
-    Map<String, Object> highlights = highlights(type, history);
-    return new RespostaProgressoAtividade(activityId, type, history.size(), highlights,
-        recordes(type, history), tendencias(type, history), history);
+    }, uid, activityId, limite);
   }
 
   @SuppressWarnings("unchecked")

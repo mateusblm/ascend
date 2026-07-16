@@ -41,12 +41,44 @@ class ExecucaoAtividadeServiceTest {
   @Test void calculaVolumeEUmRmAPartirDasSeries() {
     JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
     when(jdbc.queryForObject(Mockito.anyString(), Mockito.eq(Boolean.class), Mockito.any(), Mockito.any())).thenReturn(true);
-    when(jdbc.update(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
+    when(jdbc.update(
+        Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(),
+        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull()
+    )).thenReturn(1);
     ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
     var resposta = service.registrar("u1", new RequisicaoExecucaoAtividade("d1", "e1", "q1", "supino-reto", "strengthSets", 1,
         Map.of("sets", java.util.List.of(Map.of("loadKg", 60, "repetitions", 8), Map.of("loadKg", 55, "repetitions", 10))), null));
     assertEquals(1030d, resposta.calculatedMetrics().get("volumeKg"));
     assertEquals(76d, resposta.calculatedMetrics().get("estimatedOneRepMaxKg"));
+  }
+
+  @Test void retornaSomenteRecordesNovosCalculadosNoBackend() {
+    var recordes = ExecucaoAtividadeService.recordesSuperados(
+        "strengthSets", Map.of(),
+        Map.of("maxLoadKg", 60d, "volumeKg", 480d, "estimatedOneRepMaxKg", 76d),
+        Map.of("maxLoadKg", 55d, "maxVolumeKg", 900d, "maxEstimatedOneRepMaxKg", 74d));
+
+    assertEquals(java.util.List.of("maxLoadKg", "maxEstimatedOneRepMaxKg"), recordes);
+  }
+
+  @Test void naoAnunciaRecordeQuandoAExecucaoIdempotenteNaoFoiInserida() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    ProgressoAtividadeService progresso = Mockito.mock(ProgressoAtividadeService.class);
+    when(jdbc.queryForObject(Mockito.anyString(), Mockito.eq(Boolean.class), Mockito.any(), Mockito.any())).thenReturn(true);
+    when(jdbc.update(
+        Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(),
+        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull()
+    )).thenReturn(0);
+    when(progresso.recordesPara("u1", "supino-reto")).thenReturn(Map.of());
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc,
+        Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService(),
+        Mockito.mock(MutacaoQuestPessoalService.class), progresso);
+
+    var resposta = service.registrar("u1", new RequisicaoExecucaoAtividade(
+        "d1", "e1", "q1", "supino-reto", "strengthSets", 1,
+        Map.of("sets", java.util.List.of(Map.of("loadKg", 60, "repetitions", 8))), null));
+
+    assertEquals(java.util.List.of(), resposta.personalRecords());
   }
 
   @Test void rejeitaSerieComRepeticoesInvalidas() {

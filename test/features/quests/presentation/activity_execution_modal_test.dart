@@ -99,6 +99,16 @@ void main() {
     expect(formatPaceSecondsPerKm(305), '5:05/km');
     expect(formatPaceSecondsPerKm(0), '—');
   });
+  test('recibo apresenta recorde retornado pelo backend', () {
+    expect(
+      activityExecutionReceipt(
+        'strengthSets',
+        const {'volumeKg': 480, 'estimatedOneRepMaxKg': 76},
+        const ['maxLoadKg', 'maxEstimatedOneRepMaxKg'],
+      ),
+      contains('Novo recorde'),
+    );
+  });
 }
 
 void _noOp() {}

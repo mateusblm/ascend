@@ -42,6 +42,7 @@ public class ProgressoAtividadeService {
       if ("strengthSets".equals(type)) { total += number(derived.get("volumeKg")); best = Math.max(best, number(derived.get("maxLoadKg"))); totalKey = "totalVolumeKg"; bestKey = "maxLoadKg"; }
       if ("distanceDuration".equals(type)) { total += number(input.get("distanceKm")); double pace = number(derived.get("paceSecondsPerKm")); if (best == 0 || (pace > 0 && pace < best)) best = pace; totalKey = "totalDistanceKm"; bestKey = "bestPaceSecondsPerKm"; }
       if ("studySession".equals(type)) { total += number(input.get("durationMinutes")); best = Math.max(best, number(derived.get("accuracyPercent"))); totalKey = "totalMinutes"; bestKey = "bestAccuracyPercent"; }
+      if ("readingProgress".equals(type)) { total += number(input.get("pagesRead")); best = Math.max(best, number(input.get("pagesRead"))); totalKey = "totalPagesRead"; bestKey = "maxPagesRead"; }
     }
     Map<String, Object> result = new LinkedHashMap<>(); result.put(totalKey.isEmpty() ? "total" : totalKey, total); if (!bestKey.isEmpty()) result.put(bestKey, best); return result;
   }
@@ -61,6 +62,8 @@ public class ProgressoAtividadeService {
       } else if ("studySession".equals(type)) {
         maior(records, "maxStudyMinutes", number(input.get("durationMinutes")));
         maior(records, "bestAccuracyPercent", number(derived.get("accuracyPercent")));
+      } else if ("readingProgress".equals(type)) {
+        maior(records, "maxPagesRead", number(input.get("pagesRead")));
       }
     }
     return records;
@@ -73,7 +76,8 @@ public class ProgressoAtividadeService {
       Map<String, Object> input = (Map<String, Object>) row.get("metrics");
       Map<String, Object> derived = (Map<String, Object>) row.get("calculatedMetrics");
       double value = "strengthSets".equals(type) ? number(derived.get("volumeKg")) :
-          "distanceDuration".equals(type) ? number(input.get("distanceKm")) : number(input.get("durationMinutes"));
+          "distanceDuration".equals(type) ? number(input.get("distanceKm")) :
+          "readingProgress".equals(type) ? number(input.get("pagesRead")) : number(input.get("durationMinutes"));
       if (!at.isBefore(now.minus(7, ChronoUnit.DAYS))) weekly += value;
       else if (!at.isBefore(now.minus(14, ChronoUnit.DAYS))) previousWeekly += value;
       if (!at.isBefore(now.minus(30, ChronoUnit.DAYS))) monthly += value;

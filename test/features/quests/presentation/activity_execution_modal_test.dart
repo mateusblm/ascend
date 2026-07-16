@@ -49,6 +49,17 @@ void main() {
     expect(find.text('Principal aprendizado'), findsOneWidget);
   });
 
+  testWidgets('leitura apresenta obra e intervalo de paginas', (tester) async {
+    await tester.pumpWidget(_modal('readingProgress'));
+    await tester.pump();
+
+    expect(find.text('SESSÃO DE LEITURA'), findsOneWidget);
+    expect(find.text('Obra ou material'), findsOneWidget);
+    expect(find.text('Página inicial'), findsOneWidget);
+    expect(find.text('Página final'), findsOneWidget);
+    expect(find.text('Páginas lidas'), findsNothing);
+  });
+
   testWidgets('loading possui Semantics e erro oferece retomada', (
     tester,
   ) async {
@@ -188,6 +199,58 @@ List<ActivityMetricDefinition> _metrics(String type) => switch (type) {
       minimum: 1,
       maximum: 10,
       evolution: 'INFORMATIONAL',
+    ),
+  ],
+  'readingProgress' => const [
+    ActivityMetricDefinition(
+      id: 'workTitle',
+      type: 'text',
+      unit: 'text',
+      required: false,
+      derived: false,
+      minimum: 0,
+      maximum: 200,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'startPage',
+      type: 'integer',
+      unit: 'pages',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 100000,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'endPage',
+      type: 'integer',
+      unit: 'pages',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 100000,
+      evolution: 'INFORMATIONAL',
+    ),
+    ActivityMetricDefinition(
+      id: 'pagesRead',
+      type: 'integer',
+      unit: 'pages',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 10000,
+      evolution: 'ACCUMULATIVE',
+    ),
+    ActivityMetricDefinition(
+      id: 'durationMinutes',
+      type: 'integer',
+      unit: 'min',
+      required: false,
+      derived: false,
+      minimum: 1,
+      maximum: 1440,
+      evolution: 'ACCUMULATIVE',
     ),
   ],
   _ => const [

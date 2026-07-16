@@ -128,6 +128,9 @@ ou mensal quando aplicável.
 - **Estudo:** duracao, topico, questoes, acertos e aprendizado podem ser
   registrados. Acertos nao podem exceder questoes e o percentual e derivado
   pelo servidor.
+- **Leitura:** obra ou material, pagina inicial/final e duracao podem ser
+  registrados. O servidor calcula as paginas lidas a partir do intervalo;
+  clientes legados que enviam apenas `pagesRead` continuam compativeis.
 
 O recibo exibe apenas as metricas calculadas retornadas pela conclusao. O
 read-model de progresso retorna recordes pessoais e totais dos ultimos 7 e 30

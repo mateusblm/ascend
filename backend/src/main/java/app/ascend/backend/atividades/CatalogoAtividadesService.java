@@ -105,7 +105,15 @@ public class CatalogoAtividadesService {
         metrica("learning", "text", "text", false, false, 0, 2000, "INFORMATIONAL"),
         metrica("accuracyPercent", "decimal", "%", false, true, 0, 100, "INFORMATIONAL"));
   }
-  private List<DefinicaoMetricaAtividade> metricasLeitura() { return List.of(metrica("pagesRead", "integer", "pages", true, false, 1, 10000, "ACCUMULATIVE")); }
+  private List<DefinicaoMetricaAtividade> metricasLeitura() {
+    return List.of(
+        metrica("workTitle", "text", "text", false, false, 0, 200, "INFORMATIONAL"),
+        metrica("startPage", "integer", "pages", false, false, 1, 100000, "INFORMATIONAL"),
+        metrica("endPage", "integer", "pages", false, false, 1, 100000, "INFORMATIONAL"),
+        // Compatibilidade: clientes antigos ainda podem registrar pagesRead diretamente.
+        metrica("pagesRead", "integer", "pages", false, false, 1, 10000, "ACCUMULATIVE"),
+        metrica("durationMinutes", "integer", "min", false, false, 1, 1440, "ACCUMULATIVE"));
+  }
   private List<DefinicaoMetricaAtividade> metricasTempo() { return List.of(metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "ACCUMULATIVE")); }
   private List<DefinicaoMetricaAtividade> metricasSono() { return List.of(metrica("durationMinutes", "integer", "min", true, false, 1, 1440, "CONSISTENCY")); }
   private List<DefinicaoMetricaAtividade> metricasFinanceiras() { return List.of(metrica("amount", "decimal", "BRL", true, false, 0.01, 10000000, "INFORMATIONAL")); }

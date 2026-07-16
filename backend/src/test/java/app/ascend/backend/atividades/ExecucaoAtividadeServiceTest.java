@@ -80,4 +80,28 @@ class ExecucaoAtividadeServiceTest {
     assertEquals(1, service.marcarExecucoesRevogadas("u1", "q1"));
     verify(jdbc, times(1)).update(Mockito.anyString(), Mockito.eq("u1"), Mockito.eq("q1"));
   }
+
+  @Test void calculaPaginasLidasAPartirDoIntervalo() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    when(jdbc.queryForObject(Mockito.anyString(), Mockito.eq(Boolean.class), Mockito.any(), Mockito.any())).thenReturn(true);
+    when(jdbc.update(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, Mockito.mock(GuardaSessaoAtiva.class),
+        new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
+
+    var resposta = service.registrar("u1", new RequisicaoExecucaoAtividade("d1", "e1", "q1", "leitura-livre", "readingProgress", 1,
+        Map.of("workTitle", "Livro", "startPage", 12, "endPage", 30, "durationMinutes", 25), null));
+
+    assertEquals(19d, resposta.calculatedMetrics().get("pagesRead"));
+  }
+
+  @Test void rejeitaIntervaloDeLeituraInvertido() {
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(Mockito.mock(JdbcTemplate.class),
+        Mockito.mock(GuardaSessaoAtiva.class), new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
+
+    ExcecaoApi erro = assertThrows(ExcecaoApi.class, () -> service.registrar("u1",
+        new RequisicaoExecucaoAtividade("d1", "e1", "q1", "leitura-livre", "readingProgress", 1,
+            Map.of("startPage", 30, "endPage", 12), null)));
+
+    assertEquals("invalid_reading_progress", erro.codigo());
+  }
 }

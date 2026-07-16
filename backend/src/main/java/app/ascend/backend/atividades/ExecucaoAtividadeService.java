@@ -40,6 +40,8 @@ public class ExecucaoAtividadeService {
     if ("studySession".equals(atividade.modeloExecucao())
         && numero(metricas, "correctAnswers") > numero(metricas, "questionsAnswered"))
       throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_study_answers", "Os acertos nao podem exceder as questoes.");
+    if ("readingProgress".equals(atividade.modeloExecucao()) && numero(metricas, "pagesRead") < 1)
+      throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "required_reading_progress", "Informe as paginas lidas.");
     if (!Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from quests where uid = ? and id = ?)", Boolean.class, uid, request.questId())))
       throw new ExcecaoApi(HttpStatus.NOT_FOUND, "personal_quest_not_found", "Missão não encontrada.");
     Map<String, Object> calculadas = calcular(atividade.modeloExecucao(), metricas);
@@ -69,6 +71,15 @@ public class ExecucaoAtividadeService {
     atividade.metricas().stream().filter(DefinicaoMetricaAtividade::calculada)
         .map(DefinicaoMetricaAtividade::id).forEach(metricas::remove);
     String tipo = atividade.modeloExecucao();
+    if ("readingProgress".equals(tipo)) {
+      Object inicio = metricas.get("startPage"); Object fim = metricas.get("endPage");
+      if (inicio == null && fim == null) return metricas;
+      if (!(inicio instanceof Number paginaInicial) || !(fim instanceof Number paginaFinal)
+          || paginaInicial.doubleValue() < 1 || paginaFinal.doubleValue() < paginaInicial.doubleValue())
+        throw new ExcecaoApi(HttpStatus.UNPROCESSABLE_ENTITY, "invalid_reading_progress", "Intervalo de paginas invalido.");
+      metricas.put("pagesRead", paginaFinal.doubleValue() - paginaInicial.doubleValue() + 1);
+      return metricas;
+    }
     if (!"strengthSets".equals(tipo) || !(metricas.get("sets") instanceof List<?> series)) return metricas;
     double repeticoes = 0, maiorCarga = 0;
     for (Object item : series) {
@@ -101,6 +112,7 @@ public class ExecucaoAtividadeService {
     if ("distanceDuration".equals(tipo)) calculadas.put("paceSecondsPerKm", numero(metricas, "durationMinutes") * 60 / numero(metricas, "distanceKm"));
     if ("studySession".equals(tipo) && metricas.get("questionsAnswered") instanceof Number)
       calculadas.put("accuracyPercent", numero(metricas, "correctAnswers") * 100 / numero(metricas, "questionsAnswered"));
+    if ("readingProgress".equals(tipo)) calculadas.put("pagesRead", numero(metricas, "pagesRead"));
     return calculadas;
   }
   private double numero(Map<String, Object> metricas, String chave) { Object valor = metricas.get(chave); return valor instanceof Number n ? n.doubleValue() : 0; }

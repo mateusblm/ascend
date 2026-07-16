@@ -62,6 +62,7 @@ class _ProgressBody extends StatelessWidget {
       'strengthSets' => 'FORÇA EM CAMPO',
       'distanceDuration' => 'RITMO EM MOVIMENTO',
       'studySession' => 'DOMÍNIO DE ESTUDO',
+      'readingProgress' => 'RITMO DE LEITURA',
       _ => 'HISTÓRICO DA ATIVIDADE',
     };
     return ListView(
@@ -134,6 +135,7 @@ class _TrendSummary extends StatelessWidget {
     final unit = switch (type) {
       'strengthSets' => 'kg',
       'distanceDuration' => 'km',
+      'readingProgress' => 'páginas',
       _ => 'min',
     };
     return Container(
@@ -207,6 +209,7 @@ String _recordLabel(String key) => switch (key) {
   'bestPaceSecondsPerKm' => 'Melhor ritmo',
   'maxStudyMinutes' => 'Maior sessão',
   'bestAccuracyPercent' => 'Melhor acerto',
+  'maxPagesRead' => 'Maior sessão de leitura',
   _ => key,
 };
 
@@ -228,6 +231,10 @@ class _Highlights extends StatelessWidget {
       'studySession' => [
         ('Tempo acumulado', values['totalMinutes'], 'min'),
         ('Melhor acerto', values['bestAccuracyPercent'], '%'),
+      ],
+      'readingProgress' => [
+        ('Páginas lidas', values['totalPagesRead'], 'páginas'),
+        ('Maior sessão', values['maxPagesRead'], 'páginas'),
       ],
       _ => values.entries.map((e) => (e.key, e.value, '')).toList(),
     };

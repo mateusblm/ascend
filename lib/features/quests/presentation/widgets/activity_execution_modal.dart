@@ -148,6 +148,13 @@ class _ActivityExecutionModalState
             .map(_metricField),
       ];
     }
+    if (activity.executionType == 'readingProgress') {
+      return [
+        const Text('SESSÃO DE LEITURA', style: _eyebrowStyle),
+        const SizedBox(height: 8),
+        ...inputs.where((metric) => metric.id != 'pagesRead').map(_metricField),
+      ];
+    }
     return inputs.map(_metricField).toList();
   }
 
@@ -206,7 +213,9 @@ class _ActivityExecutionModalState
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        keyboardType: metric.type == 'text'
+            ? TextInputType.text
+            : const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: '${_metricLabel(metric.id)}${metric.required ? ' *' : ''}',
           helperText:
@@ -226,6 +235,10 @@ class _ActivityExecutionModalState
     'questionsAnswered' => 'Questões respondidas',
     'correctAnswers' => 'Acertos',
     'learning' => 'Principal aprendizado',
+    'workTitle' => 'Obra ou material',
+    'startPage' => 'Página inicial',
+    'endPage' => 'Página final',
+    'pagesRead' => 'Páginas lidas',
     _ => id,
   };
 
@@ -327,6 +340,8 @@ String _receipt(String type, Map<String, dynamic> metrics) => switch (type) {
     'Corrida confirmada · ritmo ${formatPaceSecondsPerKm(metrics['paceSecondsPerKm'])}',
   'studySession' =>
     'Estudo confirmado · ${metrics['accuracyPercent'] ?? '—'}% de acerto',
+  'readingProgress' =>
+    'Leitura registrada · ${metrics['pagesRead'] ?? '—'} páginas lidas',
   _ => 'Execução registrada e missão concluída com recompensa confirmada.',
 };
 

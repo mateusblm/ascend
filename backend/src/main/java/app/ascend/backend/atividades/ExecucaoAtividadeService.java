@@ -57,6 +57,12 @@ public class ExecucaoAtividadeService {
         request.activityId(), request.executionType(), request.schemaVersion());
     return new RespostaExecucaoConcluida(execucao.status(), execucao.executionId(), execucao.calculatedMetrics(), conclusao);
   }
+  /** A revogacao da quest invalida seus fatos guiados sem apagar o historico auditavel. */
+  @Transactional
+  public int marcarExecucoesRevogadas(String uid, String questId) {
+    return jdbc.update("update execucoes_atividades set revogada_em = current_timestamp "
+        + "where uid = ? and quest_id = ? and revogada_em is null", uid, questId);
+  }
   @SuppressWarnings("unchecked")
   private Map<String, Object> normalizarMetricas(DefinicaoAtividade atividade, Map<String, Object> recebidas) {
     Map<String, Object> metricas = new LinkedHashMap<>(recebidas == null ? Map.of() : recebidas);

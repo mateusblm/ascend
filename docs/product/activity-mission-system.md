@@ -99,6 +99,14 @@ geram feedback e histórico, não bônus explorável.
   informam “aguardando sincronização”.
 - Ao reconectar, o backend decide a idempotência, a conclusão e a recompensa.
 
+### Revogacao de execucao guiada
+
+Uma revogacao bem-sucedida da Quest marca no PostgreSQL todas as execucoes
+guiadas ainda ativas daquela Quest e daquele usuario como revogadas. Os fatos
+nao sao apagados: permanecem auditaveis, mas ficam fora de historico,
+agregados, recordes e tendencias. Uma nova conclusao gera uma nova execucao
+com ID proprio; a operacao de revogacao e idempotente.
+
 ## UX
 
 O modal de criação abre com a escolha “Missão rápida” ou “Missão guiada”. A

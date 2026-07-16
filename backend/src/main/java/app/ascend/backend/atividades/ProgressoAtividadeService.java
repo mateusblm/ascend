@@ -18,7 +18,7 @@ public class ProgressoAtividadeService {
   public RespostaProgressoAtividade consultar(String uid, String activityId) {
     List<Map<String, Object>> history = jdbc.query("""
         select id, execution_type, metricas::text, metricas_calculadas::text, observacao, registrada_em
-        from execucoes_atividades where uid = ? and activity_id = ? order by registrada_em desc limit 50
+        from execucoes_atividades where uid = ? and activity_id = ? and revogada_em is null order by registrada_em desc limit 50
         """, (rs, row) -> {
       Map<String, Object> item = new LinkedHashMap<>();
       item.put("id", rs.getString("id")); item.put("executionType", rs.getString("execution_type"));

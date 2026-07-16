@@ -1,6 +1,7 @@
 package app.ascend.backend.quests;
 
 import app.ascend.backend.autenticacao.UsuarioAutenticado;
+import app.ascend.backend.atividades.ExecucaoAtividadeService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,17 +15,20 @@ public class InventarioQuestController {
   private final MutacaoQuestPessoalService mutacaoQuestPessoalService;
   private final CicloVidaQuestPessoalService cicloVidaQuestPessoalService;
   private final RecorrenciaQuestService recorrenciaQuestService;
+  private final ExecucaoAtividadeService execucaoAtividadeService;
 
   public InventarioQuestController(
       SincronizacaoInventarioQuestService service,
       MutacaoQuestPessoalService mutacaoQuestPessoalService,
       CicloVidaQuestPessoalService cicloVidaQuestPessoalService,
-      RecorrenciaQuestService recorrenciaQuestService
+      RecorrenciaQuestService recorrenciaQuestService,
+      ExecucaoAtividadeService execucaoAtividadeService
   ) {
     this.service = service;
     this.mutacaoQuestPessoalService = mutacaoQuestPessoalService;
     this.cicloVidaQuestPessoalService = cicloVidaQuestPessoalService;
     this.recorrenciaQuestService = recorrenciaQuestService;
+    this.execucaoAtividadeService = execucaoAtividadeService;
   }
 
   @PostMapping("/inventory:sync")
@@ -48,7 +52,11 @@ public class InventarioQuestController {
       UsuarioAutenticado user,
       @RequestBody RequisicaoMutacaoQuestPessoal request
   ) {
-    return mutacaoQuestPessoalService.revogar(user.uid(), user.email(), request);
+    RespostaMutacaoQuestPessoal resposta = mutacaoQuestPessoalService.revogar(user.uid(), user.email(), request);
+    if ("revoked".equals(resposta.status())) {
+      execucaoAtividadeService.marcarExecucoesRevogadas(user.uid(), resposta.questId());
+    }
+    return resposta;
   }
 
   @PostMapping("/personal:archive")

@@ -3,6 +3,7 @@ package app.ascend.backend.atividades;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import app.ascend.backend.compartilhado.ExcecaoApi;
@@ -68,5 +69,15 @@ class ExecucaoAtividadeServiceTest {
             Map.of("durationMinutes", 30, "questionsAnswered", 8, "correctAnswers", 9, "topic", "Java"), null)));
 
     assertEquals("invalid_study_answers", erro.codigo());
+  }
+
+  @Test void revogacaoMarcaSomenteExecucoesDaQuestDoUsuario() {
+    JdbcTemplate jdbc = Mockito.mock(JdbcTemplate.class);
+    when(jdbc.update(Mockito.anyString(), Mockito.eq("u1"), Mockito.eq("q1"))).thenReturn(1);
+    ExecucaoAtividadeService service = new ExecucaoAtividadeService(jdbc, Mockito.mock(GuardaSessaoAtiva.class),
+        new CatalogoAtividadesService(), Mockito.mock(MutacaoQuestPessoalService.class));
+
+    assertEquals(1, service.marcarExecucoesRevogadas("u1", "q1"));
+    verify(jdbc, times(1)).update(Mockito.anyString(), Mockito.eq("u1"), Mockito.eq("q1"));
   }
 }
